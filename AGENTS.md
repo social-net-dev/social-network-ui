@@ -1,0 +1,124 @@
+# AGENTS.md
+
+This file provides guidelines for agentic coding assistants working on this social-network-ui repository.
+
+## Project Overview
+
+- **Stack**: React 19 + Vite 7 + TypeScript
+- **Language**: TypeScript (ES2022 target)
+- **Build System**: Vite
+- **Testing**: None configured yet
+
+## Build, Lint, and Development Commands
+
+```bash
+pnpm dev          # Start development server with hot module replacement
+pnpm build        # Type-check and build for production (runs tsc -b && vite build)
+pnpm lint         # Run ESLint on the codebase
+pnpm preview      # Preview production build locally
+```
+
+**Important**: There is no testing framework configured. Do not attempt to run tests unless you add one (e.g., Vitest, Jest).
+
+## Code Style Guidelines
+
+### Imports and Modules
+
+- Use named imports: `import { useState, useEffect } from 'react'`
+- Use `.tsx` extension for imports if using TSX: `import App from './App.tsx'`
+- No `.js` extensions needed for module resolution (bundler mode)
+- Import order: React imports first, then external libraries, then local modules
+- No React import needed for JSX (react-jsx transform enabled)
+
+### TypeScript Types
+
+- **Never** use `any` or `unknown` types
+- Strict mode is enabled - type everything explicitly
+- Use `null` for absent values (not `undefined` unless intentional)
+- Leverage type inference where types are obvious from context
+- Use `readonly` for immutable arrays/objects where appropriate
+- Non-null assertion operator (`!`) is acceptable when you're certain a value exists
+
+### Component Structure
+
+- Use functional components with hooks (no class components)
+- Name functions with `PascalCase`: `function UserProfile() { }`
+- Export components as default: `export default App`
+- Use TypeScript interface or type for props: `interface Props { name: string }`
+- Destructure props in function signature: `function App({ name, age }: Props)`
+
+### React Patterns
+
+- Use React hooks at the top level of components
+- Prefer `useState` over `useReducer` for simple state
+- Use arrow functions for inline callbacks: `onClick={() => setCount(count + 1)}`
+- Use functional updates when new state depends on old: `setCount(prev => prev + 1)`
+- Use `StrictMode` wrapper in the root component for development
+
+### Error Handling
+
+- Always handle async errors with try/catch or error boundaries
+- Type error objects: `catch (error: Error) { }`
+- Provide meaningful error messages to users
+- Log errors for debugging (use appropriate logging strategy as the app grows)
+
+### Naming Conventions
+
+- **Components**: PascalCase (`UserProfile`, `Sidebar`)
+- **Functions**: camelCase (`handleClick`, `fetchData`)
+- **Variables**: camelCase (`userName`, `isLoading`)
+- **Constants**: UPPER_SNAKE_CASE (`API_BASE_URL`, `MAX_RETRIES`)
+- **Types/Interfaces**: PascalCase (`User`, `ApiResponse`)
+- **Boolean prefixes**: `is`, `has`, `should`, `can` (`isLoading`, `hasError`)
+
+### Code Formatting
+
+- Use 2-space indentation
+- Use semicolons at the end of statements
+- Use double quotes for strings
+- Prefer template literals over concatenation
+- Keep lines under 100 characters when practical
+- Add spacing around operators: `const sum = a + b`
+
+### ESLint Configuration
+
+The project uses ESLint with:
+- TypeScript ESLint (recommended config)
+- React Hooks plugin
+- React Refresh plugin (for Vite HMR)
+- No global ignores except `dist/`
+
+Always run `pnpm lint` after making changes and fix any linting errors.
+
+### TypeScript Compiler Options
+
+Strict mode enabled with:
+- `noUnusedLocals`: No unused local variables
+- `noUnusedParameters`: No unused function parameters
+- `noFallthroughCasesInSwitch`: Exhaustive switch cases
+- `strictNullChecks`: Strict null checking
+
+### File Organization
+
+- Source files in `src/` directory
+- Components in `src/components/` (create as needed)
+- Assets in `src/assets/` (images, fonts, etc.)
+- Global styles in `src/index.css`
+- Entry point: `src/main.tsx`
+
+### CSS Guidelines
+
+- Use CSS variables (`:root`) for theme colors
+- Support both light and dark modes with media queries
+- Use `system-ui` font family for native OS fonts
+- Prefer Flexbox over Grid for simple layouts
+- Use utility-first approach for common patterns (margin, padding, display)
+
+### Adding Tests
+
+When adding tests, first add a testing framework to package.json:
+```bash
+pnpm add -D vitest @testing-library/react @testing-library/jest-dom
+```
+
+Configure Vitest and add test files alongside components using `.test.tsx` or `.spec.tsx` extension.
