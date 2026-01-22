@@ -28,6 +28,7 @@ pnpm preview      # Preview production build locally
 - Use `.tsx` extension for imports if using TSX: `import App from './App.tsx'`
 - No `.js` extensions needed for module resolution (bundler mode)
 - Import order: React imports first, then external libraries, then local modules
+- Use path alias `@/` for src imports: `import { Button } from '@/components/ui/button'`
 - No React import needed for JSX (react-jsx transform enabled)
 
 ### TypeScript Types
@@ -131,6 +132,14 @@ Strict mode enabled with:
 - Keep technical terms (variables, comments, API endpoints, code) in English
 - Variable names, function names, and comments should remain in English
 
+### shadcn/ui Components
+
+- UI components are managed via shadcn CLI (`npx shadcn@latest add <component>`)
+- Components located in `src/components/ui/`
+- Use `cn()` utility for conditional class merging: `import { cn } from '@/lib/utils'`
+- Follow shadcn patterns for component composition and variants
+- When adding new UI components, use the shadcn CLI rather than manual creation
+
 ### Adding Tests
 
 When adding tests, first add a testing framework to package.json:
@@ -139,3 +148,13 @@ pnpm add -D vitest @testing-library/react @testing-library/jest-dom
 ```
 
 Configure Vitest and add test files alongside components using `.test.tsx` or `.spec.tsx` extension.
+
+## Browser Automation
+
+Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
+
+Core workflow:
+1. `agent-browser open <url>` - Navigate to page
+2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
+3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
+4. Re-snapshot after page changes
