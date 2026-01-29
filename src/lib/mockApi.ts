@@ -85,6 +85,45 @@ export const mockApi = {
         followers: userId === '1' ? 1234 : 567,
         following: userId === '1' ? 567 : 234,
         postsCount: userId === '1' ? 89 : 45,
+        location: 'Hồ Chí Minh, Việt Nam',
+        website: 'https://etechs.vn',
+        phone: '+84 123 456 789',
+        joinDate: '2024-01-01T00:00:00.000Z',
+        skills: [
+          { name: 'React & Next.js', level: 95, category: 'technical', iconName: 'Code' },
+          { name: 'TypeScript', level: 90, category: 'technical', iconName: 'Code' },
+          { name: 'Python & AI/ML', level: 88, category: 'technical', iconName: 'Zap' },
+          { name: 'Leadership', level: 88, category: 'soft', iconName: 'TrendingUp' },
+          { name: 'AWS Certified', level: 100, category: 'certification', iconName: 'Award' },
+        ],
+        experience: [
+          {
+            id: '1',
+            title: 'Senior AI Engineer',
+            company: 'ETECHS',
+            location: 'Hồ Chí Minh, Việt Nam',
+            startDate: '2023/06',
+            current: true,
+            description: 'Chịu trách nhiệm phát triển và triển khai các hệ thống AI cho sản phẩm công nghệ giáo dục của ETECHS',
+            achievements: ['Xây dựng hệ thống AI Tutor cá nhân hóa', 'Tối ưu hóa mô hình NLP'],
+            technologies: ['Python', 'TensorFlow', 'FastAPI']
+          }
+        ],
+        achievements: [
+          {
+            id: '1',
+            title: 'Nhà sáng tạo',
+            description: 'Đăng 100 bài viết chất lượng',
+            iconName: 'Star',
+            level: 'gold',
+            earnedDate: '2026-01-15'
+          }
+        ],
+        socialLinks: [
+          { platform: 'facebook', url: 'https://facebook.com/etechs', label: 'Facebook' },
+          { platform: 'linkedin', url: 'https://linkedin.com/company/etechs', label: 'LinkedIn' },
+          { platform: 'github', url: 'https://github.com/etechs', label: 'GitHub' }
+        ],
         createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date().toISOString(),
       }
