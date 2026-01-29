@@ -95,6 +95,8 @@ export const authApi = {
         // Get current user profile
         const userResponse = await api.get<User>("/users/me");
 
+        console.log("User response data:", userResponse.data);
+
         return {
             user: userResponse.data,
             token: access_token,

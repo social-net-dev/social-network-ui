@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/features/shared/layouts/MainLayout";
@@ -11,21 +11,109 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Save, User, School, Shield, Mail, Phone, GraduationCap, Award, BookOpen, Info, Trash2, Lock, AlertTriangle } from "lucide-react";
+import { Save, User, School, Shield, Mail, Phone, GraduationCap, Award, BookOpen, Info, Trash2, Lock, AlertTriangle, Loader2 } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
 import { ChangePasswordForm } from "../components/ChangePasswordForm";
 import { accountSecurityApi } from "../services/accountSecurityApi";
 import { useAuthStore } from "@/stores/authStore";
 
 export function ProfileSettingsPage() {
-    const { profile, isLoading } = useProfile();
-    const [activeTab, setActiveTab] = useState("privacy");
+    const { profile, isLoading, updateProfile, updatePrivacy, isUpdating } = useProfile();
+    const [activeTab, setActiveTab] = useState("basic");
     const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
     const [deactivatePassword, setDeactivatePassword] = useState("");
     const [confirmDeactivate, setConfirmDeactivate] = useState(false);
     const [deactivateError, setDeactivateError] = useState<string | null>(null);
     const { logout } = useAuthStore();
     const navigate = useNavigate();
+
+    const [formData, setFormData] = useState({
+        username: '',
+        displayName: '',
+        birthDate: '',
+        bio: ''
+    });
+
+    const [privacySettings, setPrivacySettings] = useState({
+        displayNameVisibility: 'PUBLIC' as 'PUBLIC' | 'FRIENDS' | 'PRIVATE',
+        birthDateVisibility: 'PRIVATE' as 'PUBLIC' | 'FRIENDS' | 'PRIVATE',
+        bioVisibility: 'FRIENDS' as 'PUBLIC' | 'FRIENDS' | 'PRIVATE',
+        avatarVisibility: 'PUBLIC' as 'PUBLIC' | 'FRIENDS' | 'PRIVATE',
+    });
+
+    useEffect(() => {
+        if (!profile) return;
+
+        setFormData({
+            username: profile.username || '',
+            displayName: profile.displayName || '',
+            birthDate: profile.birthDate || '',
+            bio: profile.bio || ''
+        });
+
+        if (profile.privacy) {
+            setPrivacySettings({
+                displayNameVisibility: profile.privacy.displayNameVisibility || 'PUBLIC',
+                birthDateVisibility: profile.privacy.birthDateVisibility || 'PRIVATE',
+                bioVisibility: profile.privacy.bioVisibility || 'FRIENDS',
+                avatarVisibility: profile.privacy.avatarVisibility || 'PUBLIC',
+            });
+        }
+    }, [profile]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { id, value } = e.target;
+        setFormData(prev => ({ ...prev, [id]: value }));
+    };
+
+    const handlePrivacyChange = (field: string, value: string) => {
+        setPrivacySettings(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSaveBasic = async () => {
+        try {
+            await updateProfile({
+                displayName: formData.displayName,
+                username: formData.username,
+                birthDate: formData.birthDate,
+                bio: formData.bio,
+            });
+            alert('Cập nhật thành công!');
+        } catch (error) {
+            console.error(error);
+            alert('Cập nhật thất bại!');
+        }
+    };
+
+    const handleSavePrivacy = async () => {
+        try {
+            await updatePrivacy(privacySettings as any);
+            alert('Cập nhật quyền riêng tư thành công!');
+        } catch (error) {
+            console.error(error);
+            alert('Cập nhật thất bại!');
+        }
+    };
+
+    const handleReset = () => {
+        if (profile) {
+            setFormData({
+                username: profile.username || '',
+                displayName: profile.displayName || '',
+                birthDate: profile.birthDate || '',
+                bio: profile.bio || ''
+            });
+
+            if (profile.privacy) {
+                setPrivacySettings({
+                    displayNameVisibility: profile.privacy.displayNameVisibility || 'PUBLIC',
+                    birthDateVisibility: profile.privacy.birthDateVisibility || 'PRIVATE',
+                    bioVisibility: profile.privacy.bioVisibility || 'FRIENDS',
+                    avatarVisibility: profile.privacy.avatarVisibility || 'PUBLIC',
+                });
+            }
+        }
+    };
 
     const deactivateMutation = useMutation({
         mutationFn: () => accountSecurityApi.deactivateAccount(deactivatePassword),
@@ -48,6 +136,16 @@ export function ProfileSettingsPage() {
             </MainLayout>
         );
     }
+
+    const privacyItems = [
+        { id: 'displayNameVisibility', label: 'Tên hiển thị', icon: User },
+        { id: 'avatarVisibility', label: 'Ảnh đại diện', icon: User },
+        { id: 'birthDateVisibility', label: 'Ngày sinh', icon: GraduationCap },
+        { id: 'bioVisibility', label: 'Giới thiệu bản thân', icon: Info },
+        { id: 'email', label: "Địa chỉ Email", icon: Mail },
+        { id: 'phone', label: "Số điện thoại", icon: Phone },
+        { id: 'academic', label: "Lịch sử học tập", icon: BookOpen },
+    ];
 
     return (
         <MainLayout>
@@ -76,7 +174,7 @@ export function ProfileSettingsPage() {
                 </div>
 
                 {/* Tabs */}
-                <Tabs defaultValue="privacy" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="bg-white dark:bg-card p-1 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 w-full justify-start mb-8 overflow-x-auto no-scrollbar">
                         <TabsTrigger
                             value="basic"
@@ -112,32 +210,48 @@ export function ProfileSettingsPage() {
                         <Card className="border-none shadow-xl bg-white dark:bg-card rounded-3xl overflow-hidden">
                             <CardHeader>
                                 <CardTitle>Thông tin cá nhân</CardTitle>
-                                <CardDescription>Cập nhật họ tên và thông tin giới thiệu của bạn.</CardDescription>
+                                <CardDescription>Cập nhật định danh và thông tin hiển thị của bạn trên hệ thống.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="firstName">Họ</Label>
+                                        <Label htmlFor="username">Username</Label>
                                         <Input
-                                            id="firstName"
-                                            defaultValue={profile.firstName}
+                                            id="username"
+                                            value={formData.username}
+                                            onChange={handleInputChange}
+                                            placeholder="Nhập username..."
                                             className="rounded-xl border-gray-200 dark:border-gray-800"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="lastName">Tên</Label>
+                                        <Label htmlFor="displayName">Tên hiển thị</Label>
                                         <Input
-                                            id="lastName"
-                                            defaultValue={profile.lastName}
+                                            id="displayName"
+                                            value={formData.displayName}
+                                            onChange={handleInputChange}
+                                            placeholder="Nhập tên hiển thị..."
                                             className="rounded-xl border-gray-200 dark:border-gray-800"
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
+                                    <Label htmlFor="birthDate">Ngày sinh</Label>
+                                    <Input
+                                        id="birthDate"
+                                        type="date"
+                                        value={formData.birthDate}
+                                        onChange={handleInputChange}
+                                        className="rounded-xl border-gray-200 dark:border-gray-800"
+                                    />
+                                </div>
+                                <div className="space-y-2">
                                     <Label htmlFor="bio">Giới thiệu bản thân</Label>
                                     <textarea
                                         id="bio"
-                                        defaultValue={profile.bio}
+                                        value={formData.bio}
+                                        onChange={handleInputChange}
+                                        placeholder="Giới thiệu ngắn về bạn..."
                                         rows={4}
                                         className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent px-3 py-2 text-sm focus:ring-2 focus:ring-etechs-primary outline-none resize-none"
                                     />
@@ -195,13 +309,7 @@ export function ProfileSettingsPage() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {[
-                                                { id: "email", label: "Địa chỉ Email", icon: Mail },
-                                                { id: "phone", label: "Số điện thoại", icon: Phone },
-                                                { id: "academic", label: "Lịch sử học tập", icon: BookOpen },
-                                                { id: "certs", label: "Chứng chỉ & Huy hiệu", icon: Award },
-                                                { id: "grades", label: "Điểm số khóa học", icon: Info },
-                                            ].map((item) => (
+                                            {privacyItems.map((item) => (
                                                 <TableRow
                                                     key={item.id}
                                                     className="group hover:bg-gray-50/50 dark:hover:bg-white/5 border-gray-100 dark:border-gray-800 transition-colors"
@@ -215,25 +323,37 @@ export function ProfileSettingsPage() {
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-center py-4 px-6">
-                                                        <RadioGroup defaultValue="me" className="flex justify-center">
+                                                        <RadioGroup 
+                                                            value={(privacySettings as any)[item.id] || 'PUBLIC'} 
+                                                            onValueChange={(val) => handlePrivacyChange(item.id, val)}
+                                                            className="flex justify-center"
+                                                        >
                                                             <RadioGroupItem
-                                                                value="everyone"
+                                                                value="PUBLIC"
                                                                 className="border-2 border-gray-300 dark:border-gray-600 text-etechs-primary ring-offset-etechs-primary"
                                                             />
                                                         </RadioGroup>
                                                     </TableCell>
                                                     <TableCell className="text-center py-4 px-6">
-                                                        <RadioGroup defaultValue="me" className="flex justify-center">
+                                                        <RadioGroup 
+                                                            value={(privacySettings as any)[item.id] || 'FRIENDS'} 
+                                                            onValueChange={(val) => handlePrivacyChange(item.id, val)}
+                                                            className="flex justify-center"
+                                                        >
                                                             <RadioGroupItem
-                                                                value="connections"
+                                                                value="FRIENDS"
                                                                 className="border-2 border-gray-300 dark:border-gray-600 text-etechs-primary ring-offset-etechs-primary"
                                                             />
                                                         </RadioGroup>
                                                     </TableCell>
                                                     <TableCell className="text-center py-4 px-6">
-                                                        <RadioGroup defaultValue="me" className="flex justify-center">
+                                                        <RadioGroup 
+                                                            value={(privacySettings as any)[item.id] || 'PRIVATE'} 
+                                                            onValueChange={(val) => handlePrivacyChange(item.id, val)}
+                                                            className="flex justify-center"
+                                                        >
                                                             <RadioGroupItem
-                                                                value="me"
+                                                                value="PRIVATE"
                                                                 className="border-2 border-gray-300 dark:border-gray-600 text-etechs-primary ring-offset-etechs-primary"
                                                             />
                                                         </RadioGroup>
@@ -315,16 +435,22 @@ export function ProfileSettingsPage() {
             {/* Sticky Footer Action Bar */}
             <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-card/80 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 p-4 z-40 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
-                    <Button variant="ghost" className="text-gray-500 hover:text-red-500 font-bold px-6 rounded-xl transition-colors">
+                    <Button 
+                        variant="ghost" 
+                        onClick={handleReset}
+                        disabled={isUpdating}
+                        className="text-gray-500 hover:text-red-500 font-bold px-6 rounded-xl transition-colors"
+                    >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Hủy thay đổi
                     </Button>
                     <div className="flex gap-4">
-                        <Button variant="outline" className="hidden sm:flex rounded-xl border-gray-200 dark:border-gray-800 px-6 font-bold">
-                            Lưu bản nháp
-                        </Button>
-                        <Button className="bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 font-bold px-8 rounded-xl shadow-lg shadow-etechs-primary/20 flex items-center gap-2">
-                            <Save className="w-4 h-4" />
+                        <Button 
+                            onClick={activeTab === 'basic' ? handleSaveBasic : handleSavePrivacy}
+                            disabled={isUpdating}
+                            className="bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 font-bold px-8 rounded-xl shadow-lg shadow-etechs-primary/20 flex items-center gap-2"
+                        >
+                            {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             Lưu thay đổi
                         </Button>
                     </div>
