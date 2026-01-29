@@ -141,9 +141,8 @@ export function RegisterForm() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1b7a78] dark:bg-[#132d3b] dark:border-gray-600"
                     disabled={isLoading}
                 >
-                    <option value="USER">Chung</option>
-                    <option value="STUDENT">Học sinh</option>
-                    <option value="TEACHER">Giáo viên</option>
+                    <option value="STUDENT">Người học</option>
+                    <option value="INSTRUCTOR">Người dạy</option>
                 </select>
                 {form.formState.errors.role && <p className="text-sm text-red-500">{form.formState.errors.role.message}</p>}
             </div>
