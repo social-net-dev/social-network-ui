@@ -12,6 +12,8 @@ export interface VerificationRequest {
         phone?: string;
         cccd_front_path?: string;
         cccd_back_path?: string;
+        account_status?: string;
+        storage_quota_mb?: number;
     };
 }
 
