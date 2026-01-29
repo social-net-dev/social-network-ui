@@ -25,6 +25,20 @@ export const EditProfileFormDataSchema = z.object({
 
 export type EditProfileFormData = z.infer<typeof EditProfileFormDataSchema>
 
+export const PrivacySettingSchema = z.enum(['everyone', 'connections', 'only_me'])
+export type PrivacySetting = z.infer<typeof PrivacySettingSchema>
+
+export const ProfilePrivacySchema = z.object({
+  email: PrivacySettingSchema,
+  phone: PrivacySettingSchema,
+  academicHistory: PrivacySettingSchema,
+  certificates: PrivacySettingSchema,
+  courseGrades: PrivacySettingSchema,
+  searchEngineIndexing: z.boolean(),
+})
+
+export type ProfilePrivacy = z.infer<typeof ProfilePrivacySchema>
+
 export interface ProfileStats {
   posts: number
   followers: number

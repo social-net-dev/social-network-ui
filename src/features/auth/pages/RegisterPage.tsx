@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
 import { RegisterForm } from "../components/RegisterForm";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 
 export function RegisterPage() {
     return (

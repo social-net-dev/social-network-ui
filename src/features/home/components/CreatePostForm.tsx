@@ -21,9 +21,7 @@ export function CreatePostForm({
 
   useEffect(() => {
     return () => {
-      files.forEach((f) => {
-        // noop (object URLs created when rendering)
-      });
+      // Cleanup logic if needed
     };
   }, [files]);
 

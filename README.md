@@ -1,73 +1,118 @@
-# React + TypeScript + Vite
+# 🚀 ETECHS Social Network UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Giao diện mạng xã hội hiện đại, tập trung vào trải nghiệm người dùng và hiệu suất, được xây dựng cho hệ sinh thái công nghệ ETECHS.
 
-Currently, two official plugins are available:
+![Project Status](https://img.shields.io/badge/status-development-orange)
+![React](https://img.shields.io/badge/React-19-blue)
+![Vite](https://img.shields.io/badge/Vite-7-purple)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🌟 Giới thiệu
 
-## React Compiler
+Dự án này là Frontend cho mạng xã hội ETECHS, được thiết kế với phong cách hiện đại (Modern Tech), hỗ trợ đầy đủ Dark/Light mode và tương thích tốt trên mọi thiết bị.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Hệ thống sử dụng các công nghệ mới nhất như React 19, Tailwind CSS v4 và shadcn/ui để đảm bảo hiệu suất và khả năng mở rộng.
 
-## Expanding the ESLint configuration
+## ✨ Tính năng chính
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+*   **🔐 Xác thực (Auth)**: Đăng nhập, Đăng ký, Xác thực OTP.
+*   **📰 Bảng tin (Feed)**: Xem bài viết, hình ảnh, tương tác (Like, Comment).
+*   **👤 Hồ sơ người dùng (Profile)**:
+    *   Ảnh bìa & Avatar tùy chỉnh.
+    *   Thống kê (Followers, Following, Posts).
+    *   Tabs nội dung (Bài viết, Ảnh, Video).
+*   **⚙️ Cài đặt (Settings)**:
+    *   Chỉnh sửa thông tin cá nhân.
+    *   **Trung tâm quyền riêng tư**: Kiểm soát ai xem được thông tin của bạn.
+*   **🎨 Giao diện**:
+    *   Theme thương hiệu ETECHS (Dark Teal & Lime Green).
+    *   Chế độ Sáng/Tối (Dark Mode) hoàn chỉnh.
+    *   Responsive Design (Mobile First).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🛠 Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+*   **Core**: [React 19](https://react.dev/), [Vite 7](https://vitejs.dev/), [TypeScript](https://www.typescriptlang.org/)
+*   **Styling**: [Tailwind CSS 4](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/), [Lucide React](https://lucide.dev/)
+*   **State Management**: [Zustand](https://github.com/pmndrs/zustand) (Global State), [TanStack Query](https://tanstack.com/query/latest) (Server State)
+*   **Forms**: React Hook Form + Zod Validation
+*   **Networking**: Axios (với Interceptors & Refresh Token logic)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🚀 Cài đặt & Chạy dự án
+
+### 1. Yêu cầu tiên quyết
+*   Node.js (v18 trở lên)
+*   pnpm (khuyên dùng) hoặc npm/yarn
+
+### 2. Cài đặt dependencies
+
+```bash
+git clone <repository-url>
+cd social-network-ui
+pnpm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 3. Cấu hình môi trường
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Sao chép file cấu hình mẫu và cập nhật các biến môi trường:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cp .env.example .env
 ```
+
+**Lưu ý**: Để chạy với dữ liệu giả lập (không cần Backend), hãy đảm bảo `.env` có dòng:
+```env
+VITE_ENABLE_MOCK_API=true
+```
+
+### 4. Khởi chạy Development Server
+
+```bash
+pnpm dev
+```
+Truy cập `http://localhost:5173` để xem ứng dụng.
+
+## 📜 Các lệnh (Scripts) có sẵn
+
+| Lệnh | Mô tả |
+| :--- | :--- |
+| `pnpm dev` | Chạy server phát triển (Hot Reload) |
+| `pnpm build` | Kiểm tra Type và Build production |
+| `pnpm preview` | Xem trước bản build production |
+| `pnpm lint` | Kiểm tra lỗi cú pháp (ESLint) |
+
+## 📂 Cấu trúc dự án
+
+```text
+src/
+├── components/         # Các component tái sử dụng
+│   └── ui/             # Component từ shadcn/ui
+├── features/           # Modules theo tính năng (Auth, Profile, Home...)
+│   ├── auth/           # Login, Register, OTP...
+│   ├── home/           # News Feed...
+│   └── profile/        # Profile Page, Settings...
+├── lib/                # Tiện ích chung (Axios, Utils...)
+├── stores/             # Quản lý state toàn cục (Zustand)
+├── types/              # Định nghĩa TypeScript Types
+└── App.tsx             # Routing & Main Layout
+```
+
+## 🎨 Màu sắc thương hiệu (Brand Colors)
+
+Dự án sử dụng bảng màu đặc trưng của ETECHS:
+
+| Màu | Hex | Variable | Sử dụng |
+| :--- | :--- | :--- | :--- |
+| **Dark Teal** | `#0E4E5A` | `--primary` (Light) / `--secondary` (Dark) | Nền chính, Text đậm |
+| **Lime Green** | `#E2F046` | `--secondary` (Light) / `--primary` (Dark) | Điểm nhấn, Buttons, Active states |
+| **Deep Blue** | `#02182B` | `--background` (Dark) | Nền chế độ tối |
+
+## 🤝 Đóng góp
+
+1.  Fork dự án
+2.  Tạo branch tính năng (`git checkout -b feature/AmazingFeature`)
+3.  Commit thay đổi (`git commit -m 'Add some AmazingFeature'`)
+4.  Push lên branch (`git push origin feature/AmazingFeature`)
+5.  Mở Pull Request
+
+---
+© 2026 ETECHS Social Network.

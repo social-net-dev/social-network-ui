@@ -1,8 +1,6 @@
 import { LoginForm } from "../components/LoginForm";
 import { AuthLayout } from "../components/AuthLayout";
 import { LoginLeftPanel } from "../components/LoginLeftPanel";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 
 export function LoginPage() {

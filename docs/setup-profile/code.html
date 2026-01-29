@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Profile Settings - EduNet</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#80f20d",
+                        "background-light": "#f7f8f5",
+                        "background-dark": "#192210",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-[#141811] dark:text-white min-h-screen flex flex-col">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e0e6db] dark:border-[#2a361f] bg-white dark:bg-[#1f2b15] px-4 md:px-10 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-[#141811] dark:text-white">
+<div class="size-8 text-primary">
+<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M44 11.2727C44 14.0109 39.8386 16.3957 33.69 17.6364C39.8386 18.877 44 21.2618 44 24C44 26.7382 39.8386 29.123 33.69 30.3636C39.8386 31.6043 44 33.9891 44 36.7273C44 40.7439 35.0457 44 24 44C12.9543 44 4 40.7439 4 36.7273C4 33.9891 8.16144 31.6043 14.31 30.3636C8.16144 29.123 4 26.7382 4 24C4 21.2618 8.16144 18.877 14.31 17.6364C8.16144 16.3957 4 14.0109 4 11.2727C4 7.25611 12.9543 4 24 4C35.0457 4 44 7.25611 44 11.2727Z"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">EduNet</h2>
+</div>
+<label class="hidden md:flex flex-col min-w-40 !h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-[#758a60] flex border-none bg-[#f2f5f0] dark:bg-[#2a361f] items-center justify-center pl-4 rounded-l-lg border-r-0">
+<span class="material-symbols-outlined text-lg">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#141811] dark:text-white focus:outline-0 focus:ring-0 border-none bg-[#f2f5f0] dark:bg-[#2a361f] focus:border-none h-full placeholder:text-[#758a60] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Search" value=""/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-8">
+<div class="hidden md:flex items-center gap-9">
+<a class="text-[#141811] dark:text-gray-200 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Home</a>
+<a class="text-[#141811] dark:text-gray-200 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Profile</a>
+<a class="text-[#141811] dark:text-gray-200 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Network</a>
+<a class="text-[#141811] dark:text-gray-200 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Courses</a>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-transparent hover:border-primary cursor-pointer transition-colors" data-alt="User profile avatar placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAO33S6ccACSumSnDn9gREJLNEiHZYDoiNdwQEJ8xu7Y8-WmHtSFCasOWwFYCO5a-w19gZZRJCzkhOjfMhWQeFS1iMojZWlHMcbzYH4PK4vuxAq5fKY7jsfBu2ab4LFzYQC7fhKerU90APsDrYx2vzPgA48ZKidj0c92Svm1vCweHBwqNPlRpGfdiGTT3Xhon6Q_eF9xcrMbg4SALmY8epxeBNxW1WCTY9jgZJWFai4ZWykZE7JFDa1RW69Z8au3UWXQNqUrxZkn6oZ");'></div>
+</div>
+</header>
+<main class="flex-1 flex flex-col items-center w-full px-4 md:px-10 pb-20">
+<div class="w-full max-w-[960px] flex flex-col gap-6 py-6 md:py-10">
+<!-- Breadcrumbs -->
+<div class="flex flex-wrap gap-2 text-sm">
+<a class="text-[#758a60] font-medium hover:underline" href="#">Home</a>
+<span class="text-[#758a60] font-medium">/</span>
+<a class="text-[#758a60] font-medium hover:underline" href="#">Profile</a>
+<span class="text-[#758a60] font-medium">/</span>
+<span class="text-[#141811] dark:text-white font-medium">Settings</span>
+</div>
+<!-- Page Heading -->
+<div class="flex flex-col gap-2">
+<h1 class="text-[#141811] dark:text-white text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">Profile Settings</h1>
+<p class="text-[#758a60] text-base font-normal leading-normal">Manage your personal details, academic credentials, and privacy preferences.</p>
+</div>
+<!-- Tabs Navigation -->
+<div class="w-full border-b border-[#e0e6db] dark:border-[#2a361f] overflow-x-auto">
+<div class="flex gap-8 min-w-max">
+<button class="group flex flex-col items-center justify-center border-b-[3px] border-b-transparent hover:border-b-primary/50 text-[#758a60] pb-3 pt-4 px-2 transition-all">
+<span class="font-bold text-sm tracking-[0.015em]">Basic Info</span>
+</button>
+<button class="group flex flex-col items-center justify-center border-b-[3px] border-b-transparent hover:border-b-primary/50 text-[#758a60] pb-3 pt-4 px-2 transition-all">
+<span class="font-bold text-sm tracking-[0.015em]">Academic Info</span>
+</button>
+<button class="group flex flex-col items-center justify-center border-b-[3px] border-b-primary text-[#141811] dark:text-primary pb-3 pt-4 px-2 transition-all">
+<span class="font-bold text-sm tracking-[0.015em]">Privacy &amp; Visibility</span>
+</button>
+</div>
+</div>
+<!-- Tab Content: Privacy & Visibility -->
+<div class="flex flex-col gap-8 bg-white dark:bg-[#1f2b15] rounded-xl p-6 md:p-8 shadow-sm border border-[#e0e6db] dark:border-[#2a361f]">
+<!-- Privacy Intro -->
+<div class="flex flex-col gap-2">
+<h2 class="text-xl font-bold text-[#141811] dark:text-white">Privacy Control Center</h2>
+<p class="text-[#758a60] text-sm">Decide exactly who can see your information. Changes are applied immediately after saving.</p>
+</div>
+<!-- Privacy Matrix -->
+<div class="overflow-x-auto rounded-lg border border-[#e0e6db] dark:border-[#2a361f]">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#f2f5f0] dark:bg-[#2a361f] text-[#141811] dark:text-white text-sm font-bold uppercase tracking-wider">
+<th class="p-4 min-w-[200px] border-b border-[#e0e6db] dark:border-[#38462b]">Category</th>
+<th class="p-4 text-center min-w-[120px] border-b border-[#e0e6db] dark:border-[#38462b]">Everyone</th>
+<th class="p-4 text-center min-w-[120px] border-b border-[#e0e6db] dark:border-[#38462b]">Connections</th>
+<th class="p-4 text-center min-w-[120px] border-b border-[#e0e6db] dark:border-[#38462b]">Only Me</th>
+</tr>
+</thead>
+<tbody class="text-sm divide-y divide-[#e0e6db] dark:divide-[#38462b]">
+<!-- Row 1: Email Address -->
+<tr class="group hover:bg-[#fcfdfb] dark:hover:bg-[#25321a] transition-colors">
+<td class="p-4 font-medium text-[#141811] dark:text-white flex items-center gap-3">
+<span class="material-symbols-outlined text-[#758a60]">mail</span>
+                                    Email Address
+                                </td>
+<td class="p-4 text-center">
+<input class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_email" type="radio"/>
+</td>
+<td class="p-4 text-center">
+<input class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_email" type="radio"/>
+</td>
+<td class="p-4 text-center">
+<input checked="" class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_email" type="radio"/>
+</td>
+</tr>
+<!-- Row 2: Phone Number -->
+<tr class="group hover:bg-[#fcfdfb] dark:hover:bg-[#25321a] transition-colors">
+<td class="p-4 font-medium text-[#141811] dark:text-white flex items-center gap-3">
+<span class="material-symbols-outlined text-[#758a60]">call</span>
+                                    Phone Number
+                                </td>
+<td class="p-4 text-center">
+<input class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_phone" type="radio"/>
+</td>
+<td class="p-4 text-center">
+<input class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_phone" type="radio"/>
+</td>
+<td class="p-4 text-center">
+<input checked="" class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_phone" type="radio"/>
+</td>
+</tr>
+<!-- Row 3: Academic History -->
+<tr class="group hover:bg-[#fcfdfb] dark:hover:bg-[#25321a] transition-colors">
+<td class="p-4 font-medium text-[#141811] dark:text-white flex items-center gap-3">
+<span class="material-symbols-outlined text-[#758a60]">school</span>
+                                    Academic History
+                                </td>
+<td class="p-4 text-center">
+<input checked="" class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_history" type="radio"/>
+</td>
+<td class="p-4 text-center">
+<input class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_history" type="radio"/>
+</td>
+<td class="p-4 text-center">
+<input class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_history" type="radio"/>
+</td>
+</tr>
+<!-- Row 4: Certificates & Badges -->
+<tr class="group hover:bg-[#fcfdfb] dark:hover:bg-[#25321a] transition-colors">
+<td class="p-4 font-medium text-[#141811] dark:text-white flex items-center gap-3">
+<span class="material-symbols-outlined text-[#758a60]">verified</span>
+                                    Certificates &amp; Badges
+                                </td>
+<td class="p-4 text-center">
+<input checked="" class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_certs" type="radio"/>
+</td>
+<td class="p-4 text-center">
+<input class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_certs" type="radio"/>
+</td>
+<td class="p-4 text-center">
+<input class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_certs" type="radio"/>
+</td>
+</tr>
+<!-- Row 5: Course Grades -->
+<tr class="group hover:bg-[#fcfdfb] dark:hover:bg-[#25321a] transition-colors">
+<td class="p-4 font-medium text-[#141811] dark:text-white flex items-center gap-3">
+<span class="material-symbols-outlined text-[#758a60]">grade</span>
+                                    Course Grades
+                                </td>
+<td class="p-4 text-center">
+<input class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_grades" type="radio"/>
+</td>
+<td class="p-4 text-center">
+<input class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_grades" type="radio"/>
+</td>
+<td class="p-4 text-center">
+<input checked="" class="size-5 border-2 border-[#758a60] text-primary focus:ring-primary focus:ring-offset-0 bg-transparent cursor-pointer" name="privacy_grades" type="radio"/>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Global Toggle Section -->
+<div class="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 p-5 bg-[#f2f5f0] dark:bg-[#2a361f] rounded-lg">
+<div class="flex flex-col gap-1">
+<span class="text-[#141811] dark:text-white font-bold text-base">Search Engine Indexing</span>
+<p class="text-[#758a60] text-sm">Allow public search engines (Google, Bing) to show your profile.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<!-- Additional Info Card (Contextual) -->
+<div class="bg-primary/10 rounded-lg p-5 border border-primary/20 flex gap-4 items-start">
+<span class="material-symbols-outlined text-primary mt-1">info</span>
+<div>
+<h4 class="font-bold text-[#141811] dark:text-white mb-1">What happens when I choose "Only Me"?</h4>
+<p class="text-sm text-[#758a60]">
+                        The information will be hidden from your public profile and only visible to you when you are logged in. Network administrators may still have access for compliance reasons.
+                    </p>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky Footer -->
+<div class="fixed bottom-0 left-0 w-full bg-white dark:bg-[#1f2b15] border-t border-[#e0e6db] dark:border-[#2a361f] p-4 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div class="max-w-[960px] mx-auto flex items-center justify-between">
+<button class="text-[#758a60] hover:text-[#141811] dark:hover:text-white font-bold text-sm px-6 py-2 rounded-lg transition-colors">
+                Discard Changes
+            </button>
+<div class="flex gap-4">
+<button class="hidden sm:block text-[#141811] dark:text-white font-bold text-sm px-6 py-3 rounded-lg border border-[#e0e6db] dark:border-[#38462b] hover:bg-[#f2f5f0] dark:hover:bg-[#2a361f] transition-colors">
+                    Save as Draft
+                </button>
+<button class="bg-primary hover:bg-[#72d60b] text-[#192210] font-bold text-sm px-8 py-3 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">save</span>
+                    Save Changes
+                </button>
+</div>
+</div>
+</div>
+</body></html>

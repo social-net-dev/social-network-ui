@@ -1,160 +1,112 @@
 # AGENTS.md
 
-This file provides guidelines for agentic coding assistants working on this social-network-ui repository.
+This file provides guidelines for agentic coding assistants working on the **social-network-ui** repository.
 
-## Project Overview
+## 🚀 Project Overview
 
-- **Stack**: React 19 + Vite 7 + TypeScript
+- **Stack**: React 19 + Vite 7 + TypeScript + Tailwind CSS 4
+- **State Management**: Zustand + React Query (@tanstack/react-query)
+- **UI Framework**: shadcn/ui (Radix UI + Tailwind)
 - **Language**: TypeScript (ES2022 target)
 - **Build System**: Vite
-- **Testing**: None configured yet
+- **Testing**: None configured yet (Vitest recommended if needed)
 
-## Build, Lint, and Development Commands
+## 🛠️ Build, Lint, and Development Commands
 
 ```bash
-pnpm dev          # Start development server with hot module replacement
-pnpm build        # Type-check and build for production (runs tsc -b && vite build)
-pnpm lint         # Run ESLint on the codebase
+pnpm dev          # Start development server
+pnpm build        # Type-check and build for production
+pnpm lint         # Run ESLint (Flat Config)
 pnpm preview      # Preview production build locally
 ```
 
-**Important**: There is no testing framework configured. Do not attempt to run tests unless you add one (e.g., Vitest, Jest).
+**Note**: There is no testing framework configured. Do not run `npm test`.
 
-## Code Style Guidelines
+## 🎨 Code Style Guidelines
 
 ### Imports and Modules
-
-- Use named imports: `import { useState, useEffect } from 'react'`
-- Use `.tsx` extension for imports if using TSX: `import App from './App.tsx'`
-- No `.js` extensions needed for module resolution (bundler mode)
-- Import order: React imports first, then external libraries, then local modules
-- Use path alias `@/` for src imports: `import { Button } from '@/components/ui/button'`
-- No React import needed for JSX (react-jsx transform enabled)
+- **Extensions**: Use `.tsx` for components, `.ts` for logic.
+- **Path Alias**: Use `@/` for `src/` (e.g., `import { Button } from '@/components/ui/button'`).
+- **Order**:
+  1. React / Core imports
+  2. External libraries (Zustand, React Router, etc.)
+  3. Internal Components (`@/components/...`)
+  4. Internal Hooks/Utils/Types (`@/lib/...`, `@/types/...`)
+  5. Styles / Assets
 
 ### TypeScript Types
-
-- **Never** use `any` or `unknown` types
-- Strict mode is enabled - type everything explicitly
-- Use `null` for absent values (not `undefined` unless intentional)
-- Leverage type inference where types are obvious from context
-- Use `readonly` for immutable arrays/objects where appropriate
-- Non-null assertion operator (`!`) is acceptable when you're certain a value exists
+- **Strict Mode**: Enabled. No `any` or `unknown` unless absolutely necessary.
+- **Interfaces**: Use `interface` for object definitions (Props, Data Models).
+- **Inference**: Leverage TS inference for simple primitives.
+- **Nullability**: Use `null` for absent API data; `undefined` for optional props.
 
 ### Component Structure
-
-- Use functional components with hooks (no class components)
-- Name functions with `PascalCase`: `function UserProfile() { }`
-- Export components as default: `export default App`
-- Use TypeScript interface or type for props: `interface Props { name: string }`
-- Destructure props in function signature: `function App({ name, age }: Props)`
+- **Functional Components**: Use `function ComponentName() {}` (PascalCase).
+- **Exports**: Named exports preferred for utilities; Default or Named for pages/components (consistency within feature).
+- **Props**: Destructure props. Type with `interface Props { ... }`.
+- **Hooks**: Top-level only. Custom hooks in `src/hooks` or `src/features/*/hooks`.
 
 ### React Patterns
-
-- Use React hooks at the top level of components
-- Prefer `useState` over `useReducer` for simple state
-- Use arrow functions for inline callbacks: `onClick={() => setCount(count + 1)}`
-- Use functional updates when new state depends on old: `setCount(prev => prev + 1)`
-- Use `StrictMode` wrapper in the root component for development
-
-### Error Handling
-
-- Always handle async errors with try/catch or error boundaries
-- Type error objects: `catch (error: Error) { }`
-- Provide meaningful error messages to users
-- Log errors for debugging (use appropriate logging strategy as the app grows)
+- **State**: `useState` for local, `Zustand` for global auth/session state.
+- **Async Data**: Use `tanstack-query` (useQuery/useMutation) for API data.
+- **Effects**: Minimize `useEffect`. Prefer derived state or event handlers.
+- **JSX**: Use standard JSX. Self-close tags when possible.
 
 ### Naming Conventions
+- **Files/Components**: PascalCase (`UserProfile.tsx`).
+- **Functions/Vars**: camelCase (`handleLogin`, `isLoading`).
+- **Constants**: UPPER_SNAKE_CASE (`API_BASE_URL`).
+- **Custom Hooks**: `use` prefix (`useProfile`).
 
-- **Components**: PascalCase (`UserProfile`, `Sidebar`)
-- **Functions**: camelCase (`handleClick`, `fetchData`)
-- **Variables**: camelCase (`userName`, `isLoading`)
-- **Constants**: UPPER_SNAKE_CASE (`API_BASE_URL`, `MAX_RETRIES`)
-- **Types/Interfaces**: PascalCase (`User`, `ApiResponse`)
-- **Boolean prefixes**: `is`, `has`, `should`, `can` (`isLoading`, `hasError`)
+### Formatting & Syntax
+- **Indentation**: 2 spaces.
+- **Quotes**: Single quotes (`'`) for JS/TS; Double quotes (`"`) for JSX attributes.
+- **Semicolons**: **Avoid** semicolons (Standard/Prettier style) unless required.
+- **Environment**: Access variables via `import.meta.env` (e.g., `import.meta.env.VITE_API_BASE_URL`).
 
-### Code Formatting
+## 💅 UI/UX & Design System
 
-- Use 2-space indentation
-- Use semicolons at the end of statements
-- Use double quotes for strings
-- Prefer template literals over concatenation
-- Keep lines under 100 characters when practical
-- Add spacing around operators: `const sum = a + b`
+- **Language**: **ALL user-facing text must be in VIETNAMESE**.
+- **Branding (ETECHS)**:
+  - Primary: Dark Teal (#0E4E5A)
+  - Secondary: Lime Green (#E2F046)
+  - Dark Mode: Deep Blue (#02182B)
+- **Tailwind v4**: Use utility classes. No `tailwind.config.js` (configured in CSS).
+- **shadcn/ui**:
+  - Add components: `pnpm dlx shadcn@latest add <name>`
+  - Location: `src/components/ui/`
+  - Do not modify shadcn internals unless necessary for theming.
 
-### ESLint Configuration
+## 🌐 API & Data Fetching
 
-The project uses ESLint with:
-- TypeScript ESLint (recommended config)
-- React Hooks plugin
-- React Refresh plugin (for Vite HMR)
-- No global ignores except `dist/`
+- **Axios**: Use the configured instance in `@/lib/axios`.
+- **Mocking**: Check `VITE_ENABLE_MOCK_API` in `.env` if developing without backend.
+- **Error Handling**:
+  - Catch errors in Services/Hooks.
+  - Display user-friendly messages (Vietnamese) via Toast or UI alerts.
 
-Always run `pnpm lint` after making changes and fix any linting errors.
+## 🤖 Browser Automation (agent-browser)
 
-### TypeScript Compiler Options
+Use the `agent-browser` tool for verifying UI flows:
+1. `agent-browser open <url>`
+2. `agent-browser snapshot -i` (Find interactive elements)
+3. `agent-browser click @id` or `agent-browser fill @id "text"`
 
-Strict mode enabled with:
-- `noUnusedLocals`: No unused local variables
-- `noUnusedParameters`: No unused function parameters
-- `noFallthroughCasesInSwitch`: Exhaustive switch cases
-- `strictNullChecks`: Strict null checking
+## 📂 File Organization
 
-### File Organization
-
-- Source files in `src/` directory
-- Components in `src/components/` (create as needed)
-- Assets in `src/assets/` (images, fonts, etc.)
-- Global styles in `src/index.css`
-- Entry point: `src/main.tsx`
-
-### CSS Guidelines
-
-- Use CSS variables (`:root`) for theme colors
-- Support both light and dark modes with media queries
-- Use `system-ui` font family for native OS fonts
-- Prefer Flexbox over Grid for simple layouts
-- Use utility-first approach for common patterns (margin, padding, display)
-
-### UI/UX Language
-
-- **All user-facing text MUST be in Vietnamese**
-- Apply Vietnamese language to ALL UI elements, not just:
-  - `src/components/ui/` directory
-  - Components generated by shadcn CLI
-- Vietnamese should be used for:
-  - Button labels and text
-  - Form labels and placeholders
-  - Navigation items
-  - Error messages and notifications
-  - Page titles and headings
-  - Tooltips and help text
-  - Any text visible to end users
-- Keep technical terms (variables, comments, API endpoints, code) in English
-- Variable names, function names, and comments should remain in English
-
-### shadcn/ui Components
-
-- UI components are managed via shadcn CLI (`npx shadcn@latest add <component>`)
-- Components located in `src/components/ui/`
-- Use `cn()` utility for conditional class merging: `import { cn } from '@/lib/utils'`
-- Follow shadcn patterns for component composition and variants
-- When adding new UI components, use the shadcn CLI rather than manual creation
-
-### Adding Tests
-
-When adding tests, first add a testing framework to package.json:
-```bash
-pnpm add -D vitest @testing-library/react @testing-library/jest-dom
+```text
+src/
+├── components/ui/       # shadcn components
+├── features/            # Feature-based modules (auth, profile, home)
+│   └── [feature]/       # components, hooks, pages, services, types
+├── lib/                 # Shared utilities (axios, utils, query-client)
+├── stores/              # Zustand stores
+├── types/               # Global types
+└── App.tsx              # Root component & Routing
 ```
 
-Configure Vitest and add test files alongside components using `.test.tsx` or `.spec.tsx` extension.
+## 🧪 Adding Tests (Future)
 
-## Browser Automation
-
-Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
-
-Core workflow:
-1. `agent-browser open <url>` - Navigate to page
-2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
-3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
-4. Re-snapshot after page changes
+To add tests, install Vitest:
+`pnpm add -D vitest @testing-library/react @testing-library/dom jsdom`
+Create `vitest.config.ts` and add `test` script to `package.json`.

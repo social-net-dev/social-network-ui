@@ -29,10 +29,13 @@ export const mockApi = {
 
     register: async (data: RegisterFormData): Promise<AuthResponse> => {
       await mockDelay(1000)
+      const nameParts = data.displayName.split(' ')
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || firstName
       const user: User = {
         id: Date.now().toString(),
-        firstName: data.firstName,
-        lastName: data.lastName,
+        firstName,
+        lastName,
         email: data.email,
         avatar: 'https://i.pravatar.cc/150?img=' + Math.floor(Math.random() * 70),
         bio: '',

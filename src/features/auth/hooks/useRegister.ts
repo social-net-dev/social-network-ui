@@ -25,7 +25,7 @@ export function useRegister() {
     const onSubmit = async (data: RegisterFormData) => {
         try {
             setError(null);
-            const response = await authApi.register(data);
+            await authApi.register(data);
             setIsSuccess(true);
 
             // Redirect to OTP verification page with email

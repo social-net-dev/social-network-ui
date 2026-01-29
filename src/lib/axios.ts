@@ -3,7 +3,7 @@ import type { AxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 
 const api = axios.create({
-    baseURL: "http://localhost:8000",
+    baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
     headers: {
         "Content-Type": "application/json",
     },
@@ -87,7 +87,7 @@ api.interceptors.response.use(
 
             try {
                 // Call refresh token endpoint
-                const response = await axios.post("http://localhost:8000/auth/refresh", {
+                const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/auth/refresh`, {
                     refresh_token: refreshToken,
                 });
 
