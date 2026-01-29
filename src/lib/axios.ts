@@ -1,41 +1,116 @@
-import axios from 'axios'
+import axios, { AxiosError } from "axios";
+import type { AxiosRequestConfig } from "axios";
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
+    baseURL: "http://localhost:8000",
+    headers: {
+        "Content-Type": "application/json",
+    },
+});
+
+let isRefreshing = false;
+let failedQueue: Array<{
+    resolve: (value?: unknown) => void;
+    reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: AxiosError | null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve();
+        }
+    });
+
+    failedQueue = [];
+};
 
 // Add a request interceptor
 api.interceptors.request.use(
-  (config) => {
-    // Get token from localStorage (matching the key used in authStore)
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      // Remove quotes if they exist (sometimes persist middleware adds them)
-      const cleanToken = token.replace(/"/g, '')
-      config.headers.Authorization = `Bearer ${cleanToken}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  }
-)
+    (config) => {
+        // Get token from localStorage (matching the key used in authStore)
+        const token = localStorage.getItem("auth_token");
+        if (token) {
+            // Remove quotes if they exist (sometimes persist middleware adds them)
+            const cleanToken = token.replace(/"/g, "");
+            config.headers.Authorization = `Bearer ${cleanToken}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    },
+);
 
-// Add a response interceptor
+// Add a response interceptor with refresh token logic
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized (e.g., clear storage, redirect to login)
-      // We'll let the component/store handle the redirect for now
-      // but we could clear local storage here if needed
-      // localStorage.removeItem('auth_token')
-    }
-    return Promise.reject(error)
-  }
-)
+    (response) => response,
+    async (error: AxiosError) => {
+        const originalRequest = error.config as AxiosRequestConfig & {
+            _retry?: boolean;
+        };
 
-export default api
+        // If 401 and not already retrying
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            if (isRefreshing) {
+                // Wait for the refresh to complete
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then(() => {
+                        return api(originalRequest);
+                    })
+                    .catch((err) => {
+                        return Promise.reject(err);
+                    });
+            }
+
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            const refreshToken = localStorage.getItem("refresh_token")?.replace(/"/g, "");
+
+            if (!refreshToken) {
+                // No refresh token, logout
+                localStorage.removeItem("auth_token");
+                localStorage.removeItem("refresh_token");
+                window.location.href = "/login";
+                return Promise.reject(error);
+            }
+
+            try {
+                // Call refresh token endpoint
+                const response = await axios.post("http://localhost:8000/auth/refresh", {
+                    refresh_token: refreshToken,
+                });
+
+                const { access_token } = response.data;
+
+                // Save new token
+                localStorage.setItem("auth_token", access_token);
+
+                // Update axios default header
+                api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+
+                processQueue(null);
+
+                // Retry original request
+                return api(originalRequest);
+            } catch (refreshError) {
+                processQueue(refreshError as AxiosError);
+                // Refresh token failed, logout
+                localStorage.removeItem("auth_token");
+                localStorage.removeItem("refresh_token");
+                window.location.href = "/login";
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
+        return Promise.reject(error);
+    },
+);
+
+export default api;

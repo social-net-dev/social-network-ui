@@ -1,75 +1,147 @@
-import api from '@/lib/axios'
-import type { AuthResponse, LoginFormData, RegisterFormData } from '../types/auth.types'
-import type { User } from '@/types'
+import api from "@/lib/axios";
+import type {
+    AuthResponse,
+    LoginFormData,
+    RegisterFormData,
+    OTPVerifyData,
+    RegisterResponse,
+    OTPResponse,
+    RefreshTokenResponse,
+} from "../types/auth.types";
+import type { User } from "@/types";
 
 export const authApi = {
-  login: async (data: LoginFormData): Promise<AuthResponse> => {
-    // 1. Call login endpoint to get token
-    // Backend expects x-www-form-urlencoded typically for OAuth2, but let's check if it accepts JSON
-    // Checking main.py -> auth_router -> login. It uses OAuth2PasswordRequestForm which expects form data
-    // But let's try JSON first as it's cleaner, if not we switch to FormData.
-    // Wait, FastAPI OAuth2PasswordRequestForm strictly requires form data.
-    
-    const formData = new URLSearchParams()
-    formData.append('username', data.email)
-    formData.append('password', data.password)
-    if (data.rememberMe) {
-      formData.append('remember_me', 'true')
-    }
+    /**
+     * Register new user with ID card images
+     * POST /auth/register
+     */
+    register: async (data: RegisterFormData): Promise<RegisterResponse> => {
+        const formData = new FormData();
+        formData.append("email", data.email);
+        formData.append("password", data.password);
+        formData.append("display_name", data.displayName);
+        formData.append("role", data.role);
+        formData.append("consent", String(data.consent));
 
-    const tokenResponse = await api.post('/auth/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    })
+        if (data.phone) {
+            formData.append("phone", data.phone);
+        }
 
-    const { access_token, refresh_token } = tokenResponse.data
+        // Upload ID card images
+        formData.append("cccd_front", data.idCardFront);
+        formData.append("cccd_back", data.idCardBack);
 
-    // 2. Save token temporarily to localStorage so the next request's interceptor can pick it up
-    // Note: The store will also save this, but we need it immediately for the next call
-    localStorage.setItem('auth_token', access_token)
-    if (refresh_token) {
-      localStorage.setItem('refresh_token', refresh_token)
-    }
+        const response = await api.post<RegisterResponse>("/auth/register", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        return response.data;
+    },
 
-    // 3. Get current user profile
-    const userResponse = await api.get<User>('/users/me')
-    
-    return {
-      user: userResponse.data,
-      token: access_token,
-      refreshToken: refresh_token || '',
-    }
-  },
+    /**
+     * Verify OTP code after registration
+     * POST /auth/verify-otp
+     */
+    verifyOTP: async (data: OTPVerifyData): Promise<OTPResponse> => {
+        const response = await api.post<OTPResponse>("/auth/verify-otp", {
+            email: data.email,
+            otp_code: data.otpCode,
+        });
+        return response.data;
+    },
 
-  register: async (data: RegisterFormData): Promise<User> => {
-    // Backend expects: email, password, display_name (optional), phone (optional), consent
-    // Frontend provides: firstName, lastName, email, password, acceptedTerms
-    
-    const formData = new FormData()
-    formData.append('email', data.email)
-    formData.append('password', data.password)
-    formData.append('display_name', `${data.firstName} ${data.lastName}`.trim())
-    formData.append('consent', String(data.acceptedTerms))
-    // phone is not in the form yet, optional
+    /**
+     * Resend OTP code
+     * POST /auth/resend-otp
+     */
+    resendOTP: async (email: string): Promise<OTPResponse> => {
+        const response = await api.post<OTPResponse>("/auth/resend-otp", { email });
+        return response.data;
+    },
 
-    const response = await api.post('/auth/register', formData, {
-      headers: {
-        'Content-Type': null, // Force remove Content-Type to let browser set boundary
-      },
-    })
-    return response.data
-  },
+    /**
+     * Login user
+     * POST /auth/login
+     * Returns access_token and refresh_token
+     */
+    login: async (data: LoginFormData): Promise<AuthResponse> => {
+        // FastAPI OAuth2PasswordRequestForm requires form data
+        const formData = new URLSearchParams();
+        formData.append("username", data.email);
+        formData.append("password", data.password);
+        if (data.rememberMe) {
+            formData.append("remember_me", "true");
+        }
 
-  logout: async (): Promise<void> => {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('refresh_token')
-    // Optionally call backend logout endpoint if it exists
-    // await api.post('/auth/logout') 
-  },
+        const tokenResponse = await api.post("/auth/login", formData, {
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        });
 
-  getCurrentUser: async (): Promise<User> => {
-    const response = await api.get<User>('/users/me')
-    return response.data
-  },
-}
+        const { access_token, refresh_token } = tokenResponse.data;
+
+        // Save tokens temporarily for the next request
+        localStorage.setItem("auth_token", access_token);
+        if (refresh_token) {
+            localStorage.setItem("refresh_token", refresh_token);
+        }
+
+        // Get current user profile
+        const userResponse = await api.get<User>("/users/me");
+
+        return {
+            user: userResponse.data,
+            token: access_token,
+            refreshToken: refresh_token || "",
+        };
+    },
+
+    /**
+     * Logout user
+     * POST /auth/logout
+     */
+    logout: async (): Promise<void> => {
+        try {
+            // Call backend logout to revoke tokens
+            await api.post("/auth/logout");
+        } catch (error) {
+            console.error("Logout error:", error);
+        } finally {
+            // Clear local storage regardless
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("refresh_token");
+        }
+    },
+
+    /**
+     * Refresh access token
+     * POST /auth/refresh
+     */
+    refreshToken: async (): Promise<RefreshTokenResponse> => {
+        const refreshToken = localStorage.getItem("refresh_token")?.replace(/"/g, "");
+
+        if (!refreshToken) {
+            throw new Error("No refresh token available");
+        }
+
+        const response = await api.post<RefreshTokenResponse>("/auth/refresh", {
+            refresh_token: refreshToken,
+        });
+
+        // Update access token in localStorage
+        localStorage.setItem("auth_token", response.data.access_token);
+
+        return response.data;
+    },
+
+    /**
+     * Get current user profile
+     * GET /users/me
+     */
+    getCurrentUser: async (): Promise<User> => {
+        const response = await api.get<User>("/users/me");
+        return response.data;
+    },
+};
