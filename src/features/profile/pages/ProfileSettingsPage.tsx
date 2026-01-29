@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/features/shared/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,13 +11,33 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Save, User, School, Shield, Mail, Phone, GraduationCap, Award, BookOpen, Info, Trash2, Lock } from "lucide-react";
+import { Save, User, School, Shield, Mail, Phone, GraduationCap, Award, BookOpen, Info, Trash2, Lock, AlertTriangle } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
 import { ChangePasswordForm } from "../components/ChangePasswordForm";
+import { accountSecurityApi } from "../services/accountSecurityApi";
+import { useAuthStore } from "@/stores/authStore";
 
 export function ProfileSettingsPage() {
     const { profile, isLoading } = useProfile();
     const [activeTab, setActiveTab] = useState("privacy");
+    const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
+    const [deactivatePassword, setDeactivatePassword] = useState("");
+    const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+    const [deactivateError, setDeactivateError] = useState<string | null>(null);
+    const { logout } = useAuthStore();
+    const navigate = useNavigate();
+
+    const deactivateMutation = useMutation({
+        mutationFn: () => accountSecurityApi.deactivateAccount(deactivatePassword),
+        onSuccess: async () => {
+            await logout();
+            navigate("/login", { replace: true });
+        },
+        onError: (error: any) => {
+            const message = error?.response?.data?.detail || error?.message || "Vô hiệu hóa thất bại. Vui lòng thử lại.";
+            setDeactivateError(message);
+        },
+    });
 
     if (isLoading || !profile) {
         return (
@@ -248,7 +270,7 @@ export function ProfileSettingsPage() {
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="security" className="outline-none">
+                    <TabsContent value="security" className="outline-none space-y-6">
                         <Card className="border-none shadow-xl bg-white dark:bg-card rounded-3xl overflow-hidden">
                             <CardHeader>
                                 <CardTitle>Bảo mật tài khoản</CardTitle>
@@ -261,9 +283,30 @@ export function ProfileSettingsPage() {
                                 </div>
                             </CardContent>
                         </Card>
-                    </TabsContent>
-                                </p>
-                            </div>
+
+                        <Card className="border-none shadow-xl bg-white dark:bg-card rounded-3xl overflow-hidden border border-red-100 dark:border-red-900/40">
+                            <CardHeader>
+                                <CardTitle className="text-red-600 dark:text-red-400">Vô hiệu hóa tài khoản</CardTitle>
+                                <CardDescription>
+                                    Tạm thời vô hiệu hóa tài khoản. Nếu không liên hệ admin trong 30 ngày, tài khoản sẽ bị khóa vĩnh viễn.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                    Khi vô hiệu hóa, bạn sẽ bị đăng xuất và không thể đăng nhập lại cho đến khi được kích hoạt.
+                                </div>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => {
+                                        setDeactivateError(null);
+                                        setDeactivatePassword("");
+                                        setConfirmDeactivate(false);
+                                        setIsDeactivateOpen(true);
+                                    }}
+                                >
+                                    Vô hiệu hóa tài khoản
+                                </Button>
+                            </CardContent>
                         </Card>
                     </TabsContent>
                 </Tabs>
@@ -287,6 +330,63 @@ export function ProfileSettingsPage() {
                     </div>
                 </div>
             </div>
+
+            {isDeactivateOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+                    <div className="w-full max-w-md rounded-2xl bg-white dark:bg-card shadow-xl border border-red-100 dark:border-red-900/40">
+                        <div className="p-6 space-y-4">
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                                    <AlertTriangle className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Xác nhận vô hiệu hóa</h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        Bạn có chắc chắn muốn vô hiệu hóa tài khoản? Nếu không liên hệ admin trong 30 ngày, tài khoản sẽ bị khóa vĩnh
+                                        viễn.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="deactivatePassword">Nhập mật khẩu để xác nhận</Label>
+                                <Input
+                                    id="deactivatePassword"
+                                    type="password"
+                                    value={deactivatePassword}
+                                    onChange={(e) => setDeactivatePassword(e.target.value)}
+                                    placeholder="Mật khẩu hiện tại"
+                                />
+                            </div>
+
+                            <label className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                <input
+                                    type="checkbox"
+                                    checked={confirmDeactivate}
+                                    onChange={(e) => setConfirmDeactivate(e.target.checked)}
+                                    className="mt-1"
+                                />
+                                Tôi xác nhận muốn vô hiệu hóa tài khoản và đã hiểu hậu quả.
+                            </label>
+
+                            {deactivateError && <p className="text-sm text-red-500">{deactivateError}</p>}
+
+                            <div className="flex justify-end gap-2 pt-2">
+                                <Button variant="outline" onClick={() => setIsDeactivateOpen(false)} disabled={deactivateMutation.isPending}>
+                                    Hủy
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => deactivateMutation.mutate()}
+                                    disabled={!deactivatePassword || !confirmDeactivate || deactivateMutation.isPending}
+                                >
+                                    {deactivateMutation.isPending ? "Đang xử lý..." : "Xác nhận vô hiệu hóa"}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </MainLayout>
     );
 }

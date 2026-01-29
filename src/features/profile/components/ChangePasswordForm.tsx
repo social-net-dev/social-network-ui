@@ -52,7 +52,22 @@ export function ChangePasswordForm() {
             setTimeout(() => setSuccessMessage(""), 3000);
         },
         onError: (error: any) => {
-            const errorMsg = error?.response?.data?.detail || "Có lỗi xảy ra. Vui lòng thử lại.";
+            console.error("Change password error:", error);
+            let errorMsg = "Có lỗi xảy ra. Vui lòng thử lại.";
+
+            // Handle different error response formats
+            if (error?.response?.data?.detail) {
+                if (typeof error.response.data.detail === "string") {
+                    errorMsg = error.response.data.detail;
+                } else if (Array.isArray(error.response.data.detail)) {
+                    errorMsg = error.response.data.detail.map((e: any) => e.msg).join(", ");
+                }
+            } else if (error?.response?.data?.message) {
+                errorMsg = error.response.data.message;
+            } else if (error?.message) {
+                errorMsg = error.message;
+            }
+
             form.setError("currentPassword", { message: errorMsg });
         },
     });
