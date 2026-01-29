@@ -1,9 +1,12 @@
 import { LoginForm } from "../components/LoginForm";
 import { AuthLayout } from "../components/AuthLayout";
 import { LoginLeftPanel } from "../components/LoginLeftPanel";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export function LoginPage() {
+    const location = useLocation();
+    const emailFromState = location.state?.email as string | undefined;
+
     return (
         <AuthLayout
             leftPanel={<LoginLeftPanel />}
@@ -15,7 +18,7 @@ export function LoginPage() {
                             <p className="text-gray-500 dark:text-gray-400">Vui lòng nhập chi tiết để đăng nhập</p>
                         </div>
 
-                        <LoginForm />
+                        <LoginForm initialEmail={emailFromState} />
 
                         <div className="mt-8 text-center text-sm">
                             <span className="text-gray-500 dark:text-gray-400">Chưa có tài khoản?</span>

@@ -41,22 +41,26 @@ export const authApi = {
 
     /**
      * Verify OTP code after registration
-     * POST /auth/verify-otp
+     * POST /auth/otp/verify
      */
     verifyOTP: async (data: OTPVerifyData): Promise<OTPResponse> => {
-        const response = await api.post<OTPResponse>("/auth/verify-otp", {
-            email: data.email,
-            otp_code: data.otpCode,
+        const response = await api.post<OTPResponse>("/auth/otp/verify", {
+            destination: data.email,
+            purpose: "REGISTER_VERIFY",
+            code: data.otpCode,
         });
         return response.data;
     },
 
     /**
      * Resend OTP code
-     * POST /auth/resend-otp
+     * POST /auth/otp/send
      */
     resendOTP: async (email: string): Promise<OTPResponse> => {
-        const response = await api.post<OTPResponse>("/auth/resend-otp", { email });
+        const response = await api.post<OTPResponse>("/auth/otp/send", {
+            destination: email,
+            purpose: "REGISTER_VERIFY",
+        });
         return response.data;
     },
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,8 +7,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Mail, Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { useLogin } from "../hooks/useLogin";
 
-export function LoginForm() {
+interface LoginFormProps {
+    initialEmail?: string;
+}
+
+export function LoginForm({ initialEmail }: LoginFormProps) {
     const location = useLocation();
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const { form, onSubmit, error, isLoading } = useLogin();
@@ -22,6 +27,13 @@ export function LoginForm() {
             return () => clearTimeout(timer);
         }
     }, [location]);
+
+    useEffect(() => {
+        // Pre-fill email if provided
+        if (initialEmail) {
+            form.setValue("email", initialEmail);
+        }
+    }, [initialEmail, form]);
 
     return (
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -93,9 +105,13 @@ export function LoginForm() {
                     </label>
                 </div>
                 <div className="text-sm">
-                    <a className="font-medium text-[#0E4E5A] dark:text-[#E2F046] hover:underline transition-all" href="#">
+                    <button
+                        type="button"
+                        onClick={() => navigate("/forgot-password")}
+                        className="font-medium text-[#0E4E5A] dark:text-[#E2F046] hover:underline transition-all"
+                    >
                         Quên mật khẩu?
-                    </a>
+                    </button>
                 </div>
             </div>
 

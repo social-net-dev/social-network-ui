@@ -96,7 +96,7 @@ export function RegisterForm() {
                 </div>
             </div>
 
-            <p className="text-xs text-slate-500 -mt-2">Mật khẩu tối thiểu 8 ký tự, có chữ hoa và số</p>
+            <p className="text-xs text-slate-500 -mt-2">Mật khẩu tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt</p>
 
             {/* Row 2: Display Name and Phone */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -141,6 +141,7 @@ export function RegisterForm() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1b7a78] dark:bg-[#132d3b] dark:border-gray-600"
                     disabled={isLoading}
                 >
+                    <option value="USER">Chung</option>
                     <option value="STUDENT">Học sinh</option>
                     <option value="TEACHER">Giáo viên</option>
                 </select>

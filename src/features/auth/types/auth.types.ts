@@ -3,7 +3,7 @@ import type { User } from "@/types";
 
 export const LoginFormDataSchema = z.object({
     email: z.string().email("Email không hợp lệ"),
-    password: z.string().min(6, "Mật khẩu tối thiểu 6 ký tự"),
+    password: z.string().min(1, "Mật khẩu không được để trống"),
     rememberMe: z.boolean().optional(),
 });
 
@@ -11,10 +11,16 @@ export type LoginFormData = z.infer<typeof LoginFormDataSchema>;
 
 export const RegisterFormDataSchema = z.object({
     email: z.string().email("Email không hợp lệ"),
-    password: z.string().min(8, "Mật khẩu tối thiểu 8 ký tự").regex(/[A-Z]/, "Phải chứa ít nhất 1 chữ hoa").regex(/[0-9]/, "Phải chứa ít nhất 1 số"),
+    password: z
+        .string()
+        .min(8, "Mật khẩu tối thiểu 8 ký tự")
+        .regex(/[A-Z]/, "Phải chứa ít nhất 1 chữ hoa")
+        .regex(/[a-z]/, "Phải chứa ít nhất 1 chữ thường")
+        .regex(/[0-9]/, "Phải chứa ít nhất 1 số")
+        .regex(/[!@#$%^&*(),.?":{}|<>]/, "Phải chứa ít nhất 1 ký tự đặc biệt"),
     displayName: z.string().min(2, "Tên hiển thị tối thiểu 2 ký tự"),
     phone: z.string().optional(),
-    role: z.enum(["STUDENT", "TEACHER"]),
+    role: z.enum(["USER", "STUDENT", "TEACHER"]),
     idCardFront: z.instanceof(File, { message: "Vui lòng upload ảnh CCCD mặt trước" }),
     idCardBack: z.instanceof(File, { message: "Vui lòng upload ảnh CCCD mặt sau" }),
     consent: z.boolean().refine((val) => val === true, "Vui lòng đồng ý điều khoản"),

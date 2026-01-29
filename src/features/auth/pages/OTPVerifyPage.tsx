@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { authApi } from "../services/authApi";
+import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ export function OTPVerifyPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const email = location.state?.email || "";
+    const setAuth = useAuthStore((state) => state.setAuth);
 
     const [otpCode, setOtpCode] = useState("");
     const [error, setError] = useState("");
@@ -18,11 +20,12 @@ export function OTPVerifyPage() {
 
     const verifyMutation = useMutation({
         mutationFn: authApi.verifyOTP,
-        onSuccess: () => {
+        onSuccess: async () => {
+            // After OTP verification, redirect to login page
             navigate("/login", {
                 state: {
-                    message:
-                        "Xác thực OTP thành công! Tài khoản của bạn đang chờ admin phê duyệt. Bạn sẽ nhận được email thông báo khi tài khoản được kích hoạt.",
+                    email: email,
+                    message: "Xác thực OTP thành công! Tài khoản của bạn hiện là chưa xác minh với dung lượng 100MB. Vui lòng đăng nhập.",
                 },
             });
         },
