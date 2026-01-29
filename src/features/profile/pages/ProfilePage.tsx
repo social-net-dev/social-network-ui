@@ -67,7 +67,7 @@ function ProfilePage() {
 
   return (
     <MainLayout>
-      <div className="max-w-7xl mx-auto space-y-8 pb-12">
+      <div className="max-w-7xl mx-auto space-y-6 pb-12">
         <ProfileHeader
             profile={profile}
             isCurrentUser={isCurrentUser}
@@ -76,24 +76,24 @@ function ProfilePage() {
         
         <ProfileStats stats={stats} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content Area */}
-            <div className="lg:col-span-2 space-y-8">
+        <div className="flex flex-col lg:flex-row gap-6">
+            {/* Main Content Area - Flex Grow */}
+            <div className="flex-1 min-w-0 space-y-6">
                 <Tabs defaultValue="posts" className="w-full">
-                    <TabsList className="bg-white dark:bg-card p-1 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 w-full justify-start overflow-x-auto no-scrollbar">
-                    <TabsTrigger value="posts" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
+                    <TabsList className="bg-card p-1 rounded-xl shadow-sm border border-border w-full justify-start overflow-x-auto no-scrollbar">
+                    <TabsTrigger value="posts" className="rounded-lg data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
                         <FileText className="w-4 h-4 mr-2" />
                         Bài viết
                     </TabsTrigger>
-                    <TabsTrigger value="skills" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
+                    <TabsTrigger value="skills" className="rounded-lg data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
                         <Info className="w-4 h-4 mr-2" />
                         Kỹ năng
                     </TabsTrigger>
-                    <TabsTrigger value="experience" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
+                    <TabsTrigger value="experience" className="rounded-lg data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
                         <Users className="w-4 h-4 mr-2" />
                         Kinh nghiệm
                     </TabsTrigger>
-                    <TabsTrigger value="achievements" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
+                    <TabsTrigger value="achievements" className="rounded-lg data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
                         <Info className="w-4 h-4 mr-2" />
                         Thành tích
                     </TabsTrigger>
@@ -103,37 +103,37 @@ function ProfilePage() {
                     {mockPosts.length > 0 ? (
                         <div className="space-y-6">
                             {mockPosts.map((post) => (
-                                <Card key={post.id} className="border-none shadow-lg bg-white dark:bg-card rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-xl">
+                                <Card key={post.id} className="border-border shadow-sm bg-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-md">
                                     <CardContent className="p-6">
                                         <div className="flex items-center gap-3 mb-4">
-                                            <Avatar className="w-10 h-10 border border-gray-100 dark:border-gray-800">
+                                            <Avatar className="w-10 h-10 border border-border">
                                                 <AvatarImage src={profile.avatar} />
                                                 <AvatarFallback>{profile.firstName[0]}</AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <p className="font-bold text-gray-900 dark:text-white">
+                                                <p className="font-bold text-foreground">
                                                     {profile.firstName} {profile.lastName}
                                                 </p>
-                                                <p className="text-xs text-gray-500 flex items-center gap-1">
+                                                <p className="text-xs text-muted-foreground flex items-center gap-1">
                                                     <Clock className="w-3 h-3" />
                                                     {new Date(post.createdAt).toLocaleDateString('vi-VN')}
                                                 </p>
                                             </div>
                                         </div>
-                                        <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
+                                        <p className="text-foreground mb-6 leading-relaxed">
                                             {post.content}
                                         </p>
-                                        <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-white/5">
+                                        <div className="flex items-center justify-between pt-4 border-t border-border">
                                             <div className="flex gap-6">
-                                                <button className="flex items-center gap-2 text-gray-500 hover:text-red-500 transition-colors">
+                                                <button className="flex items-center gap-2 text-muted-foreground hover:text-red-500 transition-colors">
                                                     <Heart className="w-5 h-5" />
                                                     <span className="text-sm font-medium">{post.likes}</span>
                                                 </button>
-                                                <button className="flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-colors">
+                                                <button className="flex items-center gap-2 text-muted-foreground hover:text-blue-500 transition-colors">
                                                     <MessageSquare className="w-5 h-5" />
                                                     <span className="text-sm font-medium">{post.comments}</span>
                                                 </button>
-                                                <button className="flex items-center gap-2 text-gray-500 hover:text-green-500 transition-colors">
+                                                <button className="flex items-center gap-2 text-muted-foreground hover:text-green-500 transition-colors">
                                                     <Share2 className="w-5 h-5" />
                                                     <span className="text-sm font-medium">{post.shares}</span>
                                                 </button>
@@ -142,18 +142,18 @@ function ProfilePage() {
                                     </CardContent>
                                 </Card>
                             ))}
-                            <Button variant="ghost" className="w-full rounded-2xl py-6 border-2 border-dashed border-gray-200 dark:border-gray-800 text-gray-500 hover:border-etechs-primary hover:text-etechs-primary transition-all">
+                            <Button variant="ghost" className="w-full rounded-xl py-6 border-2 border-dashed border-border text-muted-foreground hover:border-etechs-primary hover:text-etechs-primary transition-all">
                                 Xem tất cả bài viết
                             </Button>
                         </div>
                     ) : (
-                        <Card className="border-none shadow-lg bg-white dark:bg-card rounded-3xl overflow-hidden">
+                        <Card className="border-border shadow-sm bg-card rounded-xl overflow-hidden">
                             <CardContent className="p-12 text-center">
-                            <div className="w-20 h-20 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <FileText className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+                            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FileText className="w-10 h-10 text-muted-foreground" />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Chưa có bài viết nào</h3>
-                            <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                            <h3 className="text-xl font-bold text-foreground mb-2">Chưa có bài viết nào</h3>
+                            <p className="text-muted-foreground max-w-sm mx-auto">
                                 Khi {profile.firstName} chia sẻ bài viết, chúng sẽ xuất hiện ở đây.
                             </p>
                             </CardContent>
@@ -175,8 +175,8 @@ function ProfilePage() {
                 </Tabs>
             </div>
 
-            {/* Sidebar Area */}
-            <div className="space-y-6">
+            {/* Sidebar Area - Fixed Width */}
+            <div className="w-full lg:w-80 space-y-6 shrink-0">
                 <ProfileSidebar 
                     contactInfo={{
                         email: profile.email,

@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { 
   Clock, 
   FileText, 
@@ -9,7 +8,7 @@ import {
   Trophy,
   UserPlus,
   Calendar,
-  TrendingUp
+  Activity as ActivityIcon
 } from 'lucide-react'
 
 interface Activity {
@@ -31,90 +30,55 @@ interface ActivityFeedProps {
 export function ActivityFeed({ activities = defaultActivities, limit = 5 }: ActivityFeedProps) {
   const displayActivities = activities.slice(0, limit)
 
-  const typeConfig = {
-    post: {
-      icon: FileText,
-      color: 'text-blue-500',
-      bg: 'bg-blue-500/10'
-    },
-    like: {
-      icon: Heart,
-      color: 'text-red-500',
-      bg: 'bg-red-500/10'
-    },
-    comment: {
-      icon: MessageSquare,
-      color: 'text-green-500',
-      bg: 'bg-green-500/10'
-    },
-    share: {
-      icon: Share2,
-      color: 'text-purple-500',
-      bg: 'bg-purple-500/10'
-    },
-    achievement: {
-      icon: Trophy,
-      color: 'text-yellow-500',
-      bg: 'bg-yellow-500/10'
-    },
-    follow: {
-      icon: UserPlus,
-      color: 'text-cyan-500',
-      bg: 'bg-cyan-500/10'
-    },
-    course_complete: {
-      icon: Calendar,
-      color: 'text-orange-500',
-      bg: 'bg-orange-500/10'
-    }
+  const typeConfig: Record<string, { icon: any, color: string, bg: string }> = {
+    post: { icon: FileText, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    like: { icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20' },
+    comment: { icon: MessageSquare, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' },
+    share: { icon: Share2, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+    achievement: { icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+    follow: { icon: UserPlus, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+    course_complete: { icon: Calendar, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' }
   }
 
   return (
-    <Card className="border-none shadow-lg bg-white dark:bg-card rounded-3xl overflow-hidden">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-bold flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-etechs-primary/10 text-etechs-secondary dark:text-etechs-primary">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-            Hoạt động gần đây
-          </div>
-          <Badge variant="outline" className="text-xs bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10">
-            <Clock className="w-3 h-3 mr-1" />
-            {displayActivities.length} hoạt động
-          </Badge>
+    <Card className="rounded-xl border-border shadow-sm bg-card">
+      <CardHeader className="pb-3 pt-5 px-5 flex flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <ActivityIcon className="w-4 h-4 text-muted-foreground" />
+          Hoạt động
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="px-5 pb-5">
+        <div className="relative space-y-5">
           {displayActivities.map((activity, index) => {
             const config = typeConfig[activity.type]
-            const Icon = activity.icon || config.icon
+            const Icon = activity.icon || config?.icon || ActivityIcon
+            const colors = config || { color: 'text-gray-500', bg: 'bg-gray-100' }
 
             return (
-              <div key={activity.id} className="flex items-start gap-4 group">
-                <div className={`relative mt-1`}>
-                  <div className={`p-2.5 rounded-xl ${activity.bg} ${activity.color} transition-all duration-300 group-hover:scale-110`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  {index < displayActivities.length - 1 && (
-                    <div className="absolute top-8 left-1/2 -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-gray-200 dark:from-white/5 to-transparent" />
-                  )}
+              <div key={activity.id} className="flex gap-3 relative">
+                {/* Timeline connector */}
+                {index < displayActivities.length - 1 && (
+                  <div className="absolute left-[15px] top-8 bottom-[-20px] w-px bg-border" />
+                )}
+                
+                <div className={`relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${colors.bg}`}>
+                  <Icon className={`w-4 h-4 ${colors.color}`} />
                 </div>
                 
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-etechs-secondary dark:group-hover:text-etechs-primary transition-colors">
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <p className="text-sm font-medium leading-none text-foreground truncate">
                     {activity.title}
                   </p>
                   {activity.description && (
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
                       {activity.description}
                     </p>
                   )}
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {activity.timestamp}
-                  </p>
+                  <div className="flex items-center mt-1.5">
+                    <Clock className="w-3 h-3 text-muted-foreground mr-1" />
+                    <span className="text-[10px] text-muted-foreground">{activity.timestamp}</span>
+                  </div>
                 </div>
               </div>
             )
@@ -130,7 +94,7 @@ const defaultActivities: Activity[] = [
     id: '1',
     type: 'achievement',
     title: 'Đạt huy hiệu "Nhà sáng tạo"',
-    description: 'Hoàn thành thành tích đăng 100 bài viết chất lượng',
+    description: 'Đăng 100 bài viết chất lượng',
     timestamp: '2 giờ trước',
     icon: Trophy,
     color: 'text-yellow-500',
@@ -140,7 +104,7 @@ const defaultActivities: Activity[] = [
     id: '2',
     type: 'post',
     title: 'Đăng bài viết mới',
-    description: 'Chia sẻ về kinh nghiệm học AI với Python',
+    description: 'Chia sẻ về kinh nghiệm học AI',
     timestamp: '5 giờ trước',
     icon: FileText,
     color: 'text-blue-500',
@@ -148,32 +112,12 @@ const defaultActivities: Activity[] = [
   },
   {
     id: '3',
-    type: 'course_complete',
-    title: 'Hoàn thành khóa học',
-    description: 'Hoàn thành khóa "Advanced Machine Learning" với điểm xuất sắc',
-    timestamp: '1 ngày trước',
-    icon: Calendar,
-    color: 'text-orange-500',
-    bg: 'bg-orange-500/10'
-  },
-  {
-    id: '4',
     type: 'like',
-    title: 'Nhận 50 lượt thích',
-    description: 'Bài viết "10 kỹ năng cần có cho Data Scientist" nhận được sự quan tâm lớn',
-    timestamp: '2 ngày trước',
+    title: 'Thích bài viết',
+    description: 'Bạn đã thích bài viết của Nguyễn Văn A',
+    timestamp: '1 ngày trước',
     icon: Heart,
     color: 'text-red-500',
     bg: 'bg-red-500/10'
-  },
-  {
-    id: '5',
-    type: 'follow',
-    title: 'Đạt 1.000 người theo dõi',
-    description: 'Cảm ơn mọi người đã tin tưởng và theo dõi',
-    timestamp: '3 ngày trước',
-    icon: UserPlus,
-    color: 'text-cyan-500',
-    bg: 'bg-cyan-500/10'
   }
 ]
