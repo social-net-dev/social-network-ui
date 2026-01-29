@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import type { AxiosRequestConfig } from "axios";
+import { useAuthStore } from "@/stores/authStore";
 
 const api = axios.create({
     baseURL: "http://localhost:8000",
@@ -75,6 +76,11 @@ api.interceptors.response.use(
                 // No refresh token, logout
                 localStorage.removeItem("auth_token");
                 localStorage.removeItem("refresh_token");
+                try {
+                    useAuthStore.getState().logout();
+                } catch (err) {
+                    // ignore
+                }
                 window.location.href = "/login";
                 return Promise.reject(error);
             }
@@ -102,6 +108,11 @@ api.interceptors.response.use(
                 // Refresh token failed, logout
                 localStorage.removeItem("auth_token");
                 localStorage.removeItem("refresh_token");
+                try {
+                    useAuthStore.getState().logout();
+                } catch (err) {
+                    // ignore
+                }
                 window.location.href = "/login";
                 return Promise.reject(refreshError);
             } finally {
