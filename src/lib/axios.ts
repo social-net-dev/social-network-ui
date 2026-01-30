@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import type { AxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -63,7 +63,7 @@ api.interceptors.request.use(
 );
 
 // Unwrap middleware format: { success: true, data: T } -> response.data = T
-function unwrapResponse(response: { data: unknown }) {
+function unwrapResponse(response: AxiosResponse): AxiosResponse {
     const d = response.data;
     if (d && typeof d === "object" && (d as any).success === true && "data" in d) {
         response.data = (d as { data: unknown }).data;
