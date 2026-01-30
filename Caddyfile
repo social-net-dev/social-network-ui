@@ -1,0 +1,28 @@
+# Giống etechs-operation/operation-fe: Caddy serve SPA từ /srv và proxy /api tới backend
+{$APP_DOMAIN} {
+  encode gzip zstd
+
+  # Backend API – giữ prefix /api (social-be nhận /api/...)
+  @api path /api*
+  handle @api {
+    reverse_proxy social-be:8000 {
+      header_up X-Real-IP {remote_host}
+      header_up X-Forwarded-For {remote_host}
+      header_up X-Forwarded-Proto {scheme}
+      header_up Authorization {http.request.header.Authorization}
+      header_up X-Tenant-Slug {http.request.header.X-Tenant-Slug}
+    }
+  }
+
+  # Health check
+  handle /health {
+    reverse_proxy social-be:8000
+  }
+
+  # SPA static site
+  handle {
+    root * /srv
+    try_files {path} /index.html
+    file_server
+  }
+}
