@@ -2,8 +2,10 @@ import axios, { AxiosError } from "axios";
 import type { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 
+// baseURL: dùng relative path /api khi chạy sau Caddy, hoặc absolute URL khi dev
+const baseURL = import.meta.env.VITE_API_BASE_URL || "/api";
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+    baseURL: baseURL,
     headers: {
         "Content-Type": "application/json",
     },
@@ -114,8 +116,9 @@ api.interceptors.response.use(
 
             try {
                 // Call refresh token endpoint (etechs-middleware expects "refresh")
+                const refreshURL = baseURL.endsWith("/") ? `${baseURL}auth/refresh/` : `${baseURL}/auth/refresh/`;
                 const response = await axios.post(
-                    `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/auth/refresh/`,
+                    refreshURL,
                     { refresh: refreshToken, refresh_token: refreshToken },
                 );
                 const payload = response.data?.data ?? response.data;
