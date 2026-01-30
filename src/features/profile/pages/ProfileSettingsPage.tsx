@@ -19,7 +19,6 @@ import {
     Mail,
     Phone,
     GraduationCap,
-    Award,
     BookOpen,
     Info,
     Trash2,
@@ -27,6 +26,7 @@ import {
     AlertTriangle,
     Eye,
     EyeOff,
+    Loader2
 } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
 import { ChangePasswordForm } from "../components/ChangePasswordForm";
