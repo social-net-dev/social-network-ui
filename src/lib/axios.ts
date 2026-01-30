@@ -2,8 +2,9 @@ import axios, { AxiosError } from "axios";
 import type { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 
-// baseURL: dùng relative path /api khi chạy sau Caddy, hoặc absolute URL khi dev
-const baseURL = import.meta.env.VITE_API_BASE_URL || "/api";
+// baseURL: luôn dùng relative path /api khi chạy sau Caddy
+// (FE gọi /api/... -> Caddy -> social-be -> etechs-middleware)
+const baseURL = "/api";
 const api = axios.create({
     baseURL: baseURL,
     headers: {
