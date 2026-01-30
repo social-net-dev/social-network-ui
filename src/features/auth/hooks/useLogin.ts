@@ -23,11 +23,9 @@ export function useLogin() {
         mutationFn: (data: LoginFormData) => authApi.login(data),
         onSuccess: (response) => {
             setAuth(response);
-            if (response.user?.role === "ADMIN") {
-                navigate("/admin/verification");
-                return;
-            }
-            navigate("/");
+            // Redirect admin users to accounts management, others to home
+            const redirectPath = response.user?.role === "ADMIN" ? "/admin/accounts" : "/";
+            navigate(redirectPath);
         },
     });
 
@@ -38,7 +36,7 @@ export function useLogin() {
     return {
         form,
         onSubmit,
-        error: mutation.error instanceof Error ? mutation.error.message : null,
+        error: (mutation.error as any)?.response?.data?.detail || (mutation.error instanceof Error ? mutation.error.message : null),
         isSuccess: mutation.isSuccess,
         isLoading: mutation.isPending,
     };

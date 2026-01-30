@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage, RegisterPage, OTPVerifyPage, ForgotPasswordPage } from "@/features/auth/routes";
 import { FeedPage } from "@/features/home/pages/FeedPage";
 import { ProfilePage, ProfileSettingsPage } from "@/features/profile/routes";
-import { AdminVerificationPage } from "@/features/admin/pages/VerificationPage";
+import { AdminAccountsPage } from "@/features/admin/pages/AdminAccountsPage";
 import { useAuthStore } from "@/stores/authStore";
 
 function App() {
@@ -23,8 +23,8 @@ function App() {
 
             {/* Admin routes - Protected */}
             <Route
-                path="/admin/verification"
-                element={isLoading ? null : isAuthenticated && isAdmin ? <AdminVerificationPage /> : <Navigate to="/login" replace />}
+                path="/admin/accounts"
+                element={isLoading ? null : isAuthenticated && isAdmin ? <AdminAccountsPage /> : <Navigate to="/login" replace />}
             />
 
             <Route path="*" element={<Navigate to="/" replace />} />

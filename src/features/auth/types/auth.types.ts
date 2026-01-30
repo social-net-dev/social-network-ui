@@ -20,7 +20,7 @@ export const RegisterFormDataSchema = z.object({
         .regex(/[!@#$%^&*(),.?":{}|<>]/, "Phải chứa ít nhất 1 ký tự đặc biệt"),
     displayName: z.string().min(2, "Tên hiển thị tối thiểu 2 ký tự"),
     phone: z.string().optional(),
-    role: z.enum(["USER", "STUDENT", "TEACHER"]),
+    role: z.enum(["STUDENT", "INSTRUCTOR"]),
     idCardFront: z.instanceof(File, { message: "Vui lòng upload ảnh CCCD mặt trước" }),
     idCardBack: z.instanceof(File, { message: "Vui lòng upload ảnh CCCD mặt sau" }),
     consent: z.boolean().refine((val) => val === true, "Vui lòng đồng ý điều khoản"),

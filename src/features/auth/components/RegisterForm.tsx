@@ -221,8 +221,8 @@ export function RegisterForm() {
             </div>
 
             {/* Terms */}
-            <div className="flex items-start gap-2">
-                <div className="flex items-center h-4 flex-shrink-0 mt-0.5">
+            <div className="flex items-center gap-2">
+                <div className="flex items-center h-4 flex-shrink-0">
                     <Checkbox
                         id="consent"
                         checked={form.watch("consent")}
@@ -230,18 +230,16 @@ export function RegisterForm() {
                         disabled={isLoading}
                     />
                 </div>
-                <div className="text-xs leading-relaxed flex-1">
-                    <Label htmlFor="consent" className="font-normal text-slate-600 dark:text-slate-300 cursor-pointer break-words">
-                        Tôi đồng ý với{" "}
-                        <a href="#" className="font-medium text-[#1b7a78] hover:underline">
-                            Điều khoản sử dụng
-                        </a>{" "}
-                        và{" "}
-                        <a href="#" className="font-medium text-[#1b7a78] hover:underline">
-                            Chính sách bảo mật
-                        </a>
-                    </Label>
-                </div>
+                <Label htmlFor="consent" className="font-normal text-xs text-slate-600 dark:text-slate-300 cursor-pointer whitespace-nowrap">
+                    Tôi đồng ý với{" "}
+                    <a href="#" className="font-medium text-[#1b7a78] hover:underline">
+                        Điều khoản sử dụng
+                    </a>{" "}
+                    và{" "}
+                    <a href="#" className="font-medium text-[#1b7a78] hover:underline">
+                        Chính sách bảo mật
+                    </a>
+                </Label>
             </div>
             {form.formState.errors.consent && <p className="text-sm text-red-500">{form.formState.errors.consent.message}</p>}
 
@@ -254,10 +252,6 @@ export function RegisterForm() {
             >
                 {isLoading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
             </Button>
-
-            <p className="text-xs text-center text-gray-500 leading-5 px-4">
-                Sau khi đăng ký, bạn sẽ nhận mã OTP qua email và cần chờ admin phê duyệt
-            </p>
         </form>
     );
 }

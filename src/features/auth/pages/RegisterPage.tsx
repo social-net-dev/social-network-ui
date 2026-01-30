@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import logoEtechs from "@/assets/logo-etechs-ETS.svg";
 import { RegisterForm } from "../components/RegisterForm";
 
 export function RegisterPage() {
@@ -8,24 +9,8 @@ export function RegisterPage() {
                 <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
                     <Link to="/" className="flex items-center space-x-3">
                         <div className="flex items-center gap-2">
-                            <div className="relative w-8 h-8 flex items-center justify-center">
-                                <div className="absolute inset-0 bg-[#1b7a78] opacity-20 rounded-full animate-pulse"></div>
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="text-[#1b7a78]"
-                                >
-                                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                                    <polyline points="16 6 12 2 8 6" />
-                                    <line x1="12" y1="2" x2="12" y2="15" />
-                                </svg>
+                            <div className="relative h-8 flex items-center justify-center">
+                                <img src={logoEtechs} alt="ETECHS" className="h-8 w-auto" />
                             </div>
                             <span className="self-center text-xl font-bold whitespace-nowrap dark:text-white">ETECHS</span>
                         </div>
@@ -52,17 +37,17 @@ export function RegisterPage() {
                     <div className="hidden md:block space-y-8 pr-8">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#d4e937]/20 text-teal-800 dark:text-[#d4e937] border border-[#d4e937]/30 text-xs font-semibold uppercase tracking-wide">
                             <span className="w-2 h-2 rounded-full bg-[#d4e937] animate-pulse"></span>
-                            Trí tuệ nhân tạo thế hệ mới
+                            Mạng xã hội học tập
                         </div>
                         <h1 className="text-4xl lg:text-5xl font-bold leading-tight text-slate-900 dark:text-white">
-                            Từ Dữ Liệu Đến Trí Tuệ <br />
+                            Học tập kết nối <br />
                             <span className="bg-gradient-to-r from-[#1b7a78] to-[#26a69a] text-transparent bg-clip-text dark:bg-gradient-to-r dark:from-[#d4e937] dark:to-[#80cbc4]">
-                                Kiến Tạo Tương Lai Số
+                                cùng cộng đồng giảng dạy
                             </span>
                         </h1>
                         <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-                            Tham gia cùng hàng ngàn doanh nghiệp và tổ chức giáo dục đang chuyển đổi số toàn diện. Xây dựng hệ sinh thái thông minh,
-                            tự động hóa quy trình và kết nối không giới hạn.
+                            Kết nối người học và người dạy để chia sẻ tài liệu, khóa học, và kinh nghiệm thực tiễn. Tương tác trực tiếp qua bài viết,
+                            thảo luận chuyên sâu và mạng lưới kết nối học tập.
                         </p>
                         <div className="grid grid-cols-2 gap-6 pt-4">
                             <div className="flex items-start gap-3">
@@ -83,8 +68,8 @@ export function RegisterPage() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-slate-900 dark:text-white">Phân tích sâu</h3>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Dự báo chính xác dựa trên dữ liệu lớn và AI.</p>
+                                    <h3 className="font-semibold text-slate-900 dark:text-white">Tài liệu & khóa học</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Kho học liệu phong phú, chia sẻ dễ dàng.</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
@@ -108,8 +93,8 @@ export function RegisterPage() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-slate-900 dark:text-white">Kết nối đa điểm</h3>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Mạng lưới chia sẻ tri thức không giới hạn.</p>
+                                    <h3 className="font-semibold text-slate-900 dark:text-white">Kết nối giảng dạy</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Kết nối học viên, giảng viên, mentor.</p>
                                 </div>
                             </div>
                         </div>
@@ -144,7 +129,7 @@ export function RegisterPage() {
             <footer className="bg-white border-t border-gray-200 dark:bg-[#0a1f29] dark:border-gray-800 py-6">
                 <div className="max-w-screen-xl mx-auto px-4 text-center">
                     <p className="text-sm text-slate-500 dark:text-slate-500">
-                        © 2024 ETECHS Platform. All Rights Reserved.{" "}
+                        © 2026 ETECHS Platform. All Rights Reserved.{" "}
                         <a href="#" className="hover:text-[#1b7a78] ml-2">
                             Privacy Policy
                         </a>{" "}

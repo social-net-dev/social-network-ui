@@ -11,7 +11,23 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Save, User, School, Shield, Mail, Phone, GraduationCap, Award, BookOpen, Info, Trash2, Lock, AlertTriangle } from "lucide-react";
+import {
+    Save,
+    User,
+    School,
+    Shield,
+    Mail,
+    Phone,
+    GraduationCap,
+    Award,
+    BookOpen,
+    Info,
+    Trash2,
+    Lock,
+    AlertTriangle,
+    Eye,
+    EyeOff,
+} from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
 import { ChangePasswordForm } from "../components/ChangePasswordForm";
 import { accountSecurityApi } from "../services/accountSecurityApi";
@@ -22,6 +38,7 @@ export function ProfileSettingsPage() {
     const [activeTab, setActiveTab] = useState("privacy");
     const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
     const [deactivatePassword, setDeactivatePassword] = useState("");
+    const [showDeactivatePassword, setShowDeactivatePassword] = useState(false);
     const [confirmDeactivate, setConfirmDeactivate] = useState(false);
     const [deactivateError, setDeactivateError] = useState<string | null>(null);
     const { logout } = useAuthStore();
@@ -303,6 +320,7 @@ export function ProfileSettingsPage() {
                                         setConfirmDeactivate(false);
                                         setIsDeactivateOpen(true);
                                     }}
+                                    className="transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-red-500/50 active:scale-95"
                                 >
                                     Vô hiệu hóa tài khoản
                                 </Button>
@@ -350,21 +368,31 @@ export function ProfileSettingsPage() {
 
                             <div className="space-y-2">
                                 <Label htmlFor="deactivatePassword">Nhập mật khẩu để xác nhận</Label>
-                                <Input
-                                    id="deactivatePassword"
-                                    type="password"
-                                    value={deactivatePassword}
-                                    onChange={(e) => setDeactivatePassword(e.target.value)}
-                                    placeholder="Mật khẩu hiện tại"
-                                />
+                                <div className="relative">
+                                    <Input
+                                        id="deactivatePassword"
+                                        type={showDeactivatePassword ? "text" : "password"}
+                                        value={deactivatePassword}
+                                        onChange={(e) => setDeactivatePassword(e.target.value)}
+                                        placeholder="Mật khẩu hiện tại"
+                                        className="pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDeactivatePassword(!showDeactivatePassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
+                                    >
+                                        {showDeactivatePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
                             </div>
 
-                            <label className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <label className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={confirmDeactivate}
                                     onChange={(e) => setConfirmDeactivate(e.target.checked)}
-                                    className="mt-1"
+                                    className="mt-1 cursor-pointer"
                                 />
                                 Tôi xác nhận muốn vô hiệu hóa tài khoản và đã hiểu hậu quả.
                             </label>

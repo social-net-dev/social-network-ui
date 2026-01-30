@@ -102,7 +102,7 @@ export function ChangePasswordForm() {
                     <button
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
                     >
                         {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -125,7 +125,7 @@ export function ChangePasswordForm() {
                     <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
                     >
                         {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -149,7 +149,7 @@ export function ChangePasswordForm() {
                     <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
                     >
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -160,7 +160,7 @@ export function ChangePasswordForm() {
             <Button
                 type="submit"
                 disabled={mutation.isPending}
-                className="w-full bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 font-bold py-2 rounded-xl"
+                className="w-full bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 font-bold py-2 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-etechs-primary/50 active:scale-95"
             >
                 {mutation.isPending ? (
                     <>

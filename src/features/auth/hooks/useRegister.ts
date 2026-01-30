@@ -17,7 +17,7 @@ export function useRegister() {
             password: "",
             displayName: "",
             phone: "",
-            role: "USER",
+            role: "STUDENT",
             consent: false,
         },
     });
