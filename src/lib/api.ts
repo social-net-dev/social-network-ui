@@ -1,7 +1,11 @@
 import axios from 'axios'
 
+// dev: gọi social-be trực tiếp; production: /api (Caddy)
+const apiBaseURL = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')
+  : (import.meta.env.VITE_API_BASE_URL || '/api');
 const apiClient = axios.create({
-  baseURL: '/api',  // Luôn qua Caddy -> social-be
+  baseURL: apiBaseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
