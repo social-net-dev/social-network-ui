@@ -1,5 +1,5 @@
-import axios, { AxiosError, AxiosResponse } from "axios";
-import type { AxiosRequestConfig } from "axios";
+import axios, { AxiosError } from "axios";
+import type { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 
 const api = axios.create({
