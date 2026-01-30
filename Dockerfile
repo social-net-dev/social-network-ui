@@ -22,6 +22,10 @@ RUN pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
+# Build-time API URL (same origin khi chạy sau nginx: để trống hoặc https://fe.example.com)
+ARG VITE_API_BASE_URL=
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Build the application
 RUN pnpm build
 
