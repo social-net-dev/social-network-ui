@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 
 const menuItems = [
   { icon: Home, label: 'Trang chủ', path: '/' },
+  { icon: User, label: 'Tôi', path: '/profile/me' },
   { icon: User, label: 'Trang cá nhân', path: '/profile' },
   { icon: MessageSquare, label: 'Tin nhắn', path: '/messages' },
   { icon: Bell, label: 'Thông báo', path: '/notifications' },

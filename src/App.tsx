@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage, RegisterPage, OTPVerifyPage, ForgotPasswordPage } from "@/features/auth/routes";
 import { FeedPage } from "@/features/home/pages/FeedPage";
-import { ProfilePage, ProfileSettingsPage } from "@/features/profile/routes";
+import { ProfilePage, ProfileSettingsPage, PersonalProfilePage } from "@/features/profile/routes";
 import { AdminVerificationPage } from "@/features/admin/pages/VerificationPage";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -18,6 +18,7 @@ function App() {
 
             <Route path="/" element={isLoading ? null : isAuthenticated ? <FeedPage /> : <Navigate to="/login" replace />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/me" element={<PersonalProfilePage />} />
             <Route path="/profile/:userId" element={<ProfilePage />} />
             <Route path="/settings" element={<ProfileSettingsPage />} />
 

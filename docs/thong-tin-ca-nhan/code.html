@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Personal Profile | EduConnect</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#80f20d",
+                        "background-light": "#f7f8f5",
+                        "background-dark": "#192210",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#141811] dark:text-white transition-colors duration-200">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-solid border-[#f2f5f0] dark:border-white/10 px-4 md:px-10 lg:px-40 py-3">
+<div class="max-w-[1200px] mx-auto flex items-center justify-between gap-8">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2">
+<div class="bg-primary p-1.5 rounded-lg">
+<span class="material-symbols-outlined text-background-dark text-xl">school</span>
+</div>
+<h2 class="text-lg font-extrabold tracking-tight">EduConnect</h2>
+</div>
+<div class="hidden md:flex">
+<label class="flex flex-col min-w-40 h-10 w-64">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full bg-[#f2f5f0] dark:bg-white/5">
+<div class="text-[#758a60] flex items-center justify-center pl-4">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="form-input flex w-full border-none bg-transparent focus:ring-0 text-sm placeholder:text-[#758a60]" placeholder="Search courses, peers..."/>
+</div>
+</label>
+</div>
+</div>
+<div class="flex flex-1 justify-end items-center gap-4 md:gap-8">
+<nav class="hidden lg:flex items-center gap-9">
+<a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Home</a>
+<a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Courses</a>
+<a class="text-sm font-semibold text-primary" href="#">Network</a>
+<a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Resources</a>
+</nav>
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-xl h-10 w-10 bg-[#f2f5f0] dark:bg-white/10 hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined text-xl">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded-xl h-10 w-10 bg-[#f2f5f0] dark:bg-white/10 hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined text-xl">chat_bubble</span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-10 w-10 border-2 border-primary" data-alt="User profile picture showing a young male professional" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBJZjZF_55fSA4niP-wXVLYPZ0LU-TimYHV3VUTk_AWF_TBg9vMXx0Dk-82YQrgEp9nopxK50_HOPzvrVI_4N5E7drTMggX3_bihS-F9jIHHs8qPnLUqvbVG82u3gx3K7M-dWcjmLqxG-Gl4mSlxYzG1JjaS4QAFwLBQprVjIzdORF_hijDeUHdIpQDQa2owxLy177HOaMEY3UAF57IRfRCg6mz2s5jTYzpcjSUvsbbp-dfgSKOnwYX_SuZUZpKp0JKze5xK7dHeP1D");'>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-[1200px] mx-auto px-4 md:px-10 lg:px-40 py-8">
+<!-- Profile Header Section -->
+<section class="bg-white dark:bg-white/5 rounded-xl p-6 mb-8 border border-[#f2f5f0] dark:border-white/10 shadow-sm">
+<div class="flex flex-col md:flex-row gap-6 items-center md:items-start justify-between">
+<div class="flex flex-col md:flex-row gap-6 items-center">
+<div class="relative">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-32 w-32 md:h-40 md:w-40 border-4 border-white dark:border-background-dark shadow-xl" data-alt="Large profile portrait of Alex Harrison" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAvkZFTpkhrHk9IJtmEdJWkSdPYN1vYn_v4UgdBdHpcMvr3CxRpifC9pzFNDrtQgCaDxLfwfn8VpdA-b-A6Kx17fGLs53xzjtJaH7EXXOJQqRgx5K-OMMo5aZui856QpOny3ywdygxTFc6wg1aFhq6IMuo2nAOgnxESjvvtnZlD-gs88NvhQCSgqgeitQHgpspP8UIfs-4q-IJCkKvjnw_YFLQ5GYvpXt-gFNh77JHSfpnxm4CcUrk-hgodV3GE34KjFk1cG7BgdICf");'>
+</div>
+<div class="absolute bottom-2 right-2 bg-primary text-background-dark p-1 rounded-full border-2 border-white dark:border-background-dark">
+<span class="material-symbols-outlined text-base font-bold">verified</span>
+</div>
+</div>
+<div class="text-center md:text-left">
+<div class="flex items-center justify-center md:justify-start gap-2 mb-1">
+<h1 class="text-3xl font-extrabold tracking-tight">Alex Harrison</h1>
+</div>
+<p class="text-[#758a60] dark:text-primary/70 text-lg font-medium">Senior Student | Computer Science Major</p>
+<div class="flex items-center justify-center md:justify-start gap-2 mt-2 text-sm text-[#758a60]">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span>Stanford University • San Francisco, CA</span>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center justify-center gap-2 rounded-xl h-11 px-6 bg-primary text-background-dark font-bold hover:brightness-105 transition-all shadow-md shadow-primary/20">
+<span class="material-symbols-outlined">edit</span>
+<span>Edit Profile</span>
+</button>
+<button class="flex items-center justify-center rounded-xl h-11 w-11 bg-[#f2f5f0] dark:bg-white/10 text-background-dark dark:text-white hover:bg-[#e8ece5] transition-all">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Grid Layout for Information Cards -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Academic Background Card -->
+<div class="bg-white dark:bg-white/5 rounded-xl p-6 border border-[#f2f5f0] dark:border-white/10 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">history_edu</span>
+<h2 class="text-xl font-bold">Academic Background</h2>
+</div>
+<button class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<div class="flex items-center gap-4 bg-background-light dark:bg-white/5 p-4 rounded-xl border-l-4 border-primary">
+<div class="h-16 w-16 bg-white rounded-lg flex items-center justify-center p-2 shadow-sm">
+<img alt="University Logo" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAna-XUt89o48fJsJ7rbedBsdk4_Ci0ZFIbvwVYEPInc583-3Cx79HrSgMXXEWG7GBnHcKcbmVcrs-4aDAWzivuDrI4WBhRGjRRQ0eL2C_Qtazmxlr_h0ZILrsMAZkL2xiE0_B0ia3Tt6maIXdabGPrV50m2XQrKYThe1jXCKY64nc4Fra__DTU-E9eUL5Vss1B-eXHcrL5M8HTTwglfcHcbJrSZzrVy4Q1bBpfUeo6hGni3_ATBpyaQFEdiVYYLs0jrkQQQqYFStop"/>
+</div>
+<div>
+<p class="text-sm font-bold text-primary">Class of 2024</p>
+<p class="text-lg font-extrabold">Stanford University</p>
+<p class="text-[#758a60] text-sm font-medium">Major: Computer Science &amp; Engineering</p>
+</div>
+</div>
+<div class="mt-4 p-4 rounded-xl border border-dashed border-[#d1d9c9] dark:border-white/20 flex items-center justify-center cursor-pointer hover:bg-background-light dark:hover:bg-white/5 transition-all group">
+<div class="flex items-center gap-2 text-[#758a60] group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="text-sm font-bold">Add previous education</span>
+</div>
+</div>
+</div>
+<!-- Academic Interests Card -->
+<div class="bg-white dark:bg-white/5 rounded-xl p-6 border border-[#f2f5f0] dark:border-white/10 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">menu_book</span>
+<h2 class="text-xl font-bold">Academic Interests</h2>
+</div>
+<button class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 bg-primary/10 dark:bg-primary/20 text-[#4a5f36] dark:text-primary rounded-full text-sm font-bold border border-primary/20">Machine Learning</span>
+<span class="px-4 py-2 bg-[#f0f9ff] text-[#0369a1] rounded-full text-sm font-bold border border-[#bae6fd]">Human-Computer Interaction</span>
+<span class="px-4 py-2 bg-[#fdf2f8] text-[#be185d] rounded-full text-sm font-bold border border-[#fbcfe8]">Computational Linguistics</span>
+<span class="px-4 py-2 bg-[#f0fdf4] text-[#15803d] rounded-full text-sm font-bold border border-[#bbf7d0]">Data Structures</span>
+<span class="px-4 py-2 bg-[#fff7ed] text-[#c2410c] rounded-full text-sm font-bold border border-[#ffedd5]">Quantum Computing</span>
+<span class="px-4 py-2 bg-[#f5f3ff] text-[#6d28d9] rounded-full text-sm font-bold border border-[#ddd6fe]">UI/UX Principles</span>
+</div>
+</div>
+<!-- Personal Interests Card -->
+<div class="bg-white dark:bg-white/5 rounded-xl p-6 border border-[#f2f5f0] dark:border-white/10 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">favorite</span>
+<h2 class="text-xl font-bold">Personal Interests</h2>
+</div>
+<button class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<div class="flex items-center gap-2 px-4 py-2 bg-background-light dark:bg-white/10 rounded-xl border border-[#f2f5f0] dark:border-white/5 group hover:border-primary/50 cursor-default transition-all">
+<span class="material-symbols-outlined text-lg text-[#758a60]">photo_camera</span>
+<span class="text-sm font-bold">Photography</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-background-light dark:bg-white/10 rounded-xl border border-[#f2f5f0] dark:border-white/5 group hover:border-primary/50 cursor-default transition-all">
+<span class="material-symbols-outlined text-lg text-[#758a60]">terminal</span>
+<span class="text-sm font-bold">Open Source Coding</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-background-light dark:bg-white/10 rounded-xl border border-[#f2f5f0] dark:border-white/5 group hover:border-primary/50 cursor-default transition-all">
+<span class="material-symbols-outlined text-lg text-[#758a60]">directions_bike</span>
+<span class="text-sm font-bold">Cycling</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-background-light dark:bg-white/10 rounded-xl border border-[#f2f5f0] dark:border-white/5 group hover:border-primary/50 cursor-default transition-all">
+<span class="material-symbols-outlined text-lg text-[#758a60]">casino</span>
+<span class="text-sm font-bold">Strategy Games</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 bg-background-light dark:bg-white/10 rounded-xl border border-[#f2f5f0] dark:border-white/5 group hover:border-primary/50 cursor-default transition-all">
+<span class="material-symbols-outlined text-lg text-[#758a60]">travel_explore</span>
+<span class="text-sm font-bold">Travel Photography</span>
+</div>
+</div>
+</div>
+<!-- Profile Completion Sidebar/Info -->
+<div class="bg-primary/5 dark:bg-primary/10 rounded-xl p-6 border-2 border-primary/20 shadow-inner flex flex-col justify-center">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-bold text-lg">Profile Strength</h3>
+<span class="text-primary font-black">85%</span>
+</div>
+<div class="w-full bg-[#f2f5f0] dark:bg-white/10 h-3 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 85%;"></div>
+</div>
+<p class="text-sm text-[#758a60] dark:text-primary/70 mt-4 leading-relaxed">
+                    You're almost there! Add a <strong>professional summary</strong> and <strong>past projects</strong> to reach 100% and get noticed by study groups.
+                </p>
+<button class="mt-6 w-full h-11 bg-white dark:bg-white/10 rounded-xl font-bold text-sm text-background-dark dark:text-white border border-[#f2f5f0] dark:border-white/10 hover:border-primary transition-all">
+                    Complete Profile
+                </button>
+</div>
+</div>
+<!-- Extra Projects Section -->
+<section class="mt-12">
+<h2 class="text-2xl font-bold mb-6 px-4">Highlighted Projects</h2>
+<div class="p-4">
+<div class="flex flex-col md:flex-row items-stretch justify-between gap-6 bg-white dark:bg-white/5 rounded-2xl p-6 border border-[#f2f5f0] dark:border-white/10">
+<div class="flex flex-[3_3_0px] flex-col gap-4">
+<div class="flex flex-col gap-1">
+<p class="text-primary text-sm font-bold uppercase tracking-wider">Independent Research</p>
+<h3 class="text-2xl font-extrabold leading-tight">Neural Network Optimization for Edge Devices</h3>
+<p class="text-[#758a60] text-base font-medium mt-2 leading-relaxed">
+                                Developed a novel pruning technique reducing memory footprint by 40% while maintaining 98% accuracy on benchmark datasets.
+                            </p>
+</div>
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-xl h-10 px-4 bg-primary/20 text-[#4a5f36] dark:text-primary gap-2 text-sm font-bold transition-all hover:bg-primary/30">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+<span>View Source</span>
+</button>
+<button class="flex items-center justify-center rounded-xl h-10 px-4 bg-[#f2f5f0] dark:bg-white/10 text-background-dark dark:text-white gap-2 text-sm font-bold transition-all hover:bg-[#e8ece5]">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+<span>Edit</span>
+</button>
+</div>
+</div>
+<div class="flex-1 min-h-[160px] bg-center bg-no-repeat aspect-video bg-cover rounded-xl shadow-lg border border-[#f2f5f0] dark:border-white/10" data-alt="Abstract representation of a neural network data graph" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAj50MGZO9v0EAyTv-4LtsO8Uow44gB_Hz8qoVd0uf4-4_KDWlt0PGQcF830eG2Y0L7_B9lYWSSz4sj7hOHvrlj_fQ2MDMGoWDsA0xMVCQn_NjNtx8wMkWcb3booNnd6sH3DH7XWD1kMHU8F4IB3__zvtAq_J6b-al2RCQWdjVB8qkcBzoUC84WeCtVtJdOMeueHFHvCZ4BdwGKmuWhng4HG0NaxYD42fn6uLZM6BZbYzRo29Da8cPF9vdSt7XtaDVrGobmy2Mx0LpE");'>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Space -->
+<footer class="mt-20 py-10 border-t border-[#f2f5f0] dark:border-white/10 text-center">
+<p class="text-[#758a60] text-sm">© 2024 EduConnect Platform. All academic rights reserved.</p>
+</footer>
+</body></html>
