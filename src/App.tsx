@@ -18,6 +18,7 @@ function App() {
 
             <Route path="/" element={isLoading ? null : isAuthenticated ? <FeedPage /> : <Navigate to="/login" replace />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/me" element={<PersonalProfilePage />} />
             <Route path="/profile/:userId" element={<ProfilePage />} />
             <Route path="/settings" element={<ProfileSettingsPage />} />
 

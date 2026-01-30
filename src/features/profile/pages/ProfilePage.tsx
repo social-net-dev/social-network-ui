@@ -1,18 +1,35 @@
 import { useNavigate } from 'react-router-dom'
+import { useMemo } from 'react'
 import { useProfile } from '../hooks/useProfile'
 import { ProfileHeader } from '../components/ProfileHeader'
 import { ProfileStats } from '../components/ProfileStats'
+import { PersonalInfoSidebar } from '../components/PersonalInfoSidebar'
 import { MainLayout } from '@/features/shared/layouts/MainLayout'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { useAuthStore } from '@/stores/authStore'
-import { FileText, Image as ImageIcon, Video, Info, Users } from 'lucide-react'
+import { FileText, Heart, MessageSquare, Share2, Clock } from 'lucide-react'
+import { ActivityFeed } from '../components/ActivityFeed'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 function ProfilePage() {
   const navigate = useNavigate()
   const { profile, isLoading, error } = useProfile()
   const { user, isAuthenticated } = useAuthStore()
+
+  const mockPosts = useMemo(() => {
+    if (!profile || profile.postsCount === 0) return []
+
+    return Array.from({ length: 3 }, (_, i) => ({
+      id: i.toString(),
+      content: `Bài viết thứ ${i + 1} của tôi về công nghệ AI và phát triển phần mềm. Hy vọng mọi người thích nó! #AI #ETECHS #SoftwareDevelopment`,
+      likes: 124 + i * 10,
+      comments: 12 + i,
+      shares: 5 + i,
+      createdAt: `2024-01-${(10 + i).toString().padStart(2, '0')}T00:00:00.000Z`,
+    }))
+  }, [profile?.postsCount])
 
   if (isLoading) {
     return (
@@ -51,111 +68,93 @@ function ProfilePage() {
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      <div className="max-w-7xl mx-auto space-y-6 pb-12">
         <ProfileHeader
-            profile={profile}
-            isCurrentUser={isCurrentUser}
-            onEdit={() => isCurrentUser && navigate('/settings')}
+          profile={profile}
+          isCurrentUser={isCurrentUser}
+          onEdit={() => isCurrentUser && navigate('/settings')}
         />
-        
+
         <ProfileStats stats={stats} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content Area */}
-            <div className="lg:col-span-2 space-y-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1 min-w-0 space-y-6">
             <Tabs defaultValue="posts" className="w-full">
-                <TabsList className="bg-white dark:bg-card p-1 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 w-full justify-start overflow-x-auto no-scrollbar">
-                <TabsTrigger value="posts" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Bài viết
+              <TabsList className="bg-card p-1 rounded-xl shadow-sm border border-border w-full justify-start overflow-x-auto no-scrollbar">
+                <TabsTrigger value="posts" className="rounded-lg data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Bài viết
                 </TabsTrigger>
-                <TabsTrigger value="photos" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
-                    <ImageIcon className="w-4 h-4 mr-2" />
-                    Ảnh
-                </TabsTrigger>
-                <TabsTrigger value="videos" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
-                    <Video className="w-4 h-4 mr-2" />
-                    Video
-                </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="posts" className="mt-6 space-y-6 outline-none">
-                <Card className="border-none shadow-lg bg-white dark:bg-card rounded-3xl overflow-hidden">
-                    <CardContent className="p-12 text-center">
-                    <div className="w-20 h-20 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <FileText className="w-10 h-10 text-gray-300 dark:text-gray-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Chưa có bài viết nào</h3>
-                    <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                        Khi {profile.firstName} chia sẻ bài viết, chúng sẽ xuất hiện ở đây.
-                    </p>
-                    </CardContent>
-                </Card>
-                </TabsContent>
+              </TabsList>
 
-                <TabsContent value="photos" className="mt-6 outline-none">
-                <Card className="border-none shadow-lg bg-white dark:bg-card rounded-3xl p-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="aspect-square rounded-2xl bg-gray-100 dark:bg-white/5 animate-pulse" />
-                        ))}
-                    </div>
-                </Card>
-                </TabsContent>
-
-                <TabsContent value="videos" className="mt-6 outline-none">
-                <Card className="border-none shadow-lg bg-white dark:bg-card rounded-3xl p-12 text-center">
-                    <Video className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Chưa có video nào</p>
-                </Card>
-                </TabsContent>
-            </Tabs>
-            </div>
-
-            {/* Sidebar Area */}
-            <div className="space-y-6">
-            <Card className="border-none shadow-lg bg-white dark:bg-card rounded-3xl overflow-hidden">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center">
-                        <Info className="w-5 h-5 mr-2 text-etechs-primary" />
-                        Giới thiệu
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Chuyên gia AI và Khoa học dữ liệu tại ETECHS. Đam mê xây dựng các hệ sinh thái số thông minh.
-                    </p>
-                    <div className="space-y-3">
-                        <div className="flex items-center text-sm">
-                            <Users className="w-4 h-4 mr-3 text-gray-400" />
-                            <span>24 bạn chung</span>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card className="border-none shadow-lg bg-white dark:bg-card rounded-3xl overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-lg flex items-center">
-                        <Users className="w-5 h-5 mr-2 text-etechs-primary" />
-                        Bạn bè
-                    </CardTitle>
-                    <Button variant="link" className="text-etechs-secondary dark:text-etechs-primary font-bold text-xs p-0 h-auto">
-                        Xem tất cả
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-3 gap-2">
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <div key={i} className="space-y-1">
-                                <div className="aspect-square rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-100 dark:border-white/5" />
-                                <div className="h-2 w-full bg-gray-50 dark:bg-white/5 rounded-full" />
+              <TabsContent value="posts" className="mt-6 space-y-6 outline-none">
+                {mockPosts.length > 0 ? (
+                  <div className="space-y-6">
+                    {mockPosts.map((post) => (
+                      <Card key={post.id} className="border-border shadow-sm bg-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-md">
+                        <CardContent className="p-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <Avatar className="w-10 h-10 border border-border">
+                              <AvatarImage src={profile.avatar} />
+                              <AvatarFallback>{profile.displayName?.[0] || '?'}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-bold text-foreground">
+                                {profile.displayName}
+                              </p>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {new Date(post.createdAt).toLocaleDateString('vi-VN')}
+                              </p>
                             </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
-            </div>
+                          </div>
+                          <p className="text-foreground mb-6 leading-relaxed">
+                            {post.content}
+                          </p>
+                          <div className="flex items-center justify-between pt-4 border-t border-border">
+                            <div className="flex gap-6">
+                              <button className="flex items-center gap-2 text-muted-foreground hover:text-red-500 transition-colors">
+                                <Heart className="w-5 h-5" />
+                                <span className="text-sm font-medium">{post.likes}</span>
+                              </button>
+                              <button className="flex items-center gap-2 text-muted-foreground hover:text-blue-500 transition-colors">
+                                <MessageSquare className="w-5 h-5" />
+                                <span className="text-sm font-medium">{post.comments}</span>
+                              </button>
+                              <button className="flex items-center gap-2 text-muted-foreground hover:text-green-500 transition-colors">
+                                <Share2 className="w-5 h-5" />
+                                <span className="text-sm font-medium">{post.shares}</span>
+                              </button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    <Button variant="ghost" className="w-full rounded-xl py-6 border-2 border-dashed border-border text-muted-foreground hover:border-etechs-primary hover:text-etechs-primary transition-all">
+                      Xem tất cả bài viết
+                    </Button>
+                  </div>
+                ) : (
+                  <Card className="border-border shadow-sm bg-card rounded-xl overflow-hidden">
+                    <CardContent className="p-12 text-center">
+                      <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                        <FileText className="w-10 h-10 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-xl font-bold text-foreground mb-2">Chưa có bài viết nào</h3>
+                      <p className="text-muted-foreground max-w-sm mx-auto">
+                        Khi {profile.displayName} chia sẻ bài viết, chúng sẽ xuất hiện ở đây.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <div className="w-full lg:w-80 space-y-6 shrink-0">
+            <PersonalInfoSidebar />
+            <ActivityFeed limit={5} />
+          </div>
         </div>
       </div>
     </MainLayout>

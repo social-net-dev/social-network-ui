@@ -77,8 +77,10 @@ export const mockApi = {
       await mockDelay(500)
       return {
         id: userId,
-        firstName: userId === '1' ? 'Nguyễn' : 'Trần',
-        lastName: userId === '1' ? 'Văn A' : 'Thị B',
+        username: userId === '1' ? 'nguyenvana' : 'tranthib',
+        displayName: userId === '1' ? 'Nguyễn Văn A' : 'Trần Thị B',
+        isOwner: true,
+        isFriend: false,
         email: userId === '1' ? 'nguyenvana@example.com' : 'tranthib@example.com',
         avatar: `https://i.pravatar.cc/150?img=${parseInt(userId) + 10}`,
         bio: userId === '1' ? 'Software Engineer tại ETECHS. Yêu thích công nghệ và AI.' : 'Designer tại ETECHS. Đam mê sáng tạo.',
@@ -90,12 +92,14 @@ export const mockApi = {
       }
     },
 
-    updateProfile: async (userId: string, data: Partial<ProfileData>): Promise<ProfileData> => {
+    updateProfile: async (_userId: string, data: Partial<ProfileData>): Promise<ProfileData> => {
       await mockDelay(800)
       return {
-        id: userId,
-        firstName: data.firstName || 'Nguyễn',
-        lastName: data.lastName || 'Văn A',
+        id: '1',
+        username: data.username || 'nguyenvana',
+        displayName: data.displayName || 'Nguyễn Văn A',
+        isOwner: true,
+        isFriend: false,
         email: data.email || 'nguyenvana@example.com',
         avatar: data.avatar || 'https://i.pravatar.cc/150?img=1',
         bio: data.bio || '',
