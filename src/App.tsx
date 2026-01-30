@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage, RegisterPage, OTPVerifyPage, ForgotPasswordPage } from "@/features/auth/routes";
 import { FeedPage } from "@/features/home/pages/FeedPage";
-import { ProfilePage, ProfileSettingsPage } from "@/features/profile/routes";
+import { ProfilePage, ProfileSettingsPage, PersonalProfilePage } from "@/features/profile/routes";
 import { AdminAccountsPage } from "@/features/admin/pages/AdminAccountsPage";
 import { useAuthStore } from "@/stores/authStore";
 

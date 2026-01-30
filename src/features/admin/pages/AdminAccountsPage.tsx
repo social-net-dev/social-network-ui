@@ -212,11 +212,11 @@ export function AdminAccountsPage() {
                                                             </TableCell>
                                                             <TableCell>
                                                                 {activeTab === "DEACTIVATED"
-                                                                    ? formatDate(user.deactivated_at)
+                                                                    ? formatDate(user.deactivated_at ?? undefined)
                                                                     : formatDate(user.created_at)}
                                                             </TableCell>
                                                             {activeTab === "DEACTIVATED" && (
-                                                                <TableCell>{getDaysSinceDeactivation(user.deactivated_at)}</TableCell>
+                                                                <TableCell>{getDaysSinceDeactivation(user.deactivated_at ?? undefined)}</TableCell>
                                                             )}
                                                             <TableCell>
                                                                 {isRecoverable ? (
