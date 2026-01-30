@@ -1,8 +1,8 @@
-# Giống etechs-operation/operation-fe: Caddy serve SPA từ /srv và proxy /api tới backend
-{$APP_DOMAIN} {
+# :80 = nhận mọi Host (tránh 502/500 khi Host không khớp). {$APP_DOMAIN} = HTTPS khi là domain
+:80, {$APP_DOMAIN} {
   encode gzip zstd
 
-  # Backend API – giữ prefix /api (social-be nhận /api/...)
+  # Backend API – path bắt đầu /api (vd /api/auth/login/)
   @api path /api*
   handle @api {
     reverse_proxy social-be:8000 {
