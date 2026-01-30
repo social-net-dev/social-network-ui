@@ -27,15 +27,33 @@ const processQueue = (error: AxiosError | null) => {
     failedQueue = [];
 };
 
+// Các path auth công khai: không gửi Authorization (token cũ/invalid khiến backend trả "Token is invalid" trước khi vào view)
+const PUBLIC_AUTH_PATHS = [
+    "/auth/login",
+    "/auth/register",
+    "/auth/verify-otp",
+    "/auth/resend-otp",
+];
+
+function isPublicAuthRequest(url: string | undefined): boolean {
+    if (!url) return false;
+    const path = url.replace(api.defaults.baseURL || "", "").split("?")[0];
+    return PUBLIC_AUTH_PATHS.some((p) => path === p || path === `${p}/`);
+}
+
 // Add a request interceptor
 api.interceptors.request.use(
     (config) => {
-        // Get token from localStorage (matching the key used in authStore)
-        const token = localStorage.getItem("auth_token");
-        if (token) {
-            // Remove quotes if they exist (sometimes persist middleware adds them)
-            const cleanToken = token.replace(/"/g, "");
-            config.headers.Authorization = `Bearer ${cleanToken}`;
+        if (!isPublicAuthRequest(config.url)) {
+            const token = localStorage.getItem("auth_token");
+            if (token) {
+                const cleanToken = token.replace(/"/g, "");
+                config.headers.Authorization = `Bearer ${cleanToken}`;
+            }
+            const tenantSlug = localStorage.getItem("tenant_slug");
+            if (tenantSlug) {
+                config.headers["X-Tenant-Slug"] = tenantSlug.replace(/"/g, "");
+            }
         }
         return config;
     },
@@ -44,9 +62,18 @@ api.interceptors.request.use(
     },
 );
 
+// Unwrap middleware format: { success: true, data: T } -> response.data = T
+function unwrapResponse(response: { data: unknown }) {
+    const d = response.data;
+    if (d && typeof d === "object" && (d as any).success === true && "data" in d) {
+        response.data = (d as { data: unknown }).data;
+    }
+    return response;
+}
+
 // Add a response interceptor with refresh token logic
 api.interceptors.response.use(
-    (response) => response,
+    (response) => unwrapResponse(response),
     async (error: AxiosError) => {
         const originalRequest = error.config as AxiosRequestConfig & {
             _retry?: boolean;
@@ -86,12 +113,14 @@ api.interceptors.response.use(
             }
 
             try {
-                // Call refresh token endpoint
-                const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/auth/refresh`, {
-                    refresh_token: refreshToken,
-                });
-
-                const { access_token } = response.data;
+                // Call refresh token endpoint (etechs-middleware expects "refresh")
+                const response = await axios.post(
+                    `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/auth/refresh/`,
+                    { refresh: refreshToken, refresh_token: refreshToken },
+                );
+                const payload = response.data?.data ?? response.data;
+                const access_token =
+                    payload?.access_token ?? payload?.access;
 
                 // Save new token
                 localStorage.setItem("auth_token", access_token);

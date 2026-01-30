@@ -25,12 +25,16 @@ export function useRegister() {
     const onSubmit = async (data: RegisterFormData) => {
         try {
             setError(null);
-            await authApi.register(data);
+            const res = await authApi.register(data);
             setIsSuccess(true);
 
-            // Redirect to OTP verification page with email
+            const user_id = res.user_id != null ? String(res.user_id) : "";
+            sessionStorage.setItem("otp_verify_email", data.email);
+            sessionStorage.setItem("otp_verify_user_id", user_id);
+
             navigate("/verify-otp", {
-                state: { email: data.email },
+                state: { email: data.email, user_id },
+                replace: true,
             });
         } catch (err: any) {
             const errorMessage = err.response?.data?.detail || err.message || "Đăng ký thất bại";

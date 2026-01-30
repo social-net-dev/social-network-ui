@@ -179,21 +179,44 @@ export const feedApi = {
 
   /**
    * Lấy danh sách bài viết (feed)
-   * GET /feed/
+   * GET /feed/?page=1&limit=10&all_tenants=1
    */
-  getPosts: async (page = 1, limit = 10): Promise<FeedPost[]> => {
+  getPosts: async (
+    page = 1,
+    limit = 10,
+    options?: { all_tenants?: boolean },
+  ): Promise<{ posts: FeedPost[]; total_pages: number; total: number }> => {
     const res = await api.get<PaginatedResponse<IBackendPost>>("/feed/", {
-      params: { page, limit },
+      params: {
+        page,
+        limit,
+        page_size: limit,
+        ...(options?.all_tenants ? { all_tenants: "1" } : {}),
+      },
     });
-    const data = res.data;
+    const data = res.data as {
+      posts?: IBackendPost[];
+      items?: IBackendPost[];
+      total_pages?: number;
+      total?: number;
+    };
 
-    // Support cả response trực tiếp và wrapped trong data
-    const posts =
+    const raw =
       data?.posts || data?.items || (Array.isArray(data) ? data : []);
+    const posts = (Array.isArray(raw) ? raw : []).map(normalizePostWithToken);
+    const total_pages = data?.total_pages ?? 1;
+    const total = data?.total ?? posts.length;
 
-    console.debug("[feedApi.getPosts] page=", page, "items=", posts.length);
+    console.debug(
+      "[feedApi.getPosts] page=",
+      page,
+      "items=",
+      posts.length,
+      "total_pages=",
+      total_pages,
+    );
 
-    return posts.map(normalizePostWithToken);
+    return { posts, total_pages, total };
   },
 
   /**

@@ -10,12 +10,15 @@ export function useFeed() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
+  const pageSize = 10;
   const query = useQuery({
     queryKey: queryKeys.feed.posts(page),
     queryFn: async () => {
-      const data = await feedApi.getPosts(page, 10);
-      setHasMore(data.length > 0);
-      return data;
+      const result = await feedApi.getPosts(page, pageSize, {
+        all_tenants: true,
+      });
+      setHasMore(page < result.total_pages);
+      return result;
     },
     refetchOnMount: "always",
     staleTime: 0,
@@ -24,11 +27,13 @@ export function useFeed() {
   const posts = useMemo(() => {
     const allPages: Post[] = [];
     for (let i = 1; i <= page; i++) {
-      const pageData = queryClient.getQueryData<Post[]>(
-        queryKeys.feed.posts(i),
-      );
-      if (pageData) {
-        allPages.push(...pageData);
+      const pageData = queryClient.getQueryData<{
+        posts: Post[];
+        total_pages: number;
+        total: number;
+      }>(queryKeys.feed.posts(i));
+      if (pageData?.posts) {
+        allPages.push(...pageData.posts);
       }
     }
     return allPages;
@@ -73,22 +78,29 @@ export function useFeed() {
     (postId: string, liked: boolean) => {
       const reaction = liked ? "LIKE" : null;
       for (let i = 1; i <= page; i++) {
-        queryClient.setQueryData<Post[]>(queryKeys.feed.posts(i), (old) => {
-          if (!old) return old;
-          return old.map((post) => {
-            if (post.id !== postId) return post;
-            const currentLikes =
-              (post as any).likes ?? (post as any).reaction_count ?? 0;
-            const delta = liked ? 1 : -1;
-            const newLikes = Math.max(0, currentLikes + delta);
-            return {
-              ...post,
-              likedByCurrentUser: liked,
-              user_reaction: reaction,
-              likes: newLikes,
-              reaction_count: newLikes,
-            } as Post;
-          });
+        queryClient.setQueryData<{
+          posts: Post[];
+          total_pages: number;
+          total: number;
+        }>(queryKeys.feed.posts(i), (old) => {
+          if (!old?.posts) return old;
+          return {
+            ...old,
+            posts: old.posts.map((post) => {
+              if (post.id !== postId) return post;
+              const currentLikes =
+                (post as any).likes ?? (post as any).reaction_count ?? 0;
+              const delta = liked ? 1 : -1;
+              const newLikes = Math.max(0, currentLikes + delta);
+              return {
+                ...post,
+                likedByCurrentUser: liked,
+                user_reaction: reaction,
+                likes: newLikes,
+                reaction_count: newLikes,
+              } as Post;
+            }),
+          };
         });
       }
       return reactMutation.mutateAsync({ postId, reaction });

@@ -27,6 +27,7 @@ import {
     AlertTriangle,
     Eye,
     EyeOff,
+    Loader2,
 } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
 import { ChangePasswordForm } from "../components/ChangePasswordForm";

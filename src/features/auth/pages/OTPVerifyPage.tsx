@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { authApi } from "../services/authApi";
@@ -8,11 +8,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Mail, RefreshCw } from "lucide-react";
 
+const OTP_STORAGE_EMAIL = "otp_verify_email";
+const OTP_STORAGE_USER_ID = "otp_verify_user_id";
+
+function getStoredEmail(): string {
+  if (typeof sessionStorage === "undefined") return "";
+  return sessionStorage.getItem(OTP_STORAGE_EMAIL) ?? "";
+}
+
+function getStoredUserId(): string {
+  if (typeof sessionStorage === "undefined") return "";
+  return sessionStorage.getItem(OTP_STORAGE_USER_ID) ?? "";
+}
+
 export function OTPVerifyPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const email = location.state?.email || "";
-  // const setAuth = useAuthStore((state) => state.setAuth);
+  const state = location.state as { email?: string; user_id?: string } | null;
+  const [email, setEmail] = useState(() => state?.email ?? getStoredEmail());
+  const [user_id, setUserId] = useState(() => state?.user_id ?? getStoredUserId());
+
+  useEffect(() => {
+    if (state?.email && state?.user_id) {
+      setEmail(state.email);
+      setUserId(state.user_id);
+    } else {
+      const storedEmail = getStoredEmail();
+      const storedUserId = getStoredUserId();
+      if (storedEmail || storedUserId) {
+        setEmail((prev) => storedEmail || prev);
+        setUserId((prev) => storedUserId || prev);
+      }
+    }
+  }, [location.state, state?.email, state?.user_id]);
 
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState("");
@@ -21,10 +49,13 @@ export function OTPVerifyPage() {
   const verifyMutation = useMutation({
     mutationFn: authApi.verifyOTP,
     onSuccess: async () => {
-      // After OTP verification, redirect to login page
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.removeItem(OTP_STORAGE_EMAIL);
+        sessionStorage.removeItem(OTP_STORAGE_USER_ID);
+      }
       navigate("/login", {
         state: {
-          email: email,
+          email,
           message:
             "Xác thực OTP thành công! Tài khoản của bạn hiện là chưa xác minh với dung lượng 100MB. Vui lòng đăng nhập.",
         },
@@ -57,25 +88,31 @@ export function OTPVerifyPage() {
       setError("Mã OTP phải có 6 chữ số");
       return;
     }
+    if (!user_id) {
+      setError("Thiếu thông tin xác thực. Vui lòng đăng ký lại.");
+      return;
+    }
 
-    verifyMutation.mutate({ email, otpCode });
+    verifyMutation.mutate({ user_id, otpCode });
   };
 
   const handleResend = () => {
-    if (!email) {
-      setError("Email không hợp lệ");
+    if (!user_id) {
+      setError("Thiếu user_id. Vui lòng đăng ký lại.");
       return;
     }
-    resendMutation.mutate(email);
+    resendMutation.mutate(user_id);
   };
 
-  if (!email) {
+  if (!user_id || !email) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg">
           <div className="text-center">
-            <h2 className="text-2xl font-bold">Email không hợp lệ</h2>
-            <p className="mt-2 text-gray-600">Vui lòng đăng ký lại.</p>
+            <h2 className="text-2xl font-bold">Thiếu thông tin xác thực</h2>
+            <p className="mt-2 text-gray-600">
+              Trang nhập mã OTP chỉ dùng sau khi bạn đăng ký thành công. Nếu bạn vừa đăng ký, hãy kiểm tra email và thử quay lại bước đăng ký rồi hoàn tất để được chuyển đến trang nhập mã.
+            </p>
             <Button className="mt-4" onClick={() => navigate("/register")}>
               Quay lại đăng ký
             </Button>

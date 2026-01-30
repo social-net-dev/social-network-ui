@@ -40,36 +40,45 @@ Hệ thống sử dụng các công nghệ mới nhất như React 19, Tailwind 
 ## 🚀 Cài đặt & Chạy dự án
 
 ### 1. Yêu cầu tiên quyết
-*   Node.js (v18 trở lên)
-*   pnpm (khuyên dùng) hoặc npm/yarn
+*   **Node.js** (v18 trở lên)
+*   **pnpm** (khuyên dùng, project dùng `packageManager: "pnpm@10.28.2"`) hoặc **npm**
 
 ### 2. Cài đặt dependencies
 
 ```bash
-git clone <repository-url>
 cd social-network-ui
 pnpm install
 ```
 
+*(Nếu không dùng pnpm: `npm install`)*
+
 ### 3. Cấu hình môi trường
 
-Sao chép file cấu hình mẫu và cập nhật các biến môi trường:
+Tạo file `.env` từ mẫu (hoặc tạo mới):
 
 ```bash
 cp .env.example .env
 ```
 
-**Lưu ý**: Để chạy với dữ liệu giả lập (không cần Backend), hãy đảm bảo `.env` có dòng:
-```env
-VITE_ENABLE_MOCK_API=true
-```
+Chỉnh `.env`:
 
-### 4. Khởi chạy Development Server
+| Biến | Mô tả | Ví dụ |
+|------|--------|--------|
+| `VITE_API_BASE_URL` | URL của **social-be** (BFF). UI gọi API qua đây. | `http://localhost:8000` |
+| `VITE_ENABLE_MOCK_API` | Bật API giả (không cần backend). | `true` / `false` |
+
+* **Chạy với backend thật** (social-be + etechs-middleware): đặt `VITE_API_BASE_URL=http://localhost:8000` và `VITE_ENABLE_MOCK_API=false` (hoặc bỏ dòng này).
+* **Chạy chỉ với dữ liệu giả**: `VITE_ENABLE_MOCK_API=true`.
+
+### 4. Chạy Development Server
 
 ```bash
 pnpm dev
 ```
-Truy cập `http://localhost:5173` để xem ứng dụng.
+
+*(Hoặc `npm run dev` nếu dùng npm.)*
+
+Mở trình duyệt: **http://localhost:5173**
 
 ## 📜 Các lệnh (Scripts) có sẵn
 
