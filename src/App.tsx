@@ -3,6 +3,7 @@ import { LoginPage, RegisterPage, OTPVerifyPage, ForgotPasswordPage } from "@/fe
 import { FeedPage } from "@/features/home/pages/FeedPage";
 import { ProfilePage, ProfileSettingsPage, PersonalProfilePage } from "@/features/profile/routes";
 import { AdminAccountsPage } from "@/features/admin/pages/AdminAccountsPage";
+import { AdminVerificationPage } from "@/features/admin/pages/VerificationPage";
 import { useAuthStore } from "@/stores/authStore";
 
 function App() {
@@ -26,6 +27,10 @@ function App() {
             <Route
                 path="/admin/accounts"
                 element={isLoading ? null : isAuthenticated && isAdmin ? <AdminAccountsPage /> : <Navigate to="/login" replace />}
+            />
+            <Route
+                path="/admin/verification"
+                element={isLoading ? null : isAuthenticated && isAdmin ? <AdminVerificationPage /> : <Navigate to="/login" replace />}
             />
 
             <Route path="*" element={<Navigate to="/" replace />} />
