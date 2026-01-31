@@ -1,9 +1,8 @@
 import axios from 'axios'
+import { getApiBaseUrl } from '@/lib/config';
 
 // dev: gọi social-be trực tiếp; production: /api (Caddy)
-const apiBaseURL = import.meta.env.DEV
-  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')
-  : (import.meta.env.VITE_API_BASE_URL || '/api');
+const apiBaseURL = getApiBaseUrl();
 const apiClient = axios.create({
   baseURL: apiBaseURL,
   timeout: 10000,
