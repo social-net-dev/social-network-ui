@@ -1,4 +1,4 @@
-import { AxiosRequestConfig, AxiosError } from 'axios';
+import type { AxiosRequestConfig, AxiosError } from 'axios';
 import apiClient from './api';
 
 export const customInstance = <T>(
