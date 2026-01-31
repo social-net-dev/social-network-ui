@@ -1,12 +1,10 @@
 import axios, { AxiosError } from "axios";
 import type { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuthStore } from "@/stores/authStore";
+import { getApiBaseUrl } from "@/lib/config";
 
 // baseURL: dev -> social-be trực tiếp; production -> /api (Caddy -> social-be)
-const baseURL =
-    import.meta.env.DEV
-        ? (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000")
-        : (import.meta.env.VITE_API_BASE_URL || "/api");
+const baseURL = getApiBaseUrl();
 const api = axios.create({
     baseURL: baseURL,
     headers: {

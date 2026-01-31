@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: social-network-ui
+    environment:
+      - VITE_API_BASE_URL=http://api.socialnetwork.local
     ports:
       - "8080:80"
     restart: unless-stopped
