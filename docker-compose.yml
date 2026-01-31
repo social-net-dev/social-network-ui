@@ -5,7 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: social-network-ui
     environment:
-      - VITE_API_BASE_URL=http://api.socialnetwork.local
+      - VITE_API_BASE_URL=/api
+      - APP_DOMAIN=:80
     ports:
       - "8080:80"
     restart: unless-stopped
