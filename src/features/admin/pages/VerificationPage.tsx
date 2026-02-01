@@ -4,7 +4,6 @@ import { verificationApi } from "../services/verificationApi";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
-import { MainLayout } from "@/features/shared/layouts/MainLayout";
 
 export function AdminVerificationPanel({ showTitle = true }: { showTitle?: boolean }) {
     const queryClient = useQueryClient();
@@ -196,10 +195,8 @@ export function AdminVerificationPanel({ showTitle = true }: { showTitle?: boole
 
 export function AdminVerificationPage() {
     return (
-        <MainLayout>
-            <div className="space-y-6">
-                <AdminVerificationPanel />
-            </div>
-        </MainLayout>
+        <div className="space-y-6">
+            <AdminVerificationPanel />
+        </div>
     );
 }

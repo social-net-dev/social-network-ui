@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MainLayout } from "@/features/shared/layouts/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -114,20 +113,19 @@ export function AdminAccountsPage() {
     ];
 
     return (
-        <MainLayout>
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Quản lý tài khoản</h1>
-                        <p className="text-gray-500 dark:text-gray-400">Danh sách tất cả tài khoản và trạng thái hiện tại.</p>
-                    </div>
-                    <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="flex items-center gap-2">
-                        <RefreshCcw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-                        Làm mới
-                    </Button>
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Quản lý tài khoản</h1>
+                    <p className="text-gray-500 dark:text-gray-400">Danh sách tất cả tài khoản và trạng thái hiện tại.</p>
                 </div>
+                <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="flex items-center gap-2">
+                    <RefreshCcw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+                    Làm mới
+                </Button>
+            </div>
 
-                <Card className="p-4">
+            <Card className="p-4">
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
                         <TabsList className="flex flex-wrap gap-2">
                             {tabs.map((tab) => (
@@ -243,7 +241,6 @@ export function AdminAccountsPage() {
                         ))}
                     </Tabs>
                 </Card>
-            </div>
-        </MainLayout>
+        </div>
     );
 }

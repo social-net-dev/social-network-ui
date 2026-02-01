@@ -3,7 +3,6 @@ import { useFeed } from "../hooks/useFeed";
 import { CreatePostForm } from "../components/CreatePostForm";
 import { FeedList } from "../components/FeedList";
 import { ShareDialog } from "../components/ShareDialog";
-import { MainLayout } from "@/features/shared/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { feedApi } from "../services/feedApi";
 import { useAuthStore } from "@/stores/authStore";
@@ -107,67 +106,66 @@ export function FeedPage() {
     };
 
     return (
-        <MainLayout>
-            <div className="max-w-2xl mx-auto">
-                {/* Account Status Banner */}
-                {currentUser?.account_status === "UNVERIFIED" && (
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6 flex items-start gap-3">
-                        <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                            <p className="font-medium text-blue-900 dark:text-blue-200">Tài khoản chưa xác minh</p>
-                            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                                Dung lượng hiện tại: <span className="font-semibold">{currentUser?.storage_quota_mb || 100}MB</span>. Khi admin phê
-                                duyệt, bạn sẽ nhận được 5GB dung lượng.
-                            </p>
-                        </div>
+        <div className="max-w-2xl mx-auto">
+            {/* Account Status Banner */}
+            {currentUser?.account_status === "UNVERIFIED" && (
+                <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6 flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                        <p className="font-medium text-foreground">Tài khoản chưa xác minh</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Dung lượng hiện tại: <span className="font-semibold text-foreground">{currentUser?.storage_quota_mb || 100}MB</span>. Khi admin phê
+                            duyệt, bạn sẽ nhận được 5GB dung lượng.
+                        </p>
                     </div>
-                )}
+                </div>
+            )}
 
-                {currentUser?.account_status === "VERIFIED" && (
-                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6 flex items-start gap-3">
-                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                            <p className="font-medium text-green-900 dark:text-green-200">Tài khoản đã xác minh</p>
-                            <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                                <HardDrive className="inline h-4 w-4 mr-1" />
-                                Dung lượng sử dụng: <span className="font-semibold">{currentUser?.storage_quota_mb || 5120}MB (5GB)</span>
-                            </p>
-                        </div>
+            {currentUser?.account_status === "VERIFIED" && (
+                <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4 mb-6 flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-secondary mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                        <p className="font-medium text-secondary">Tài khoản đã xác minh</p>
+                        <p className="text-sm text-secondary/80 mt-1">
+                            <HardDrive className="inline h-4 w-4 mr-1" />
+                            Dung lượng sử dụng: <span className="font-semibold">{currentUser?.storage_quota_mb || 5120}MB (5GB)</span>
+                        </p>
                     </div>
-                )}
+                </div>
+            )}
 
-                <CreatePostForm onSubmit={handleCreatePost} isLoading={isCreating} />
+            <CreatePostForm onSubmit={handleCreatePost} isLoading={isCreating} />
 
-                {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-                        <div className="flex items-center justify-between">
-                            <p className="text-red-800 dark:text-red-400">{error instanceof Error ? error.message : "Đã có lỗi xảy ra"}</p>
-                            <Button variant="outline" size="sm" onClick={refresh}>
-                                Thử lại
-                            </Button>
-                        </div>
+            {error && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
+                    <div className="flex items-center justify-between">
+                        <p className="text-destructive font-medium">{error instanceof Error ? error.message : "Đã có lỗi xảy ra"}</p>
+                        <Button variant="outline" size="sm" onClick={refresh} className="border-destructive/30 hover:bg-destructive/10 text-destructive">
+                            Thử lại
+                        </Button>
                     </div>
-                )}
+                </div>
+            )}
 
-                <FeedList
-                    posts={posts}
-                    isLoading={isLoading}
-                    onLike={handleLike}
-                    onComment={handleComment}
-                    onShare={handleShare}
-                    onDelete={handleDeletePost}
-                    onEdit={handleEditPost}
-                    selectedPostId={selectedPostId}
-                    comments={comments}
-                    loadingComments={loadingComments}
-                    onAddComment={handleAddComment}
-                    onDeleteComment={handleDeleteComment}
-                    currentUserId={currentUser?.id}
-                    onRefreshComment={(postId) => loadComments(postId)}
-                />
+            <FeedList
+                posts={posts}
+                isLoading={isLoading}
+                onLike={handleLike}
+                onComment={handleComment}
+                onShare={handleShare}
+                onDelete={handleDeletePost}
+                onEdit={handleEditPost}
+                selectedPostId={selectedPostId}
+                comments={comments}
+                loadingComments={loadingComments}
+                onAddComment={handleAddComment}
+                onDeleteComment={handleDeleteComment}
+                currentUserId={currentUser?.id}
+                onRefreshComment={(postId) => loadComments(postId)}
+            />
 
-                <ShareDialog isOpen={sharePostId !== null} onClose={() => setSharePostId(null)} onShare={handleShareSubmit} />
-            </div>
-        </MainLayout>
+            <ShareDialog isOpen={sharePostId !== null} onClose={() => setSharePostId(null)} onShare={handleShareSubmit} />
+        </div>
     );
 }
+

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { MainLayout } from '@/features/shared/layouts/MainLayout'
 import { useProfile } from '../hooks/useProfile'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -141,17 +140,14 @@ export function PersonalProfilePage() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-etechs-primary"></div>
-        </div>
-      </MainLayout>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-etechs-primary"></div>
+      </div>
     )
   }
 
   return (
-    <MainLayout>
-      <div className="max-w-[1200px] mx-auto px-4 md:px-10 lg:px-40 py-8 space-y-8">
+    <div className="max-w-[1200px] mx-auto px-4 md:px-10 lg:px-40 py-8 space-y-8">
         
         {/* Profile Header Section */}
         <section className="bg-white dark:bg-card rounded-xl p-6 border border-border shadow-sm">
@@ -389,6 +385,5 @@ export function PersonalProfilePage() {
         </section>
 
       </div>
-    </MainLayout>
   )
 }

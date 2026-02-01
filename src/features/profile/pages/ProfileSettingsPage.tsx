@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { MainLayout } from "@/features/shared/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -146,11 +145,9 @@ export function ProfileSettingsPage() {
 
     if (isLoading || !profile) {
         return (
-            <MainLayout>
-                <div className="flex items-center justify-center min-h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-etechs-primary"></div>
-                </div>
-            </MainLayout>
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-etechs-primary"></div>
+            </div>
         );
     }
 
@@ -165,8 +162,7 @@ export function ProfileSettingsPage() {
     ];
 
     return (
-        <MainLayout>
-            <div className="max-w-4xl mx-auto space-y-8 pb-32">
+        <div className="max-w-4xl mx-auto space-y-8 pb-32">
                 {/* Breadcrumbs */}
                 <Breadcrumb>
                     <BreadcrumbList>
@@ -448,7 +444,6 @@ export function ProfileSettingsPage() {
                         </Card>
                     </TabsContent>
                 </Tabs>
-            </div>
 
             {/* Sticky Footer Action Bar */}
             <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-card/80 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 p-4 z-40 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
@@ -541,6 +536,6 @@ export function ProfileSettingsPage() {
                     </div>
                 </div>
             )}
-        </MainLayout>
+        </div>
     );
 }

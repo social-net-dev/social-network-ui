@@ -10,18 +10,29 @@ import './index.css'
 import App from './App.tsx'
 // import { Agentation } from "agentation";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <ThemeProvider>
-            <App />
-          </ThemeProvider>
-        </BrowserRouter>
-        <ReactQueryDevtools initialIsOpen={false} />
-        {/* {import.meta.env.MODE === "development" && <Agentation />} */}
-      </QueryClientProvider>
-    </ErrorBoundary>
-  </StrictMode>,
-)
+const enableMocking = async () => {
+  if (import.meta.env.VITE_USE_MOCK === "true") {
+    const { worker } = await import("./mocks/browser");
+    return worker.start({
+      onUnhandledRequest: "bypass",
+    });
+  }
+};
+
+enableMocking().then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <ThemeProvider>
+              <App />
+            </ThemeProvider>
+          </BrowserRouter>
+          <ReactQueryDevtools initialIsOpen={false} />
+          {/* {import.meta.env.MODE === "development" && <Agentation />} */}
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </StrictMode>,
+  )
+});
