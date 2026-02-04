@@ -1,11 +1,41 @@
 import { Models } from '../generated';
 import { appendAuthToken } from './common';
-import type { Author } from '@/features/home/types/feed.types';
+import type { Author, PersonalInfo } from '@/features/home/types/feed.types';
 
 /**
- * Transform Generated AuthorInfo to Frontend Author model
+ * Extract personal info from bio string if it's JSON
  */
-export const transformAuthor = (author: Models.AuthorInfo | null | undefined): Author => {
+const parseBioInfo = (bio: string | null | undefined): { bioText: string; personalInfo: PersonalInfo } => {
+  if (!bio) return { bioText: '', personalInfo: {} };
+  
+  try {
+    // Check if it's JSON
+    if (bio.startsWith('{') && bio.endsWith('}')) {
+      const parsed = JSON.parse(bio);
+      // If it has our expected fields, it's our structured bio
+      if (parsed.school || parsed.class || parsed.favoriteSubjects || parsed.hobbies || parsed.bioText !== undefined) {
+        return {
+          bioText: parsed.bioText || '',
+          personalInfo: {
+            school: parsed.school,
+            class: parsed.class,
+            favoriteSubjects: parsed.favoriteSubjects,
+            hobbies: parsed.hobbies,
+          }
+        };
+      }
+    }
+  } catch (e) {
+    // Not JSON or parse error
+  }
+  
+  return { bioText: bio, personalInfo: {} };
+};
+
+/**
+ * Transform Generated AuthorInfo/PublicProfileResponse to Frontend Author model
+ */
+export const transformAuthor = (author: Models.AuthorInfo | Models.PublicProfileResponse | null | undefined): Author => {
   if (!author) {
     return {
       id: '',
@@ -15,14 +45,20 @@ export const transformAuthor = (author: Models.AuthorInfo | null | undefined): A
     };
   }
 
+  // bio might not exist on AuthorInfo, but exists on PublicProfileResponse
+  const bio = (author as any).bio;
+  const { bioText, personalInfo } = parseBioInfo(bio);
+
   return {
     id: author.id,
-    displayName: author.display_name,
+    displayName: author.display_name || 'Người dùng',
     avatar: appendAuthToken(author.avatar_path),
     username: author.username || '',
+    bio: bioText,
+    personalInfo,
     // Support legacy fields if needed by components
-    firstName: author.display_name.split(' ')[0] || '',
-    lastName: author.display_name.split(' ').slice(1).join(' ') || '',
+    firstName: (author.display_name || 'Người dùng').split(' ')[0] || '',
+    lastName: (author.display_name || 'Người dùng').split(' ').slice(1).join(' ') || '',
   };
 };
 
@@ -30,6 +66,8 @@ export const transformAuthor = (author: Models.AuthorInfo | null | undefined): A
  * Transform UserMeResponse to Frontend Author model (unified)
  */
 export const transformUserMe = (user: Models.UserMeResponse): Author => {
+  const { bioText, personalInfo } = parseBioInfo(user.bio);
+  
   return {
     id: user.id,
     displayName: user.display_name,
@@ -40,7 +78,8 @@ export const transformUserMe = (user: Models.UserMeResponse): Author => {
     accountStatus: user.account_status,
     storageQuotaMb: user.storage_quota_mb,
     createdAt: user.created_at,
-    bio: user.bio || '',
+    bio: bioText,
+    personalInfo,
     // Default stats for me if missing
     followers: 0,
     following: 0,

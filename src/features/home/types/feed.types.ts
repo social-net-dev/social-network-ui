@@ -6,6 +6,13 @@ import { z } from "zod";
 
 export type ReactionType = "LIKE" | "LOVE" | "HAHA" | "WOW" | "SAD" | "ANGRY";
 
+export interface PersonalInfo {
+  school?: string;
+  class?: string;
+  favoriteSubjects?: string[];
+  hobbies?: string[];
+}
+
 /**
  * Frontend Author Model
  */
@@ -16,6 +23,7 @@ export interface Author {
   username?: string | null;
   role?: string;
   bio?: string;
+  personalInfo?: PersonalInfo;
   birthDate?: string;
   followers?: number;
   following?: number;
@@ -30,6 +38,7 @@ export interface Author {
   lastName?: string;
   email?: string;
 }
+
 
 /**
  * Frontend Media Model

@@ -44,7 +44,8 @@ export function useProfile(userIdParam?: string) {
   const updateProfileMutation = UsersAPI.useUpdateMyProfileUsersMeProfilePatch({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
+        queryClient.invalidateQueries({ queryKey: UsersAPI.getMeAliasUsersMeGetQueryKey() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.profile.all })
       },
     }
   })
@@ -52,7 +53,7 @@ export function useProfile(userIdParam?: string) {
   const updatePrivacyMutation = ProfilesAPI.useUpdateMyPrivacyUsersMePrivacyPatch({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
+        queryClient.invalidateQueries({ queryKey: UsersAPI.getMeAliasUsersMeGetQueryKey() })
       },
     }
   })
@@ -60,7 +61,7 @@ export function useProfile(userIdParam?: string) {
   const uploadAvatarMutation = UsersAPI.useUploadMyAvatarUsersMeAvatarPost({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
+        queryClient.invalidateQueries({ queryKey: UsersAPI.getMeAliasUsersMeGetQueryKey() })
       },
     }
   })

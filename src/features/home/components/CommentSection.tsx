@@ -15,6 +15,7 @@ import {
 import { useComments } from "../hooks/useComments";
 import { useMediaBlobs } from "../hooks/useMedia";
 import { getErrorMessage } from "@/lib/api/transforms";
+import type { FeedComment } from "../types/feed.types";
 
 interface CommentSectionProps {
   postId: string;
@@ -111,7 +112,7 @@ export function CommentSection({
       </form>
 
       <div className="space-y-4">
-        {comments.map((comment: any) => (
+        {comments.map((comment) => (
           <CommentItem 
             key={comment.id} 
             comment={comment} 
@@ -122,8 +123,8 @@ export function CommentSection({
               inputRef.current?.focus();
             }}
             onDelete={deleteComment}
-            onUpdate={updateComment}
-            onLike={reactToComment}
+            onUpdate={async (id, content) => { await updateComment(id, content); }}
+            onLike={async (id, reaction) => { await reactToComment(id, reaction); }}
           />
         ))}
       </div>
@@ -131,18 +132,27 @@ export function CommentSection({
   );
 }
 
-function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, onLike }: any) {
+interface CommentItemProps {
+  comment: FeedComment;
+  currentUserId?: string;
+  onReply: (id: string, name: string) => void;
+  onDelete: (id: string) => Promise<void>;
+  onUpdate: (id: string, content: string) => Promise<void>;
+  onLike: (id: string, reaction: string | null) => Promise<void>;
+}
+
+function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, onLike }: CommentItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const { data: mediaUrls = [] } = useMediaBlobs(comment.mediaUrls || []);
-  const isAuthor = currentUserId === (comment.author?.id || comment.authorId);
+  const isAuthor = currentUserId === comment.author.id;
 
   return (
     <div className="flex items-start space-x-3">
       <Avatar user={comment.author} size="sm" />
       <div className="flex-1">
         <div className="bg-white dark:bg-[#0A2737] rounded-lg px-3 py-2">
-          <p className="font-semibold text-sm">{comment.author?.displayName}</p>
+          <p className="font-semibold text-sm">{comment.author.displayName}</p>
           {isEditing ? (
             <div className="mt-2">
               <textarea 
@@ -169,11 +179,11 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, onLi
         </div>
         <div className="flex items-center gap-4 mt-1 ml-2 text-xs text-gray-500">
           <span>{new Date(comment.createdAt).toLocaleDateString("vi-VN")}</span>
-          <button onClick={() => onLike(comment.id, comment.userReaction)} className={`flex items-center gap-1 ${comment.userReaction ? 'text-red-500' : ''}`}>
+          <button onClick={() => onLike(comment.id, comment.userReaction ? null : "LIKE")} className={`flex items-center gap-1 ${comment.userReaction ? 'text-red-500' : ''}`}>
             <Heart className={`w-3 h-3 ${comment.userReaction ? 'fill-current' : ''}`} />
-            {comment.stats?.reactions || 0}
+            {comment.stats.reactions}
           </button>
-          <button onClick={() => onReply(comment.id, comment.author?.displayName)} className="flex items-center gap-1">
+          <button onClick={() => onReply(comment.id, comment.author.displayName)} className="flex items-center gap-1">
             <Reply className="w-3 h-3" />
             Phản hồi
           </button>

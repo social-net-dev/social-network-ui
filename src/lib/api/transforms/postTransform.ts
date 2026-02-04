@@ -1,7 +1,7 @@
 import { Models } from '../generated';
 import { transformAuthor } from './userTransform';
 import { appendAuthToken } from './common';
-import type { FeedPost, ReactionType } from '@/features/home/types/feed.types';
+import type { FeedPost, FeedComment, ReactionType } from '@/features/home/types/feed.types';
 
 /**
  * Transform Generated PostOut/PostDetailOut to Frontend FeedPost
@@ -33,11 +33,12 @@ export const transformPost = (post: Models.PostOut | Models.PostDetailOut): Feed
 /**
  * Transform Generated CommentOut to Frontend Comment
  */
-export const transformComment = (comment: Models.CommentOut) => {
+export const transformComment = (comment: Models.CommentOut): FeedComment => {
   return {
     id: comment.id,
     postId: comment.post_id,
     author: transformAuthor(comment.author),
+    parentCommentId: comment.parent_comment_id || null,
     content: comment.content_text,
     mediaUrls: (comment.media_files || []).map(m => appendAuthToken(m.file_url)),
     stats: {

@@ -24,19 +24,24 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
   useEffect(() => {
     const duration = 1500
     const steps = 60
+    const safeStats = {
+        posts: stats?.posts || 0,
+        followers: stats?.followers || 0,
+        following: stats?.following || 0
+    }
     const increment = {
-      posts: stats.posts / steps,
-      followers: stats.followers / steps,
-      following: stats.following / steps
+      posts: safeStats.posts / steps,
+      followers: safeStats.followers / steps,
+      following: safeStats.following / steps
     }
 
     let currentStep = 0
     const timer = setInterval(() => {
       currentStep++
       setAnimatedValues(prev => ({
-        posts: Math.min(Math.floor(prev.posts + increment.posts), stats.posts),
-        followers: Math.min(Math.floor(prev.followers + increment.followers), stats.followers),
-        following: Math.min(Math.floor(prev.following + increment.following), stats.following)
+        posts: Math.min(Math.floor(prev.posts + increment.posts), safeStats.posts),
+        followers: Math.min(Math.floor(prev.followers + increment.followers), safeStats.followers),
+        following: Math.min(Math.floor(prev.following + increment.following), safeStats.following)
       }))
 
       if (currentStep >= steps) {
