@@ -2,48 +2,15 @@ import { Avatar } from "@/features/shared/components/Avatar";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import type { Post as PostType } from "../types/feed.types";
-import { feedApi } from "../services/feedApi";
-import { useState, useEffect } from "react";
+import { useMediaBlobs } from "../hooks/useMedia";
 
 interface SharedPostCardProps {
   post: PostType;
 }
 
 export function SharedPostCard({ post }: SharedPostCardProps) {
-  const [blobUrls, setBlobUrls] = useState<string[]>([]);
-  const [loadingImages, setLoadingImages] = useState(true);
-
-  const createdAt =
-    post.createdAt ?? post.created_at ?? new Date().toISOString();
-  const timeAgo = formatDistanceToNow(new Date(createdAt), {
-    addSuffix: true,
-    locale: vi,
-  });
-
-  const content = post.content ?? post.content_text ?? "";
   const images = post.images ?? post.media_urls ?? post.media_paths ?? [];
-
-  useEffect(() => {
-    if (images.length === 0) {
-      setLoadingImages(false);
-      return;
-    }
-
-    const fetchImages = async () => {
-      setLoadingImages(true);
-      const urls = await Promise.all(
-        images.map((url) => feedApi.fetchMediaAsBlob(url)),
-      );
-      setBlobUrls(urls.filter((u) => u !== ""));
-      setLoadingImages(false);
-    };
-
-    fetchImages();
-
-    return () => {
-      blobUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [post.id, images.length]);
+  const { data: blobUrls = [], isLoading: loadingImages } = useMediaBlobs(images);
 
   const a = post.author as any;
   const display = a?.display_name || "";

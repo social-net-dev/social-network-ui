@@ -38,35 +38,12 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Register
  */
-export type registerAuthRegisterPostResponse200 = {
-  data: RegisterResponse
-  status: 200
-}
-
-export type registerAuthRegisterPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type registerAuthRegisterPostResponseSuccess = (registerAuthRegisterPostResponse200) & {
-  headers: Headers;
-};
-export type registerAuthRegisterPostResponseError = (registerAuthRegisterPostResponse422) & {
-  headers: Headers;
-};
-
-export type registerAuthRegisterPostResponse = (registerAuthRegisterPostResponseSuccess | registerAuthRegisterPostResponseError)
-
-export const getRegisterAuthRegisterPostUrl = () => {
-
-
-  
-
-  return `/auth/register`
-}
-
-export const registerAuthRegisterPost = async (bodyRegisterAuthRegisterPost: BodyRegisterAuthRegisterPost, options?: RequestInit): Promise<registerAuthRegisterPostResponse> => {
-    const formData = new FormData();
+export const registerAuthRegisterPost = (
+    bodyRegisterAuthRegisterPost: BodyType<BodyRegisterAuthRegisterPost>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 formData.append(`email`, bodyRegisterAuthRegisterPost.email);
 if(bodyRegisterAuthRegisterPost.phone !== undefined && bodyRegisterAuthRegisterPost.phone !== null) {
  formData.append(`phone`, bodyRegisterAuthRegisterPost.phone);
@@ -80,17 +57,14 @@ formData.append(`consent`, bodyRegisterAuthRegisterPost.consent.toString())
 formData.append(`cccd_front`, bodyRegisterAuthRegisterPost.cccd_front);
 formData.append(`cccd_back`, bodyRegisterAuthRegisterPost.cccd_back);
 
-  return customInstance<registerAuthRegisterPostResponse>(getRegisterAuthRegisterPostUrl(),
-  {      
-    ...options,
-    method: 'POST'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<RegisterResponse>(
+      {url: `/auth/register`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+  
 
 
 export const getRegisterAuthRegisterPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -140,35 +114,12 @@ export const useRegisterAuthRegisterPost = <TError = ErrorType<HTTPValidationErr
     /**
  * @summary Login
  */
-export type loginAuthLoginPostResponse200 = {
-  data: TokenResponse
-  status: 200
-}
-
-export type loginAuthLoginPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type loginAuthLoginPostResponseSuccess = (loginAuthLoginPostResponse200) & {
-  headers: Headers;
-};
-export type loginAuthLoginPostResponseError = (loginAuthLoginPostResponse422) & {
-  headers: Headers;
-};
-
-export type loginAuthLoginPostResponse = (loginAuthLoginPostResponseSuccess | loginAuthLoginPostResponseError)
-
-export const getLoginAuthLoginPostUrl = () => {
-
-
-  
-
-  return `/auth/login`
-}
-
-export const loginAuthLoginPost = async (bodyLoginAuthLoginPost: BodyLoginAuthLoginPost, options?: RequestInit): Promise<loginAuthLoginPostResponse> => {
-    const formUrlEncoded = new URLSearchParams();
+export const loginAuthLoginPost = (
+    bodyLoginAuthLoginPost: BodyType<BodyLoginAuthLoginPost>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formUrlEncoded = new URLSearchParams();
 if(bodyLoginAuthLoginPost.remember_me !== undefined) {
  formUrlEncoded.append(`remember_me`, bodyLoginAuthLoginPost.remember_me.toString())
  }
@@ -187,17 +138,14 @@ if(bodyLoginAuthLoginPost.client_secret !== undefined && bodyLoginAuthLoginPost.
  formUrlEncoded.append(`client_secret`, bodyLoginAuthLoginPost.client_secret);
  }
 
-  return customInstance<loginAuthLoginPostResponse>(getLoginAuthLoginPostUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...options?.headers },
-    body: 
-      formUrlEncoded,
-  }
-);}
-
-
+      return customInstance<TokenResponse>(
+      {url: `/auth/login`, method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded', },
+       data: formUrlEncoded, signal
+    },
+      options);
+    }
+  
 
 
 export const getLoginAuthLoginPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -247,46 +195,20 @@ export const useLoginAuthLoginPost = <TError = ErrorType<HTTPValidationError>,
     /**
  * @summary Refresh
  */
-export type refreshAuthRefreshPostResponse200 = {
-  data: TokenResponse
-  status: 200
-}
-
-export type refreshAuthRefreshPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type refreshAuthRefreshPostResponseSuccess = (refreshAuthRefreshPostResponse200) & {
-  headers: Headers;
-};
-export type refreshAuthRefreshPostResponseError = (refreshAuthRefreshPostResponse422) & {
-  headers: Headers;
-};
-
-export type refreshAuthRefreshPostResponse = (refreshAuthRefreshPostResponseSuccess | refreshAuthRefreshPostResponseError)
-
-export const getRefreshAuthRefreshPostUrl = () => {
-
-
+export const refreshAuthRefreshPost = (
+    refreshRequest: BodyType<RefreshRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<TokenResponse>(
+      {url: `/auth/refresh`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: refreshRequest, signal
+    },
+      options);
+    }
   
-
-  return `/auth/refresh`
-}
-
-export const refreshAuthRefreshPost = async (refreshRequest: RefreshRequest, options?: RequestInit): Promise<refreshAuthRefreshPostResponse> => {
-  
-  return customInstance<refreshAuthRefreshPostResponse>(getRefreshAuthRefreshPostUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      refreshRequest,)
-  }
-);}
-
-
 
 
 export const getRefreshAuthRefreshPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -336,46 +258,20 @@ export const useRefreshAuthRefreshPost = <TError = ErrorType<HTTPValidationError
     /**
  * @summary Logout
  */
-export type logoutAuthLogoutPostResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type logoutAuthLogoutPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type logoutAuthLogoutPostResponseSuccess = (logoutAuthLogoutPostResponse200) & {
-  headers: Headers;
-};
-export type logoutAuthLogoutPostResponseError = (logoutAuthLogoutPostResponse422) & {
-  headers: Headers;
-};
-
-export type logoutAuthLogoutPostResponse = (logoutAuthLogoutPostResponseSuccess | logoutAuthLogoutPostResponseError)
-
-export const getLogoutAuthLogoutPostUrl = () => {
-
-
+export const logoutAuthLogoutPost = (
+    logoutRequest: BodyType<LogoutRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/auth/logout`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: logoutRequest, signal
+    },
+      options);
+    }
   
-
-  return `/auth/logout`
-}
-
-export const logoutAuthLogoutPost = async (logoutRequest: LogoutRequest, options?: RequestInit): Promise<logoutAuthLogoutPostResponse> => {
-  
-  return customInstance<logoutAuthLogoutPostResponse>(getLogoutAuthLogoutPostUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      logoutRequest,)
-  }
-);}
-
-
 
 
 export const getLogoutAuthLogoutPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -425,46 +321,20 @@ export const useLogoutAuthLogoutPost = <TError = ErrorType<HTTPValidationError>,
     /**
  * @summary Otp Send
  */
-export type otpSendAuthOtpSendPostResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type otpSendAuthOtpSendPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type otpSendAuthOtpSendPostResponseSuccess = (otpSendAuthOtpSendPostResponse200) & {
-  headers: Headers;
-};
-export type otpSendAuthOtpSendPostResponseError = (otpSendAuthOtpSendPostResponse422) & {
-  headers: Headers;
-};
-
-export type otpSendAuthOtpSendPostResponse = (otpSendAuthOtpSendPostResponseSuccess | otpSendAuthOtpSendPostResponseError)
-
-export const getOtpSendAuthOtpSendPostUrl = () => {
-
-
+export const otpSendAuthOtpSendPost = (
+    otpSendRequest: BodyType<OtpSendRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/auth/otp/send`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: otpSendRequest, signal
+    },
+      options);
+    }
   
-
-  return `/auth/otp/send`
-}
-
-export const otpSendAuthOtpSendPost = async (otpSendRequest: OtpSendRequest, options?: RequestInit): Promise<otpSendAuthOtpSendPostResponse> => {
-  
-  return customInstance<otpSendAuthOtpSendPostResponse>(getOtpSendAuthOtpSendPostUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      otpSendRequest,)
-  }
-);}
-
-
 
 
 export const getOtpSendAuthOtpSendPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -514,46 +384,20 @@ export const useOtpSendAuthOtpSendPost = <TError = ErrorType<HTTPValidationError
     /**
  * @summary Otp Verify
  */
-export type otpVerifyAuthOtpVerifyPostResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type otpVerifyAuthOtpVerifyPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type otpVerifyAuthOtpVerifyPostResponseSuccess = (otpVerifyAuthOtpVerifyPostResponse200) & {
-  headers: Headers;
-};
-export type otpVerifyAuthOtpVerifyPostResponseError = (otpVerifyAuthOtpVerifyPostResponse422) & {
-  headers: Headers;
-};
-
-export type otpVerifyAuthOtpVerifyPostResponse = (otpVerifyAuthOtpVerifyPostResponseSuccess | otpVerifyAuthOtpVerifyPostResponseError)
-
-export const getOtpVerifyAuthOtpVerifyPostUrl = () => {
-
-
+export const otpVerifyAuthOtpVerifyPost = (
+    otpVerifyRequest: BodyType<OtpVerifyRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/auth/otp/verify`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: otpVerifyRequest, signal
+    },
+      options);
+    }
   
-
-  return `/auth/otp/verify`
-}
-
-export const otpVerifyAuthOtpVerifyPost = async (otpVerifyRequest: OtpVerifyRequest, options?: RequestInit): Promise<otpVerifyAuthOtpVerifyPostResponse> => {
-  
-  return customInstance<otpVerifyAuthOtpVerifyPostResponse>(getOtpVerifyAuthOtpVerifyPostUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      otpVerifyRequest,)
-  }
-);}
-
-
 
 
 export const getOtpVerifyAuthOtpVerifyPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -604,46 +448,20 @@ export const useOtpVerifyAuthOtpVerifyPost = <TError = ErrorType<HTTPValidationE
  * Send OTP to email for password reset
  * @summary Forgot Password
  */
-export type forgotPasswordAuthForgotPasswordPostResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type forgotPasswordAuthForgotPasswordPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type forgotPasswordAuthForgotPasswordPostResponseSuccess = (forgotPasswordAuthForgotPasswordPostResponse200) & {
-  headers: Headers;
-};
-export type forgotPasswordAuthForgotPasswordPostResponseError = (forgotPasswordAuthForgotPasswordPostResponse422) & {
-  headers: Headers;
-};
-
-export type forgotPasswordAuthForgotPasswordPostResponse = (forgotPasswordAuthForgotPasswordPostResponseSuccess | forgotPasswordAuthForgotPasswordPostResponseError)
-
-export const getForgotPasswordAuthForgotPasswordPostUrl = () => {
-
-
+export const forgotPasswordAuthForgotPasswordPost = (
+    otpSendRequest: BodyType<OtpSendRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/auth/forgot-password`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: otpSendRequest, signal
+    },
+      options);
+    }
   
-
-  return `/auth/forgot-password`
-}
-
-export const forgotPasswordAuthForgotPasswordPost = async (otpSendRequest: OtpSendRequest, options?: RequestInit): Promise<forgotPasswordAuthForgotPasswordPostResponse> => {
-  
-  return customInstance<forgotPasswordAuthForgotPasswordPostResponse>(getForgotPasswordAuthForgotPasswordPostUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      otpSendRequest,)
-  }
-);}
-
-
 
 
 export const getForgotPasswordAuthForgotPasswordPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -694,50 +512,24 @@ export const useForgotPasswordAuthForgotPasswordPost = <TError = ErrorType<HTTPV
  * Reset password using OTP verification
  * @summary Reset Password
  */
-export type resetPasswordAuthResetPasswordPostResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type resetPasswordAuthResetPasswordPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type resetPasswordAuthResetPasswordPostResponseSuccess = (resetPasswordAuthResetPasswordPostResponse200) & {
-  headers: Headers;
-};
-export type resetPasswordAuthResetPasswordPostResponseError = (resetPasswordAuthResetPasswordPostResponse422) & {
-  headers: Headers;
-};
-
-export type resetPasswordAuthResetPasswordPostResponse = (resetPasswordAuthResetPasswordPostResponseSuccess | resetPasswordAuthResetPasswordPostResponseError)
-
-export const getResetPasswordAuthResetPasswordPostUrl = () => {
-
-
-  
-
-  return `/auth/reset-password`
-}
-
-export const resetPasswordAuthResetPasswordPost = async (bodyResetPasswordAuthResetPasswordPost: BodyResetPasswordAuthResetPasswordPost, options?: RequestInit): Promise<resetPasswordAuthResetPasswordPostResponse> => {
-    const formUrlEncoded = new URLSearchParams();
+export const resetPasswordAuthResetPasswordPost = (
+    bodyResetPasswordAuthResetPasswordPost: BodyType<BodyResetPasswordAuthResetPasswordPost>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formUrlEncoded = new URLSearchParams();
 formUrlEncoded.append(`email`, bodyResetPasswordAuthResetPasswordPost.email);
 formUrlEncoded.append(`otp_code`, bodyResetPasswordAuthResetPasswordPost.otp_code);
 formUrlEncoded.append(`new_password`, bodyResetPasswordAuthResetPasswordPost.new_password);
 
-  return customInstance<resetPasswordAuthResetPasswordPostResponse>(getResetPasswordAuthResetPasswordPostUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...options?.headers },
-    body: 
-      formUrlEncoded,
-  }
-);}
-
-
+      return customInstance<unknown>(
+      {url: `/auth/reset-password`, method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded', },
+       data: formUrlEncoded, signal
+    },
+      options);
+    }
+  
 
 
 export const getResetPasswordAuthResetPasswordPostMutationOptions = <TError = ErrorType<HTTPValidationError>,

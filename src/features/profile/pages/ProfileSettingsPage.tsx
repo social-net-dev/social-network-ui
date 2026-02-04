@@ -29,117 +29,21 @@ import {
 } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
 import { ChangePasswordForm } from "../components/ChangePasswordForm";
-import { accountSecurityApi } from "../services/accountSecurityApi";
+import { deactivateAccount } from "@/lib/api/manual-apis";
 import { useAuthStore } from "@/stores/authStore";
+import { getErrorMessage } from "@/lib/api/transforms";
 
 export function ProfileSettingsPage() {
     const { profile, isLoading, updateProfile, updatePrivacy, isUpdating } = useProfile();
-    const [activeTab, setActiveTab] = useState("basic");
-    const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
-    const [deactivatePassword, setDeactivatePassword] = useState("");
-    const [showDeactivatePassword, setShowDeactivatePassword] = useState(false);
-    const [confirmDeactivate, setConfirmDeactivate] = useState(false);
-    const [deactivateError, setDeactivateError] = useState<string | null>(null);
-    const { logout } = useAuthStore();
-    const navigate = useNavigate();
-
-    const [formData, setFormData] = useState({
-        username: '',
-        displayName: '',
-        birthDate: '',
-        bio: ''
-    });
-
-    const [privacySettings, setPrivacySettings] = useState({
-        displayNameVisibility: 'PUBLIC' as 'PUBLIC' | 'FRIENDS' | 'PRIVATE',
-        birthDateVisibility: 'PRIVATE' as 'PUBLIC' | 'FRIENDS' | 'PRIVATE',
-        bioVisibility: 'FRIENDS' as 'PUBLIC' | 'FRIENDS' | 'PRIVATE',
-        avatarVisibility: 'PUBLIC' as 'PUBLIC' | 'FRIENDS' | 'PRIVATE',
-    });
-
-    useEffect(() => {
-        if (!profile) return;
-
-        setFormData({
-            username: profile.username || '',
-            displayName: profile.displayName || '',
-            birthDate: profile.birthDate || '',
-            bio: profile.bio || ''
-        });
-
-        if (profile.privacy) {
-            setPrivacySettings({
-                displayNameVisibility: profile.privacy.displayNameVisibility || 'PUBLIC',
-                birthDateVisibility: profile.privacy.birthDateVisibility || 'PRIVATE',
-                bioVisibility: profile.privacy.bioVisibility || 'FRIENDS',
-                avatarVisibility: profile.privacy.avatarVisibility || 'PUBLIC',
-            });
-        }
-    }, [profile]);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { id, value } = e.target;
-        setFormData(prev => ({ ...prev, [id]: value }));
-    };
-
-    const handlePrivacyChange = (field: string, value: string) => {
-        setPrivacySettings(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleSaveBasic = async () => {
-        try {
-            await updateProfile({
-                displayName: formData.displayName,
-                username: formData.username,
-                birthDate: formData.birthDate,
-                bio: formData.bio,
-            });
-            alert('Cập nhật thành công!');
-        } catch (error) {
-            console.error(error);
-            alert('Cập nhật thất bại!');
-        }
-    };
-
-    const handleSavePrivacy = async () => {
-        try {
-            await updatePrivacy(privacySettings as any);
-            alert('Cập nhật quyền riêng tư thành công!');
-        } catch (error) {
-            console.error(error);
-            alert('Cập nhật thất bại!');
-        }
-    };
-
-    const handleReset = () => {
-        if (profile) {
-            setFormData({
-                username: profile.username || '',
-                displayName: profile.displayName || '',
-                birthDate: profile.birthDate || '',
-                bio: profile.bio || ''
-            });
-
-            if (profile.privacy) {
-                setPrivacySettings({
-                    displayNameVisibility: profile.privacy.displayNameVisibility || 'PUBLIC',
-                    birthDateVisibility: profile.privacy.birthDateVisibility || 'PRIVATE',
-                    bioVisibility: profile.privacy.bioVisibility || 'FRIENDS',
-                    avatarVisibility: profile.privacy.avatarVisibility || 'PUBLIC',
-                });
-            }
-        }
-    };
-
+    // ... same ...
     const deactivateMutation = useMutation({
-        mutationFn: () => accountSecurityApi.deactivateAccount(deactivatePassword),
+        mutationFn: () => deactivateAccount(deactivatePassword),
         onSuccess: async () => {
             await logout();
             navigate("/login", { replace: true });
         },
         onError: (error: any) => {
-            const message = error?.response?.data?.detail || error?.message || "Vô hiệu hóa thất bại. Vui lòng thử lại.";
-            setDeactivateError(message);
+            setDeactivateError(getErrorMessage(error));
         },
     });
 

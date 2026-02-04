@@ -19,5 +19,18 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      ...reactHooks.configs.flat.recommended.rules,
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['**/features/*/services/*Api'],
+          message: 'Vui lòng sử dụng generated hooks từ @/lib/api/generated thay vì viết manual API services.'
+        }]
+      }]
+    },
   },
 ])

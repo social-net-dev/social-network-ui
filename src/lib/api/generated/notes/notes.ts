@@ -40,38 +40,18 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary List Notes
  */
-export type listNotesNotesGetResponse200 = {
-  data: NoteResponse[]
-  status: 200
-}
+export const listNotesNotesGet = (
     
-export type listNotesNotesGetResponseSuccess = (listNotesNotesGetResponse200) & {
-  headers: Headers;
-};
-;
-
-export type listNotesNotesGetResponse = (listNotesNotesGetResponseSuccess)
-
-export const getListNotesNotesGetUrl = () => {
-
-
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<NoteResponse[]>(
+      {url: `/notes`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/notes`
-}
-
-export const listNotesNotesGet = async ( options?: RequestInit): Promise<listNotesNotesGetResponse> => {
-  
-  return customInstance<listNotesNotesGetResponse>(getListNotesNotesGetUrl(),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -91,7 +71,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listNotesNotesGet>>> = ({ signal }) => listNotesNotesGet({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listNotesNotesGet>>> = ({ signal }) => listNotesNotesGet(requestOptions, signal);
 
       
 
@@ -150,46 +130,20 @@ export function useListNotesNotesGet<TData = Awaited<ReturnType<typeof listNotes
 /**
  * @summary Create Note
  */
-export type createNoteNotesPostResponse200 = {
-  data: NoteResponse
-  status: 200
-}
-
-export type createNoteNotesPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type createNoteNotesPostResponseSuccess = (createNoteNotesPostResponse200) & {
-  headers: Headers;
-};
-export type createNoteNotesPostResponseError = (createNoteNotesPostResponse422) & {
-  headers: Headers;
-};
-
-export type createNoteNotesPostResponse = (createNoteNotesPostResponseSuccess | createNoteNotesPostResponseError)
-
-export const getCreateNoteNotesPostUrl = () => {
-
-
+export const createNoteNotesPost = (
+    noteCreate: BodyType<NoteCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<NoteResponse>(
+      {url: `/notes`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: noteCreate, signal
+    },
+      options);
+    }
   
-
-  return `/notes`
-}
-
-export const createNoteNotesPost = async (noteCreate: NoteCreate, options?: RequestInit): Promise<createNoteNotesPostResponse> => {
-  
-  return customInstance<createNoteNotesPostResponse>(getCreateNoteNotesPostUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      noteCreate,)
-  }
-);}
-
-
 
 
 export const getCreateNoteNotesPostMutationOptions = <TError = ErrorType<HTTPValidationError>,

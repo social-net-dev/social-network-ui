@@ -1,9 +1,9 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { feedApi } from "../services/feedApi";
+import { useQueryClient } from "@tanstack/react-query";
+import { PostsV2API, PostsAPI } from "@/lib/api/generated";
+import { transformPost } from "@/lib/api/transforms";
 import type { Post } from "../types/feed.types";
 import { queryKeys } from "@/lib/query-keys";
-import { useQueryClient } from "@tanstack/react-query";
 
 export function useFeed() {
   const queryClient = useQueryClient();
@@ -11,99 +11,87 @@ export function useFeed() {
   const [hasMore, setHasMore] = useState(true);
 
   const pageSize = 10;
-  const query = useQuery({
-    queryKey: queryKeys.feed.posts(page),
-    queryFn: async () => {
-      const result = await feedApi.getPosts(page, pageSize, {
-        all_tenants: true,
-      });
-      setHasMore(page < result.total_pages);
-      return result;
-    },
-    refetchOnMount: "always",
-    staleTime: 0,
+  
+  const query = PostsV2API.useGetFeedV2FeedGet({
+    all_tenants: true,
+  }, {
+    query: {
+      refetchOnMount: "always",
+      staleTime: 0,
+    }
   });
 
   const posts = useMemo(() => {
     const allPages: Post[] = [];
     for (let i = 1; i <= page; i++) {
-      const pageData = queryClient.getQueryData<{
-        posts: Post[];
-        total_pages: number;
-        total: number;
-      }>(queryKeys.feed.posts(i));
-      if (pageData?.posts) {
-        allPages.push(...pageData.posts);
+      const pageData = queryClient.getQueryData<any>(queryKeys.feed.posts(i));
+      const rawPosts = pageData?.data?.posts || pageData?.posts || pageData?.items || [];
+      if (Array.isArray(rawPosts)) {
+        allPages.push(...rawPosts.map(transformPost) as Post[]);
       }
     }
     return allPages;
-  }, [page, queryClient, query.data]);
+  }, [page, queryClient]);
 
-  useEffect(() => {
-    try {
-      console.debug("[useFeed] posts count=", posts.length, "page=", page);
-    } catch (e) {}
-  }, [posts, page]);
+  const hasMoreData = useMemo(() => {
+    const data = query.data as any;
+    if (!data) return true;
+    const totalPages = data.total_pages || data.data?.total_pages || 1;
+    return page < totalPages;
+  }, [query.data, page]);
 
-  const createMutation = useMutation({
-    // mutation expects FormData
-    mutationFn: (form: FormData) => feedApi.createPost(form as any),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed.posts(1) });
-    },
+  const createMutation = PostsV2API.useCreatePostV2PostsPost({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.feed.posts(1) });
+      },
+    }
   });
 
-  const reactMutation = useMutation({
-    mutationFn: ({
-      postId,
-      reaction,
-    }: {
-      postId: string;
-      reaction: string | null;
-    }) => feedApi.reactToPost(postId, reaction),
-  });
+  const reactMutation = PostsV2API.useReactToPostV2PostsPostIdReactionsPost();
 
   const createPost = useCallback(
     (content: string, files: File[]) => {
-      const form = new FormData();
-      form.append("content_text", content);
-      form.append("visibility", "PUBLIC");
-      files?.forEach((f) => form.append("files", f));
-      return createMutation.mutateAsync(form);
+      return createMutation.mutateAsync({
+        data: {
+          content_text: content,
+          visibility: "PUBLIC",
+          files,
+        }
+      });
     },
     [createMutation],
   );
+
 
   const likePost = useCallback(
     (postId: string, liked: boolean) => {
       const reaction = liked ? "LIKE" : null;
       for (let i = 1; i <= page; i++) {
-        queryClient.setQueryData<{
-          posts: Post[];
-          total_pages: number;
-          total: number;
-        }>(queryKeys.feed.posts(i), (old) => {
-          if (!old?.posts) return old;
+        queryClient.setQueryData<any>(queryKeys.feed.posts(i), (old: any) => {
+          if (!old) return old;
+          const postsKey = old.posts ? 'posts' : 'items';
+          if (!old[postsKey]) return old;
+          
           return {
             ...old,
-            posts: old.posts.map((post) => {
+            [postsKey]: old[postsKey].map((post: any) => {
               if (post.id !== postId) return post;
-              const currentLikes =
-                (post as any).likes ?? (post as any).reaction_count ?? 0;
+              const currentLikes = post.reaction_count ?? post.likes ?? 0;
               const delta = liked ? 1 : -1;
-              const newLikes = Math.max(0, currentLikes + delta);
               return {
                 ...post,
-                likedByCurrentUser: liked,
                 user_reaction: reaction,
-                likes: newLikes,
-                reaction_count: newLikes,
-              } as Post;
+                reaction_count: Math.max(0, currentLikes + delta),
+              };
             }),
           };
         });
       }
-      return reactMutation.mutateAsync({ postId, reaction });
+      return reactMutation.mutateAsync({ 
+        postId, 
+        data: { reaction: reaction as string } 
+      });
     },
     [page, queryClient, reactMutation],
   );
@@ -125,7 +113,7 @@ export function useFeed() {
     posts,
     isLoading: query.isPending,
     error: query.error,
-    hasMore,
+    hasMore: hasMoreData,
     createPost,
     likePost,
     loadMore,

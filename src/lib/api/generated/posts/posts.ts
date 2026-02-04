@@ -61,35 +61,12 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * Create a new post with multiple media files and text content
  * @summary Create Post
  */
-export type createPostPostsPostResponse200 = {
-  data: PostOut
-  status: 200
-}
-
-export type createPostPostsPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type createPostPostsPostResponseSuccess = (createPostPostsPostResponse200) & {
-  headers: Headers;
-};
-export type createPostPostsPostResponseError = (createPostPostsPostResponse422) & {
-  headers: Headers;
-};
-
-export type createPostPostsPostResponse = (createPostPostsPostResponseSuccess | createPostPostsPostResponseError)
-
-export const getCreatePostPostsPostUrl = () => {
-
-
-  
-
-  return `/posts`
-}
-
-export const createPostPostsPost = async (bodyCreatePostPostsPost: BodyCreatePostPostsPost, options?: RequestInit): Promise<createPostPostsPostResponse> => {
-    const formData = new FormData();
+export const createPostPostsPost = (
+    bodyCreatePostPostsPost: BodyType<BodyCreatePostPostsPost>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 formData.append(`content_text`, bodyCreatePostPostsPost.content_text);
 if(bodyCreatePostPostsPost.visibility !== undefined) {
  formData.append(`visibility`, bodyCreatePostPostsPost.visibility);
@@ -98,17 +75,14 @@ if(bodyCreatePostPostsPost.files !== undefined) {
  bodyCreatePostPostsPost.files.forEach(value => formData.append(`files`, value));
  }
 
-  return customInstance<createPostPostsPostResponse>(getCreatePostPostsPostUrl(),
-  {      
-    ...options,
-    method: 'POST'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<PostOut>(
+      {url: `/posts`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+  
 
 
 export const getCreatePostPostsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -159,45 +133,18 @@ export const useCreatePostPostsPost = <TError = ErrorType<HTTPValidationError>,
  * Get detailed information about a specific post
  * @summary Get Post
  */
-export type getPostPostsPostIdGetResponse200 = {
-  data: PostDetailOut
-  status: 200
-}
-
-export type getPostPostsPostIdGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type getPostPostsPostIdGetResponseSuccess = (getPostPostsPostIdGetResponse200) & {
-  headers: Headers;
-};
-export type getPostPostsPostIdGetResponseError = (getPostPostsPostIdGetResponse422) & {
-  headers: Headers;
-};
-
-export type getPostPostsPostIdGetResponse = (getPostPostsPostIdGetResponseSuccess | getPostPostsPostIdGetResponseError)
-
-export const getGetPostPostsPostIdGetUrl = (postId: string,) => {
-
-
+export const getPostPostsPostIdGet = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PostDetailOut>(
+      {url: `/posts/${postId}`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}`
-}
-
-export const getPostPostsPostIdGet = async (postId: string, options?: RequestInit): Promise<getPostPostsPostIdGetResponse> => {
-  
-  return customInstance<getPostPostsPostIdGetResponse>(getGetPostPostsPostIdGetUrl(postId),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -217,7 +164,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPostPostsPostIdGet>>> = ({ signal }) => getPostPostsPostIdGet(postId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPostPostsPostIdGet>>> = ({ signal }) => getPostPostsPostIdGet(postId, requestOptions, signal);
 
       
 
@@ -277,47 +224,21 @@ export function useGetPostPostsPostIdGet<TData = Awaited<ReturnType<typeof getPo
  * Update a post (only author can update)
  * @summary Update Post
  */
-export type updatePostPostsPostIdPutResponse200 = {
-  data: PostOut
-  status: 200
-}
-
-export type updatePostPostsPostIdPutResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type updatePostPostsPostIdPutResponseSuccess = (updatePostPostsPostIdPutResponse200) & {
-  headers: Headers;
-};
-export type updatePostPostsPostIdPutResponseError = (updatePostPostsPostIdPutResponse422) & {
-  headers: Headers;
-};
-
-export type updatePostPostsPostIdPutResponse = (updatePostPostsPostIdPutResponseSuccess | updatePostPostsPostIdPutResponseError)
-
-export const getUpdatePostPostsPostIdPutUrl = (postId: string,) => {
-
-
+export const updatePostPostsPostIdPut = (
+    postId: string,
+    postUpdateRequest: BodyType<PostUpdateRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PostOut>(
+      {url: `/posts/${postId}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: postUpdateRequest, signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}`
-}
-
-export const updatePostPostsPostIdPut = async (postId: string,
-    postUpdateRequest: PostUpdateRequest, options?: RequestInit): Promise<updatePostPostsPostIdPutResponse> => {
-  
-  return customInstance<updatePostPostsPostIdPutResponse>(getUpdatePostPostsPostIdPutUrl(postId),
-  {      
-    ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      postUpdateRequest,)
-  }
-);}
-
-
 
 
 export const getUpdatePostPostsPostIdPutMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -368,45 +289,18 @@ export const useUpdatePostPostsPostIdPut = <TError = ErrorType<HTTPValidationErr
  * Delete a post (only author can delete) - also deletes associated media files
  * @summary Delete Post
  */
-export type deletePostPostsPostIdDeleteResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type deletePostPostsPostIdDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type deletePostPostsPostIdDeleteResponseSuccess = (deletePostPostsPostIdDeleteResponse200) & {
-  headers: Headers;
-};
-export type deletePostPostsPostIdDeleteResponseError = (deletePostPostsPostIdDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deletePostPostsPostIdDeleteResponse = (deletePostPostsPostIdDeleteResponseSuccess | deletePostPostsPostIdDeleteResponseError)
-
-export const getDeletePostPostsPostIdDeleteUrl = (postId: string,) => {
-
-
+export const deletePostPostsPostIdDelete = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/posts/${postId}`, method: 'DELETE', signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}`
-}
-
-export const deletePostPostsPostIdDelete = async (postId: string, options?: RequestInit): Promise<deletePostPostsPostIdDeleteResponse> => {
-  
-  return customInstance<deletePostPostsPostIdDeleteResponse>(getDeletePostPostsPostIdDeleteUrl(postId),
-  {      
-    ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
-
-
 
 
 export const getDeletePostPostsPostIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -457,49 +351,23 @@ export const useDeletePostPostsPostIdDelete = <TError = ErrorType<HTTPValidation
  * Update post media files (replaces all existing media)
  * @summary Update Post Media
  */
-export type updatePostMediaPostsPostIdMediaPutResponse200 = {
-  data: PostOut
-  status: 200
-}
-
-export type updatePostMediaPostsPostIdMediaPutResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type updatePostMediaPostsPostIdMediaPutResponseSuccess = (updatePostMediaPostsPostIdMediaPutResponse200) & {
-  headers: Headers;
-};
-export type updatePostMediaPostsPostIdMediaPutResponseError = (updatePostMediaPostsPostIdMediaPutResponse422) & {
-  headers: Headers;
-};
-
-export type updatePostMediaPostsPostIdMediaPutResponse = (updatePostMediaPostsPostIdMediaPutResponseSuccess | updatePostMediaPostsPostIdMediaPutResponseError)
-
-export const getUpdatePostMediaPostsPostIdMediaPutUrl = (postId: string,) => {
-
-
-  
-
-  return `/posts/${postId}/media`
-}
-
-export const updatePostMediaPostsPostIdMediaPut = async (postId: string,
-    bodyUpdatePostMediaPostsPostIdMediaPut: BodyUpdatePostMediaPostsPostIdMediaPut, options?: RequestInit): Promise<updatePostMediaPostsPostIdMediaPutResponse> => {
-    const formData = new FormData();
+export const updatePostMediaPostsPostIdMediaPut = (
+    postId: string,
+    bodyUpdatePostMediaPostsPostIdMediaPut: BodyType<BodyUpdatePostMediaPostsPostIdMediaPut>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 bodyUpdatePostMediaPostsPostIdMediaPut.files.forEach(value => formData.append(`files`, value));
 
-  return customInstance<updatePostMediaPostsPostIdMediaPutResponse>(getUpdatePostMediaPostsPostIdMediaPutUrl(postId),
-  {      
-    ...options,
-    method: 'PUT'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<PostOut>(
+      {url: `/posts/${postId}/media`, method: 'PUT',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+  
 
 
 export const getUpdatePostMediaPostsPostIdMediaPutMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -550,54 +418,20 @@ export const useUpdatePostMediaPostsPostIdMediaPut = <TError = ErrorType<HTTPVal
  * Get presigned URLs for all media files in a post with visibility check
  * @summary Get Post Media Urls
  */
-export type getPostMediaUrlsPostsPostIdMediaGetResponse200 = {
-  data: GetPostMediaUrlsPostsPostIdMediaGet200
-  status: 200
-}
-
-export type getPostMediaUrlsPostsPostIdMediaGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type getPostMediaUrlsPostsPostIdMediaGetResponseSuccess = (getPostMediaUrlsPostsPostIdMediaGetResponse200) & {
-  headers: Headers;
-};
-export type getPostMediaUrlsPostsPostIdMediaGetResponseError = (getPostMediaUrlsPostsPostIdMediaGetResponse422) & {
-  headers: Headers;
-};
-
-export type getPostMediaUrlsPostsPostIdMediaGetResponse = (getPostMediaUrlsPostsPostIdMediaGetResponseSuccess | getPostMediaUrlsPostsPostIdMediaGetResponseError)
-
-export const getGetPostMediaUrlsPostsPostIdMediaGetUrl = (postId: string,
-    params?: GetPostMediaUrlsPostsPostIdMediaGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const getPostMediaUrlsPostsPostIdMediaGet = (
+    postId: string,
+    params?: GetPostMediaUrlsPostsPostIdMediaGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<GetPostMediaUrlsPostsPostIdMediaGet200>(
+      {url: `/posts/${postId}/media`, method: 'GET',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/posts/${postId}/media?${stringifiedParams}` : `/posts/${postId}/media`
-}
-
-export const getPostMediaUrlsPostsPostIdMediaGet = async (postId: string,
-    params?: GetPostMediaUrlsPostsPostIdMediaGetParams, options?: RequestInit): Promise<getPostMediaUrlsPostsPostIdMediaGetResponse> => {
   
-  return customInstance<getPostMediaUrlsPostsPostIdMediaGetResponse>(getGetPostMediaUrlsPostsPostIdMediaGetUrl(postId,params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -619,7 +453,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPostMediaUrlsPostsPostIdMediaGet>>> = ({ signal }) => getPostMediaUrlsPostsPostIdMediaGet(postId,params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPostMediaUrlsPostsPostIdMediaGet>>> = ({ signal }) => getPostMediaUrlsPostsPostIdMediaGet(postId,params, requestOptions, signal);
 
       
 
@@ -688,52 +522,19 @@ This endpoint checks if the user has permission to view the media based on:
 - PRIVATE: Only the post owner can view
  * @summary View Media File
  */
-export type viewMediaFileMediaViewGetResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type viewMediaFileMediaViewGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type viewMediaFileMediaViewGetResponseSuccess = (viewMediaFileMediaViewGetResponse200) & {
-  headers: Headers;
-};
-export type viewMediaFileMediaViewGetResponseError = (viewMediaFileMediaViewGetResponse422) & {
-  headers: Headers;
-};
-
-export type viewMediaFileMediaViewGetResponse = (viewMediaFileMediaViewGetResponseSuccess | viewMediaFileMediaViewGetResponseError)
-
-export const getViewMediaFileMediaViewGetUrl = (params: ViewMediaFileMediaViewGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const viewMediaFileMediaViewGet = (
+    params: ViewMediaFileMediaViewGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/media/view`, method: 'GET',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/media/view?${stringifiedParams}` : `/media/view`
-}
-
-export const viewMediaFileMediaViewGet = async (params: ViewMediaFileMediaViewGetParams, options?: RequestInit): Promise<viewMediaFileMediaViewGetResponse> => {
   
-  return customInstance<viewMediaFileMediaViewGetResponse>(getViewMediaFileMediaViewGetUrl(params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -753,7 +554,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof viewMediaFileMediaViewGet>>> = ({ signal }) => viewMediaFileMediaViewGet(params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof viewMediaFileMediaViewGet>>> = ({ signal }) => viewMediaFileMediaViewGet(params, requestOptions, signal);
 
       
 
@@ -819,52 +620,19 @@ This endpoint directly streams the file from MinIO after verifying permissions:
 Use this endpoint to get the actual file content through your API with access control.
  * @summary Stream Media File
  */
-export type streamMediaFileMediaStreamGetResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type streamMediaFileMediaStreamGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type streamMediaFileMediaStreamGetResponseSuccess = (streamMediaFileMediaStreamGetResponse200) & {
-  headers: Headers;
-};
-export type streamMediaFileMediaStreamGetResponseError = (streamMediaFileMediaStreamGetResponse422) & {
-  headers: Headers;
-};
-
-export type streamMediaFileMediaStreamGetResponse = (streamMediaFileMediaStreamGetResponseSuccess | streamMediaFileMediaStreamGetResponseError)
-
-export const getStreamMediaFileMediaStreamGetUrl = (params: StreamMediaFileMediaStreamGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const streamMediaFileMediaStreamGet = (
+    params: StreamMediaFileMediaStreamGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/media/stream`, method: 'GET',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/media/stream?${stringifiedParams}` : `/media/stream`
-}
-
-export const streamMediaFileMediaStreamGet = async (params: StreamMediaFileMediaStreamGetParams, options?: RequestInit): Promise<streamMediaFileMediaStreamGetResponse> => {
   
-  return customInstance<streamMediaFileMediaStreamGetResponse>(getStreamMediaFileMediaStreamGetUrl(params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -884,7 +652,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof streamMediaFileMediaStreamGet>>> = ({ signal }) => streamMediaFileMediaStreamGet(params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof streamMediaFileMediaStreamGet>>> = ({ signal }) => streamMediaFileMediaStreamGet(params, requestOptions, signal);
 
       
 
@@ -949,52 +717,19 @@ export function useStreamMediaFileMediaStreamGet<TData = Awaited<ReturnType<type
 Returns posts sorted by created_at (newest first) with reaction, comment, and share counts.
  * @summary Feed
  */
-export type feedFeedGetResponse200 = {
-  data: FeedResponse
-  status: 200
-}
-
-export type feedFeedGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type feedFeedGetResponseSuccess = (feedFeedGetResponse200) & {
-  headers: Headers;
-};
-export type feedFeedGetResponseError = (feedFeedGetResponse422) & {
-  headers: Headers;
-};
-
-export type feedFeedGetResponse = (feedFeedGetResponseSuccess | feedFeedGetResponseError)
-
-export const getFeedFeedGetUrl = (params?: FeedFeedGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const feedFeedGet = (
+    params?: FeedFeedGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<FeedResponse>(
+      {url: `/feed`, method: 'GET',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/feed?${stringifiedParams}` : `/feed`
-}
-
-export const feedFeedGet = async (params?: FeedFeedGetParams, options?: RequestInit): Promise<feedFeedGetResponse> => {
   
-  return customInstance<feedFeedGetResponse>(getFeedFeedGetUrl(params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -1014,7 +749,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof feedFeedGet>>> = ({ signal }) => feedFeedGet(params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof feedFeedGet>>> = ({ signal }) => feedFeedGet(params, requestOptions, signal);
 
       
 
@@ -1073,45 +808,18 @@ export function useFeedFeedGet<TData = Awaited<ReturnType<typeof feedFeedGet>>, 
 /**
  * @summary Profile Posts
  */
-export type profilePostsProfilesUsernamePostsGetResponse200 = {
-  data: PostOut[]
-  status: 200
-}
-
-export type profilePostsProfilesUsernamePostsGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type profilePostsProfilesUsernamePostsGetResponseSuccess = (profilePostsProfilesUsernamePostsGetResponse200) & {
-  headers: Headers;
-};
-export type profilePostsProfilesUsernamePostsGetResponseError = (profilePostsProfilesUsernamePostsGetResponse422) & {
-  headers: Headers;
-};
-
-export type profilePostsProfilesUsernamePostsGetResponse = (profilePostsProfilesUsernamePostsGetResponseSuccess | profilePostsProfilesUsernamePostsGetResponseError)
-
-export const getProfilePostsProfilesUsernamePostsGetUrl = (username: string,) => {
-
-
+export const profilePostsProfilesUsernamePostsGet = (
+    username: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PostOut[]>(
+      {url: `/profiles/${username}/posts`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/profiles/${username}/posts`
-}
-
-export const profilePostsProfilesUsernamePostsGet = async (username: string, options?: RequestInit): Promise<profilePostsProfilesUsernamePostsGetResponse> => {
-  
-  return customInstance<profilePostsProfilesUsernamePostsGetResponse>(getProfilePostsProfilesUsernamePostsGetUrl(username),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -1131,7 +839,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof profilePostsProfilesUsernamePostsGet>>> = ({ signal }) => profilePostsProfilesUsernamePostsGet(username, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof profilePostsProfilesUsernamePostsGet>>> = ({ signal }) => profilePostsProfilesUsernamePostsGet(username, requestOptions, signal);
 
       
 
@@ -1190,47 +898,21 @@ export function useProfilePostsProfilesUsernamePostsGet<TData = Awaited<ReturnTy
 /**
  * @summary React
  */
-export type reactPostsPostIdReactPostResponse200 = {
-  data: ReactionOut
-  status: 200
-}
-
-export type reactPostsPostIdReactPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type reactPostsPostIdReactPostResponseSuccess = (reactPostsPostIdReactPostResponse200) & {
-  headers: Headers;
-};
-export type reactPostsPostIdReactPostResponseError = (reactPostsPostIdReactPostResponse422) & {
-  headers: Headers;
-};
-
-export type reactPostsPostIdReactPostResponse = (reactPostsPostIdReactPostResponseSuccess | reactPostsPostIdReactPostResponseError)
-
-export const getReactPostsPostIdReactPostUrl = (postId: string,) => {
-
-
+export const reactPostsPostIdReactPost = (
+    postId: string,
+    reactRequest: BodyType<ReactRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ReactionOut>(
+      {url: `/posts/${postId}/react`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: reactRequest, signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}/react`
-}
-
-export const reactPostsPostIdReactPost = async (postId: string,
-    reactRequest: ReactRequest, options?: RequestInit): Promise<reactPostsPostIdReactPostResponse> => {
-  
-  return customInstance<reactPostsPostIdReactPostResponse>(getReactPostsPostIdReactPostUrl(postId),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      reactRequest,)
-  }
-);}
-
-
 
 
 export const getReactPostsPostIdReactPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1280,45 +962,18 @@ export const useReactPostsPostIdReactPost = <TError = ErrorType<HTTPValidationEr
     /**
  * @summary Unreact
  */
-export type unreactPostsPostIdReactDeleteResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type unreactPostsPostIdReactDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type unreactPostsPostIdReactDeleteResponseSuccess = (unreactPostsPostIdReactDeleteResponse200) & {
-  headers: Headers;
-};
-export type unreactPostsPostIdReactDeleteResponseError = (unreactPostsPostIdReactDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type unreactPostsPostIdReactDeleteResponse = (unreactPostsPostIdReactDeleteResponseSuccess | unreactPostsPostIdReactDeleteResponseError)
-
-export const getUnreactPostsPostIdReactDeleteUrl = (postId: string,) => {
-
-
+export const unreactPostsPostIdReactDelete = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/posts/${postId}/react`, method: 'DELETE', signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}/react`
-}
-
-export const unreactPostsPostIdReactDelete = async (postId: string, options?: RequestInit): Promise<unreactPostsPostIdReactDeleteResponse> => {
-  
-  return customInstance<unreactPostsPostIdReactDeleteResponse>(getUnreactPostsPostIdReactDeleteUrl(postId),
-  {      
-    ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
-
-
 
 
 export const getUnreactPostsPostIdReactDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1369,45 +1024,18 @@ export const useUnreactPostsPostIdReactDelete = <TError = ErrorType<HTTPValidati
  * Get all reactions for a post
  * @summary List Reactions
  */
-export type listReactionsPostsPostIdReactionsGetResponse200 = {
-  data: ReactionOut[]
-  status: 200
-}
-
-export type listReactionsPostsPostIdReactionsGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type listReactionsPostsPostIdReactionsGetResponseSuccess = (listReactionsPostsPostIdReactionsGetResponse200) & {
-  headers: Headers;
-};
-export type listReactionsPostsPostIdReactionsGetResponseError = (listReactionsPostsPostIdReactionsGetResponse422) & {
-  headers: Headers;
-};
-
-export type listReactionsPostsPostIdReactionsGetResponse = (listReactionsPostsPostIdReactionsGetResponseSuccess | listReactionsPostsPostIdReactionsGetResponseError)
-
-export const getListReactionsPostsPostIdReactionsGetUrl = (postId: string,) => {
-
-
+export const listReactionsPostsPostIdReactionsGet = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ReactionOut[]>(
+      {url: `/posts/${postId}/reactions`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}/reactions`
-}
-
-export const listReactionsPostsPostIdReactionsGet = async (postId: string, options?: RequestInit): Promise<listReactionsPostsPostIdReactionsGetResponse> => {
-  
-  return customInstance<listReactionsPostsPostIdReactionsGetResponse>(getListReactionsPostsPostIdReactionsGetUrl(postId),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -1427,7 +1055,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listReactionsPostsPostIdReactionsGet>>> = ({ signal }) => listReactionsPostsPostIdReactionsGet(postId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listReactionsPostsPostIdReactionsGet>>> = ({ signal }) => listReactionsPostsPostIdReactionsGet(postId, requestOptions, signal);
 
       
 
@@ -1487,52 +1115,26 @@ export function useListReactionsPostsPostIdReactionsGet<TData = Awaited<ReturnTy
  * Create a comment with optional media files
  * @summary Create Comment
  */
-export type createCommentPostsPostIdCommentsPostResponse200 = {
-  data: CommentOut
-  status: 200
-}
-
-export type createCommentPostsPostIdCommentsPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type createCommentPostsPostIdCommentsPostResponseSuccess = (createCommentPostsPostIdCommentsPostResponse200) & {
-  headers: Headers;
-};
-export type createCommentPostsPostIdCommentsPostResponseError = (createCommentPostsPostIdCommentsPostResponse422) & {
-  headers: Headers;
-};
-
-export type createCommentPostsPostIdCommentsPostResponse = (createCommentPostsPostIdCommentsPostResponseSuccess | createCommentPostsPostIdCommentsPostResponseError)
-
-export const getCreateCommentPostsPostIdCommentsPostUrl = (postId: string,) => {
-
-
-  
-
-  return `/posts/${postId}/comments`
-}
-
-export const createCommentPostsPostIdCommentsPost = async (postId: string,
-    bodyCreateCommentPostsPostIdCommentsPost: BodyCreateCommentPostsPostIdCommentsPost, options?: RequestInit): Promise<createCommentPostsPostIdCommentsPostResponse> => {
-    const formData = new FormData();
+export const createCommentPostsPostIdCommentsPost = (
+    postId: string,
+    bodyCreateCommentPostsPostIdCommentsPost: BodyType<BodyCreateCommentPostsPostIdCommentsPost>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 formData.append(`content_text`, bodyCreateCommentPostsPostIdCommentsPost.content_text);
 if(bodyCreateCommentPostsPostIdCommentsPost.files !== undefined) {
  bodyCreateCommentPostsPostIdCommentsPost.files.forEach(value => formData.append(`files`, value));
  }
 
-  return customInstance<createCommentPostsPostIdCommentsPostResponse>(getCreateCommentPostsPostIdCommentsPostUrl(postId),
-  {      
-    ...options,
-    method: 'POST'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<CommentOut>(
+      {url: `/posts/${postId}/comments`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+  
 
 
 export const getCreateCommentPostsPostIdCommentsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1588,54 +1190,20 @@ Sort options:
 - top: Most reactions
  * @summary List Comments
  */
-export type listCommentsPostsPostIdCommentsGetResponse200 = {
-  data: CommentOut[]
-  status: 200
-}
-
-export type listCommentsPostsPostIdCommentsGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type listCommentsPostsPostIdCommentsGetResponseSuccess = (listCommentsPostsPostIdCommentsGetResponse200) & {
-  headers: Headers;
-};
-export type listCommentsPostsPostIdCommentsGetResponseError = (listCommentsPostsPostIdCommentsGetResponse422) & {
-  headers: Headers;
-};
-
-export type listCommentsPostsPostIdCommentsGetResponse = (listCommentsPostsPostIdCommentsGetResponseSuccess | listCommentsPostsPostIdCommentsGetResponseError)
-
-export const getListCommentsPostsPostIdCommentsGetUrl = (postId: string,
-    params?: ListCommentsPostsPostIdCommentsGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const listCommentsPostsPostIdCommentsGet = (
+    postId: string,
+    params?: ListCommentsPostsPostIdCommentsGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CommentOut[]>(
+      {url: `/posts/${postId}/comments`, method: 'GET',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/posts/${postId}/comments?${stringifiedParams}` : `/posts/${postId}/comments`
-}
-
-export const listCommentsPostsPostIdCommentsGet = async (postId: string,
-    params?: ListCommentsPostsPostIdCommentsGetParams, options?: RequestInit): Promise<listCommentsPostsPostIdCommentsGetResponse> => {
   
-  return customInstance<listCommentsPostsPostIdCommentsGetResponse>(getListCommentsPostsPostIdCommentsGetUrl(postId,params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -1657,7 +1225,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCommentsPostsPostIdCommentsGet>>> = ({ signal }) => listCommentsPostsPostIdCommentsGet(postId,params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCommentsPostsPostIdCommentsGet>>> = ({ signal }) => listCommentsPostsPostIdCommentsGet(postId,params, requestOptions, signal);
 
       
 
@@ -1721,51 +1289,24 @@ export function useListCommentsPostsPostIdCommentsGet<TData = Awaited<ReturnType
  * Update comment text (only author can update)
  * @summary Update Comment
  */
-export type updateCommentPostsPostIdCommentsCommentIdPutResponse200 = {
-  data: CommentOut
-  status: 200
-}
-
-export type updateCommentPostsPostIdCommentsCommentIdPutResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type updateCommentPostsPostIdCommentsCommentIdPutResponseSuccess = (updateCommentPostsPostIdCommentsCommentIdPutResponse200) & {
-  headers: Headers;
-};
-export type updateCommentPostsPostIdCommentsCommentIdPutResponseError = (updateCommentPostsPostIdCommentsCommentIdPutResponse422) & {
-  headers: Headers;
-};
-
-export type updateCommentPostsPostIdCommentsCommentIdPutResponse = (updateCommentPostsPostIdCommentsCommentIdPutResponseSuccess | updateCommentPostsPostIdCommentsCommentIdPutResponseError)
-
-export const getUpdateCommentPostsPostIdCommentsCommentIdPutUrl = (postId: string,
-    commentId: string,) => {
-
-
-  
-
-  return `/posts/${postId}/comments/${commentId}`
-}
-
-export const updateCommentPostsPostIdCommentsCommentIdPut = async (postId: string,
+export const updateCommentPostsPostIdCommentsCommentIdPut = (
+    postId: string,
     commentId: string,
-    bodyUpdateCommentPostsPostIdCommentsCommentIdPut: BodyUpdateCommentPostsPostIdCommentsCommentIdPut, options?: RequestInit): Promise<updateCommentPostsPostIdCommentsCommentIdPutResponse> => {
-    const formUrlEncoded = new URLSearchParams();
+    bodyUpdateCommentPostsPostIdCommentsCommentIdPut: BodyType<BodyUpdateCommentPostsPostIdCommentsCommentIdPut>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formUrlEncoded = new URLSearchParams();
 formUrlEncoded.append(`content_text`, bodyUpdateCommentPostsPostIdCommentsCommentIdPut.content_text);
 
-  return customInstance<updateCommentPostsPostIdCommentsCommentIdPutResponse>(getUpdateCommentPostsPostIdCommentsCommentIdPutUrl(postId,commentId),
-  {      
-    ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...options?.headers },
-    body: 
-      formUrlEncoded,
-  }
-);}
-
-
+      return customInstance<CommentOut>(
+      {url: `/posts/${postId}/comments/${commentId}`, method: 'PUT',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded', },
+       data: formUrlEncoded, signal
+    },
+      options);
+    }
+  
 
 
 export const getUpdateCommentPostsPostIdCommentsCommentIdPutMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1816,47 +1357,19 @@ export const useUpdateCommentPostsPostIdCommentsCommentIdPut = <TError = ErrorTy
  * Delete a comment (only comment author or post author can delete)
  * @summary Delete Comment
  */
-export type deleteCommentPostsPostIdCommentsCommentIdDeleteResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type deleteCommentPostsPostIdCommentsCommentIdDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type deleteCommentPostsPostIdCommentsCommentIdDeleteResponseSuccess = (deleteCommentPostsPostIdCommentsCommentIdDeleteResponse200) & {
-  headers: Headers;
-};
-export type deleteCommentPostsPostIdCommentsCommentIdDeleteResponseError = (deleteCommentPostsPostIdCommentsCommentIdDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deleteCommentPostsPostIdCommentsCommentIdDeleteResponse = (deleteCommentPostsPostIdCommentsCommentIdDeleteResponseSuccess | deleteCommentPostsPostIdCommentsCommentIdDeleteResponseError)
-
-export const getDeleteCommentPostsPostIdCommentsCommentIdDeleteUrl = (postId: string,
-    commentId: string,) => {
-
-
+export const deleteCommentPostsPostIdCommentsCommentIdDelete = (
+    postId: string,
+    commentId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/posts/${postId}/comments/${commentId}`, method: 'DELETE', signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}/comments/${commentId}`
-}
-
-export const deleteCommentPostsPostIdCommentsCommentIdDelete = async (postId: string,
-    commentId: string, options?: RequestInit): Promise<deleteCommentPostsPostIdCommentsCommentIdDeleteResponse> => {
-  
-  return customInstance<deleteCommentPostsPostIdCommentsCommentIdDeleteResponse>(getDeleteCommentPostsPostIdCommentsCommentIdDeleteUrl(postId,commentId),
-  {      
-    ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
-
-
 
 
 export const getDeleteCommentPostsPostIdCommentsCommentIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1907,51 +1420,24 @@ export const useDeleteCommentPostsPostIdCommentsCommentIdDelete = <TError = Erro
  * Update comment media files (replaces all existing media)
  * @summary Update Comment Media
  */
-export type updateCommentMediaPostsPostIdCommentsCommentIdMediaPutResponse200 = {
-  data: CommentOut
-  status: 200
-}
-
-export type updateCommentMediaPostsPostIdCommentsCommentIdMediaPutResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type updateCommentMediaPostsPostIdCommentsCommentIdMediaPutResponseSuccess = (updateCommentMediaPostsPostIdCommentsCommentIdMediaPutResponse200) & {
-  headers: Headers;
-};
-export type updateCommentMediaPostsPostIdCommentsCommentIdMediaPutResponseError = (updateCommentMediaPostsPostIdCommentsCommentIdMediaPutResponse422) & {
-  headers: Headers;
-};
-
-export type updateCommentMediaPostsPostIdCommentsCommentIdMediaPutResponse = (updateCommentMediaPostsPostIdCommentsCommentIdMediaPutResponseSuccess | updateCommentMediaPostsPostIdCommentsCommentIdMediaPutResponseError)
-
-export const getUpdateCommentMediaPostsPostIdCommentsCommentIdMediaPutUrl = (postId: string,
-    commentId: string,) => {
-
-
-  
-
-  return `/posts/${postId}/comments/${commentId}/media`
-}
-
-export const updateCommentMediaPostsPostIdCommentsCommentIdMediaPut = async (postId: string,
+export const updateCommentMediaPostsPostIdCommentsCommentIdMediaPut = (
+    postId: string,
     commentId: string,
-    bodyUpdateCommentMediaPostsPostIdCommentsCommentIdMediaPut: BodyUpdateCommentMediaPostsPostIdCommentsCommentIdMediaPut, options?: RequestInit): Promise<updateCommentMediaPostsPostIdCommentsCommentIdMediaPutResponse> => {
-    const formData = new FormData();
+    bodyUpdateCommentMediaPostsPostIdCommentsCommentIdMediaPut: BodyType<BodyUpdateCommentMediaPostsPostIdCommentsCommentIdMediaPut>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 bodyUpdateCommentMediaPostsPostIdCommentsCommentIdMediaPut.files.forEach(value => formData.append(`files`, value));
 
-  return customInstance<updateCommentMediaPostsPostIdCommentsCommentIdMediaPutResponse>(getUpdateCommentMediaPostsPostIdCommentsCommentIdMediaPutUrl(postId,commentId),
-  {      
-    ...options,
-    method: 'PUT'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<CommentOut>(
+      {url: `/posts/${postId}/comments/${commentId}/media`, method: 'PUT',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+  
 
 
 export const getUpdateCommentMediaPostsPostIdCommentsCommentIdMediaPutMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -2003,47 +1489,21 @@ export const useUpdateCommentMediaPostsPostIdCommentsCommentIdMediaPut = <TError
 The shared post will appear on the sharer's feed and timeline.
  * @summary Share Post
  */
-export type sharePostPostsPostIdSharePostResponse200 = {
-  data: PostOut
-  status: 200
-}
-
-export type sharePostPostsPostIdSharePostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type sharePostPostsPostIdSharePostResponseSuccess = (sharePostPostsPostIdSharePostResponse200) & {
-  headers: Headers;
-};
-export type sharePostPostsPostIdSharePostResponseError = (sharePostPostsPostIdSharePostResponse422) & {
-  headers: Headers;
-};
-
-export type sharePostPostsPostIdSharePostResponse = (sharePostPostsPostIdSharePostResponseSuccess | sharePostPostsPostIdSharePostResponseError)
-
-export const getSharePostPostsPostIdSharePostUrl = (postId: string,) => {
-
-
+export const sharePostPostsPostIdSharePost = (
+    postId: string,
+    shareCreateRequest: BodyType<ShareCreateRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PostOut>(
+      {url: `/posts/${postId}/share`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: shareCreateRequest, signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}/share`
-}
-
-export const sharePostPostsPostIdSharePost = async (postId: string,
-    shareCreateRequest: ShareCreateRequest, options?: RequestInit): Promise<sharePostPostsPostIdSharePostResponse> => {
-  
-  return customInstance<sharePostPostsPostIdSharePostResponse>(getSharePostPostsPostIdSharePostUrl(postId),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      shareCreateRequest,)
-  }
-);}
-
-
 
 
 export const getSharePostPostsPostIdSharePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -2094,45 +1554,18 @@ export const useSharePostPostsPostIdSharePost = <TError = ErrorType<HTTPValidati
  * Get all shares for a post
  * @summary List Shares
  */
-export type listSharesPostsPostIdSharesGetResponse200 = {
-  data: ShareOut[]
-  status: 200
-}
-
-export type listSharesPostsPostIdSharesGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type listSharesPostsPostIdSharesGetResponseSuccess = (listSharesPostsPostIdSharesGetResponse200) & {
-  headers: Headers;
-};
-export type listSharesPostsPostIdSharesGetResponseError = (listSharesPostsPostIdSharesGetResponse422) & {
-  headers: Headers;
-};
-
-export type listSharesPostsPostIdSharesGetResponse = (listSharesPostsPostIdSharesGetResponseSuccess | listSharesPostsPostIdSharesGetResponseError)
-
-export const getListSharesPostsPostIdSharesGetUrl = (postId: string,) => {
-
-
+export const listSharesPostsPostIdSharesGet = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ShareOut[]>(
+      {url: `/posts/${postId}/shares`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}/shares`
-}
-
-export const listSharesPostsPostIdSharesGet = async (postId: string, options?: RequestInit): Promise<listSharesPostsPostIdSharesGetResponse> => {
-  
-  return customInstance<listSharesPostsPostIdSharesGetResponse>(getListSharesPostsPostIdSharesGetUrl(postId),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -2152,7 +1585,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSharesPostsPostIdSharesGet>>> = ({ signal }) => listSharesPostsPostIdSharesGet(postId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSharesPostsPostIdSharesGet>>> = ({ signal }) => listSharesPostsPostIdSharesGet(postId, requestOptions, signal);
 
       
 
@@ -2212,47 +1645,19 @@ export function useListSharesPostsPostIdSharesGet<TData = Awaited<ReturnType<typ
  * Delete a share (unshare) - only the person who shared can delete
  * @summary Delete Share
  */
-export type deleteSharePostsPostIdSharesShareIdDeleteResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type deleteSharePostsPostIdSharesShareIdDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type deleteSharePostsPostIdSharesShareIdDeleteResponseSuccess = (deleteSharePostsPostIdSharesShareIdDeleteResponse200) & {
-  headers: Headers;
-};
-export type deleteSharePostsPostIdSharesShareIdDeleteResponseError = (deleteSharePostsPostIdSharesShareIdDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deleteSharePostsPostIdSharesShareIdDeleteResponse = (deleteSharePostsPostIdSharesShareIdDeleteResponseSuccess | deleteSharePostsPostIdSharesShareIdDeleteResponseError)
-
-export const getDeleteSharePostsPostIdSharesShareIdDeleteUrl = (postId: string,
-    shareId: string,) => {
-
-
+export const deleteSharePostsPostIdSharesShareIdDelete = (
+    postId: string,
+    shareId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/posts/${postId}/shares/${shareId}`, method: 'DELETE', signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}/shares/${shareId}`
-}
-
-export const deleteSharePostsPostIdSharesShareIdDelete = async (postId: string,
-    shareId: string, options?: RequestInit): Promise<deleteSharePostsPostIdSharesShareIdDeleteResponse> => {
-  
-  return customInstance<deleteSharePostsPostIdSharesShareIdDeleteResponse>(getDeleteSharePostsPostIdSharesShareIdDeleteUrl(postId,shareId),
-  {      
-    ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
-
-
 
 
 export const getDeleteSharePostsPostIdSharesShareIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -2303,49 +1708,22 @@ export const useDeleteSharePostsPostIdSharesShareIdDelete = <TError = ErrorType<
  * React to a comment (LIKE, LOVE, HAHA, WOW, SAD, ANGRY)
  * @summary React Comment
  */
-export type reactCommentPostsPostIdCommentsCommentIdReactPostResponse200 = {
-  data: CommentReactionOut
-  status: 200
-}
-
-export type reactCommentPostsPostIdCommentsCommentIdReactPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type reactCommentPostsPostIdCommentsCommentIdReactPostResponseSuccess = (reactCommentPostsPostIdCommentsCommentIdReactPostResponse200) & {
-  headers: Headers;
-};
-export type reactCommentPostsPostIdCommentsCommentIdReactPostResponseError = (reactCommentPostsPostIdCommentsCommentIdReactPostResponse422) & {
-  headers: Headers;
-};
-
-export type reactCommentPostsPostIdCommentsCommentIdReactPostResponse = (reactCommentPostsPostIdCommentsCommentIdReactPostResponseSuccess | reactCommentPostsPostIdCommentsCommentIdReactPostResponseError)
-
-export const getReactCommentPostsPostIdCommentsCommentIdReactPostUrl = (postId: string,
-    commentId: string,) => {
-
-
-  
-
-  return `/posts/${postId}/comments/${commentId}/react`
-}
-
-export const reactCommentPostsPostIdCommentsCommentIdReactPost = async (postId: string,
+export const reactCommentPostsPostIdCommentsCommentIdReactPost = (
+    postId: string,
     commentId: string,
-    reactRequest: ReactRequest, options?: RequestInit): Promise<reactCommentPostsPostIdCommentsCommentIdReactPostResponse> => {
+    reactRequest: BodyType<ReactRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CommentReactionOut>(
+      {url: `/posts/${postId}/comments/${commentId}/react`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: reactRequest, signal
+    },
+      options);
+    }
   
-  return customInstance<reactCommentPostsPostIdCommentsCommentIdReactPostResponse>(getReactCommentPostsPostIdCommentsCommentIdReactPostUrl(postId,commentId),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      reactRequest,)
-  }
-);}
-
-
 
 
 export const getReactCommentPostsPostIdCommentsCommentIdReactPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -2396,47 +1774,19 @@ export const useReactCommentPostsPostIdCommentsCommentIdReactPost = <TError = Er
  * Remove reaction from a comment
  * @summary Unreact Comment
  */
-export type unreactCommentPostsPostIdCommentsCommentIdReactDeleteResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type unreactCommentPostsPostIdCommentsCommentIdReactDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type unreactCommentPostsPostIdCommentsCommentIdReactDeleteResponseSuccess = (unreactCommentPostsPostIdCommentsCommentIdReactDeleteResponse200) & {
-  headers: Headers;
-};
-export type unreactCommentPostsPostIdCommentsCommentIdReactDeleteResponseError = (unreactCommentPostsPostIdCommentsCommentIdReactDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type unreactCommentPostsPostIdCommentsCommentIdReactDeleteResponse = (unreactCommentPostsPostIdCommentsCommentIdReactDeleteResponseSuccess | unreactCommentPostsPostIdCommentsCommentIdReactDeleteResponseError)
-
-export const getUnreactCommentPostsPostIdCommentsCommentIdReactDeleteUrl = (postId: string,
-    commentId: string,) => {
-
-
+export const unreactCommentPostsPostIdCommentsCommentIdReactDelete = (
+    postId: string,
+    commentId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/posts/${postId}/comments/${commentId}/react`, method: 'DELETE', signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}/comments/${commentId}/react`
-}
-
-export const unreactCommentPostsPostIdCommentsCommentIdReactDelete = async (postId: string,
-    commentId: string, options?: RequestInit): Promise<unreactCommentPostsPostIdCommentsCommentIdReactDeleteResponse> => {
-  
-  return customInstance<unreactCommentPostsPostIdCommentsCommentIdReactDeleteResponse>(getUnreactCommentPostsPostIdCommentsCommentIdReactDeleteUrl(postId,commentId),
-  {      
-    ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
-
-
 
 
 export const getUnreactCommentPostsPostIdCommentsCommentIdReactDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -2487,47 +1837,19 @@ export const useUnreactCommentPostsPostIdCommentsCommentIdReactDelete = <TError 
  * Get all reactions for a comment
  * @summary List Comment Reactions
  */
-export type listCommentReactionsPostsPostIdCommentsCommentIdReactionsGetResponse200 = {
-  data: CommentReactionOut[]
-  status: 200
-}
-
-export type listCommentReactionsPostsPostIdCommentsCommentIdReactionsGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type listCommentReactionsPostsPostIdCommentsCommentIdReactionsGetResponseSuccess = (listCommentReactionsPostsPostIdCommentsCommentIdReactionsGetResponse200) & {
-  headers: Headers;
-};
-export type listCommentReactionsPostsPostIdCommentsCommentIdReactionsGetResponseError = (listCommentReactionsPostsPostIdCommentsCommentIdReactionsGetResponse422) & {
-  headers: Headers;
-};
-
-export type listCommentReactionsPostsPostIdCommentsCommentIdReactionsGetResponse = (listCommentReactionsPostsPostIdCommentsCommentIdReactionsGetResponseSuccess | listCommentReactionsPostsPostIdCommentsCommentIdReactionsGetResponseError)
-
-export const getListCommentReactionsPostsPostIdCommentsCommentIdReactionsGetUrl = (postId: string,
-    commentId: string,) => {
-
-
+export const listCommentReactionsPostsPostIdCommentsCommentIdReactionsGet = (
+    postId: string,
+    commentId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CommentReactionOut[]>(
+      {url: `/posts/${postId}/comments/${commentId}/reactions`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}/comments/${commentId}/reactions`
-}
-
-export const listCommentReactionsPostsPostIdCommentsCommentIdReactionsGet = async (postId: string,
-    commentId: string, options?: RequestInit): Promise<listCommentReactionsPostsPostIdCommentsCommentIdReactionsGetResponse> => {
-  
-  return customInstance<listCommentReactionsPostsPostIdCommentsCommentIdReactionsGetResponse>(getListCommentReactionsPostsPostIdCommentsCommentIdReactionsGetUrl(postId,commentId),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -2549,7 +1871,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCommentReactionsPostsPostIdCommentsCommentIdReactionsGet>>> = ({ signal }) => listCommentReactionsPostsPostIdCommentsCommentIdReactionsGet(postId,commentId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCommentReactionsPostsPostIdCommentsCommentIdReactionsGet>>> = ({ signal }) => listCommentReactionsPostsPostIdCommentsCommentIdReactionsGet(postId,commentId, requestOptions, signal);
 
       
 
@@ -2613,54 +1935,27 @@ export function useListCommentReactionsPostsPostIdCommentsCommentIdReactionsGet<
  * Reply to a comment with optional media files
  * @summary Create Reply
  */
-export type createReplyPostsPostIdCommentsCommentIdRepliesPostResponse200 = {
-  data: CommentOut
-  status: 200
-}
-
-export type createReplyPostsPostIdCommentsCommentIdRepliesPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type createReplyPostsPostIdCommentsCommentIdRepliesPostResponseSuccess = (createReplyPostsPostIdCommentsCommentIdRepliesPostResponse200) & {
-  headers: Headers;
-};
-export type createReplyPostsPostIdCommentsCommentIdRepliesPostResponseError = (createReplyPostsPostIdCommentsCommentIdRepliesPostResponse422) & {
-  headers: Headers;
-};
-
-export type createReplyPostsPostIdCommentsCommentIdRepliesPostResponse = (createReplyPostsPostIdCommentsCommentIdRepliesPostResponseSuccess | createReplyPostsPostIdCommentsCommentIdRepliesPostResponseError)
-
-export const getCreateReplyPostsPostIdCommentsCommentIdRepliesPostUrl = (postId: string,
-    commentId: string,) => {
-
-
-  
-
-  return `/posts/${postId}/comments/${commentId}/replies`
-}
-
-export const createReplyPostsPostIdCommentsCommentIdRepliesPost = async (postId: string,
+export const createReplyPostsPostIdCommentsCommentIdRepliesPost = (
+    postId: string,
     commentId: string,
-    bodyCreateReplyPostsPostIdCommentsCommentIdRepliesPost: BodyCreateReplyPostsPostIdCommentsCommentIdRepliesPost, options?: RequestInit): Promise<createReplyPostsPostIdCommentsCommentIdRepliesPostResponse> => {
-    const formData = new FormData();
+    bodyCreateReplyPostsPostIdCommentsCommentIdRepliesPost: BodyType<BodyCreateReplyPostsPostIdCommentsCommentIdRepliesPost>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 formData.append(`content_text`, bodyCreateReplyPostsPostIdCommentsCommentIdRepliesPost.content_text);
 if(bodyCreateReplyPostsPostIdCommentsCommentIdRepliesPost.files !== undefined) {
  bodyCreateReplyPostsPostIdCommentsCommentIdRepliesPost.files.forEach(value => formData.append(`files`, value));
  }
 
-  return customInstance<createReplyPostsPostIdCommentsCommentIdRepliesPostResponse>(getCreateReplyPostsPostIdCommentsCommentIdRepliesPostUrl(postId,commentId),
-  {      
-    ...options,
-    method: 'POST'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<CommentOut>(
+      {url: `/posts/${postId}/comments/${commentId}/replies`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+  
 
 
 export const getCreateReplyPostsPostIdCommentsCommentIdRepliesPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -2711,47 +2006,19 @@ export const useCreateReplyPostsPostIdCommentsCommentIdRepliesPost = <TError = E
  * Get all replies for a comment
  * @summary List Replies
  */
-export type listRepliesPostsPostIdCommentsCommentIdRepliesGetResponse200 = {
-  data: CommentOut[]
-  status: 200
-}
-
-export type listRepliesPostsPostIdCommentsCommentIdRepliesGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type listRepliesPostsPostIdCommentsCommentIdRepliesGetResponseSuccess = (listRepliesPostsPostIdCommentsCommentIdRepliesGetResponse200) & {
-  headers: Headers;
-};
-export type listRepliesPostsPostIdCommentsCommentIdRepliesGetResponseError = (listRepliesPostsPostIdCommentsCommentIdRepliesGetResponse422) & {
-  headers: Headers;
-};
-
-export type listRepliesPostsPostIdCommentsCommentIdRepliesGetResponse = (listRepliesPostsPostIdCommentsCommentIdRepliesGetResponseSuccess | listRepliesPostsPostIdCommentsCommentIdRepliesGetResponseError)
-
-export const getListRepliesPostsPostIdCommentsCommentIdRepliesGetUrl = (postId: string,
-    commentId: string,) => {
-
-
+export const listRepliesPostsPostIdCommentsCommentIdRepliesGet = (
+    postId: string,
+    commentId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CommentOut[]>(
+      {url: `/posts/${postId}/comments/${commentId}/replies`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/posts/${postId}/comments/${commentId}/replies`
-}
-
-export const listRepliesPostsPostIdCommentsCommentIdRepliesGet = async (postId: string,
-    commentId: string, options?: RequestInit): Promise<listRepliesPostsPostIdCommentsCommentIdRepliesGetResponse> => {
-  
-  return customInstance<listRepliesPostsPostIdCommentsCommentIdRepliesGetResponse>(getListRepliesPostsPostIdCommentsCommentIdRepliesGetUrl(postId,commentId),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -2773,7 +2040,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRepliesPostsPostIdCommentsCommentIdRepliesGet>>> = ({ signal }) => listRepliesPostsPostIdCommentsCommentIdRepliesGet(postId,commentId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRepliesPostsPostIdCommentsCommentIdRepliesGet>>> = ({ signal }) => listRepliesPostsPostIdCommentsCommentIdRepliesGet(postId,commentId, requestOptions, signal);
 
       
 

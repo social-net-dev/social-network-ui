@@ -1,6 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
-import { profileApi } from '../services/profileApi'
+import { ProfilesAPI, UsersAPI } from '@/lib/api/generated'
+import { transformUserMe, transformAuthor } from '@/lib/api/transforms'
 import type {
   EditProfileFormData,
   ProfileVisibilityUpdateRequest
@@ -24,46 +25,64 @@ export function useProfile(userIdParam?: string) {
 
   const queryClient = useQueryClient()
 
-  const query = useQuery({
-    queryKey: queryKeys.profile.detail(identifier || 'me'),
-    queryFn: () => profileApi.getProfile(identifier),
-    enabled: !!identifier,
+  // Own profile query
+  const meQuery = UsersAPI.useGetUsersMeUsersMeGet({
+    query: {
+      enabled: identifier === 'me',
+      select: transformUserMe
+    }
+  });
+
+  // Public profile query
+  const publicQuery = ProfilesAPI.useGetProfileProfilesUserIdOrUsernameGet(identifier || '', {
+    query: {
+      enabled: !!identifier && identifier !== 'me',
+      select: transformAuthor
+    }
+  });
+
+  const updateProfileMutation = UsersAPI.useUpdateProfileUsersMeProfilePatch({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
+      },
+    }
   })
 
-  const updateProfileMutation = useMutation({
-    mutationFn: (data: EditProfileFormData) => profileApi.updateProfile(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
-      if (identifier && identifier !== 'me') {
-        queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail(identifier) })
-      }
-    },
+  const updatePrivacyMutation = UsersAPI.useUpdatePrivacyUsersMePrivacyPatch({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
+      },
+    }
   })
 
-  const updatePrivacyMutation = useMutation({
-    mutationFn: (data: ProfileVisibilityUpdateRequest) => profileApi.updatePrivacy(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
-    },
-  })
-
-  const uploadAvatarMutation = useMutation({
-    mutationFn: (file: File) => profileApi.uploadAvatar(file),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
-      if (identifier && identifier !== 'me') {
-        queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail(identifier) })
-      }
-    },
+  const uploadAvatarMutation = UsersAPI.useUploadMyAvatarUsersMeAvatarPost({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
+      },
+    }
   })
 
   return {
-    profile: query.data,
-    isLoading: query.isPending,
-    error: query.error,
-    updateProfile: updateProfileMutation.mutateAsync,
-    updatePrivacy: updatePrivacyMutation.mutateAsync,
-    uploadAvatar: uploadAvatarMutation.mutateAsync,
+    profile: identifier === 'me' ? meQuery.data : publicQuery.data,
+    isLoading: meQuery.isPending || publicQuery.isPending,
+    error: meQuery.error || publicQuery.error,
+    updateProfile: (data: EditProfileFormData) => updateProfileMutation.mutateAsync({
+      data: {
+        display_name: data.displayName,
+        username: data.username || null,
+        birth_date: data.birthDate,
+        bio: data.bio
+      }
+    }),
+    updatePrivacy: (data: ProfileVisibilityUpdateRequest) => updatePrivacyMutation.mutateAsync({
+      data: data as any
+    }),
+    uploadAvatar: (file: File) => uploadAvatarMutation.mutateAsync({
+      data: { file }
+    }),
     isUpdating: updateProfileMutation.isPending || updatePrivacyMutation.isPending || uploadAvatarMutation.isPending,
   }
 }

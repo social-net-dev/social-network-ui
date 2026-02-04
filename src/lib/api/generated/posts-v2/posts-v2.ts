@@ -56,35 +56,12 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * Create a new post in tenant's own database
  * @summary Create Post
  */
-export type createPostV2PostsPostResponse201 = {
-  data: PostOut
-  status: 201
-}
-
-export type createPostV2PostsPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type createPostV2PostsPostResponseSuccess = (createPostV2PostsPostResponse201) & {
-  headers: Headers;
-};
-export type createPostV2PostsPostResponseError = (createPostV2PostsPostResponse422) & {
-  headers: Headers;
-};
-
-export type createPostV2PostsPostResponse = (createPostV2PostsPostResponseSuccess | createPostV2PostsPostResponseError)
-
-export const getCreatePostV2PostsPostUrl = () => {
-
-
-  
-
-  return `/v2/posts`
-}
-
-export const createPostV2PostsPost = async (bodyCreatePostV2PostsPost: BodyCreatePostV2PostsPost, options?: RequestInit): Promise<createPostV2PostsPostResponse> => {
-    const formData = new FormData();
+export const createPostV2PostsPost = (
+    bodyCreatePostV2PostsPost: BodyType<BodyCreatePostV2PostsPost>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 formData.append(`content_text`, bodyCreatePostV2PostsPost.content_text);
 if(bodyCreatePostV2PostsPost.visibility !== undefined) {
  formData.append(`visibility`, bodyCreatePostV2PostsPost.visibility);
@@ -93,17 +70,14 @@ if(bodyCreatePostV2PostsPost.files !== undefined) {
  bodyCreatePostV2PostsPost.files.forEach(value => formData.append(`files`, value));
  }
 
-  return customInstance<createPostV2PostsPostResponse>(getCreatePostV2PostsPostUrl(),
-  {      
-    ...options,
-    method: 'POST'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<PostOut>(
+      {url: `/v2/posts`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+  
 
 
 export const getCreatePostV2PostsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -154,45 +128,18 @@ export const useCreatePostV2PostsPost = <TError = ErrorType<HTTPValidationError>
  * Get a specific post (cross-tenant) - comments available via separate endpoint
  * @summary Get Post
  */
-export type getPostV2PostsPostIdGetResponse200 = {
-  data: PostOut
-  status: 200
-}
-
-export type getPostV2PostsPostIdGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type getPostV2PostsPostIdGetResponseSuccess = (getPostV2PostsPostIdGetResponse200) & {
-  headers: Headers;
-};
-export type getPostV2PostsPostIdGetResponseError = (getPostV2PostsPostIdGetResponse422) & {
-  headers: Headers;
-};
-
-export type getPostV2PostsPostIdGetResponse = (getPostV2PostsPostIdGetResponseSuccess | getPostV2PostsPostIdGetResponseError)
-
-export const getGetPostV2PostsPostIdGetUrl = (postId: string,) => {
-
-
+export const getPostV2PostsPostIdGet = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PostOut>(
+      {url: `/v2/posts/${postId}`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/v2/posts/${postId}`
-}
-
-export const getPostV2PostsPostIdGet = async (postId: string, options?: RequestInit): Promise<getPostV2PostsPostIdGetResponse> => {
-  
-  return customInstance<getPostV2PostsPostIdGetResponse>(getGetPostV2PostsPostIdGetUrl(postId),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -212,7 +159,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPostV2PostsPostIdGet>>> = ({ signal }) => getPostV2PostsPostIdGet(postId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPostV2PostsPostIdGet>>> = ({ signal }) => getPostV2PostsPostIdGet(postId, requestOptions, signal);
 
       
 
@@ -272,36 +219,13 @@ export function useGetPostV2PostsPostIdGet<TData = Awaited<ReturnType<typeof get
  * Update a post (only owner can update)
  * @summary Update Post
  */
-export type updatePostV2PostsPostIdPutResponse200 = {
-  data: PostOut
-  status: 200
-}
-
-export type updatePostV2PostsPostIdPutResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type updatePostV2PostsPostIdPutResponseSuccess = (updatePostV2PostsPostIdPutResponse200) & {
-  headers: Headers;
-};
-export type updatePostV2PostsPostIdPutResponseError = (updatePostV2PostsPostIdPutResponse422) & {
-  headers: Headers;
-};
-
-export type updatePostV2PostsPostIdPutResponse = (updatePostV2PostsPostIdPutResponseSuccess | updatePostV2PostsPostIdPutResponseError)
-
-export const getUpdatePostV2PostsPostIdPutUrl = (postId: string,) => {
-
-
-  
-
-  return `/v2/posts/${postId}`
-}
-
-export const updatePostV2PostsPostIdPut = async (postId: string,
-    bodyUpdatePostV2PostsPostIdPut: BodyUpdatePostV2PostsPostIdPut, options?: RequestInit): Promise<updatePostV2PostsPostIdPutResponse> => {
-    const formData = new FormData();
+export const updatePostV2PostsPostIdPut = (
+    postId: string,
+    bodyUpdatePostV2PostsPostIdPut: BodyType<BodyUpdatePostV2PostsPostIdPut>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 if(bodyUpdatePostV2PostsPostIdPut.content_text !== undefined) {
  formData.append(`content_text`, bodyUpdatePostV2PostsPostIdPut.content_text);
  }
@@ -312,17 +236,14 @@ if(bodyUpdatePostV2PostsPostIdPut.files !== undefined) {
  bodyUpdatePostV2PostsPostIdPut.files.forEach(value => formData.append(`files`, value));
  }
 
-  return customInstance<updatePostV2PostsPostIdPutResponse>(getUpdatePostV2PostsPostIdPutUrl(postId),
-  {      
-    ...options,
-    method: 'PUT'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<PostOut>(
+      {url: `/v2/posts/${postId}`, method: 'PUT',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+  
 
 
 export const getUpdatePostV2PostsPostIdPutMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -373,45 +294,18 @@ export const useUpdatePostV2PostsPostIdPut = <TError = ErrorType<HTTPValidationE
  * Delete own post (soft delete in index, hard delete in tenant DB)
  * @summary Delete Post
  */
-export type deletePostV2PostsPostIdDeleteResponse204 = {
-  data: void
-  status: 204
-}
-
-export type deletePostV2PostsPostIdDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type deletePostV2PostsPostIdDeleteResponseSuccess = (deletePostV2PostsPostIdDeleteResponse204) & {
-  headers: Headers;
-};
-export type deletePostV2PostsPostIdDeleteResponseError = (deletePostV2PostsPostIdDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deletePostV2PostsPostIdDeleteResponse = (deletePostV2PostsPostIdDeleteResponseSuccess | deletePostV2PostsPostIdDeleteResponseError)
-
-export const getDeletePostV2PostsPostIdDeleteUrl = (postId: string,) => {
-
-
+export const deletePostV2PostsPostIdDelete = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v2/posts/${postId}`, method: 'DELETE', signal
+    },
+      options);
+    }
   
-
-  return `/v2/posts/${postId}`
-}
-
-export const deletePostV2PostsPostIdDelete = async (postId: string, options?: RequestInit): Promise<deletePostV2PostsPostIdDeleteResponse> => {
-  
-  return customInstance<deletePostV2PostsPostIdDeleteResponse>(getDeletePostV2PostsPostIdDeleteUrl(postId),
-  {      
-    ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
-
-
 
 
 export const getDeletePostV2PostsPostIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -462,54 +356,20 @@ export const useDeletePostV2PostsPostIdDelete = <TError = ErrorType<HTTPValidati
  * Get comments for a post with pagination (cross-tenant)
  * @summary Get Post Comments
  */
-export type getPostCommentsV2PostsPostIdCommentsGetResponse200 = {
-  data: CommentOut[]
-  status: 200
-}
-
-export type getPostCommentsV2PostsPostIdCommentsGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type getPostCommentsV2PostsPostIdCommentsGetResponseSuccess = (getPostCommentsV2PostsPostIdCommentsGetResponse200) & {
-  headers: Headers;
-};
-export type getPostCommentsV2PostsPostIdCommentsGetResponseError = (getPostCommentsV2PostsPostIdCommentsGetResponse422) & {
-  headers: Headers;
-};
-
-export type getPostCommentsV2PostsPostIdCommentsGetResponse = (getPostCommentsV2PostsPostIdCommentsGetResponseSuccess | getPostCommentsV2PostsPostIdCommentsGetResponseError)
-
-export const getGetPostCommentsV2PostsPostIdCommentsGetUrl = (postId: string,
-    params?: GetPostCommentsV2PostsPostIdCommentsGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const getPostCommentsV2PostsPostIdCommentsGet = (
+    postId: string,
+    params?: GetPostCommentsV2PostsPostIdCommentsGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CommentOut[]>(
+      {url: `/v2/posts/${postId}/comments`, method: 'GET',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/v2/posts/${postId}/comments?${stringifiedParams}` : `/v2/posts/${postId}/comments`
-}
-
-export const getPostCommentsV2PostsPostIdCommentsGet = async (postId: string,
-    params?: GetPostCommentsV2PostsPostIdCommentsGetParams, options?: RequestInit): Promise<getPostCommentsV2PostsPostIdCommentsGetResponse> => {
   
-  return customInstance<getPostCommentsV2PostsPostIdCommentsGetResponse>(getGetPostCommentsV2PostsPostIdCommentsGetUrl(postId,params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -531,7 +391,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPostCommentsV2PostsPostIdCommentsGet>>> = ({ signal }) => getPostCommentsV2PostsPostIdCommentsGet(postId,params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPostCommentsV2PostsPostIdCommentsGet>>> = ({ signal }) => getPostCommentsV2PostsPostIdCommentsGet(postId,params, requestOptions, signal);
 
       
 
@@ -595,52 +455,26 @@ export function useGetPostCommentsV2PostsPostIdCommentsGet<TData = Awaited<Retur
  * Comment on any post (cross-tenant) with optional media
  * @summary Comment On Post
  */
-export type commentOnPostV2PostsPostIdCommentsPostResponse200 = {
-  data: CommentOut
-  status: 200
-}
-
-export type commentOnPostV2PostsPostIdCommentsPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type commentOnPostV2PostsPostIdCommentsPostResponseSuccess = (commentOnPostV2PostsPostIdCommentsPostResponse200) & {
-  headers: Headers;
-};
-export type commentOnPostV2PostsPostIdCommentsPostResponseError = (commentOnPostV2PostsPostIdCommentsPostResponse422) & {
-  headers: Headers;
-};
-
-export type commentOnPostV2PostsPostIdCommentsPostResponse = (commentOnPostV2PostsPostIdCommentsPostResponseSuccess | commentOnPostV2PostsPostIdCommentsPostResponseError)
-
-export const getCommentOnPostV2PostsPostIdCommentsPostUrl = (postId: string,) => {
-
-
-  
-
-  return `/v2/posts/${postId}/comments`
-}
-
-export const commentOnPostV2PostsPostIdCommentsPost = async (postId: string,
-    bodyCommentOnPostV2PostsPostIdCommentsPost: BodyCommentOnPostV2PostsPostIdCommentsPost, options?: RequestInit): Promise<commentOnPostV2PostsPostIdCommentsPostResponse> => {
-    const formData = new FormData();
+export const commentOnPostV2PostsPostIdCommentsPost = (
+    postId: string,
+    bodyCommentOnPostV2PostsPostIdCommentsPost: BodyType<BodyCommentOnPostV2PostsPostIdCommentsPost>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 formData.append(`content_text`, bodyCommentOnPostV2PostsPostIdCommentsPost.content_text);
 if(bodyCommentOnPostV2PostsPostIdCommentsPost.files !== undefined) {
  bodyCommentOnPostV2PostsPostIdCommentsPost.files.forEach(value => formData.append(`files`, value));
  }
 
-  return customInstance<commentOnPostV2PostsPostIdCommentsPostResponse>(getCommentOnPostV2PostsPostIdCommentsPostUrl(postId),
-  {      
-    ...options,
-    method: 'POST'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<CommentOut>(
+      {url: `/v2/posts/${postId}/comments`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+  
 
 
 export const getCommentOnPostV2PostsPostIdCommentsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -691,52 +525,19 @@ export const useCommentOnPostV2PostsPostIdCommentsPost = <TError = ErrorType<HTT
  * Get all posts created by the current user
  * @summary Get My Posts
  */
-export type getMyPostsV2PostsMeListGetResponse200 = {
-  data: PostOut[]
-  status: 200
-}
-
-export type getMyPostsV2PostsMeListGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type getMyPostsV2PostsMeListGetResponseSuccess = (getMyPostsV2PostsMeListGetResponse200) & {
-  headers: Headers;
-};
-export type getMyPostsV2PostsMeListGetResponseError = (getMyPostsV2PostsMeListGetResponse422) & {
-  headers: Headers;
-};
-
-export type getMyPostsV2PostsMeListGetResponse = (getMyPostsV2PostsMeListGetResponseSuccess | getMyPostsV2PostsMeListGetResponseError)
-
-export const getGetMyPostsV2PostsMeListGetUrl = (params?: GetMyPostsV2PostsMeListGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const getMyPostsV2PostsMeListGet = (
+    params?: GetMyPostsV2PostsMeListGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PostOut[]>(
+      {url: `/v2/posts/me/list`, method: 'GET',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/v2/posts/me/list?${stringifiedParams}` : `/v2/posts/me/list`
-}
-
-export const getMyPostsV2PostsMeListGet = async (params?: GetMyPostsV2PostsMeListGetParams, options?: RequestInit): Promise<getMyPostsV2PostsMeListGetResponse> => {
   
-  return customInstance<getMyPostsV2PostsMeListGetResponse>(getGetMyPostsV2PostsMeListGetUrl(params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -756,7 +557,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyPostsV2PostsMeListGet>>> = ({ signal }) => getMyPostsV2PostsMeListGet(params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyPostsV2PostsMeListGet>>> = ({ signal }) => getMyPostsV2PostsMeListGet(params, requestOptions, signal);
 
       
 
@@ -816,54 +617,27 @@ export function useGetMyPostsV2PostsMeListGet<TData = Awaited<ReturnType<typeof 
  * Update own comment (only author can update)
  * @summary Update Comment
  */
-export type updateCommentV2PostsPostIdCommentsCommentIdPutResponse200 = {
-  data: CommentOut
-  status: 200
-}
-
-export type updateCommentV2PostsPostIdCommentsCommentIdPutResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type updateCommentV2PostsPostIdCommentsCommentIdPutResponseSuccess = (updateCommentV2PostsPostIdCommentsCommentIdPutResponse200) & {
-  headers: Headers;
-};
-export type updateCommentV2PostsPostIdCommentsCommentIdPutResponseError = (updateCommentV2PostsPostIdCommentsCommentIdPutResponse422) & {
-  headers: Headers;
-};
-
-export type updateCommentV2PostsPostIdCommentsCommentIdPutResponse = (updateCommentV2PostsPostIdCommentsCommentIdPutResponseSuccess | updateCommentV2PostsPostIdCommentsCommentIdPutResponseError)
-
-export const getUpdateCommentV2PostsPostIdCommentsCommentIdPutUrl = (postId: string,
-    commentId: string,) => {
-
-
-  
-
-  return `/v2/posts/${postId}/comments/${commentId}`
-}
-
-export const updateCommentV2PostsPostIdCommentsCommentIdPut = async (postId: string,
+export const updateCommentV2PostsPostIdCommentsCommentIdPut = (
+    postId: string,
     commentId: string,
-    bodyUpdateCommentV2PostsPostIdCommentsCommentIdPut: BodyUpdateCommentV2PostsPostIdCommentsCommentIdPut, options?: RequestInit): Promise<updateCommentV2PostsPostIdCommentsCommentIdPutResponse> => {
-    const formData = new FormData();
+    bodyUpdateCommentV2PostsPostIdCommentsCommentIdPut: BodyType<BodyUpdateCommentV2PostsPostIdCommentsCommentIdPut>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 formData.append(`content_text`, bodyUpdateCommentV2PostsPostIdCommentsCommentIdPut.content_text);
 if(bodyUpdateCommentV2PostsPostIdCommentsCommentIdPut.files !== undefined) {
  bodyUpdateCommentV2PostsPostIdCommentsCommentIdPut.files.forEach(value => formData.append(`files`, value));
  }
 
-  return customInstance<updateCommentV2PostsPostIdCommentsCommentIdPutResponse>(getUpdateCommentV2PostsPostIdCommentsCommentIdPutUrl(postId,commentId),
-  {      
-    ...options,
-    method: 'PUT'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<CommentOut>(
+      {url: `/v2/posts/${postId}/comments/${commentId}`, method: 'PUT',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+  
 
 
 export const getUpdateCommentV2PostsPostIdCommentsCommentIdPutMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -914,47 +688,19 @@ export const useUpdateCommentV2PostsPostIdCommentsCommentIdPut = <TError = Error
  * Delete own comment (only author can delete)
  * @summary Delete Comment
  */
-export type deleteCommentV2PostsPostIdCommentsCommentIdDeleteResponse204 = {
-  data: void
-  status: 204
-}
-
-export type deleteCommentV2PostsPostIdCommentsCommentIdDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type deleteCommentV2PostsPostIdCommentsCommentIdDeleteResponseSuccess = (deleteCommentV2PostsPostIdCommentsCommentIdDeleteResponse204) & {
-  headers: Headers;
-};
-export type deleteCommentV2PostsPostIdCommentsCommentIdDeleteResponseError = (deleteCommentV2PostsPostIdCommentsCommentIdDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deleteCommentV2PostsPostIdCommentsCommentIdDeleteResponse = (deleteCommentV2PostsPostIdCommentsCommentIdDeleteResponseSuccess | deleteCommentV2PostsPostIdCommentsCommentIdDeleteResponseError)
-
-export const getDeleteCommentV2PostsPostIdCommentsCommentIdDeleteUrl = (postId: string,
-    commentId: string,) => {
-
-
+export const deleteCommentV2PostsPostIdCommentsCommentIdDelete = (
+    postId: string,
+    commentId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v2/posts/${postId}/comments/${commentId}`, method: 'DELETE', signal
+    },
+      options);
+    }
   
-
-  return `/v2/posts/${postId}/comments/${commentId}`
-}
-
-export const deleteCommentV2PostsPostIdCommentsCommentIdDelete = async (postId: string,
-    commentId: string, options?: RequestInit): Promise<deleteCommentV2PostsPostIdCommentsCommentIdDeleteResponse> => {
-  
-  return customInstance<deleteCommentV2PostsPostIdCommentsCommentIdDeleteResponse>(getDeleteCommentV2PostsPostIdCommentsCommentIdDeleteUrl(postId,commentId),
-  {      
-    ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
-
-
 
 
 export const getDeleteCommentV2PostsPostIdCommentsCommentIdDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1005,61 +751,28 @@ export const useDeleteCommentV2PostsPostIdCommentsCommentIdDelete = <TError = Er
  * Reply to a comment (nested comment) with optional media
  * @summary Reply To Comment
  */
-export type replyToCommentV2CommentsCommentIdRepliesPostResponse200 = {
-  data: CommentOut
-  status: 200
-}
-
-export type replyToCommentV2CommentsCommentIdRepliesPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type replyToCommentV2CommentsCommentIdRepliesPostResponseSuccess = (replyToCommentV2CommentsCommentIdRepliesPostResponse200) & {
-  headers: Headers;
-};
-export type replyToCommentV2CommentsCommentIdRepliesPostResponseError = (replyToCommentV2CommentsCommentIdRepliesPostResponse422) & {
-  headers: Headers;
-};
-
-export type replyToCommentV2CommentsCommentIdRepliesPostResponse = (replyToCommentV2CommentsCommentIdRepliesPostResponseSuccess | replyToCommentV2CommentsCommentIdRepliesPostResponseError)
-
-export const getReplyToCommentV2CommentsCommentIdRepliesPostUrl = (commentId: string,
-    params: ReplyToCommentV2CommentsCommentIdRepliesPostParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/v2/comments/${commentId}/replies?${stringifiedParams}` : `/v2/comments/${commentId}/replies`
-}
-
-export const replyToCommentV2CommentsCommentIdRepliesPost = async (commentId: string,
-    bodyReplyToCommentV2CommentsCommentIdRepliesPost: BodyReplyToCommentV2CommentsCommentIdRepliesPost,
-    params: ReplyToCommentV2CommentsCommentIdRepliesPostParams, options?: RequestInit): Promise<replyToCommentV2CommentsCommentIdRepliesPostResponse> => {
-    const formData = new FormData();
+export const replyToCommentV2CommentsCommentIdRepliesPost = (
+    commentId: string,
+    bodyReplyToCommentV2CommentsCommentIdRepliesPost: BodyType<BodyReplyToCommentV2CommentsCommentIdRepliesPost>,
+    params: ReplyToCommentV2CommentsCommentIdRepliesPostParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 formData.append(`content_text`, bodyReplyToCommentV2CommentsCommentIdRepliesPost.content_text);
 if(bodyReplyToCommentV2CommentsCommentIdRepliesPost.files !== undefined) {
  bodyReplyToCommentV2CommentsCommentIdRepliesPost.files.forEach(value => formData.append(`files`, value));
  }
 
-  return customInstance<replyToCommentV2CommentsCommentIdRepliesPostResponse>(getReplyToCommentV2CommentsCommentIdRepliesPostUrl(commentId,params),
-  {      
-    ...options,
-    method: 'POST'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<CommentOut>(
+      {url: `/v2/comments/${commentId}/replies`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData,
+        params, signal
+    },
+      options);
+    }
+  
 
 
 export const getReplyToCommentV2CommentsCommentIdRepliesPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1110,54 +823,20 @@ export const useReplyToCommentV2CommentsCommentIdRepliesPost = <TError = ErrorTy
  * Get replies to a comment with pagination - similar to post comments
  * @summary Get Comment Replies
  */
-export type getCommentRepliesV2CommentsCommentIdRepliesGetResponse200 = {
-  data: CommentOut[]
-  status: 200
-}
-
-export type getCommentRepliesV2CommentsCommentIdRepliesGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type getCommentRepliesV2CommentsCommentIdRepliesGetResponseSuccess = (getCommentRepliesV2CommentsCommentIdRepliesGetResponse200) & {
-  headers: Headers;
-};
-export type getCommentRepliesV2CommentsCommentIdRepliesGetResponseError = (getCommentRepliesV2CommentsCommentIdRepliesGetResponse422) & {
-  headers: Headers;
-};
-
-export type getCommentRepliesV2CommentsCommentIdRepliesGetResponse = (getCommentRepliesV2CommentsCommentIdRepliesGetResponseSuccess | getCommentRepliesV2CommentsCommentIdRepliesGetResponseError)
-
-export const getGetCommentRepliesV2CommentsCommentIdRepliesGetUrl = (commentId: string,
-    params?: GetCommentRepliesV2CommentsCommentIdRepliesGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const getCommentRepliesV2CommentsCommentIdRepliesGet = (
+    commentId: string,
+    params?: GetCommentRepliesV2CommentsCommentIdRepliesGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CommentOut[]>(
+      {url: `/v2/comments/${commentId}/replies`, method: 'GET',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/v2/comments/${commentId}/replies?${stringifiedParams}` : `/v2/comments/${commentId}/replies`
-}
-
-export const getCommentRepliesV2CommentsCommentIdRepliesGet = async (commentId: string,
-    params?: GetCommentRepliesV2CommentsCommentIdRepliesGetParams, options?: RequestInit): Promise<getCommentRepliesV2CommentsCommentIdRepliesGetResponse> => {
   
-  return customInstance<getCommentRepliesV2CommentsCommentIdRepliesGetResponse>(getGetCommentRepliesV2CommentsCommentIdRepliesGetUrl(commentId,params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -1179,7 +858,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommentRepliesV2CommentsCommentIdRepliesGet>>> = ({ signal }) => getCommentRepliesV2CommentsCommentIdRepliesGet(commentId,params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommentRepliesV2CommentsCommentIdRepliesGet>>> = ({ signal }) => getCommentRepliesV2CommentsCommentIdRepliesGet(commentId,params, requestOptions, signal);
 
       
 
@@ -1243,56 +922,23 @@ export function useGetCommentRepliesV2CommentsCommentIdRepliesGet<TData = Awaite
  * React to a comment (like, love, etc.)
  * @summary React To Comment
  */
-export type reactToCommentV2CommentsCommentIdReactionsPostResponse200 = {
-  data: ReactionOut
-  status: 200
-}
-
-export type reactToCommentV2CommentsCommentIdReactionsPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type reactToCommentV2CommentsCommentIdReactionsPostResponseSuccess = (reactToCommentV2CommentsCommentIdReactionsPostResponse200) & {
-  headers: Headers;
-};
-export type reactToCommentV2CommentsCommentIdReactionsPostResponseError = (reactToCommentV2CommentsCommentIdReactionsPostResponse422) & {
-  headers: Headers;
-};
-
-export type reactToCommentV2CommentsCommentIdReactionsPostResponse = (reactToCommentV2CommentsCommentIdReactionsPostResponseSuccess | reactToCommentV2CommentsCommentIdReactionsPostResponseError)
-
-export const getReactToCommentV2CommentsCommentIdReactionsPostUrl = (commentId: string,
-    params: ReactToCommentV2CommentsCommentIdReactionsPostParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const reactToCommentV2CommentsCommentIdReactionsPost = (
+    commentId: string,
+    reactRequest: BodyType<ReactRequest>,
+    params: ReactToCommentV2CommentsCommentIdReactionsPostParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ReactionOut>(
+      {url: `/v2/comments/${commentId}/reactions`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: reactRequest,
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/v2/comments/${commentId}/reactions?${stringifiedParams}` : `/v2/comments/${commentId}/reactions`
-}
-
-export const reactToCommentV2CommentsCommentIdReactionsPost = async (commentId: string,
-    reactRequest: ReactRequest,
-    params: ReactToCommentV2CommentsCommentIdReactionsPostParams, options?: RequestInit): Promise<reactToCommentV2CommentsCommentIdReactionsPostResponse> => {
   
-  return customInstance<reactToCommentV2CommentsCommentIdReactionsPostResponse>(getReactToCommentV2CommentsCommentIdReactionsPostUrl(commentId,params),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      reactRequest,)
-  }
-);}
-
-
 
 
 export const getReactToCommentV2CommentsCommentIdReactionsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1343,45 +989,18 @@ export const useReactToCommentV2CommentsCommentIdReactionsPost = <TError = Error
  * Remove reaction from a comment
  * @summary Remove Comment Reaction
  */
-export type removeCommentReactionV2CommentsCommentIdReactionsDeleteResponse204 = {
-  data: void
-  status: 204
-}
-
-export type removeCommentReactionV2CommentsCommentIdReactionsDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type removeCommentReactionV2CommentsCommentIdReactionsDeleteResponseSuccess = (removeCommentReactionV2CommentsCommentIdReactionsDeleteResponse204) & {
-  headers: Headers;
-};
-export type removeCommentReactionV2CommentsCommentIdReactionsDeleteResponseError = (removeCommentReactionV2CommentsCommentIdReactionsDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type removeCommentReactionV2CommentsCommentIdReactionsDeleteResponse = (removeCommentReactionV2CommentsCommentIdReactionsDeleteResponseSuccess | removeCommentReactionV2CommentsCommentIdReactionsDeleteResponseError)
-
-export const getRemoveCommentReactionV2CommentsCommentIdReactionsDeleteUrl = (commentId: string,) => {
-
-
+export const removeCommentReactionV2CommentsCommentIdReactionsDelete = (
+    commentId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v2/comments/${commentId}/reactions`, method: 'DELETE', signal
+    },
+      options);
+    }
   
-
-  return `/v2/comments/${commentId}/reactions`
-}
-
-export const removeCommentReactionV2CommentsCommentIdReactionsDelete = async (commentId: string, options?: RequestInit): Promise<removeCommentReactionV2CommentsCommentIdReactionsDeleteResponse> => {
-  
-  return customInstance<removeCommentReactionV2CommentsCommentIdReactionsDeleteResponse>(getRemoveCommentReactionV2CommentsCommentIdReactionsDeleteUrl(commentId),
-  {      
-    ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
-
-
 
 
 export const getRemoveCommentReactionV2CommentsCommentIdReactionsDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1432,47 +1051,21 @@ export const useRemoveCommentReactionV2CommentsCommentIdReactionsDelete = <TErro
  * React to a post (like, love, etc.)
  * @summary React To Post
  */
-export type reactToPostV2PostsPostIdReactionsPostResponse200 = {
-  data: ReactionOut
-  status: 200
-}
-
-export type reactToPostV2PostsPostIdReactionsPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type reactToPostV2PostsPostIdReactionsPostResponseSuccess = (reactToPostV2PostsPostIdReactionsPostResponse200) & {
-  headers: Headers;
-};
-export type reactToPostV2PostsPostIdReactionsPostResponseError = (reactToPostV2PostsPostIdReactionsPostResponse422) & {
-  headers: Headers;
-};
-
-export type reactToPostV2PostsPostIdReactionsPostResponse = (reactToPostV2PostsPostIdReactionsPostResponseSuccess | reactToPostV2PostsPostIdReactionsPostResponseError)
-
-export const getReactToPostV2PostsPostIdReactionsPostUrl = (postId: string,) => {
-
-
+export const reactToPostV2PostsPostIdReactionsPost = (
+    postId: string,
+    reactRequest: BodyType<ReactRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ReactionOut>(
+      {url: `/v2/posts/${postId}/reactions`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: reactRequest, signal
+    },
+      options);
+    }
   
-
-  return `/v2/posts/${postId}/reactions`
-}
-
-export const reactToPostV2PostsPostIdReactionsPost = async (postId: string,
-    reactRequest: ReactRequest, options?: RequestInit): Promise<reactToPostV2PostsPostIdReactionsPostResponse> => {
-  
-  return customInstance<reactToPostV2PostsPostIdReactionsPostResponse>(getReactToPostV2PostsPostIdReactionsPostUrl(postId),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      reactRequest,)
-  }
-);}
-
-
 
 
 export const getReactToPostV2PostsPostIdReactionsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1523,45 +1116,18 @@ export const useReactToPostV2PostsPostIdReactionsPost = <TError = ErrorType<HTTP
  * Remove reaction from a post
  * @summary Remove Reaction
  */
-export type removeReactionV2PostsPostIdReactionsDeleteResponse204 = {
-  data: void
-  status: 204
-}
-
-export type removeReactionV2PostsPostIdReactionsDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type removeReactionV2PostsPostIdReactionsDeleteResponseSuccess = (removeReactionV2PostsPostIdReactionsDeleteResponse204) & {
-  headers: Headers;
-};
-export type removeReactionV2PostsPostIdReactionsDeleteResponseError = (removeReactionV2PostsPostIdReactionsDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type removeReactionV2PostsPostIdReactionsDeleteResponse = (removeReactionV2PostsPostIdReactionsDeleteResponseSuccess | removeReactionV2PostsPostIdReactionsDeleteResponseError)
-
-export const getRemoveReactionV2PostsPostIdReactionsDeleteUrl = (postId: string,) => {
-
-
+export const removeReactionV2PostsPostIdReactionsDelete = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v2/posts/${postId}/reactions`, method: 'DELETE', signal
+    },
+      options);
+    }
   
-
-  return `/v2/posts/${postId}/reactions`
-}
-
-export const removeReactionV2PostsPostIdReactionsDelete = async (postId: string, options?: RequestInit): Promise<removeReactionV2PostsPostIdReactionsDeleteResponse> => {
-  
-  return customInstance<removeReactionV2PostsPostIdReactionsDeleteResponse>(getRemoveReactionV2PostsPostIdReactionsDeleteUrl(postId),
-  {      
-    ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
-
-
 
 
 export const getRemoveReactionV2PostsPostIdReactionsDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1612,47 +1178,21 @@ export const useRemoveReactionV2PostsPostIdReactionsDelete = <TError = ErrorType
  * Share a post to your timeline
  * @summary Share Post
  */
-export type sharePostV2PostsPostIdSharePostResponse200 = {
-  data: PostOut
-  status: 200
-}
-
-export type sharePostV2PostsPostIdSharePostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type sharePostV2PostsPostIdSharePostResponseSuccess = (sharePostV2PostsPostIdSharePostResponse200) & {
-  headers: Headers;
-};
-export type sharePostV2PostsPostIdSharePostResponseError = (sharePostV2PostsPostIdSharePostResponse422) & {
-  headers: Headers;
-};
-
-export type sharePostV2PostsPostIdSharePostResponse = (sharePostV2PostsPostIdSharePostResponseSuccess | sharePostV2PostsPostIdSharePostResponseError)
-
-export const getSharePostV2PostsPostIdSharePostUrl = (postId: string,) => {
-
-
+export const sharePostV2PostsPostIdSharePost = (
+    postId: string,
+    shareCreateRequest: BodyType<ShareCreateRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PostOut>(
+      {url: `/v2/posts/${postId}/share`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: shareCreateRequest, signal
+    },
+      options);
+    }
   
-
-  return `/v2/posts/${postId}/share`
-}
-
-export const sharePostV2PostsPostIdSharePost = async (postId: string,
-    shareCreateRequest: ShareCreateRequest, options?: RequestInit): Promise<sharePostV2PostsPostIdSharePostResponse> => {
-  
-  return customInstance<sharePostV2PostsPostIdSharePostResponse>(getSharePostV2PostsPostIdSharePostUrl(postId),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      shareCreateRequest,)
-  }
-);}
-
-
 
 
 export const getSharePostV2PostsPostIdSharePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1703,45 +1243,18 @@ export const useSharePostV2PostsPostIdSharePost = <TError = ErrorType<HTTPValida
  * Remove/unshare a shared post
  * @summary Unshare Post
  */
-export type unsharePostV2PostsSharePostIdShareDeleteResponse204 = {
-  data: void
-  status: 204
-}
-
-export type unsharePostV2PostsSharePostIdShareDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type unsharePostV2PostsSharePostIdShareDeleteResponseSuccess = (unsharePostV2PostsSharePostIdShareDeleteResponse204) & {
-  headers: Headers;
-};
-export type unsharePostV2PostsSharePostIdShareDeleteResponseError = (unsharePostV2PostsSharePostIdShareDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type unsharePostV2PostsSharePostIdShareDeleteResponse = (unsharePostV2PostsSharePostIdShareDeleteResponseSuccess | unsharePostV2PostsSharePostIdShareDeleteResponseError)
-
-export const getUnsharePostV2PostsSharePostIdShareDeleteUrl = (sharePostId: string,) => {
-
-
+export const unsharePostV2PostsSharePostIdShareDelete = (
+    sharePostId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v2/posts/${sharePostId}/share`, method: 'DELETE', signal
+    },
+      options);
+    }
   
-
-  return `/v2/posts/${sharePostId}/share`
-}
-
-export const unsharePostV2PostsSharePostIdShareDelete = async (sharePostId: string, options?: RequestInit): Promise<unsharePostV2PostsSharePostIdShareDeleteResponse> => {
-  
-  return customInstance<unsharePostV2PostsSharePostIdShareDeleteResponse>(getUnsharePostV2PostsSharePostIdShareDeleteUrl(sharePostId),
-  {      
-    ...options,
-    method: 'DELETE'
-    
-    
-  }
-);}
-
-
 
 
 export const getUnsharePostV2PostsSharePostIdShareDeleteMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1792,52 +1305,19 @@ export const useUnsharePostV2PostsSharePostIdShareDelete = <TError = ErrorType<H
  * Get personalized feed (multi-tenant aggregation)
  * @summary Get Feed
  */
-export type getFeedV2FeedGetResponse200 = {
-  data: FeedResponse
-  status: 200
-}
-
-export type getFeedV2FeedGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type getFeedV2FeedGetResponseSuccess = (getFeedV2FeedGetResponse200) & {
-  headers: Headers;
-};
-export type getFeedV2FeedGetResponseError = (getFeedV2FeedGetResponse422) & {
-  headers: Headers;
-};
-
-export type getFeedV2FeedGetResponse = (getFeedV2FeedGetResponseSuccess | getFeedV2FeedGetResponseError)
-
-export const getGetFeedV2FeedGetUrl = (params?: GetFeedV2FeedGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const getFeedV2FeedGet = (
+    params?: GetFeedV2FeedGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<FeedResponse>(
+      {url: `/v2/feed`, method: 'GET',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/v2/feed?${stringifiedParams}` : `/v2/feed`
-}
-
-export const getFeedV2FeedGet = async (params?: GetFeedV2FeedGetParams, options?: RequestInit): Promise<getFeedV2FeedGetResponse> => {
   
-  return customInstance<getFeedV2FeedGetResponse>(getGetFeedV2FeedGetUrl(params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -1857,7 +1337,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeedV2FeedGet>>> = ({ signal }) => getFeedV2FeedGet(params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeedV2FeedGet>>> = ({ signal }) => getFeedV2FeedGet(params, requestOptions, signal);
 
       
 

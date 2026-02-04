@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
-import { authApi } from "../services/authApi";
-// import { useAuthStore } from "@/stores/authStore";
+import { AuthAPI } from "@/lib/api/generated";
+import { getErrorMessage } from "@/lib/api/transforms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,37 +45,37 @@ export function OTPVerifyPage() {
   const [error, setError] = useState("");
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const verifyMutation = useMutation({
-    mutationFn: authApi.verifyOTP,
-    onSuccess: async () => {
-      if (typeof sessionStorage !== "undefined") {
-        sessionStorage.removeItem(OTP_STORAGE_EMAIL);
-        sessionStorage.removeItem(OTP_STORAGE_USER_ID);
-      }
-      navigate("/login", {
-        state: {
-          email,
-          message:
-            "Xác thực OTP thành công! Tài khoản của bạn hiện là chưa xác minh với dung lượng 100MB. Vui lòng đăng nhập.",
-        },
-      });
-    },
-    onError: (err: any) => {
-      setError(
-        err.response?.data?.detail || "Mã OTP không hợp lệ hoặc đã hết hạn",
-      );
+  const verifyMutation = AuthAPI.useVerifyOtpAuthVerifyOtpPost({
+    mutation: {
+      onSuccess: async () => {
+        if (typeof sessionStorage !== "undefined") {
+          sessionStorage.removeItem(OTP_STORAGE_EMAIL);
+          sessionStorage.removeItem(OTP_STORAGE_USER_ID);
+        }
+        navigate("/login", {
+          state: {
+            email,
+            message:
+              "Xác thực OTP thành công! Tài khoản của bạn hiện là chưa xác minh với dung lượng 100MB. Vui lòng đăng nhập.",
+          },
+        });
+      },
+      onError: (err: any) => {
+        setError(getErrorMessage(err));
+      },
     },
   });
 
-  const resendMutation = useMutation({
-    mutationFn: authApi.resendOTP,
-    onSuccess: () => {
-      setResendSuccess(true);
-      setError("");
-      setTimeout(() => setResendSuccess(false), 3000);
-    },
-    onError: (err: any) => {
-      setError(err.response?.data?.detail || "Không thể gửi lại OTP");
+  const resendMutation = AuthAPI.useResendOtpAuthResendOtpPostUserIdPost({
+    mutation: {
+      onSuccess: () => {
+        setResendSuccess(true);
+        setError("");
+        setTimeout(() => setResendSuccess(false), 3000);
+      },
+      onError: (err: any) => {
+        setError(getErrorMessage(err));
+      },
     },
   });
 
@@ -93,7 +92,12 @@ export function OTPVerifyPage() {
       return;
     }
 
-    verifyMutation.mutate({ user_id, otpCode });
+    verifyMutation.mutate({ 
+      data: {
+        user_id,
+        otpCode
+      }
+    });
   };
 
   const handleResend = () => {
@@ -101,7 +105,7 @@ export function OTPVerifyPage() {
       setError("Thiếu user_id. Vui lòng đăng ký lại.");
       return;
     }
-    resendMutation.mutate(user_id);
+    resendMutation.mutate({ userId: user_id });
   };
 
   if (!user_id || !email) {

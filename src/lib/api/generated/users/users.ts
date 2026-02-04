@@ -47,38 +47,18 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Me
  */
-export type meMeGetResponse200 = {
-  data: UserMeResponse
-  status: 200
-}
+export const meMeGet = (
     
-export type meMeGetResponseSuccess = (meMeGetResponse200) & {
-  headers: Headers;
-};
-;
-
-export type meMeGetResponse = (meMeGetResponseSuccess)
-
-export const getMeMeGetUrl = () => {
-
-
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<UserMeResponse>(
+      {url: `/me`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/me`
-}
-
-export const meMeGet = async ( options?: RequestInit): Promise<meMeGetResponse> => {
-  
-  return customInstance<meMeGetResponse>(getMeMeGetUrl(),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -98,7 +78,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof meMeGet>>> = ({ signal }) => meMeGet({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof meMeGet>>> = ({ signal }) => meMeGet(requestOptions, signal);
 
       
 
@@ -157,38 +137,18 @@ export function useMeMeGet<TData = Awaited<ReturnType<typeof meMeGet>>, TError =
 /**
  * @summary Me Alias
  */
-export type meAliasUsersMeGetResponse200 = {
-  data: UserMeResponse
-  status: 200
-}
+export const meAliasUsersMeGet = (
     
-export type meAliasUsersMeGetResponseSuccess = (meAliasUsersMeGetResponse200) & {
-  headers: Headers;
-};
-;
-
-export type meAliasUsersMeGetResponse = (meAliasUsersMeGetResponseSuccess)
-
-export const getMeAliasUsersMeGetUrl = () => {
-
-
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<UserMeResponse>(
+      {url: `/users/me`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/users/me`
-}
-
-export const meAliasUsersMeGet = async ( options?: RequestInit): Promise<meAliasUsersMeGetResponse> => {
-  
-  return customInstance<meAliasUsersMeGetResponse>(getMeAliasUsersMeGetUrl(),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -208,7 +168,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof meAliasUsersMeGet>>> = ({ signal }) => meAliasUsersMeGet({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof meAliasUsersMeGet>>> = ({ signal }) => meAliasUsersMeGet(requestOptions, signal);
 
       
 
@@ -267,46 +227,20 @@ export function useMeAliasUsersMeGet<TData = Awaited<ReturnType<typeof meAliasUs
 /**
  * @summary Update My Profile
  */
-export type updateMyProfileUsersMeProfilePatchResponse200 = {
-  data: UserMeResponse
-  status: 200
-}
-
-export type updateMyProfileUsersMeProfilePatchResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type updateMyProfileUsersMeProfilePatchResponseSuccess = (updateMyProfileUsersMeProfilePatchResponse200) & {
-  headers: Headers;
-};
-export type updateMyProfileUsersMeProfilePatchResponseError = (updateMyProfileUsersMeProfilePatchResponse422) & {
-  headers: Headers;
-};
-
-export type updateMyProfileUsersMeProfilePatchResponse = (updateMyProfileUsersMeProfilePatchResponseSuccess | updateMyProfileUsersMeProfilePatchResponseError)
-
-export const getUpdateMyProfileUsersMeProfilePatchUrl = () => {
-
-
+export const updateMyProfileUsersMeProfilePatch = (
+    updateProfileRequest: BodyType<UpdateProfileRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<UserMeResponse>(
+      {url: `/users/me/profile`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: updateProfileRequest, signal
+    },
+      options);
+    }
   
-
-  return `/users/me/profile`
-}
-
-export const updateMyProfileUsersMeProfilePatch = async (updateProfileRequest: UpdateProfileRequest, options?: RequestInit): Promise<updateMyProfileUsersMeProfilePatchResponse> => {
-  
-  return customInstance<updateMyProfileUsersMeProfilePatchResponse>(getUpdateMyProfileUsersMeProfilePatchUrl(),
-  {      
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      updateProfileRequest,)
-  }
-);}
-
-
 
 
 export const getUpdateMyProfileUsersMeProfilePatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -356,48 +290,22 @@ export const useUpdateMyProfileUsersMeProfilePatch = <TError = ErrorType<HTTPVal
     /**
  * @summary Upload My Avatar
  */
-export type uploadMyAvatarUsersMeAvatarPostResponse200 = {
-  data: UserMeResponse
-  status: 200
-}
-
-export type uploadMyAvatarUsersMeAvatarPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type uploadMyAvatarUsersMeAvatarPostResponseSuccess = (uploadMyAvatarUsersMeAvatarPostResponse200) & {
-  headers: Headers;
-};
-export type uploadMyAvatarUsersMeAvatarPostResponseError = (uploadMyAvatarUsersMeAvatarPostResponse422) & {
-  headers: Headers;
-};
-
-export type uploadMyAvatarUsersMeAvatarPostResponse = (uploadMyAvatarUsersMeAvatarPostResponseSuccess | uploadMyAvatarUsersMeAvatarPostResponseError)
-
-export const getUploadMyAvatarUsersMeAvatarPostUrl = () => {
-
-
-  
-
-  return `/users/me/avatar`
-}
-
-export const uploadMyAvatarUsersMeAvatarPost = async (bodyUploadMyAvatarUsersMeAvatarPost: BodyUploadMyAvatarUsersMeAvatarPost, options?: RequestInit): Promise<uploadMyAvatarUsersMeAvatarPostResponse> => {
-    const formData = new FormData();
+export const uploadMyAvatarUsersMeAvatarPost = (
+    bodyUploadMyAvatarUsersMeAvatarPost: BodyType<BodyUploadMyAvatarUsersMeAvatarPost>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 formData.append(`file`, bodyUploadMyAvatarUsersMeAvatarPost.file);
 
-  return customInstance<uploadMyAvatarUsersMeAvatarPostResponse>(getUploadMyAvatarUsersMeAvatarPostUrl(),
-  {      
-    ...options,
-    method: 'POST'
-    ,
-    body: 
-      formData,
-  }
-);}
-
-
+      return customInstance<UserMeResponse>(
+      {url: `/users/me/avatar`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+  
 
 
 export const getUploadMyAvatarUsersMeAvatarPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -447,38 +355,18 @@ export const useUploadMyAvatarUsersMeAvatarPost = <TError = ErrorType<HTTPValida
     /**
  * @summary Self Deactivate
  */
-export type selfDeactivateUsersMeDeactivatePostResponse200 = {
-  data: UserMeResponse
-  status: 200
-}
+export const selfDeactivateUsersMeDeactivatePost = (
     
-export type selfDeactivateUsersMeDeactivatePostResponseSuccess = (selfDeactivateUsersMeDeactivatePostResponse200) & {
-  headers: Headers;
-};
-;
-
-export type selfDeactivateUsersMeDeactivatePostResponse = (selfDeactivateUsersMeDeactivatePostResponseSuccess)
-
-export const getSelfDeactivateUsersMeDeactivatePostUrl = () => {
-
-
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<UserMeResponse>(
+      {url: `/users/me/deactivate`, method: 'POST', signal
+    },
+      options);
+    }
   
-
-  return `/users/me/deactivate`
-}
-
-export const selfDeactivateUsersMeDeactivatePost = async ( options?: RequestInit): Promise<selfDeactivateUsersMeDeactivatePostResponse> => {
-  
-  return customInstance<selfDeactivateUsersMeDeactivatePostResponse>(getSelfDeactivateUsersMeDeactivatePostUrl(),
-  {      
-    ...options,
-    method: 'POST'
-    
-    
-  }
-);}
-
-
 
 
 export const getSelfDeactivateUsersMeDeactivatePostMutationOptions = <TError = ErrorType<unknown>,
@@ -528,38 +416,18 @@ export const useSelfDeactivateUsersMeDeactivatePost = <TError = ErrorType<unknow
     /**
  * @summary Self Reactivate
  */
-export type selfReactivateUsersMeReactivatePostResponse200 = {
-  data: UserMeResponse
-  status: 200
-}
+export const selfReactivateUsersMeReactivatePost = (
     
-export type selfReactivateUsersMeReactivatePostResponseSuccess = (selfReactivateUsersMeReactivatePostResponse200) & {
-  headers: Headers;
-};
-;
-
-export type selfReactivateUsersMeReactivatePostResponse = (selfReactivateUsersMeReactivatePostResponseSuccess)
-
-export const getSelfReactivateUsersMeReactivatePostUrl = () => {
-
-
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<UserMeResponse>(
+      {url: `/users/me/reactivate`, method: 'POST', signal
+    },
+      options);
+    }
   
-
-  return `/users/me/reactivate`
-}
-
-export const selfReactivateUsersMeReactivatePost = async ( options?: RequestInit): Promise<selfReactivateUsersMeReactivatePostResponse> => {
-  
-  return customInstance<selfReactivateUsersMeReactivatePostResponse>(getSelfReactivateUsersMeReactivatePostUrl(),
-  {      
-    ...options,
-    method: 'POST'
-    
-    
-  }
-);}
-
-
 
 
 export const getSelfReactivateUsersMeReactivatePostMutationOptions = <TError = ErrorType<unknown>,
@@ -609,46 +477,20 @@ export const useSelfReactivateUsersMeReactivatePost = <TError = ErrorType<unknow
     /**
  * @summary Create Reactivation Request
  */
-export type createReactivationRequestUsersMeReactivationRequestsPostResponse200 = {
-  data: ReactivationRequestOut
-  status: 200
-}
-
-export type createReactivationRequestUsersMeReactivationRequestsPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type createReactivationRequestUsersMeReactivationRequestsPostResponseSuccess = (createReactivationRequestUsersMeReactivationRequestsPostResponse200) & {
-  headers: Headers;
-};
-export type createReactivationRequestUsersMeReactivationRequestsPostResponseError = (createReactivationRequestUsersMeReactivationRequestsPostResponse422) & {
-  headers: Headers;
-};
-
-export type createReactivationRequestUsersMeReactivationRequestsPostResponse = (createReactivationRequestUsersMeReactivationRequestsPostResponseSuccess | createReactivationRequestUsersMeReactivationRequestsPostResponseError)
-
-export const getCreateReactivationRequestUsersMeReactivationRequestsPostUrl = () => {
-
-
+export const createReactivationRequestUsersMeReactivationRequestsPost = (
+    reactivationRequestCreate: BodyType<ReactivationRequestCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ReactivationRequestOut>(
+      {url: `/users/me/reactivation-requests`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: reactivationRequestCreate, signal
+    },
+      options);
+    }
   
-
-  return `/users/me/reactivation-requests`
-}
-
-export const createReactivationRequestUsersMeReactivationRequestsPost = async (reactivationRequestCreate: ReactivationRequestCreate, options?: RequestInit): Promise<createReactivationRequestUsersMeReactivationRequestsPostResponse> => {
-  
-  return customInstance<createReactivationRequestUsersMeReactivationRequestsPostResponse>(getCreateReactivationRequestUsersMeReactivationRequestsPostUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      reactivationRequestCreate,)
-  }
-);}
-
-
 
 
 export const getCreateReactivationRequestUsersMeReactivationRequestsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -698,52 +540,19 @@ export const useCreateReactivationRequestUsersMeReactivationRequestsPost = <TErr
     /**
  * @summary Admin List Reactivation Requests
  */
-export type adminListReactivationRequestsAdminReactivationRequestsGetResponse200 = {
-  data: ReactivationRequestOut[]
-  status: 200
-}
-
-export type adminListReactivationRequestsAdminReactivationRequestsGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type adminListReactivationRequestsAdminReactivationRequestsGetResponseSuccess = (adminListReactivationRequestsAdminReactivationRequestsGetResponse200) & {
-  headers: Headers;
-};
-export type adminListReactivationRequestsAdminReactivationRequestsGetResponseError = (adminListReactivationRequestsAdminReactivationRequestsGetResponse422) & {
-  headers: Headers;
-};
-
-export type adminListReactivationRequestsAdminReactivationRequestsGetResponse = (adminListReactivationRequestsAdminReactivationRequestsGetResponseSuccess | adminListReactivationRequestsAdminReactivationRequestsGetResponseError)
-
-export const getAdminListReactivationRequestsAdminReactivationRequestsGetUrl = (params?: AdminListReactivationRequestsAdminReactivationRequestsGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const adminListReactivationRequestsAdminReactivationRequestsGet = (
+    params?: AdminListReactivationRequestsAdminReactivationRequestsGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ReactivationRequestOut[]>(
+      {url: `/admin/reactivation/requests`, method: 'GET',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/admin/reactivation/requests?${stringifiedParams}` : `/admin/reactivation/requests`
-}
-
-export const adminListReactivationRequestsAdminReactivationRequestsGet = async (params?: AdminListReactivationRequestsAdminReactivationRequestsGetParams, options?: RequestInit): Promise<adminListReactivationRequestsAdminReactivationRequestsGetResponse> => {
   
-  return customInstance<adminListReactivationRequestsAdminReactivationRequestsGetResponse>(getAdminListReactivationRequestsAdminReactivationRequestsGetUrl(params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -763,7 +572,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListReactivationRequestsAdminReactivationRequestsGet>>> = ({ signal }) => adminListReactivationRequestsAdminReactivationRequestsGet(params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListReactivationRequestsAdminReactivationRequestsGet>>> = ({ signal }) => adminListReactivationRequestsAdminReactivationRequestsGet(params, requestOptions, signal);
 
       
 
@@ -822,54 +631,20 @@ export function useAdminListReactivationRequestsAdminReactivationRequestsGet<TDa
 /**
  * @summary Admin Approve Reactivation Request
  */
-export type adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostResponse200 = {
-  data: ReactivationRequestOut
-  status: 200
-}
-
-export type adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostResponseSuccess = (adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostResponse200) & {
-  headers: Headers;
-};
-export type adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostResponseError = (adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostResponse422) & {
-  headers: Headers;
-};
-
-export type adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostResponse = (adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostResponseSuccess | adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostResponseError)
-
-export const getAdminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostUrl = (requestId: string,
-    params?: AdminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePost = (
+    requestId: string,
+    params?: AdminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ReactivationRequestOut>(
+      {url: `/admin/reactivation/requests/${requestId}/approve`, method: 'POST',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/admin/reactivation/requests/${requestId}/approve?${stringifiedParams}` : `/admin/reactivation/requests/${requestId}/approve`
-}
-
-export const adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePost = async (requestId: string,
-    params?: AdminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostParams, options?: RequestInit): Promise<adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostResponse> => {
   
-  return customInstance<adminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostResponse>(getAdminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostUrl(requestId,params),
-  {      
-    ...options,
-    method: 'POST'
-    
-    
-  }
-);}
-
-
 
 
 export const getAdminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -919,54 +694,20 @@ export const useAdminApproveReactivationRequestAdminReactivationRequestsRequestI
     /**
  * @summary Admin Reject Reactivation Request
  */
-export type adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostResponse200 = {
-  data: ReactivationRequestOut
-  status: 200
-}
-
-export type adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostResponseSuccess = (adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostResponse200) & {
-  headers: Headers;
-};
-export type adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostResponseError = (adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostResponse422) & {
-  headers: Headers;
-};
-
-export type adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostResponse = (adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostResponseSuccess | adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostResponseError)
-
-export const getAdminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostUrl = (requestId: string,
-    params?: AdminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPost = (
+    requestId: string,
+    params?: AdminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ReactivationRequestOut>(
+      {url: `/admin/reactivation/requests/${requestId}/reject`, method: 'POST',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/admin/reactivation/requests/${requestId}/reject?${stringifiedParams}` : `/admin/reactivation/requests/${requestId}/reject`
-}
-
-export const adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPost = async (requestId: string,
-    params?: AdminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostParams, options?: RequestInit): Promise<adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostResponse> => {
   
-  return customInstance<adminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostResponse>(getAdminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostUrl(requestId,params),
-  {      
-    ...options,
-    method: 'POST'
-    
-    
-  }
-);}
-
-
 
 
 export const getAdminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1016,45 +757,18 @@ export const useAdminRejectReactivationRequestAdminReactivationRequestsRequestId
     /**
  * @summary Admin Lock User
  */
-export type adminLockUserAdminUsersUserIdLockPostResponse200 = {
-  data: AdminUserStatusResponse
-  status: 200
-}
-
-export type adminLockUserAdminUsersUserIdLockPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type adminLockUserAdminUsersUserIdLockPostResponseSuccess = (adminLockUserAdminUsersUserIdLockPostResponse200) & {
-  headers: Headers;
-};
-export type adminLockUserAdminUsersUserIdLockPostResponseError = (adminLockUserAdminUsersUserIdLockPostResponse422) & {
-  headers: Headers;
-};
-
-export type adminLockUserAdminUsersUserIdLockPostResponse = (adminLockUserAdminUsersUserIdLockPostResponseSuccess | adminLockUserAdminUsersUserIdLockPostResponseError)
-
-export const getAdminLockUserAdminUsersUserIdLockPostUrl = (userId: string,) => {
-
-
+export const adminLockUserAdminUsersUserIdLockPost = (
+    userId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<AdminUserStatusResponse>(
+      {url: `/admin/users/${userId}/lock`, method: 'POST', signal
+    },
+      options);
+    }
   
-
-  return `/admin/users/${userId}/lock`
-}
-
-export const adminLockUserAdminUsersUserIdLockPost = async (userId: string, options?: RequestInit): Promise<adminLockUserAdminUsersUserIdLockPostResponse> => {
-  
-  return customInstance<adminLockUserAdminUsersUserIdLockPostResponse>(getAdminLockUserAdminUsersUserIdLockPostUrl(userId),
-  {      
-    ...options,
-    method: 'POST'
-    
-    
-  }
-);}
-
-
 
 
 export const getAdminLockUserAdminUsersUserIdLockPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1104,45 +818,18 @@ export const useAdminLockUserAdminUsersUserIdLockPost = <TError = ErrorType<HTTP
     /**
  * @summary Admin Unlock User
  */
-export type adminUnlockUserAdminUsersUserIdUnlockPostResponse200 = {
-  data: AdminUserStatusResponse
-  status: 200
-}
-
-export type adminUnlockUserAdminUsersUserIdUnlockPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type adminUnlockUserAdminUsersUserIdUnlockPostResponseSuccess = (adminUnlockUserAdminUsersUserIdUnlockPostResponse200) & {
-  headers: Headers;
-};
-export type adminUnlockUserAdminUsersUserIdUnlockPostResponseError = (adminUnlockUserAdminUsersUserIdUnlockPostResponse422) & {
-  headers: Headers;
-};
-
-export type adminUnlockUserAdminUsersUserIdUnlockPostResponse = (adminUnlockUserAdminUsersUserIdUnlockPostResponseSuccess | adminUnlockUserAdminUsersUserIdUnlockPostResponseError)
-
-export const getAdminUnlockUserAdminUsersUserIdUnlockPostUrl = (userId: string,) => {
-
-
+export const adminUnlockUserAdminUsersUserIdUnlockPost = (
+    userId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<AdminUserStatusResponse>(
+      {url: `/admin/users/${userId}/unlock`, method: 'POST', signal
+    },
+      options);
+    }
   
-
-  return `/admin/users/${userId}/unlock`
-}
-
-export const adminUnlockUserAdminUsersUserIdUnlockPost = async (userId: string, options?: RequestInit): Promise<adminUnlockUserAdminUsersUserIdUnlockPostResponse> => {
-  
-  return customInstance<adminUnlockUserAdminUsersUserIdUnlockPostResponse>(getAdminUnlockUserAdminUsersUserIdUnlockPostUrl(userId),
-  {      
-    ...options,
-    method: 'POST'
-    
-    
-  }
-);}
-
-
 
 
 export const getAdminUnlockUserAdminUsersUserIdUnlockPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1192,45 +879,18 @@ export const useAdminUnlockUserAdminUsersUserIdUnlockPost = <TError = ErrorType<
     /**
  * @summary Admin Disable User
  */
-export type adminDisableUserAdminUsersUserIdDisablePostResponse200 = {
-  data: AdminUserStatusResponse
-  status: 200
-}
-
-export type adminDisableUserAdminUsersUserIdDisablePostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type adminDisableUserAdminUsersUserIdDisablePostResponseSuccess = (adminDisableUserAdminUsersUserIdDisablePostResponse200) & {
-  headers: Headers;
-};
-export type adminDisableUserAdminUsersUserIdDisablePostResponseError = (adminDisableUserAdminUsersUserIdDisablePostResponse422) & {
-  headers: Headers;
-};
-
-export type adminDisableUserAdminUsersUserIdDisablePostResponse = (adminDisableUserAdminUsersUserIdDisablePostResponseSuccess | adminDisableUserAdminUsersUserIdDisablePostResponseError)
-
-export const getAdminDisableUserAdminUsersUserIdDisablePostUrl = (userId: string,) => {
-
-
+export const adminDisableUserAdminUsersUserIdDisablePost = (
+    userId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<AdminUserStatusResponse>(
+      {url: `/admin/users/${userId}/disable`, method: 'POST', signal
+    },
+      options);
+    }
   
-
-  return `/admin/users/${userId}/disable`
-}
-
-export const adminDisableUserAdminUsersUserIdDisablePost = async (userId: string, options?: RequestInit): Promise<adminDisableUserAdminUsersUserIdDisablePostResponse> => {
-  
-  return customInstance<adminDisableUserAdminUsersUserIdDisablePostResponse>(getAdminDisableUserAdminUsersUserIdDisablePostUrl(userId),
-  {      
-    ...options,
-    method: 'POST'
-    
-    
-  }
-);}
-
-
 
 
 export const getAdminDisableUserAdminUsersUserIdDisablePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -1280,45 +940,18 @@ export const useAdminDisableUserAdminUsersUserIdDisablePost = <TError = ErrorTyp
     /**
  * @summary Admin Reactivate User
  */
-export type adminReactivateUserAdminUsersUserIdReactivatePostResponse200 = {
-  data: AdminUserStatusResponse
-  status: 200
-}
-
-export type adminReactivateUserAdminUsersUserIdReactivatePostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type adminReactivateUserAdminUsersUserIdReactivatePostResponseSuccess = (adminReactivateUserAdminUsersUserIdReactivatePostResponse200) & {
-  headers: Headers;
-};
-export type adminReactivateUserAdminUsersUserIdReactivatePostResponseError = (adminReactivateUserAdminUsersUserIdReactivatePostResponse422) & {
-  headers: Headers;
-};
-
-export type adminReactivateUserAdminUsersUserIdReactivatePostResponse = (adminReactivateUserAdminUsersUserIdReactivatePostResponseSuccess | adminReactivateUserAdminUsersUserIdReactivatePostResponseError)
-
-export const getAdminReactivateUserAdminUsersUserIdReactivatePostUrl = (userId: string,) => {
-
-
+export const adminReactivateUserAdminUsersUserIdReactivatePost = (
+    userId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<AdminUserStatusResponse>(
+      {url: `/admin/users/${userId}/reactivate`, method: 'POST', signal
+    },
+      options);
+    }
   
-
-  return `/admin/users/${userId}/reactivate`
-}
-
-export const adminReactivateUserAdminUsersUserIdReactivatePost = async (userId: string, options?: RequestInit): Promise<adminReactivateUserAdminUsersUserIdReactivatePostResponse> => {
-  
-  return customInstance<adminReactivateUserAdminUsersUserIdReactivatePostResponse>(getAdminReactivateUserAdminUsersUserIdReactivatePostUrl(userId),
-  {      
-    ...options,
-    method: 'POST'
-    
-    
-  }
-);}
-
-
 
 
 export const getAdminReactivateUserAdminUsersUserIdReactivatePostMutationOptions = <TError = ErrorType<HTTPValidationError>,

@@ -10,11 +10,11 @@ import {
   Trash2,
   Edit,
 } from "lucide-react";
-import type { Post as PostType, Comment } from "../types/feed.types";
-import { feedApi } from "../services/feedApi";
-import { useState, useEffect } from "react";
+import type { Post as PostType } from "../types/feed.types";
+import { useState } from "react";
 import { CommentSection } from "./CommentSection";
 import { SharedPostCard } from "./SharedPostCard";
+import { useMediaBlobs } from "../hooks/useMedia";
 
 interface PostProps {
   post: PostType;
@@ -22,11 +22,6 @@ interface PostProps {
   onComment: (postId: string) => void;
   onShare: (postId: string) => void;
   showComments?: boolean;
-  comments?: Comment[];
-  loadingComments?: boolean;
-  onAddComment?: (content: string, files?: File[]) => void;
-  onDeleteComment?: (commentId: string) => void;
-  onRefreshComments?: () => void;
   onDelete?: (postId: string) => void;
   onEdit?: (postId: string, content: string) => void;
   currentUserId?: string;
@@ -38,20 +33,14 @@ export function PostCard({
   onComment,
   onShare,
   showComments,
-  comments = [],
-  loadingComments = false,
-  onAddComment,
-  onDeleteComment,
-  onRefreshComments,
   onDelete,
   onEdit,
   currentUserId,
 }: PostProps) {
-  const [blobUrls, setBlobUrls] = useState<string[]>([]);
-  const [loadingImages, setLoadingImages] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [showMenu, setShowMenu] = useState(false);
+
 
   const createdAt =
     post.createdAt ?? post.created_at ?? new Date().toISOString();
@@ -62,6 +51,7 @@ export function PostCard({
 
   const content = post.content ?? post.content_text ?? "";
   const images = post.images ?? post.media_urls ?? post.media_paths ?? [];
+  const { data: blobUrls = [], isLoading: loadingImages } = useMediaBlobs(images);
   const likes = post.likes ?? post.reaction_count ?? 0;
   const commentsCount = post.comments ?? post.comment_count ?? 0;
   const shares = post.shares ?? post.share_count ?? 0;
@@ -88,30 +78,6 @@ export function PostCard({
     onEdit(post.id, editContent);
     setIsEditing(false);
   };
-
-  // Fetch images with auth headers and convert to blob URLs
-  useEffect(() => {
-    if (images.length === 0) {
-      setLoadingImages(false);
-      return;
-    }
-
-    const fetchImages = async () => {
-      setLoadingImages(true);
-      const urls = await Promise.all(
-        images.map((url) => feedApi.fetchMediaAsBlob(url)),
-      );
-      setBlobUrls(urls.filter((u) => u !== ""));
-      setLoadingImages(false);
-    };
-
-    fetchImages();
-
-    // Cleanup blob URLs when component unmounts
-    return () => {
-      blobUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [post.id, images.length]);
 
   return (
     <article className="bg-white dark:bg-[#0A2737] rounded-2xl shadow-lg overflow-hidden">
@@ -276,16 +242,11 @@ export function PostCard({
         </div>
       </div>
 
-      {showComments && onAddComment && (
+      {showComments && (
         <div className="border-t border-gray-100 dark:border-gray-700">
           <CommentSection
             postId={post.id}
-            comments={comments}
-            isLoading={loadingComments}
-            onAddComment={onAddComment}
-            onDeleteComment={onDeleteComment}
             currentUserId={currentUserId}
-            onRefresh={onRefreshComments}
           />
         </div>
       )}

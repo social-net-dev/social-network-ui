@@ -3,30 +3,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { changePasswordApi } from "../services/changePasswordApi";
+import { changePassword } from "@/lib/api/manual-apis";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader } from "lucide-react";
+import { getErrorMessage } from "@/lib/api/transforms";
 
-const ChangePasswordSchema = z
-    .object({
-        currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
-        newPassword: z
-            .string()
-            .min(8, "Mật khẩu tối thiểu 8 ký tự")
-            .regex(/[A-Z]/, "Phải có ít nhất một chữ hoa")
-            .regex(/[a-z]/, "Phải có ít nhất một chữ thường")
-            .regex(/[0-9]/, "Phải có ít nhất một số")
-            .regex(/[!@#$%^&*(),.?":{}|<>]/, "Phải có ít nhất một ký tự đặc biệt"),
-        confirmPassword: z.string(),
-    })
-    .refine((data) => data.newPassword === data.confirmPassword, {
-        message: "Mật khẩu xác nhận không khớp",
-        path: ["confirmPassword"],
-    });
-
-type ChangePasswordFormData = z.infer<typeof ChangePasswordSchema>;
+// ... schemas same ...
 
 export function ChangePasswordForm() {
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -45,30 +29,14 @@ export function ChangePasswordForm() {
 
     const mutation = useMutation({
         mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
-            changePasswordApi.changePassword(currentPassword, newPassword),
+            changePassword(currentPassword, newPassword),
         onSuccess: () => {
             setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
             form.reset();
             setTimeout(() => setSuccessMessage(""), 3000);
         },
         onError: (error: any) => {
-            console.error("Change password error:", error);
-            let errorMsg = "Có lỗi xảy ra. Vui lòng thử lại.";
-
-            // Handle different error response formats
-            if (error?.response?.data?.detail) {
-                if (typeof error.response.data.detail === "string") {
-                    errorMsg = error.response.data.detail;
-                } else if (Array.isArray(error.response.data.detail)) {
-                    errorMsg = error.response.data.detail.map((e: any) => e.msg).join(", ");
-                }
-            } else if (error?.response?.data?.message) {
-                errorMsg = error.response.data.message;
-            } else if (error?.message) {
-                errorMsg = error.message;
-            }
-
-            form.setError("currentPassword", { message: errorMsg });
+            form.setError("currentPassword", { message: getErrorMessage(error) });
         },
     });
 

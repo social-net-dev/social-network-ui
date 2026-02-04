@@ -42,52 +42,19 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary List Requests
  */
-export type listRequestsAdminVerificationRequestsGetResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type listRequestsAdminVerificationRequestsGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type listRequestsAdminVerificationRequestsGetResponseSuccess = (listRequestsAdminVerificationRequestsGetResponse200) & {
-  headers: Headers;
-};
-export type listRequestsAdminVerificationRequestsGetResponseError = (listRequestsAdminVerificationRequestsGetResponse422) & {
-  headers: Headers;
-};
-
-export type listRequestsAdminVerificationRequestsGetResponse = (listRequestsAdminVerificationRequestsGetResponseSuccess | listRequestsAdminVerificationRequestsGetResponseError)
-
-export const getListRequestsAdminVerificationRequestsGetUrl = (params?: ListRequestsAdminVerificationRequestsGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
+export const listRequestsAdminVerificationRequestsGet = (
+    params?: ListRequestsAdminVerificationRequestsGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<unknown>(
+      {url: `/admin/verification/requests`, method: 'GET',
+        params, signal
+    },
+      options);
     }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/admin/verification/requests?${stringifiedParams}` : `/admin/verification/requests`
-}
-
-export const listRequestsAdminVerificationRequestsGet = async (params?: ListRequestsAdminVerificationRequestsGetParams, options?: RequestInit): Promise<listRequestsAdminVerificationRequestsGetResponse> => {
   
-  return customInstance<listRequestsAdminVerificationRequestsGetResponse>(getListRequestsAdminVerificationRequestsGetUrl(params),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -107,7 +74,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRequestsAdminVerificationRequestsGet>>> = ({ signal }) => listRequestsAdminVerificationRequestsGet(params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRequestsAdminVerificationRequestsGet>>> = ({ signal }) => listRequestsAdminVerificationRequestsGet(params, requestOptions, signal);
 
       
 
@@ -166,47 +133,21 @@ export function useListRequestsAdminVerificationRequestsGet<TData = Awaited<Retu
 /**
  * @summary Approve
  */
-export type approveAdminVerificationRequestsRequestIdApprovePostResponse200 = {
-  data: VerificationRequestOut
-  status: 200
-}
-
-export type approveAdminVerificationRequestsRequestIdApprovePostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type approveAdminVerificationRequestsRequestIdApprovePostResponseSuccess = (approveAdminVerificationRequestsRequestIdApprovePostResponse200) & {
-  headers: Headers;
-};
-export type approveAdminVerificationRequestsRequestIdApprovePostResponseError = (approveAdminVerificationRequestsRequestIdApprovePostResponse422) & {
-  headers: Headers;
-};
-
-export type approveAdminVerificationRequestsRequestIdApprovePostResponse = (approveAdminVerificationRequestsRequestIdApprovePostResponseSuccess | approveAdminVerificationRequestsRequestIdApprovePostResponseError)
-
-export const getApproveAdminVerificationRequestsRequestIdApprovePostUrl = (requestId: string,) => {
-
-
+export const approveAdminVerificationRequestsRequestIdApprovePost = (
+    requestId: string,
+    approveRequest: BodyType<ApproveRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<VerificationRequestOut>(
+      {url: `/admin/verification/requests/${requestId}/approve`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: approveRequest, signal
+    },
+      options);
+    }
   
-
-  return `/admin/verification/requests/${requestId}/approve`
-}
-
-export const approveAdminVerificationRequestsRequestIdApprovePost = async (requestId: string,
-    approveRequest: ApproveRequest, options?: RequestInit): Promise<approveAdminVerificationRequestsRequestIdApprovePostResponse> => {
-  
-  return customInstance<approveAdminVerificationRequestsRequestIdApprovePostResponse>(getApproveAdminVerificationRequestsRequestIdApprovePostUrl(requestId),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      approveRequest,)
-  }
-);}
-
-
 
 
 export const getApproveAdminVerificationRequestsRequestIdApprovePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -256,47 +197,21 @@ export const useApproveAdminVerificationRequestsRequestIdApprovePost = <TError =
     /**
  * @summary Reject
  */
-export type rejectAdminVerificationRequestsRequestIdRejectPostResponse200 = {
-  data: VerificationRequestOut
-  status: 200
-}
-
-export type rejectAdminVerificationRequestsRequestIdRejectPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type rejectAdminVerificationRequestsRequestIdRejectPostResponseSuccess = (rejectAdminVerificationRequestsRequestIdRejectPostResponse200) & {
-  headers: Headers;
-};
-export type rejectAdminVerificationRequestsRequestIdRejectPostResponseError = (rejectAdminVerificationRequestsRequestIdRejectPostResponse422) & {
-  headers: Headers;
-};
-
-export type rejectAdminVerificationRequestsRequestIdRejectPostResponse = (rejectAdminVerificationRequestsRequestIdRejectPostResponseSuccess | rejectAdminVerificationRequestsRequestIdRejectPostResponseError)
-
-export const getRejectAdminVerificationRequestsRequestIdRejectPostUrl = (requestId: string,) => {
-
-
+export const rejectAdminVerificationRequestsRequestIdRejectPost = (
+    requestId: string,
+    rejectRequest: BodyType<RejectRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<VerificationRequestOut>(
+      {url: `/admin/verification/requests/${requestId}/reject`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: rejectRequest, signal
+    },
+      options);
+    }
   
-
-  return `/admin/verification/requests/${requestId}/reject`
-}
-
-export const rejectAdminVerificationRequestsRequestIdRejectPost = async (requestId: string,
-    rejectRequest: RejectRequest, options?: RequestInit): Promise<rejectAdminVerificationRequestsRequestIdRejectPostResponse> => {
-  
-  return customInstance<rejectAdminVerificationRequestsRequestIdRejectPostResponse>(getRejectAdminVerificationRequestsRequestIdRejectPostUrl(requestId),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      rejectRequest,)
-  }
-);}
-
-
 
 
 export const getRejectAdminVerificationRequestsRequestIdRejectPostMutationOptions = <TError = ErrorType<HTTPValidationError>,

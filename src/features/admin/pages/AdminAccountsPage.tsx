@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader, RefreshCcw } from "lucide-react";
-import { accountsApi, type AdminUserAccount } from "../services/accountsApi";
+import { UsersAPI, AdminAPI } from "@/lib/api/generated";
 import { AdminVerificationPanel } from "./VerificationPage";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -79,19 +79,21 @@ export function AdminAccountsPage() {
         isFetching,
         isError,
         error,
-    } = useQuery({
-        queryKey: ["admin", "users"],
-        queryFn: () => accountsApi.getUsers(),
+    } = UsersAPI.useGetAllUsersAdminUsersGet({
+        query: {
+            select: (data: any) => data.data || data || []
+        }
     });
 
-    const reactivateMutation = useMutation({
-        mutationFn: (userId: string) => accountsApi.reactivateUser(userId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-        },
+    const reactivateMutation = AdminAPI.useAdminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePost({
+        mutation: {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: UsersAPI.getGetAllUsersAdminUsersGetQueryKey() });
+            },
+        }
     });
 
-    const filteredUsers = useMemo<AdminUserAccount[]>(() => {
+    const filteredUsers = useMemo<any[]>(() => {
         if (activeTab === "ALL") {
             return users;
         }

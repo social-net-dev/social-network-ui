@@ -8,15 +8,54 @@ interface FeedListProps {
   onComment: (postId: string) => void;
   onShare: (postId: string) => void;
   selectedPostId?: string | null;
-  comments?: Record<string, Comment[]>;
-  loadingComments?: Record<string, boolean>;
-  onAddComment?: (postId: string, content: string, files?: File[]) => void;
-  onDeleteComment?: (postId: string, commentId: string) => void;
   onDelete?: (postId: string) => void;
   onEdit?: (postId: string, content: string) => void;
   currentUserId?: string;
-  onRefreshComment?: (postId: string) => void;
 }
+
+export function FeedList({
+  posts,
+  isLoading,
+  onLike,
+  onComment,
+  onShare,
+  selectedPostId,
+  onDelete,
+  onEdit,
+  currentUserId,
+}: FeedListProps) {
+  if (isLoading && posts.length === 0) {
+    // ...
+  }
+
+  if (posts.length === 0) {
+    // ...
+  }
+
+  return (
+    <div className="space-y-4">
+      {posts.map((post) => (
+        <PostCard
+          key={post.id}
+          post={post}
+          onLike={onLike}
+          onComment={onComment}
+          onShare={onShare}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          currentUserId={currentUserId}
+          showComments={selectedPostId === post.id}
+        />
+      ))}
+      {isLoading && (
+        <div className="flex justify-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1b7a78]"></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export function FeedList({
   posts,

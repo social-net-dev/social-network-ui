@@ -4,19 +4,17 @@ import { CreatePostForm } from "../components/CreatePostForm";
 import { FeedList } from "../components/FeedList";
 import { ShareDialog } from "../components/ShareDialog";
 import { Button } from "@/components/ui/button";
-import { feedApi } from "../services/feedApi";
+import { usePostActions } from "../hooks/usePostActions";
 import { useAuthStore } from "@/stores/authStore";
 import { AlertCircle, CheckCircle, HardDrive } from "lucide-react";
-import type { Comment } from "../types/feed.types";
 
 export function FeedPage() {
     const { posts, isLoading, error, createPost, likePost, refresh } = useFeed();
+    const { deletePost, updatePost, sharePost } = usePostActions();
     const { user: currentUser } = useAuthStore();
     const [isCreating, setIsCreating] = useState(false);
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
     const [sharePostId, setSharePostId] = useState<string | null>(null);
-    const [comments, setComments] = useState<Record<string, Comment[]>>({});
-    const [loadingComments, setLoadingComments] = useState<Record<string, boolean>>({});
 
     const handleCreatePost = async (content: string, files: File[]) => {
         try {
@@ -35,9 +33,6 @@ export function FeedPage() {
 
     const handleComment = (postId: string) => {
         setSelectedPostId(selectedPostId === postId ? null : postId);
-        if (!comments[postId]) {
-            loadComments(postId);
-        }
     };
 
     const handleShare = (postId: string) => {
@@ -47,7 +42,7 @@ export function FeedPage() {
     const handleShareSubmit = async (content: string) => {
         if (!sharePostId) return;
         try {
-            await feedApi.sharePost(sharePostId, content);
+            await sharePost(sharePostId, content);
             refresh();
         } catch (err) {
             console.error("Failed to share post:", err);
@@ -57,7 +52,7 @@ export function FeedPage() {
 
     const handleDeletePost = async (postId: string) => {
         try {
-            await feedApi.deletePost(postId);
+            await deletePost(postId);
             refresh();
         } catch (err) {
             console.error("Failed to delete post:", err);
@@ -66,43 +61,11 @@ export function FeedPage() {
 
     const handleEditPost = async (postId: string, content: string) => {
         try {
-            await feedApi.updatePost(postId, content);
+            await updatePost(postId, content);
             refresh();
         } catch (err) {
             console.error("Failed to edit post:", err);
-            alert("Không thể sửa bài viết. Vui lòng thử lại.");
         }
-    };
-
-    const loadComments = async (postId: string) => {
-        try {
-            setLoadingComments((prev) => ({ ...prev, [postId]: true }));
-            const data = await feedApi.getComments(postId);
-            setComments((prev) => ({ ...prev, [postId]: data }));
-        } catch (err) {
-            console.error("Failed to load comments:", err);
-        } finally {
-            setLoadingComments((prev) => ({ ...prev, [postId]: false }));
-        }
-    };
-
-    const handleAddComment = async (postId: string, content: string, files?: File[]) => {
-        try {
-            const newComment = await feedApi.addComment(postId, content, files);
-            setComments((prev) => ({
-                ...prev,
-                [postId]: [...(prev[postId] || []), newComment],
-            }));
-        } catch (err) {
-            console.error("Failed to add comment:", err);
-        }
-    };
-
-    const handleDeleteComment = async (postId: string, commentId: string) => {
-        setComments((prev) => ({
-            ...prev,
-            [postId]: (prev[postId] || []).filter((c) => c.id !== commentId),
-        }));
     };
 
     return (
@@ -156,12 +119,7 @@ export function FeedPage() {
                 onDelete={handleDeletePost}
                 onEdit={handleEditPost}
                 selectedPostId={selectedPostId}
-                comments={comments}
-                loadingComments={loadingComments}
-                onAddComment={handleAddComment}
-                onDeleteComment={handleDeleteComment}
                 currentUserId={currentUser?.id}
-                onRefreshComment={(postId) => loadComments(postId)}
             />
 
             <ShareDialog isOpen={sharePostId !== null} onClose={() => setSharePostId(null)} onShare={handleShareSubmit} />

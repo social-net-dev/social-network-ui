@@ -41,46 +41,20 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Create Friend Request
  */
-export type createFriendRequestFriendsRequestsPostResponse200 = {
-  data: FriendRequestOut
-  status: 200
-}
-
-export type createFriendRequestFriendsRequestsPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type createFriendRequestFriendsRequestsPostResponseSuccess = (createFriendRequestFriendsRequestsPostResponse200) & {
-  headers: Headers;
-};
-export type createFriendRequestFriendsRequestsPostResponseError = (createFriendRequestFriendsRequestsPostResponse422) & {
-  headers: Headers;
-};
-
-export type createFriendRequestFriendsRequestsPostResponse = (createFriendRequestFriendsRequestsPostResponseSuccess | createFriendRequestFriendsRequestsPostResponseError)
-
-export const getCreateFriendRequestFriendsRequestsPostUrl = () => {
-
-
+export const createFriendRequestFriendsRequestsPost = (
+    friendRequestCreate: BodyType<FriendRequestCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<FriendRequestOut>(
+      {url: `/friends/requests`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: friendRequestCreate, signal
+    },
+      options);
+    }
   
-
-  return `/friends/requests`
-}
-
-export const createFriendRequestFriendsRequestsPost = async (friendRequestCreate: FriendRequestCreate, options?: RequestInit): Promise<createFriendRequestFriendsRequestsPostResponse> => {
-  
-  return customInstance<createFriendRequestFriendsRequestsPostResponse>(getCreateFriendRequestFriendsRequestsPostUrl(),
-  {      
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      friendRequestCreate,)
-  }
-);}
-
-
 
 
 export const getCreateFriendRequestFriendsRequestsPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -130,38 +104,18 @@ export const useCreateFriendRequestFriendsRequestsPost = <TError = ErrorType<HTT
     /**
  * @summary List Incoming Requests
  */
-export type listIncomingRequestsFriendsRequestsIncomingGetResponse200 = {
-  data: FriendRequestOut[]
-  status: 200
-}
+export const listIncomingRequestsFriendsRequestsIncomingGet = (
     
-export type listIncomingRequestsFriendsRequestsIncomingGetResponseSuccess = (listIncomingRequestsFriendsRequestsIncomingGetResponse200) & {
-  headers: Headers;
-};
-;
-
-export type listIncomingRequestsFriendsRequestsIncomingGetResponse = (listIncomingRequestsFriendsRequestsIncomingGetResponseSuccess)
-
-export const getListIncomingRequestsFriendsRequestsIncomingGetUrl = () => {
-
-
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<FriendRequestOut[]>(
+      {url: `/friends/requests/incoming`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/friends/requests/incoming`
-}
-
-export const listIncomingRequestsFriendsRequestsIncomingGet = async ( options?: RequestInit): Promise<listIncomingRequestsFriendsRequestsIncomingGetResponse> => {
-  
-  return customInstance<listIncomingRequestsFriendsRequestsIncomingGetResponse>(getListIncomingRequestsFriendsRequestsIncomingGetUrl(),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -181,7 +135,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listIncomingRequestsFriendsRequestsIncomingGet>>> = ({ signal }) => listIncomingRequestsFriendsRequestsIncomingGet({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listIncomingRequestsFriendsRequestsIncomingGet>>> = ({ signal }) => listIncomingRequestsFriendsRequestsIncomingGet(requestOptions, signal);
 
       
 
@@ -240,38 +194,18 @@ export function useListIncomingRequestsFriendsRequestsIncomingGet<TData = Awaite
 /**
  * @summary List Outgoing Requests
  */
-export type listOutgoingRequestsFriendsRequestsOutgoingGetResponse200 = {
-  data: FriendRequestOut[]
-  status: 200
-}
+export const listOutgoingRequestsFriendsRequestsOutgoingGet = (
     
-export type listOutgoingRequestsFriendsRequestsOutgoingGetResponseSuccess = (listOutgoingRequestsFriendsRequestsOutgoingGetResponse200) & {
-  headers: Headers;
-};
-;
-
-export type listOutgoingRequestsFriendsRequestsOutgoingGetResponse = (listOutgoingRequestsFriendsRequestsOutgoingGetResponseSuccess)
-
-export const getListOutgoingRequestsFriendsRequestsOutgoingGetUrl = () => {
-
-
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<FriendRequestOut[]>(
+      {url: `/friends/requests/outgoing`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/friends/requests/outgoing`
-}
-
-export const listOutgoingRequestsFriendsRequestsOutgoingGet = async ( options?: RequestInit): Promise<listOutgoingRequestsFriendsRequestsOutgoingGetResponse> => {
-  
-  return customInstance<listOutgoingRequestsFriendsRequestsOutgoingGetResponse>(getListOutgoingRequestsFriendsRequestsOutgoingGetUrl(),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -291,7 +225,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOutgoingRequestsFriendsRequestsOutgoingGet>>> = ({ signal }) => listOutgoingRequestsFriendsRequestsOutgoingGet({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOutgoingRequestsFriendsRequestsOutgoingGet>>> = ({ signal }) => listOutgoingRequestsFriendsRequestsOutgoingGet(requestOptions, signal);
 
       
 
@@ -350,45 +284,18 @@ export function useListOutgoingRequestsFriendsRequestsOutgoingGet<TData = Awaite
 /**
  * @summary Accept Request
  */
-export type acceptRequestFriendsRequestsRequestIdAcceptPostResponse200 = {
-  data: FriendRequestOut
-  status: 200
-}
-
-export type acceptRequestFriendsRequestsRequestIdAcceptPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type acceptRequestFriendsRequestsRequestIdAcceptPostResponseSuccess = (acceptRequestFriendsRequestsRequestIdAcceptPostResponse200) & {
-  headers: Headers;
-};
-export type acceptRequestFriendsRequestsRequestIdAcceptPostResponseError = (acceptRequestFriendsRequestsRequestIdAcceptPostResponse422) & {
-  headers: Headers;
-};
-
-export type acceptRequestFriendsRequestsRequestIdAcceptPostResponse = (acceptRequestFriendsRequestsRequestIdAcceptPostResponseSuccess | acceptRequestFriendsRequestsRequestIdAcceptPostResponseError)
-
-export const getAcceptRequestFriendsRequestsRequestIdAcceptPostUrl = (requestId: string,) => {
-
-
+export const acceptRequestFriendsRequestsRequestIdAcceptPost = (
+    requestId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<FriendRequestOut>(
+      {url: `/friends/requests/${requestId}/accept`, method: 'POST', signal
+    },
+      options);
+    }
   
-
-  return `/friends/requests/${requestId}/accept`
-}
-
-export const acceptRequestFriendsRequestsRequestIdAcceptPost = async (requestId: string, options?: RequestInit): Promise<acceptRequestFriendsRequestsRequestIdAcceptPostResponse> => {
-  
-  return customInstance<acceptRequestFriendsRequestsRequestIdAcceptPostResponse>(getAcceptRequestFriendsRequestsRequestIdAcceptPostUrl(requestId),
-  {      
-    ...options,
-    method: 'POST'
-    
-    
-  }
-);}
-
-
 
 
 export const getAcceptRequestFriendsRequestsRequestIdAcceptPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -438,45 +345,18 @@ export const useAcceptRequestFriendsRequestsRequestIdAcceptPost = <TError = Erro
     /**
  * @summary Reject Request
  */
-export type rejectRequestFriendsRequestsRequestIdRejectPostResponse200 = {
-  data: FriendRequestOut
-  status: 200
-}
-
-export type rejectRequestFriendsRequestsRequestIdRejectPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type rejectRequestFriendsRequestsRequestIdRejectPostResponseSuccess = (rejectRequestFriendsRequestsRequestIdRejectPostResponse200) & {
-  headers: Headers;
-};
-export type rejectRequestFriendsRequestsRequestIdRejectPostResponseError = (rejectRequestFriendsRequestsRequestIdRejectPostResponse422) & {
-  headers: Headers;
-};
-
-export type rejectRequestFriendsRequestsRequestIdRejectPostResponse = (rejectRequestFriendsRequestsRequestIdRejectPostResponseSuccess | rejectRequestFriendsRequestsRequestIdRejectPostResponseError)
-
-export const getRejectRequestFriendsRequestsRequestIdRejectPostUrl = (requestId: string,) => {
-
-
+export const rejectRequestFriendsRequestsRequestIdRejectPost = (
+    requestId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<FriendRequestOut>(
+      {url: `/friends/requests/${requestId}/reject`, method: 'POST', signal
+    },
+      options);
+    }
   
-
-  return `/friends/requests/${requestId}/reject`
-}
-
-export const rejectRequestFriendsRequestsRequestIdRejectPost = async (requestId: string, options?: RequestInit): Promise<rejectRequestFriendsRequestsRequestIdRejectPostResponse> => {
-  
-  return customInstance<rejectRequestFriendsRequestsRequestIdRejectPostResponse>(getRejectRequestFriendsRequestsRequestIdRejectPostUrl(requestId),
-  {      
-    ...options,
-    method: 'POST'
-    
-    
-  }
-);}
-
-
 
 
 export const getRejectRequestFriendsRequestsRequestIdRejectPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -526,45 +406,18 @@ export const useRejectRequestFriendsRequestsRequestIdRejectPost = <TError = Erro
     /**
  * @summary Cancel Request
  */
-export type cancelRequestFriendsRequestsRequestIdCancelPostResponse200 = {
-  data: FriendRequestOut
-  status: 200
-}
-
-export type cancelRequestFriendsRequestsRequestIdCancelPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type cancelRequestFriendsRequestsRequestIdCancelPostResponseSuccess = (cancelRequestFriendsRequestsRequestIdCancelPostResponse200) & {
-  headers: Headers;
-};
-export type cancelRequestFriendsRequestsRequestIdCancelPostResponseError = (cancelRequestFriendsRequestsRequestIdCancelPostResponse422) & {
-  headers: Headers;
-};
-
-export type cancelRequestFriendsRequestsRequestIdCancelPostResponse = (cancelRequestFriendsRequestsRequestIdCancelPostResponseSuccess | cancelRequestFriendsRequestsRequestIdCancelPostResponseError)
-
-export const getCancelRequestFriendsRequestsRequestIdCancelPostUrl = (requestId: string,) => {
-
-
+export const cancelRequestFriendsRequestsRequestIdCancelPost = (
+    requestId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<FriendRequestOut>(
+      {url: `/friends/requests/${requestId}/cancel`, method: 'POST', signal
+    },
+      options);
+    }
   
-
-  return `/friends/requests/${requestId}/cancel`
-}
-
-export const cancelRequestFriendsRequestsRequestIdCancelPost = async (requestId: string, options?: RequestInit): Promise<cancelRequestFriendsRequestsRequestIdCancelPostResponse> => {
-  
-  return customInstance<cancelRequestFriendsRequestsRequestIdCancelPostResponse>(getCancelRequestFriendsRequestsRequestIdCancelPostUrl(requestId),
-  {      
-    ...options,
-    method: 'POST'
-    
-    
-  }
-);}
-
-
 
 
 export const getCancelRequestFriendsRequestsRequestIdCancelPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
@@ -614,38 +467,18 @@ export const useCancelRequestFriendsRequestsRequestIdCancelPost = <TError = Erro
     /**
  * @summary List Friends
  */
-export type listFriendsFriendsGetResponse200 = {
-  data: FriendOut[]
-  status: 200
-}
+export const listFriendsFriendsGet = (
     
-export type listFriendsFriendsGetResponseSuccess = (listFriendsFriendsGetResponse200) & {
-  headers: Headers;
-};
-;
-
-export type listFriendsFriendsGetResponse = (listFriendsFriendsGetResponseSuccess)
-
-export const getListFriendsFriendsGetUrl = () => {
-
-
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<FriendOut[]>(
+      {url: `/friends`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/friends`
-}
-
-export const listFriendsFriendsGet = async ( options?: RequestInit): Promise<listFriendsFriendsGetResponse> => {
-  
-  return customInstance<listFriendsFriendsGetResponse>(getListFriendsFriendsGetUrl(),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -665,7 +498,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFriendsFriendsGet>>> = ({ signal }) => listFriendsFriendsGet({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFriendsFriendsGet>>> = ({ signal }) => listFriendsFriendsGet(requestOptions, signal);
 
       
 

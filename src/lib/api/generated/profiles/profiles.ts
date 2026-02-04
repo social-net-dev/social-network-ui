@@ -41,45 +41,18 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Get Profile
  */
-export type getProfileProfilesUsernameGetResponse200 = {
-  data: PublicProfileResponse
-  status: 200
-}
-
-export type getProfileProfilesUsernameGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type getProfileProfilesUsernameGetResponseSuccess = (getProfileProfilesUsernameGetResponse200) & {
-  headers: Headers;
-};
-export type getProfileProfilesUsernameGetResponseError = (getProfileProfilesUsernameGetResponse422) & {
-  headers: Headers;
-};
-
-export type getProfileProfilesUsernameGetResponse = (getProfileProfilesUsernameGetResponseSuccess | getProfileProfilesUsernameGetResponseError)
-
-export const getGetProfileProfilesUsernameGetUrl = (username: string,) => {
-
-
+export const getProfileProfilesUsernameGet = (
+    username: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PublicProfileResponse>(
+      {url: `/profiles/${username}`, method: 'GET', signal
+    },
+      options);
+    }
   
-
-  return `/profiles/${username}`
-}
-
-export const getProfileProfilesUsernameGet = async (username: string, options?: RequestInit): Promise<getProfileProfilesUsernameGetResponse> => {
-  
-  return customInstance<getProfileProfilesUsernameGetResponse>(getGetProfileProfilesUsernameGetUrl(username),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
 
 
 
@@ -99,7 +72,7 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProfileProfilesUsernameGet>>> = ({ signal }) => getProfileProfilesUsernameGet(username, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProfileProfilesUsernameGet>>> = ({ signal }) => getProfileProfilesUsernameGet(username, requestOptions, signal);
 
       
 
@@ -158,46 +131,20 @@ export function useGetProfileProfilesUsernameGet<TData = Awaited<ReturnType<type
 /**
  * @summary Update My Privacy
  */
-export type updateMyPrivacyUsersMePrivacyPatchResponse200 = {
-  data: ProfileVisibilityResponse
-  status: 200
-}
-
-export type updateMyPrivacyUsersMePrivacyPatchResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-    
-export type updateMyPrivacyUsersMePrivacyPatchResponseSuccess = (updateMyPrivacyUsersMePrivacyPatchResponse200) & {
-  headers: Headers;
-};
-export type updateMyPrivacyUsersMePrivacyPatchResponseError = (updateMyPrivacyUsersMePrivacyPatchResponse422) & {
-  headers: Headers;
-};
-
-export type updateMyPrivacyUsersMePrivacyPatchResponse = (updateMyPrivacyUsersMePrivacyPatchResponseSuccess | updateMyPrivacyUsersMePrivacyPatchResponseError)
-
-export const getUpdateMyPrivacyUsersMePrivacyPatchUrl = () => {
-
-
+export const updateMyPrivacyUsersMePrivacyPatch = (
+    profileVisibilityUpdateRequest: BodyType<ProfileVisibilityUpdateRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ProfileVisibilityResponse>(
+      {url: `/users/me/privacy`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: profileVisibilityUpdateRequest, signal
+    },
+      options);
+    }
   
-
-  return `/users/me/privacy`
-}
-
-export const updateMyPrivacyUsersMePrivacyPatch = async (profileVisibilityUpdateRequest: ProfileVisibilityUpdateRequest, options?: RequestInit): Promise<updateMyPrivacyUsersMePrivacyPatchResponse> => {
-  
-  return customInstance<updateMyPrivacyUsersMePrivacyPatchResponse>(getUpdateMyPrivacyUsersMePrivacyPatchUrl(),
-  {      
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      profileVisibilityUpdateRequest,)
-  }
-);}
-
-
 
 
 export const getUpdateMyPrivacyUsersMePrivacyPatchMutationOptions = <TError = ErrorType<HTTPValidationError>,
