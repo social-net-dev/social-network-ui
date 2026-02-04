@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { ProfilesAPI, UsersAPI } from '@/lib/api/generated'
-import { transformUserMe, transformAuthor } from '@/lib/api/transforms'
+import { useUser } from '@/lib/api/hooks/useUser'
 import type {
   EditProfileFormData,
   ProfileVisibilityUpdateRequest
@@ -11,7 +11,8 @@ import { useAuthStore } from '@/stores/authStore'
 
 export function useProfile(userIdParam?: string) {
   const params = useParams()
-  const { user, isAuthenticated } = useAuthStore()
+  const { user: currentUser, isAuthenticated } = useAuthStore()
+  const queryClient = useQueryClient()
 
   let identifier = userIdParam || params.userId
 
@@ -19,27 +20,12 @@ export function useProfile(userIdParam?: string) {
     identifier = 'me'
   }
 
-  if (identifier && user?.username && identifier === user.username) {
+  if (identifier && currentUser?.username && identifier === currentUser.username) {
     identifier = 'me'
   }
 
-  const queryClient = useQueryClient()
-
-  // Own profile query
-  const meQuery = UsersAPI.useMeAliasUsersMeGet({
-    query: {
-      enabled: identifier === 'me',
-      select: (data: any) => transformUserMe(data.data || data)
-    }
-  });
-
-  // Public profile query
-  const publicQuery = ProfilesAPI.useGetProfileProfilesUsernameGet(identifier || '', {
-    query: {
-      enabled: !!identifier && identifier !== 'me',
-      select: (data: any) => transformAuthor(data.data || data)
-    }
-  });
+  // Use the Smart Hook for fetching profile
+  const { user, isLoading, error, isMe } = useUser(identifier as any)
 
   const updateProfileMutation = UsersAPI.useUpdateMyProfileUsersMeProfilePatch({
     mutation: {
@@ -67,9 +53,10 @@ export function useProfile(userIdParam?: string) {
   })
 
   return {
-    profile: identifier === 'me' ? meQuery.data : publicQuery.data,
-    isLoading: meQuery.isPending || publicQuery.isPending,
-    error: meQuery.error || publicQuery.error,
+    profile: user,
+    isLoading,
+    error,
+    isMe,
     updateProfile: (data: EditProfileFormData) => updateProfileMutation.mutateAsync({
       data: {
         display_name: data.displayName,
