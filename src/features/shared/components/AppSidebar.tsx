@@ -1,4 +1,4 @@
-import { Home, User, MessageSquare, Bell } from "lucide-react"
+import { Home, User, MessageSquare, Bell, Sparkles } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +26,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { icon: Home, label: "Trang chủ", path: "/" },
     { icon: User, label: "Tôi", path: "/profile/me" },
     { icon: User, label: "Trang cá nhân", path: "/profile" },
+    { icon: Sparkles, label: "Gợi ý kết nối", path: "/recommendations" },
     { icon: MessageSquare, label: "Tin nhắn", path: "/messages", badge: unreadMessagesCount },
     { icon: Bell, label: "Thông báo", path: "/notifications", badge: unreadCount },
   ]

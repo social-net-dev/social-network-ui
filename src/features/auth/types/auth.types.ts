@@ -29,7 +29,7 @@ export const RegisterFormDataSchema = z.object({
 export type RegisterFormData = z.infer<typeof RegisterFormDataSchema>;
 
 export const OTPVerifySchema = z.object({
-    user_id: z.string().uuid("user_id phải là UUID"),
+    email: z.string().email("Email không hợp lệ"),
     otpCode: z.string().length(6, "Mã OTP phải có 6 chữ số"),
 });
 

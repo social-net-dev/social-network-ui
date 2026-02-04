@@ -24,5 +24,19 @@ export const appendAuthToken = (url: string | null | undefined): string => {
  * Handle generic error messages
  */
 export const getErrorMessage = (error: any): string => {
-  return error?.response?.data?.detail || error?.message || "Đã có lỗi xảy ra";
+  if (!error) return "";
+  
+  const detail = error?.response?.data?.detail;
+  
+  if (detail) {
+    if (Array.isArray(detail)) {
+      return detail.map((d: any) => d.msg || d.message || String(d)).join(", ");
+    }
+    if (typeof detail === "object") {
+      return detail.msg || detail.message || JSON.stringify(detail);
+    }
+    return String(detail);
+  }
+  
+  return error?.response?.data?.message || error?.message || "Đã có lỗi xảy ra";
 };
