@@ -33,10 +33,31 @@ export function useLogin() {
         mutation.mutate(data);
     };
 
+    // Format error message properly
+    let errorMessage: string | null = null;
+    if (mutation.error) {
+        const err = mutation.error as any;
+        if (err?.response?.data?.detail) {
+            const detail = err.response.data.detail;
+            // Handle array of error objects
+            if (Array.isArray(detail)) {
+                errorMessage = detail.map((d: any) => d.msg || d.message || String(d)).join(", ");
+            } else if (typeof detail === "object") {
+                errorMessage = detail.msg || detail.message || JSON.stringify(detail);
+            } else {
+                errorMessage = String(detail);
+            }
+        } else if (err instanceof Error) {
+            errorMessage = err.message;
+        } else {
+            errorMessage = "Đăng nhập thất bại";
+        }
+    }
+
     return {
         form,
         onSubmit,
-        error: (mutation.error as any)?.response?.data?.detail || (mutation.error instanceof Error ? mutation.error.message : null),
+        error: errorMessage,
         isSuccess: mutation.isSuccess,
         isLoading: mutation.isPending,
     };

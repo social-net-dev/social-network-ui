@@ -4,7 +4,7 @@
  * - Public auth paths (no token sent)
  * - Unwrap middleware response { success: true, data: T }
  * - Tenant header support
- * 
+ *
  * Used by:
  * - Manual API services (authApi, feedApi, etc.)
  * - Orval generated hooks (via axios-instance.ts mutator)
@@ -48,12 +48,7 @@ const processQueue = (error: AxiosError | null) => {
 // ============================================
 // PUBLIC AUTH PATHS (No token sent)
 // ============================================
-const PUBLIC_AUTH_PATHS = [
-    "/auth/login",
-    "/auth/register",
-    "/auth/verify-otp",
-    "/auth/resend-otp",
-];
+const PUBLIC_AUTH_PATHS = ["/auth/login", "/auth/register", "/auth/verify-otp", "/auth/otp/verify", "/auth/resend-otp"];
 
 function isPublicAuthRequest(url: string | undefined): boolean {
     if (!url) return false;
@@ -142,13 +137,9 @@ apiClient.interceptors.response.use(
             try {
                 // Call refresh token endpoint (etechs-middleware expects "refresh")
                 const refreshURL = baseURL.endsWith("/") ? `${baseURL}auth/refresh/` : `${baseURL}/auth/refresh/`;
-                const response = await axios.post(
-                    refreshURL,
-                    { refresh: refreshToken, refresh_token: refreshToken },
-                );
+                const response = await axios.post(refreshURL, { refresh: refreshToken, refresh_token: refreshToken });
                 const payload = response.data?.data ?? response.data;
-                const access_token =
-                    payload?.access_token ?? payload?.access;
+                const access_token = payload?.access_token ?? payload?.access;
 
                 // Save new token
                 localStorage.setItem("auth_token", access_token);

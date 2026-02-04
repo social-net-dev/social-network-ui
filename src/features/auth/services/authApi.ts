@@ -39,12 +39,11 @@ export const authApi = {
             });
             const resData = response.data as Record<string, unknown>;
             const inner = resData?.data as Record<string, unknown> | undefined;
-            const user_id = (resData?.user_id ?? resData?.id ?? inner?.user_id ?? inner?.id) != null
-                ? String(resData?.user_id ?? resData?.id ?? inner?.user_id ?? inner?.id)
-                : "";
-            const message = (resData?.message ?? inner?.message) != null
-                ? String(resData?.message ?? inner?.message)
-                : "OTP sent";
+            const user_id =
+                (resData?.user_id ?? resData?.id ?? inner?.user_id ?? inner?.id) != null
+                    ? String(resData?.user_id ?? resData?.id ?? inner?.user_id ?? inner?.id)
+                    : "";
+            const message = (resData?.message ?? inner?.message) != null ? String(resData?.message ?? inner?.message) : "OTP sent";
             return { user_id, message } as RegisterResponse;
         } catch (error: any) {
             const detail = error?.response?.data?.detail || error?.message || "Đăng ký thất bại";
@@ -54,12 +53,13 @@ export const authApi = {
 
     /**
      * Verify OTP code after registration
-     * POST /auth/verify-otp/ (etechs-middleware)
+     * POST /auth/otp/verify
      */
     verifyOTP: async (data: OTPVerifyData): Promise<OTPResponse> => {
-        const response = await api.post<OTPResponse>("/auth/verify-otp/", {
-            user_id: data.user_id,
-            otp: data.otpCode,
+        const response = await api.post<OTPResponse>("/auth/otp/verify", {
+            destination: data.email,
+            purpose: "REGISTER_VERIFY",
+            code: data.otpCode,
         });
         return response.data;
     },
@@ -82,18 +82,22 @@ export const authApi = {
      */
     login: async (data: LoginFormData): Promise<AuthResponse> => {
         try {
-            // etechs-middleware: JSON body { email, password }
-            const tokenResponse = await api.post("/auth/login/", {
-                email: data.email,
-                password: data.password,
+            // Backend expects form-urlencoded with username field
+            const formData = new URLSearchParams();
+            formData.append("username", data.email);
+            formData.append("password", data.password);
+            formData.append("remember_me", data.rememberMe ? "true" : "false");
+
+            const tokenResponse = await api.post("/auth/login", formData, {
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
             });
 
             // Axios interceptor đã unwrap { success, data } -> data là payload
             const payload = tokenResponse.data as Record<string, unknown>;
-            const access_token =
-                (payload?.access_token ?? payload?.access) as string;
-            const refresh_token =
-                (payload?.refresh_token ?? payload?.refresh) as string;
+            const access_token = (payload?.access_token ?? payload?.access) as string;
+            const refresh_token = (payload?.refresh_token ?? payload?.refresh) as string;
             const tenant_slug = payload?.tenant_slug as string | undefined;
 
             if (access_token) {
@@ -119,6 +123,7 @@ export const authApi = {
                 firstName: (raw?.display_name as string)?.split?.(" ")?.[0] ?? "",
                 lastName: (raw?.display_name as string)?.split?.(" ")?.slice(1)?.join?.(" ") ?? "",
                 avatar: raw?.avatar_path ? undefined : undefined,
+                role: raw?.role != null ? String(raw.role) : undefined,
             };
 
             return {
@@ -163,8 +168,7 @@ export const authApi = {
             refresh: refreshToken,
         });
 
-        const access_token =
-            response.data.access_token ?? (response.data as any).access;
+        const access_token = response.data.access_token ?? (response.data as any).access;
         if (access_token) {
             localStorage.setItem("auth_token", access_token);
         }

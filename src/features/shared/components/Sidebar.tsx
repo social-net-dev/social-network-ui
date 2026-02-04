@@ -1,12 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
-import { Home, User, MessageSquare, Bell, LogOut, Settings, Users } from "lucide-react";
+import { Home, User, MessageSquare, Bell, LogOut, Settings, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
     { icon: Home, label: "Trang chủ", path: "/" },
     { icon: User, label: "Tôi", path: "/profile/me" },
     { icon: User, label: "Trang cá nhân", path: "/profile" },
+    { icon: Sparkles, label: "Gợi ý kết nối", path: "/recommendations" },
     { icon: MessageSquare, label: "Tin nhắn", path: "/messages" },
     { icon: Bell, label: "Thông báo", path: "/notifications" },
 ];
@@ -15,7 +16,7 @@ export function Sidebar() {
     const location = useLocation();
     const logout = useAuthStore((state) => state.logout);
     const user = useAuthStore((state) => state.user);
-    const isAdmin = user?.role === "ADMIN";
+    const isAdmin = (user?.role ?? "").toUpperCase().includes("ADMIN") || (user?.email ?? "").toLowerCase().startsWith("admin@");
 
     return (
         <aside className="fixed left-0 top-0 z-40 h-screen pt-16 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a1f29] transition-all w-64 hidden lg:block">
