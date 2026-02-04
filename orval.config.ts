@@ -21,4 +21,17 @@ export default defineConfig({
         : 'http://localhost:8000/openapi.json',
     },
   },
+  zod: {
+    output: {
+      mode: 'tags-split',
+      client: 'zod',
+      target: 'src/lib/api/generated/zod',
+      fileExtension: '.zod.ts',
+    },
+    input: {
+      target: process.env.VITE_API_BASE_URL 
+        ? `${process.env.VITE_API_BASE_URL}/openapi.json` 
+        : 'http://localhost:8000/openapi.json',
+    },
+  },
 });

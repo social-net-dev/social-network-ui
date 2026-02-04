@@ -34,19 +34,21 @@ pnpm gen:api
 
 ### 2. Cách sử dụng mới (Example)
 
+Nên sử dụng các **Smart Hooks** tại `src/lib/api/hooks/` thay vì gọi trực tiếp generated hooks nếu có logic biến đổi dữ liệu phức tạp.
+
 ```typescript
-import { PostsV2API } from '@/lib/api/generated';
-import { transformPost } from '@/lib/api/transforms';
+import { useUser } from '@/lib/api/hooks/useUser';
 
-// Trong Component/Hook
-const { data, isLoading } = PostsV2API.useGetFeedV2FeedGet({ page: 1 });
+// Tự động transform BE -> FE và xử lý cache
+const { user, isLoading } = useUser('me'); 
 
-// Transform dữ liệu sang chuẩn FE
-const posts = data?.data?.posts?.map(transformPost) || [];
+// user lúc này đã có type Author chuẩn FE (camelCase)
+console.log(user.displayName); 
 ```
 
-### 3. Transform Layer
-Do Backend sử dụng `snake_case` và Frontend sử dụng `camelCase`, toàn bộ logic mapping được tập trung tại `src/lib/api/transforms/`.
+### 3. Transform Layer & Smart Hooks
+- **Transforms**: Nơi định nghĩa logic convert `snake_case` (BE) -> `camelCase` (FE).
+- **Smart Hooks**: Wrapper quanh generated hooks, sử dụng option `select` để tự động transform dữ liệu ngay khi nhận được từ server.
 
 ## Axios & Authentication
 Hệ thống sử dụng chung một `apiClient` tại `src/lib/api.ts` hỗ trợ:
