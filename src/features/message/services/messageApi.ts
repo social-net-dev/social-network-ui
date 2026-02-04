@@ -59,6 +59,10 @@ export const callUploadFile = (roomId: string, params: IUploadFileRequest) => {
   params.files.forEach(file => {
     formData.append('files', file);
   });
+  // Include optional text content when sending files
+  if ((params as any).content) {
+    formData.append('content', (params as any).content);
+  }
   const queryParams = new URLSearchParams();
   if (params.sender_id) queryParams.set('sender_id', params.sender_id);
   if ((params as any).client_id) queryParams.set('client_id', (params as any).client_id);

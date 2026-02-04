@@ -55,7 +55,8 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isMine, currentUserI
   const handleReact = async (emoji: string) => {
     try {
       if (sendReaction) {
-        await sendReaction(message.id, emoji, false);
+        // For optimistic file uploads message.id may be undefined; fall back to client_id
+        await sendReaction((message as any).id ?? (message as any).client_id ?? '', emoji, false);
         console.log('[MessageItem] Sent reaction via WebSocket');
       } else {
         await callAddReaction(message.id, { emoji, user_id: currentUserId });

@@ -97,9 +97,43 @@ export const useFileUpload = ({ roomId, userId, onUploadStart, onUploadSuccess, 
           sender_id: userId,
           files: selectedFiles,
           client_id,
+          content: text.trim() || null,
         });
 
         console.log('[useFileUpload] Upload response:', res.data ?? res);
+
+        // If server returned the persisted message, replace optimistic entry
+        try {
+          const serverMsg = (res as any).data;
+          if (serverMsg && (serverMsg.id || serverMsg.server_id)) {
+            setFetchedMessages(prev => {
+              const next = prev.map(m => {
+                if ((m as any).client_id === client_id) {
+                  // Map server response to MessageFull shape conservatively
+                  return {
+                    id: serverMsg.id ?? serverMsg.server_id,
+                    room_id: serverMsg.room_id ?? m.room_id,
+                    sender_id: serverMsg.sender_id ?? m.sender_id,
+                    message: serverMsg.message ?? serverMsg.ciphertext ?? (m as any).ciphertext ?? null,
+                    ciphertext: serverMsg.ciphertext ?? (m as any).ciphertext ?? null,
+                    created_at: serverMsg.created_at ?? new Date().toISOString(),
+                    _status: 'sent',
+                    attachments: serverMsg.attachments ?? (m as any).attachments ?? null,
+                    attachment_url: serverMsg.attachment_url ?? (m as any).attachment_url ?? null,
+                    attachment_urls: serverMsg.attachment_urls ?? (m as any).attachment_urls ?? null,
+                    pinned: serverMsg.pinned ?? (m as any).pinned ?? false,
+                    reactions: serverMsg.reactions ?? (m as any).reactions ?? [],
+                  } as any;
+                }
+                return m;
+              });
+              return next;
+            });
+          }
+        } catch (e) {
+          // ignore mapping errors
+          console.debug('[useFileUpload] server response mapping failed', e);
+        }
 
         // Revoke local preview URLs after delay
         setTimeout(() => {

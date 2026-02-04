@@ -18,7 +18,26 @@ export const deduplicateMessages = (wsMessages: MessageOut[], fetchedMessages: M
 
     // heuristic: if there's an existing message from same sender with matching attachments filenames
     // and timestamps are very close, treat as duplicate and prefer server message (with id)
-    const aFiles = (m as any).attachments ? (m as any).attachments.map((x: any) => (x.filename || '').toLowerCase()) : [];
+    const extractNames = (arr: any[]) =>
+      (arr || [])
+        .map((x: any) => {
+          const filename = (x && (x.filename || x.url)) || '';
+          return String(filename).split('/').pop()?.toLowerCase() || '';
+        })
+        .filter(Boolean);
+
+    const aFiles = (m as any).attachments
+      ? extractNames((m as any).attachments)
+      : (m as any).attachment_urls
+        ? extractNames((m as any).attachment_urls.map((u: string) => ({ url: u })))
+        : (m as any).attachment_url
+          ? [
+              String((m as any).attachment_url)
+                .split('/')
+                .pop()
+                ?.toLowerCase() || '',
+            ]
+          : [];
     let isDuplicate = false;
 
     for (const ex of out) {
@@ -34,8 +53,19 @@ export const deduplicateMessages = (wsMessages: MessageOut[], fetchedMessages: M
         break;
       }
 
-      // if neither have ids, compare sender + attachment filenames and created_at proximity
-      const exFiles = (ex as any).attachments ? (ex as any).attachments.map((x: any) => (x.filename || '').toLowerCase()) : [];
+      // compare sender + attachment filenames/urls and created_at proximity (lenient)
+      const exFiles = (ex as any).attachments
+        ? extractNames((ex as any).attachments)
+        : (ex as any).attachment_urls
+          ? extractNames((ex as any).attachment_urls.map((u: string) => ({ url: u })))
+          : (ex as any).attachment_url
+            ? [
+                String((ex as any).attachment_url)
+                  .split('/')
+                  .pop()
+                  ?.toLowerCase() || '',
+              ]
+            : [];
 
       if (m.sender_id === ex.sender_id && aFiles.length > 0 && exFiles.length > 0) {
         const common = aFiles.filter((f: string) => exFiles.includes(f));
@@ -43,10 +73,10 @@ export const deduplicateMessages = (wsMessages: MessageOut[], fetchedMessages: M
           const ta = m.created_at ? Date.parse(m.created_at) : Date.now();
           const tb = ex.created_at ? Date.parse(ex.created_at) : Date.now();
 
-          if (Math.abs(ta - tb) < 5000) {
+          // allow larger window for dedupe (2 minutes)
+          if (Math.abs(ta - tb) < 120_000) {
             // prefer server message (one that has id) over optimistic
             if (m.id && !ex.id) {
-              // replace ex with m
               const idx = out.indexOf(ex);
               if (idx !== -1) out.splice(idx, 1, m);
               isDuplicate = true;
@@ -90,6 +120,14 @@ export const filterOptimisticMessage = (fetchedMessages: MessageOut[], newMessag
   const now = Date.now();
   let removed = false;
 
+  const extractNames = (arr: any[]) =>
+    (arr || [])
+      .map((x: any) => {
+        const filename = (x && (x.filename || x.url)) || '';
+        return String(filename).split('/').pop()?.toLowerCase() || '';
+      })
+      .filter(Boolean);
+
   return fetchedMessages.filter(m => {
     if (removed) return true; // already removed one optimistic
 
@@ -97,18 +135,18 @@ export const filterOptimisticMessage = (fetchedMessages: MessageOut[], newMessag
     if ((m as any)._status !== 'sending') return true;
     if (m.sender_id !== newMessage.sender_id) return true;
 
-    // time window: 60s
+    // time window: 2 minutes
     const createdTs = m.created_at ? Date.parse(m.created_at) : now;
-    if (Math.abs(now - createdTs) > 60_000) return true;
+    if (Math.abs(now - createdTs) > 120_000) return true;
 
-    const a = (m as any).attachments ?? [];
-    const b = (newMessage as any).attachments ?? [];
+    const a = (m as any).attachments ?? (m as any).attachment_urls ?? [];
+    const b = (newMessage as any).attachments ?? (newMessage as any).attachment_urls ?? [];
     if (!Array.isArray(a) || !Array.isArray(b)) return true;
     if (a.length !== b.length) return true;
 
-    // check filename overlap
-    const filenamesA = a.map((x: any) => (x.filename || '').toLowerCase());
-    const filenamesB = b.map((x: any) => (x.filename || '').toLowerCase());
+    // check filename overlap using extracted basenames
+    const filenamesA = extractNames(a);
+    const filenamesB = extractNames(b);
     const common = filenamesA.filter((f: string) => filenamesB.includes(f));
 
     if (common.length === 0) return true;

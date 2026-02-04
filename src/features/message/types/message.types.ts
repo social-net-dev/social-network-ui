@@ -61,7 +61,7 @@ export type MessageOut = {
   ciphertext?: string | null;
   created_at?: string | null;
   client_id?: string | null;
-  _status?: "sending" | "sent" | "failed";
+  _status?: 'sending' | 'sent' | 'failed';
   _error?: string | null;
 };
 
@@ -81,8 +81,8 @@ export type MessageFull = MessageOut & {
 };
 
 export type ServerAck = {
-  type: "ack";
-  status: "ok" | "error";
+  type: 'ack';
+  status: 'ok' | 'error';
   server_id?: string;
   client_id?: string;
   reason?: string;
@@ -109,6 +109,7 @@ export interface IUploadFileRequest {
   sender_id?: string | null;
   files: File[];
   client_id?: string | null;
+  content?: string | null;
 }
 
 export interface IDeleteMessageParams {
