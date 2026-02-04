@@ -1,0 +1,314 @@
+import type { MessageIn, MessageOut, ServerAck } from '../types/message.types';
+
+type ChatClientOpts = {
+  wsUrl: string;
+  restBase: string;
+  room: string;
+  userId: string;
+};
+
+export class ChatClient {
+  private ws: WebSocket | null = null;
+  private opts: ChatClientOpts;
+  private pending: MessageIn[] = [];
+  private backoff = 1000;
+  private connecting = false;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private manualClose = false;
+  public onMessage: (m: MessageOut) => void = () => {};
+  public onAck: (ack: ServerAck) => void = () => {};
+  public onError: (err: unknown) => void = () => {};
+  public onStatus: (s: 'connecting' | 'open' | 'closed' | 'error') => void = () => {};
+  public onReaction: (data: any) => void = () => {};
+
+  constructor(opts: ChatClientOpts) {
+    this.opts = opts;
+    this.connect();
+  }
+
+  // expose opts for callers to detect same client
+  getOpts() {
+    return { ...this.opts } as ChatClientOpts;
+  }
+
+  private url() {
+    const { wsUrl, room, userId } = this.opts;
+    if (!room || !userId) {
+      throw new Error('ChatClient: room_id and user_id are required');
+    }
+    return `${wsUrl}?user_id=${encodeURIComponent(userId)}&room_id=${encodeURIComponent(room)}`;
+  }
+
+  connect() {
+    // avoid creating multiple concurrent connections
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) return;
+    if (this.connecting) return;
+    this.connecting = true;
+    try {
+      try {
+        this.onStatus('connecting');
+      } catch {}
+      this.ws = new WebSocket(this.url());
+      console.debug('ChatClient: connecting to', this.url());
+      this.ws.onopen = () => {
+        console.debug('ChatClient: websocket open');
+        this.connecting = false;
+        if (this.retryTimer) {
+          clearTimeout(this.retryTimer);
+          this.retryTimer = null;
+        }
+        try {
+          this.onStatus('open');
+        } catch {}
+        this.backoff = 1000;
+        while (this.pending.length && this.ws && this.ws.readyState === WebSocket.OPEN) {
+          const m = this.pending.shift()!;
+          this._sendViaWS(m).catch(() => {});
+        }
+      };
+      this.ws.onmessage = ev => {
+        try {
+          const data = JSON.parse(ev.data);
+          console.debug('ChatClient: message received', data);
+          if (data.type === 'ack') {
+            // ACK cho reaction cũng đi qua onReaction nếu có action
+            if (data.action === 'reaction_added' || data.action === 'reaction_removed') {
+              console.log('[ChatClient] Reaction ACK received:', data);
+              if (this.onReaction) {
+                this.onReaction(data);
+              }
+            } else {
+              this.onAck(data as ServerAck);
+            }
+          } else if (data.type === 'message') {
+            // include possible attachment fields so FE can render images from WS broadcasts
+            const out: any = {
+              id: data.id ?? data.server_id ?? data.client_id,
+              room_id: data.room_id ?? this.opts.room,
+              sender_id: data.sender_id,
+              message: data.message,
+              ciphertext: data.ciphertext ?? null,
+              created_at: data.created_at ?? new Date().toISOString(),
+              client_id: data.client_id ?? undefined,
+              _status: 'sent',
+              // backend now returns attachments array with metadata
+              attachments: data.attachments ?? null,
+              // legacy fallback
+              attachment_url: data.attachment_url ?? null,
+              attachment_urls: data.attachment_urls ?? null,
+              pinned: data.pinned ?? false,
+              reactions: data.reactions ?? [],
+            } as MessageOut;
+            this.onMessage(out);
+          } else if (data.type === 'reaction' || data.type === 'reaction_removed') {
+            // broadcast reaction event to hook
+            console.log('[ChatClient] Reaction broadcast event detected:', data);
+            if (this.onReaction) {
+              this.onReaction(data);
+            } else {
+              console.warn('[ChatClient] onReaction handler not set!');
+            }
+          }
+        } catch (e) {
+          // ignore parse errors
+        }
+      };
+      this.ws.onclose = ev => {
+        console.error('ChatClient: websocket closed', {
+          code: ev.code,
+          reason: ev.reason || '(no reason)',
+          wasClean: ev.wasClean,
+        });
+        try {
+          this.onStatus('closed');
+        } catch {}
+        try {
+          if (!this.manualClose) {
+            if (!ev.wasClean || ev.code !== 1000) {
+              this.onError(new Error(`WebSocket closed abnormally: code=${ev.code} reason=${ev.reason || '(no reason)'}`));
+            }
+          }
+        } catch {}
+        this.ws = null;
+        this.connecting = false;
+        if (!this.manualClose) this.retryConnect();
+      };
+      this.ws.onerror = err => {
+        console.error('ChatClient: websocket error', err, {
+          readyState: this.ws?.readyState,
+          url: this.url(),
+        });
+        try {
+          this.onError(new Error(`WebSocket error readyState=${this.ws?.readyState} url=${this.url()}`));
+        } catch {}
+        try {
+          this.onStatus('error');
+        } catch {}
+        // let onclose handle
+      };
+    } catch (e) {
+      console.error('ChatClient: connect failed', e);
+      try {
+        this.onStatus('error');
+      } catch {}
+      try {
+        this.onError(e);
+      } catch {}
+      this.ws = null;
+      this.connecting = false;
+      this.retryConnect();
+    }
+  }
+
+  private retryConnect() {
+    console.debug(`ChatClient: reconnecting in ${this.backoff}ms`);
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    if (this.manualClose) return;
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      this.backoff = Math.min(this.backoff * 1.5, 30_000);
+      this.connect();
+    }, this.backoff);
+  }
+
+  async sendReaction(messageId: string, emoji: string, remove = false) {
+    const payload = {
+      action: 'reaction',
+      message_id: messageId,
+      emoji,
+      remove,
+    };
+    console.log('[ChatClient] Sending reaction:', payload);
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      try {
+        this.ws.send(JSON.stringify(payload));
+        return;
+      } catch (e) {
+        console.error('[ChatClient] sendReaction failed:', e);
+        throw e;
+      }
+    } else {
+      console.warn('[ChatClient] WebSocket not open, cannot send reaction');
+      throw new Error('WebSocket not connected');
+    }
+  }
+
+  async send(msg: MessageIn) {
+    const withId = { ...msg, client_id: msg.client_id ?? this._genClientId() };
+    if (!withId.room_id) {
+      throw new Error('ChatClient: cannot send without room_id');
+    }
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      try {
+        console.debug('ChatClient: send via WS', withId);
+        await this._sendViaWS(withId);
+        return;
+      } catch {
+        // fallback to REST
+      }
+    }
+    console.debug('ChatClient: WS not open, queueing and attempting REST', withId);
+    this.pending.push(withId);
+    try {
+      return await this._sendViaREST(withId);
+    } catch (e) {
+      console.error('ChatClient: REST send failed', e, {
+        url: this.opts.restBase,
+        message: withId,
+      });
+      try {
+        this.onError(e);
+      } catch {}
+      throw e;
+    }
+  }
+
+  private _sendViaWS(message: MessageIn) {
+    return new Promise<void>((resolve, reject) => {
+      try {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+          return reject(new Error('WS not open'));
+        }
+        const payload = {
+          action: 'message',
+          room_id: message.room_id,
+          message: message.content,
+          client_id: message.client_id,
+        };
+        try {
+          this.ws.send(JSON.stringify(payload));
+          resolve();
+        } catch (e) {
+          console.error('ChatClient: ws.send threw', e, { payload });
+          reject(e);
+        }
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
+  private async _sendViaREST(message: MessageIn) {
+    const { restBase } = this.opts;
+    const url = `${restBase}/api/rooms/${encodeURIComponent(message.room_id)}/messages`;
+    const body = {
+      room_id: message.room_id,
+      sender_id: message.sender_id,
+      content: message.content,
+      client_id: message.client_id,
+    };
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (networkErr) {
+      throw new Error(`REST request failed: ${String(networkErr)}`);
+    }
+    let json: any = null;
+    const text = await res.text();
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch (e) {
+      json = { text };
+    }
+    if (!res.ok) {
+      const err = new Error(`REST persist failed: ${res.status} ${res.statusText} - ${text}`);
+      // attach details
+      (err as any).status = res.status;
+      (err as any).body = json;
+      throw err;
+    }
+    this.onAck({
+      type: 'ack',
+      status: 'ok',
+      server_id: json?.id,
+      client_id: message.client_id,
+      created_at: json.created_at,
+    });
+    return json;
+  }
+
+  private _genClientId() {
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+  }
+  close() {
+    try {
+      this.manualClose = true;
+      if (this.retryTimer) {
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
+      }
+      this.connecting = false;
+      this.ws?.close();
+    } catch {}
+    this.ws = null;
+  }
+}
+
+export default ChatClient;

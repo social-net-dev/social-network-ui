@@ -201,8 +201,7 @@ export const feedApi = {
       total?: number;
     };
 
-    const raw =
-      data?.posts || data?.items || (Array.isArray(data) ? data : []);
+    const raw = data?.posts || data?.items || (Array.isArray(data) ? data : []);
     const posts = (Array.isArray(raw) ? raw : []).map(normalizePostWithToken);
     const total_pages = data?.total_pages ?? 1;
     const total = data?.total ?? posts.length;
