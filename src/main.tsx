@@ -8,7 +8,7 @@ import { queryClient } from './lib/react-query'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import './index.css'
 import App from './App.tsx'
-// import { Agentation } from "agentation";
+import { Agentation } from "agentation";
 
 const enableMocking = async () => {
   if (import.meta.env.VITE_USE_MOCK === "true") {
@@ -30,7 +30,7 @@ enableMocking().then(() => {
             </ThemeProvider>
           </BrowserRouter>
           <ReactQueryDevtools initialIsOpen={false} />
-          {/* {import.meta.env.MODE === "development" && <Agentation />} */}
+          {import.meta.env.MODE === "development" && <Agentation />}
         </QueryClientProvider>
       </ErrorBoundary>
     </StrictMode>,

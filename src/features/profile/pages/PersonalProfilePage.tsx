@@ -147,7 +147,7 @@ export function PersonalProfilePage() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 md:px-10 lg:px-40 py-8 space-y-8">
+    <div className="space-y-6">
         
         {/* Profile Header Section */}
         <section className="bg-white dark:bg-card rounded-xl p-6 border border-border shadow-sm">

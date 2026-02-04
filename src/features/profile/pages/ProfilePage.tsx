@@ -62,7 +62,7 @@ function ProfilePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-12">
+    <div className="space-y-6">
       <ProfileHeader
         profile={profile}
         isCurrentUser={isCurrentUser}
@@ -74,48 +74,48 @@ function ProfilePage() {
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 min-w-0 space-y-6">
           <Tabs defaultValue="posts" className="w-full">
-            <TabsList className="bg-card p-1 rounded-xl shadow-sm border border-border w-full justify-start overflow-x-auto no-scrollbar">
-              <TabsTrigger value="posts" className="rounded-lg data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
+            <TabsList className="bg-card p-1.5 rounded-xl shadow-sm border border-border/50 w-full justify-start overflow-x-auto no-scrollbar">
+              <TabsTrigger value="posts" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-5 py-2.5 transition-all-300">
                 <FileText className="w-4 h-4 mr-2" />
                 Bài viết
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="posts" className="mt-6 space-y-6 outline-none">
+            <TabsContent value="posts" className="mt-6 space-y-6 outline-none animate-fadeInUp">
               {mockPosts.length > 0 ? (
                 <div className="space-y-6">
-                  {mockPosts.map((post) => (
-                    <Card key={post.id} className="border-border shadow-sm bg-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-md">
+                  {mockPosts.map((post, index) => (
+                    <Card key={post.id} className="border-border/50 shadow-sm bg-card rounded-xl overflow-hidden transition-all-300 hover:shadow-md hover-lift" style={{ animationDelay: `${index * 50}ms` }}>
                       <CardContent className="p-6">
                         <div className="flex items-center gap-3 mb-4">
-                          <Avatar className="w-10 h-10 border border-border">
+                          <Avatar className="w-11 h-11 border border-border ring-2 ring-transparent hover:ring-primary/20 transition-all-300">
                             <AvatarImage src={profile.avatar} />
-                            <AvatarFallback>{profile.displayName?.[0] || '?'}</AvatarFallback>
+                            <AvatarFallback className="bg-primary/10 text-primary font-semibold">{profile.displayName?.[0] || '?'}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <p className="font-bold text-foreground">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-foreground truncate hover:text-primary transition-colors-300 cursor-pointer">
                               {profile.displayName}
                             </p>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                               <Clock className="w-3 h-3" />
                               {new Date(post.createdAt).toLocaleDateString('vi-VN')}
                             </p>
                           </div>
                         </div>
-                        <p className="text-foreground mb-6 leading-relaxed">
+                        <p className="text-foreground/90 mb-5 leading-relaxed text-sm">
                           {post.content}
                         </p>
-                        <div className="flex items-center justify-between pt-4 border-t border-border">
-                          <div className="flex gap-6">
-                            <button className="flex items-center gap-2 text-muted-foreground hover:text-red-500 transition-colors">
+                        <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                          <div className="flex gap-4">
+                            <button className="flex items-center gap-2 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition-colors-300 px-2 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30">
                               <Heart className="w-5 h-5" />
                               <span className="text-sm font-medium">{post.likes}</span>
                             </button>
-                            <button className="flex items-center gap-2 text-muted-foreground hover:text-blue-500 transition-colors">
+                            <button className="flex items-center gap-2 text-muted-foreground hover:text-blue-500 dark:hover:text-blue-400 transition-colors-300 px-2 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30">
                               <MessageSquare className="w-5 h-5" />
                               <span className="text-sm font-medium">{post.comments}</span>
                             </button>
-                            <button className="flex items-center gap-2 text-muted-foreground hover:text-green-500 transition-colors">
+                            <button className="flex items-center gap-2 text-muted-foreground hover:text-green-500 dark:hover:text-green-400 transition-colors-300 px-2 py-1.5 rounded-lg hover:bg-green-50 dark:hover:bg-green-950/30">
                               <Share2 className="w-5 h-5" />
                               <span className="text-sm font-medium">{post.shares}</span>
                             </button>
@@ -124,18 +124,18 @@ function ProfilePage() {
                       </CardContent>
                     </Card>
                   ))}
-                  <Button variant="ghost" className="w-full rounded-xl py-6 border-2 border-dashed border-border text-muted-foreground hover:border-etechs-primary hover:text-etechs-primary transition-all">
+                  <Button variant="ghost" className="w-full rounded-xl py-5 border-2 border-dashed border-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all-300 hover-lift">
                     Xem tất cả bài viết
                   </Button>
                 </div>
               ) : (
-                <Card className="border-border shadow-sm bg-card rounded-xl overflow-hidden">
+                <Card className="border-border/50 shadow-sm bg-card rounded-xl overflow-hidden animate-fadeIn">
                   <CardContent className="p-12 text-center">
-                    <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                      <FileText className="w-10 h-10 text-muted-foreground" />
+                    <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FileText className="w-10 h-10 text-muted-foreground/50" />
                     </div>
                     <h3 className="text-xl font-bold text-foreground mb-2">Chưa có bài viết nào</h3>
-                    <p className="text-muted-foreground max-w-sm mx-auto">
+                    <p className="text-muted-foreground max-w-sm mx-auto text-sm leading-relaxed">
                       Khi {profile.displayName} chia sẻ bài viết, chúng sẽ xuất hiện ở đây.
                     </p>
                   </CardContent>

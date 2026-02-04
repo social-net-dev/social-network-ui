@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { Comment } from "../types/feed.types";
 import { feedApi } from "../services/feedApi";
+import { cn } from "@/lib/utils";
 
 interface CommentSectionProps {
   postId: string;
@@ -447,37 +448,42 @@ export function CommentSection({
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-[#0a1f29] rounded-xl p-4 mt-4">
-      <div className="flex items-center mb-4">
-        <MessageCircle className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2" />
-        <h4 className="font-semibold text-gray-900 dark:text-white">
-          Bình luận
-        </h4>
+    <div className="bg-muted/30 rounded-xl p-5 mt-4 animate-fadeIn">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <MessageCircle className="w-5 h-5 text-muted-foreground" />
+          <h4 className="font-semibold text-foreground">
+            Bình luận
+          </h4>
+          <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
+            {comments.length}
+          </span>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex items-center gap-3 mb-4">
+      <form onSubmit={handleSubmit} className="flex items-center gap-3 mb-6">
         <div className="flex-1">
           <Input
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Viết bình luận..."
-            className="flex-1"
+            className="flex-1 h-10 border-border/50 focus:border-primary focus:ring-primary/20 transition-all-300"
           />
           {files.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2 animate-fadeInUp">
               {files.map((file, index) => {
                 const url = URL.createObjectURL(file);
                 return (
-                  <div key={index} className="relative w-16 h-16">
+                  <div key={index} className="relative w-16 h-16 group">
                     <img
                       src={url}
                       alt={`Preview ${index}`}
-                      className="w-full h-full object-cover rounded"
+                      className="w-full h-full object-cover rounded-lg shadow-sm group-hover:shadow-md transition-all-300"
                     />
                     <button
                       type="button"
                       onClick={() => handleRemoveFile(index)}
-                      className="absolute -top-1 -right-1 p-0.5 bg-black/50 rounded-full text-white hover:bg-black/70"
+                      className="absolute -top-1.5 -right-1.5 p-1 bg-destructive rounded-full text-white hover:bg-destructive/90 shadow-lg transition-all-300 hover:scale-110"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -500,24 +506,25 @@ export function CommentSection({
           variant="ghost"
           size="icon"
           onClick={() => inputRef.current?.click()}
+          className="hover:bg-primary/10 transition-colors-300"
         >
           <Image className="w-4 h-4" />
         </Button>
         <Button
           type="submit"
           disabled={!content.trim()}
-          className="bg-[#1b7a78] hover:bg-teal-700"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all-300 hover-lift"
         >
           <Send className="w-4 h-4" />
         </Button>
       </form>
 
       {isLoading ? (
-        <div className="flex justify-center py-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1b7a78]"></div>
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary/30 border-t-primary"></div>
         </div>
       ) : comments.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {comments.map((comment) => {
             const author = comment.author;
             const displayName = author?.displayName || "";
@@ -534,11 +541,13 @@ export function CommentSection({
               currentUserId === (author?.id || comment.author_id);
 
             return (
-              <div key={comment.id} className="flex items-start space-x-3">
-                <Avatar user={userForAvatar} size="sm" />
-                <div className="flex-1">
-                  <div className="bg-white dark:bg-[#0A2737] rounded-lg px-3 py-2">
-                    <p className="font-semibold text-sm text-gray-900 dark:text-white">
+              <div key={comment.id} className="flex items-start gap-3 animate-fadeIn">
+                <div className="relative">
+                  <Avatar user={userForAvatar} size="sm" className="ring-2 ring-transparent hover:ring-primary/20 transition-all-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="bg-card rounded-lg px-4 py-3 shadow-sm border border-border/30">
+                    <p className="font-semibold text-sm text-foreground mb-1.5">
                       {displayName}
                     </p>
                     {editingCommentId === comment.id ? (
@@ -546,82 +555,86 @@ export function CommentSection({
                         <textarea
                           value={editContent}
                           onChange={(e) => setEditContent(e.target.value)}
-                          className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-[#0a1f29] text-gray-900 dark:text-white"
+                          className="w-full p-3 text-sm border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-primary/20 transition-all-300 resize-none"
                           rows={2}
+                          placeholder="Nhập nội dung bình luận..."
                         />
                         <div className="flex gap-2 mt-2">
                           <button
                             onClick={() => handleSaveEdit(comment.id)}
-                            className="text-xs px-3 py-1 bg-[#1b7a78] text-white rounded hover:bg-teal-700"
+                            className="text-xs px-4 py-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors-300"
                           >
                             Lưu
                           </button>
                           <button
                             onClick={() => setEditingCommentId(null)}
-                            className="text-xs px-3 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                            className="text-xs px-4 py-1.5 border border-border rounded-lg hover:bg-muted/50 transition-colors-300"
                           >
                             Hủy
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <p className="text-sm text-foreground/90 leading-relaxed">
                         {comment.content_text || comment.content}
                       </p>
                     )}
                     {blobUrls.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
+                      <div className="mt-3 flex flex-wrap gap-2">
                         {blobUrls.map((blobUrl, idx) => (
                           <img
                             key={idx}
                             src={blobUrl}
                             alt="Comment media"
-                            className="w-20 h-20 object-cover rounded"
+                            className="w-24 h-24 object-cover rounded-lg hover:scale-[1.02] transition-transform duration-300 cursor-pointer"
                           />
                         ))}
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 mt-1 ml-3">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-4 mt-2 ml-1">
+                    <span className="text-xs text-muted-foreground">
                       {new Date(
                         comment.created_at || comment.createdAt || "",
                       ).toLocaleDateString("vi-VN")}
                     </span>
                     <button
                       onClick={() => handleLikeComment(comment.id)}
-                      className={`text-xs flex items-center gap-1 ${likedComments.has(comment.id) ? "text-red-500" : "text-gray-500 dark:text-gray-400"} hover:text-red-500 dark:hover:text-red-400 transition-colors`}
+                      className={cn(
+                        "text-xs flex items-center gap-1.5 transition-all-300",
+                        likedComments.has(comment.id)
+                          ? "text-red-500 dark:text-red-400"
+                          : "text-muted-foreground hover:text-red-500 dark:hover:text-red-400"
+                      )}
                       title="Thích"
                     >
                       <Heart
-                        className={`w-4 h-4 ${likedComments.has(comment.id) ? "fill-current" : ""}`}
+                        className={cn("w-4 h-4 transition-transform", likedComments.has(comment.id) ? "fill-current scale-110" : "")}
                       />
                       {(comment.reaction_count || comment.likes || 0) > 0 && (
-                        <span>{comment.reaction_count || comment.likes}</span>
+                        <span className="font-medium">{comment.reaction_count || comment.likes}</span>
                       )}
                     </button>
                     <button
                       onClick={() => handleReply(comment.id, displayName)}
-                      className="text-xs flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-[#1b7a78] dark:hover:text-teal-400 transition-colors"
+                      className="text-xs flex items-center gap-1.5 text-muted-foreground hover:text-primary dark:hover:text-primary transition-colors-300"
                       title="Trả lời"
                     >
                       <Reply className="w-4 h-4" />
-                      {(comment.reply_count || 0) > 0 && (
-                        <span>{comment.reply_count}</span>
-                      )}
+                      <span className="font-medium">Trả lời</span>
                     </button>
                     {isAuthor && (
                       <>
                         <button
                           onClick={() => handleEditComment(comment)}
-                          className="text-xs text-gray-500 dark:text-gray-400 hover:text-[#1b7a78] dark:hover:text-teal-400 transition-colors"
+                          className="text-xs text-muted-foreground hover:text-primary dark:hover:text-primary transition-colors-300"
                           title="Chỉnh sửa"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteComment(comment.id)}
-                          className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                          className="text-xs text-muted-foreground hover:text-destructive transition-colors-300"
                           title="Xóa"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -634,20 +647,30 @@ export function CommentSection({
                   {(comment.reply_count || 0) > 0 && (
                     <button
                       onClick={() => handleToggleReplies(comment.id)}
-                      className="text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-[#1b7a78] dark:hover:text-teal-400 mt-2 ml-3"
+                      className="text-xs font-semibold text-muted-foreground hover:text-primary dark:hover:text-primary mt-3 ml-1 transition-colors-300 flex items-center gap-1"
                     >
                       {expandedReplies.has(comment.id)
-                        ? `Ẩn ${comment.reply_count} câu trả lời`
-                        : `Xem ${comment.reply_count} câu trả lời`}
+                        ? (
+                          <>
+                            <span>Ẩn</span>
+                            <span className="bg-muted/50 px-1.5 py-0.5 rounded-full">{comment.reply_count} câu trả lời</span>
+                          </>
+                        )
+                        : (
+                          <>
+                            <span>Xem</span>
+                            <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{comment.reply_count} câu trả lời</span>
+                          </>
+                        )}
                     </button>
                   )}
 
                   {/* Nested replies */}
                   {expandedReplies.has(comment.id) && (
-                    <div className="ml-8 mt-3 space-y-3">
+                    <div className="ml-10 mt-4 space-y-4 border-l-2 border-border/20 pl-4">
                       {loadingReplies.has(comment.id) ? (
-                        <div className="flex justify-center py-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#1b7a78]"></div>
+                        <div className="flex justify-center py-4">
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary/30 border-t-primary"></div>
                         </div>
                       ) : (
                         replies[comment.id]?.map((reply) =>
@@ -662,9 +685,17 @@ export function CommentSection({
           })}
         </div>
       ) : (
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-          Chưa có bình luận nào
-        </p>
+        <div className="text-center py-8">
+          <div className="w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-3">
+            <MessageCircle className="w-8 h-8 text-muted-foreground/50" />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Chưa có bình luận nào
+          </p>
+          <p className="text-xs text-muted-foreground/60 mt-1">
+            Hãy là người đầu tiên bình luận bài viết này!
+          </p>
+        </div>
       )}
     </div>
   );

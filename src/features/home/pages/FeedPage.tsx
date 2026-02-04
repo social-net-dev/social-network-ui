@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useFeed } from "../hooks/useFeed";
-import { CreatePostForm } from "../components/CreatePostForm";
+import { CreatePostTrigger } from "../components/CreatePostTrigger";
 import { FeedList } from "../components/FeedList";
 import { ShareDialog } from "../components/ShareDialog";
 import { Button } from "@/components/ui/button";
@@ -9,19 +9,29 @@ import { useAuthStore } from "@/stores/authStore";
 import { AlertCircle, CheckCircle, HardDrive } from "lucide-react";
 import type { Comment } from "../types/feed.types";
 
+// Lazy load CreatePostModal để giảm bundle size
+const CreatePostModal = lazy(() => 
+  import("../components/CreatePostModal").then(module => ({ 
+    default: module.CreatePostModal 
+  }))
+);
+
 export function FeedPage() {
     const { posts, isLoading, error, createPost, likePost, refresh } = useFeed();
     const { user: currentUser } = useAuthStore();
     const [isCreating, setIsCreating] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
     const [sharePostId, setSharePostId] = useState<string | null>(null);
     const [comments, setComments] = useState<Record<string, Comment[]>>({});
     const [loadingComments, setLoadingComments] = useState<Record<string, boolean>>({});
 
-    const handleCreatePost = async (content: string, files: File[]) => {
+    const handleCreatePost = async (content: string, files: File[], hashtags: string[]) => {
         try {
             setIsCreating(true);
+            // TODO: Update createPost to accept hashtags
             await createPost(content, files);
+            console.log("Hashtags:", hashtags); // For now, just log
         } catch (err) {
             console.error("Failed to create post:", err);
         } finally {
@@ -134,7 +144,16 @@ export function FeedPage() {
                 </div>
             )}
 
-            <CreatePostForm onSubmit={handleCreatePost} isLoading={isCreating} />
+            <CreatePostTrigger onClick={() => setShowCreateModal(true)} />
+
+            <Suspense fallback={<div className="text-center py-4 text-muted-foreground">Đang tải...</div>}>
+                <CreatePostModal
+                    open={showCreateModal}
+                    onOpenChange={setShowCreateModal}
+                    onSubmit={handleCreatePost}
+                    isLoading={isCreating}
+                />
+            </Suspense>
 
             {error && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
