@@ -24,10 +24,10 @@ const localStorageMock = (() => {
   };
 })();
 
-Object.defineProperty(global, 'localStorage', {
+Object.defineProperty(globalThis, 'localStorage', {
   value: localStorageMock,
 });
 
 // Mock URL.createObjectURL
-global.URL.createObjectURL = vi.fn(() => 'mock-blob-url');
-global.URL.revokeObjectURL = vi.fn();
+globalThis.URL.createObjectURL = vi.fn(() => 'mock-blob-url');
+globalThis.URL.revokeObjectURL = vi.fn();

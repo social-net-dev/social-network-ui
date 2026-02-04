@@ -27,15 +27,23 @@ export const transformAuthor = (author: Models.AuthorInfo | null | undefined): A
 };
 
 /**
- * Transform UserMeResponse to Frontend User model
+ * Transform UserMeResponse to Frontend Author model (unified)
  */
-export const transformUserMe = (user: Models.UserMeResponse) => {
+export const transformUserMe = (user: Models.UserMeResponse): Author => {
   return {
-    ...user,
+    id: user.id,
     displayName: user.display_name,
     avatar: appendAuthToken(user.avatar_path),
-    // Map camelCase for frontend consistency
-    createdAt: user.created_at,
+    username: user.username || '',
+    email: user.email,
+    role: user.role,
     accountStatus: user.account_status,
+    storageQuotaMb: user.storage_quota_mb,
+    createdAt: user.created_at,
+    bio: user.bio || '',
+    // Default stats for me if missing
+    followers: 0,
+    following: 0,
+    postsCount: 0,
   };
 };

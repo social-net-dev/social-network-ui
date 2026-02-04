@@ -1,5 +1,5 @@
 import { PostCard } from "./PostCard";
-import type { Post, Comment } from "../types/feed.types";
+import type { Post } from "../types/feed.types";
 
 interface FeedListProps {
   posts: Post[];
@@ -23,55 +23,6 @@ export function FeedList({
   onDelete,
   onEdit,
   currentUserId,
-}: FeedListProps) {
-  if (isLoading && posts.length === 0) {
-    // ...
-  }
-
-  if (posts.length === 0) {
-    // ...
-  }
-
-  return (
-    <div className="space-y-4">
-      {posts.map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onLike={onLike}
-          onComment={onComment}
-          onShare={onShare}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          currentUserId={currentUserId}
-          showComments={selectedPostId === post.id}
-        />
-      ))}
-      {isLoading && (
-        <div className="flex justify-center py-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1b7a78]"></div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-export function FeedList({
-  posts,
-  isLoading,
-  onLike,
-  onComment,
-  onShare,
-  selectedPostId,
-  comments = {},
-  loadingComments = {},
-  onAddComment,
-  onDeleteComment,
-  onDelete,
-  onEdit,
-  currentUserId,
-  onRefreshComment,
 }: FeedListProps) {
   if (isLoading && posts.length === 0) {
     return (
@@ -142,21 +93,6 @@ export function FeedList({
           onEdit={onEdit}
           currentUserId={currentUserId}
           showComments={selectedPostId === post.id}
-          comments={comments[post.id] || []}
-          loadingComments={loadingComments[post.id] || false}
-          onAddComment={
-            onAddComment
-              ? (content, files) => onAddComment(post.id, content, files)
-              : undefined
-          }
-          onDeleteComment={
-            onDeleteComment
-              ? (commentId) => onDeleteComment(post.id, commentId)
-              : undefined
-          }
-          onRefreshComments={
-            onRefreshComment ? () => onRefreshComment(post.id) : undefined
-          }
         />
       ))}
       {isLoading && (

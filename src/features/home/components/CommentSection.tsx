@@ -38,8 +38,6 @@ export function CommentSection({
   const [content, setContent] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [replyToId, setReplyToId] = useState<string | null>(null);
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,7 +116,7 @@ export function CommentSection({
             key={comment.id} 
             comment={comment} 
             currentUserId={currentUserId}
-            onReply={(id, name) => {
+            onReply={(id: string, name: string) => {
               setReplyToId(id);
               setContent(`@${name} `);
               inputRef.current?.focus();

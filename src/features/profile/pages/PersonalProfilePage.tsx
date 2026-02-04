@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useProfile } from '../hooks/useProfile'
+import type { Author } from '@/features/home/types/feed.types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { 
   Edit2, Share2, MapPin, BadgeCheck, School, PlusCircle, 
-  BookOpen, Heart, Camera, Terminal,   Bike, Gamepad2, Globe
+  BookOpen, Heart, Camera, Terminal, Bike, Gamepad2, Globe
 } from 'lucide-react'
 import { 
   EditBasicInfoDialog, 
@@ -17,10 +18,9 @@ import {
 } from '../components/EditProfileDialogs'
 
 export function PersonalProfilePage() {
-  const { profile, updateProfile, isLoading } = useProfile()
+  const { profile: rawProfile, updateProfile, isLoading } = useProfile()
+  const profile = rawProfile as Author
   
-  // --- State for Profile Sections ---
-
   const [userInfo, setUserInfo] = useState({
     displayName: "User",
     username: "",
@@ -36,7 +36,7 @@ export function PersonalProfilePage() {
       setUserInfo(prev => ({
         ...prev,
         displayName: profile.displayName || prev.displayName,
-        username: profile.username || prev.username,
+        username: profile.username || prev.username || "",
         birthDate: profile.birthDate || prev.birthDate,
         role: profile.role || prev.role,
         bio: profile.bio || prev.bio,
@@ -84,26 +84,23 @@ export function PersonalProfilePage() {
   // --- Handlers ---
   const handleUpdateUserInfo = async (newData: any) => {
     try {
-      // Call API to update profile
-      const updatedProfile = await updateProfile({
+      await updateProfile({
         displayName: newData.displayName,
         username: newData.username,
         birthDate: newData.birthDate,
         bio: newData.bio
       })
       
-      // Update local state with API response + local fields (like location/role if not in API)
       setUserInfo(prev => ({
         ...prev,
-        displayName: updatedProfile.displayName,
-        username: updatedProfile.username || prev.username,
-        birthDate: updatedProfile.birthDate || prev.birthDate,
-        bio: updatedProfile.bio || prev.bio,
-        location: newData.location || prev.location // Keep location local
+        displayName: newData.displayName,
+        username: newData.username || prev.username,
+        birthDate: newData.birthDate || prev.birthDate,
+        bio: newData.bio || prev.bio,
+        location: newData.location || prev.location 
       }))
     } catch (error) {
       console.error("Failed to update profile:", error)
-      // Optionally show toast error here
     }
   }
 
@@ -116,11 +113,9 @@ export function PersonalProfilePage() {
   }
 
   const handleUpdatePersonalInterests = (newInterests: any) => {
-    // For simplicity, we just assume new items get a default icon if not present
-    // Ideally we'd have an icon picker
     const updated = newInterests.map((item: any) => ({
         ...item,
-        icon: item.icon || Heart // Default icon
+        icon: item.icon || Heart 
     }))
     setPersonalInterests(updated)
   }
@@ -138,7 +133,7 @@ export function PersonalProfilePage() {
     })
   }
 
-  if (isLoading) {
+  if (isLoading || !profile) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-etechs-primary"></div>
@@ -149,7 +144,6 @@ export function PersonalProfilePage() {
   return (
     <div className="max-w-[1200px] mx-auto px-4 md:px-10 lg:px-40 py-8 space-y-8">
         
-        {/* Profile Header Section */}
         <section className="bg-white dark:bg-card rounded-xl p-6 border border-border shadow-sm">
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start justify-between">
             <div className="flex flex-col md:flex-row gap-6 items-center">
@@ -185,25 +179,22 @@ export function PersonalProfilePage() {
                 initialData={userInfo} 
                 onSave={handleUpdateUserInfo}
                 trigger={
-                  <Button className="bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 rounded-xl h-11 px-6 font-bold shadow-md shadow-primary/20 transition-all">
+                  <Button className="bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 rounded-xl h-11 px-6 font-bold shadow-md">
                     <Edit2 className="w-4 h-4 mr-2" />
                     Edit Profile
                   </Button>
                 }
               />
-              <Button variant="outline" className="rounded-xl h-11 w-11 p-0 bg-secondary/50 border-0 hover:bg-secondary transition-all">
+              <Button variant="outline" className="rounded-xl h-11 w-11 p-0 bg-secondary/50 border-0 hover:bg-secondary">
                 <Share2 className="w-5 h-5" />
               </Button>
             </div>
           </div>
         </section>
 
-        {/* Grid Layout for Information Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Academic Background Card */}
           <Card className="rounded-xl border border-border shadow-sm overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 bg-white dark:bg-card">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="flex items-center gap-2">
                 <School className="w-6 h-6 text-etechs-primary" />
                 <CardTitle className="text-xl font-bold">Academic Background</CardTitle>
@@ -212,20 +203,16 @@ export function PersonalProfilePage() {
                 data={academicBackground}
                 onSave={handleUpdateAcademicBackground}
                 trigger={
-                  <Button variant="ghost" size="icon" className="text-etechs-primary hover:bg-etechs-primary/10 rounded-lg">
+                  <Button variant="ghost" size="icon" className="text-etechs-primary rounded-lg">
                     <Edit2 className="w-5 h-5" />
                   </Button>
                 }
               />
             </CardHeader>
-            <CardContent className="space-y-4 pt-4 bg-white dark:bg-card">
+            <CardContent className="space-y-4 pt-4">
               <div className="flex items-center gap-4 bg-secondary/30 p-4 rounded-xl border-l-4 border-etechs-primary">
                 <div className="h-16 w-16 bg-white rounded-lg flex items-center justify-center p-2 shadow-sm shrink-0">
-                  <img 
-                    alt="University Logo" 
-                    className="w-full h-full object-contain" 
-                    src={academicBackground.logoUrl}
-                  />
+                  <img alt="University Logo" className="w-full h-full object-contain" src={academicBackground.logoUrl} />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-etechs-primary">{academicBackground.degree}</p>
@@ -233,9 +220,8 @@ export function PersonalProfilePage() {
                   <p className="text-muted-foreground text-sm font-medium">{academicBackground.major}</p>
                 </div>
               </div>
-              
-              <div className="p-4 rounded-xl border border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-secondary/50 transition-all group">
-                <div className="flex items-center gap-2 text-muted-foreground group-hover:text-etechs-primary transition-colors">
+              <div className="p-4 rounded-xl border border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-secondary/50 group">
+                <div className="flex items-center gap-2 text-muted-foreground group-hover:text-etechs-primary">
                   <PlusCircle className="w-5 h-5" />
                   <span className="text-sm font-bold">Add previous education</span>
                 </div>
@@ -243,9 +229,8 @@ export function PersonalProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Academic Interests Card */}
           <Card className="rounded-xl border border-border shadow-sm overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 bg-white dark:bg-card">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-6 h-6 text-etechs-primary" />
                 <CardTitle className="text-xl font-bold">Academic Interests</CardTitle>
@@ -255,20 +240,16 @@ export function PersonalProfilePage() {
                 interests={academicInterests}
                 onSave={handleUpdateAcademicInterests}
                 trigger={
-                    <Button variant="ghost" size="icon" className="text-etechs-primary hover:bg-etechs-primary/10 rounded-lg">
+                    <Button variant="ghost" size="icon" className="text-etechs-primary rounded-lg">
                         <Edit2 className="w-5 h-5" />
                     </Button>
                 }
               />
             </CardHeader>
-            <CardContent className="pt-4 bg-white dark:bg-card">
+            <CardContent className="pt-4">
               <div className="flex flex-wrap gap-2">
                 {academicInterests.map((tag) => (
-                  <Badge 
-                    key={tag.label} 
-                    variant="outline" 
-                    className={`px-4 py-2 rounded-full text-sm font-bold border ${tag.color || "bg-secondary/20"} hover:brightness-95 transition-all`}
-                  >
+                  <Badge key={tag.label} variant="outline" className={`px-4 py-2 rounded-full text-sm font-bold border ${tag.color || "bg-secondary/20"}`}>
                     {tag.label}
                   </Badge>
                 ))}
@@ -276,9 +257,8 @@ export function PersonalProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Personal Interests Card */}
           <Card className="rounded-xl border border-border shadow-sm overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 bg-white dark:bg-card">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="flex items-center gap-2">
                 <Heart className="w-6 h-6 text-etechs-primary" />
                 <CardTitle className="text-xl font-bold">Personal Interests</CardTitle>
@@ -288,22 +268,19 @@ export function PersonalProfilePage() {
                 interests={personalInterests}
                 onSave={handleUpdatePersonalInterests}
                 trigger={
-                    <Button variant="ghost" size="icon" className="text-etechs-primary hover:bg-etechs-primary/10 rounded-lg">
+                    <Button variant="ghost" size="icon" className="text-etechs-primary rounded-lg">
                         <Edit2 className="w-5 h-5" />
                     </Button>
                 }
               />
             </CardHeader>
-            <CardContent className="pt-4 bg-white dark:bg-card">
+            <CardContent className="pt-4">
               <div className="flex flex-wrap gap-2">
                 {personalInterests.map((interest) => {
                   const Icon = interest.icon || Heart
                   return (
-                    <div 
-                        key={interest.label}
-                        className="flex items-center gap-2 px-4 py-2 bg-secondary/30 rounded-xl border border-border hover:border-etechs-primary/50 cursor-default transition-all group"
-                    >
-                        <Icon className="w-5 h-5 text-muted-foreground group-hover:text-etechs-primary transition-colors" />
+                    <div key={interest.label} className="flex items-center gap-2 px-4 py-2 bg-secondary/30 rounded-xl border border-border group">
+                        <Icon className="w-5 h-5 text-muted-foreground group-hover:text-etechs-primary" />
                         <span className="text-sm font-bold">{interest.label}</span>
                     </div>
                   )
@@ -312,24 +289,19 @@ export function PersonalProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Profile Completion Sidebar/Info */}
-          <div className="bg-etechs-primary/5 dark:bg-etechs-primary/10 rounded-xl p-6 border-2 border-etechs-primary/20 shadow-inner flex flex-col justify-center h-full">
+          <div className="bg-etechs-primary/5 rounded-xl p-6 border-2 border-etechs-primary/20 flex flex-col justify-center h-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg">Profile Strength</h3>
               <span className="text-etechs-primary font-black">85%</span>
             </div>
-            <Progress value={85} className="h-3 bg-secondary/20" indicatorClassName="bg-etechs-primary" />
-            <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
-              You're almost there! Add a <strong>professional summary</strong> and <strong>past projects</strong> to reach 100% and get noticed by study groups.
-            </p>
-            <Button className="mt-6 w-full h-11 bg-background text-foreground font-bold border border-border hover:border-etechs-primary hover:text-etechs-primary transition-all">
+            <Progress value={85} className="h-3" />
+            <p className="text-sm text-muted-foreground mt-4">You're almost there! Complete your profile to get noticed.</p>
+            <Button className="mt-6 w-full h-11 bg-background font-bold border border-border hover:border-etechs-primary transition-all">
               Complete Profile
             </Button>
           </div>
-
         </div>
 
-        {/* Highlighted Projects Section */}
         <section className="mt-12">
           <div className="flex items-center justify-between mb-6 px-2">
             <h2 className="text-2xl font-bold">Highlighted Projects</h2>
@@ -343,47 +315,37 @@ export function PersonalProfilePage() {
                 }
              />
           </div>
-          
           <div className="space-y-6">
             {projects.map(project => (
                 <div key={project.id} className="flex flex-col md:flex-row items-stretch justify-between gap-6 bg-white dark:bg-card rounded-2xl p-6 border border-border shadow-sm">
                     <div className="flex flex-[3_3_0px] flex-col gap-4 justify-between">
                     <div className="flex flex-col gap-1">
-                        <p className="text-etechs-primary text-sm font-bold uppercase tracking-wider">{project.category}</p>
-                        <h3 className="text-2xl font-extrabold leading-tight">{project.title}</h3>
-                        <p className="text-muted-foreground text-base font-medium mt-2 leading-relaxed">
-                        {project.description}
-                        </p>
+                        <p className="text-etechs-primary text-sm font-bold uppercase">{project.category}</p>
+                        <h3 className="text-2xl font-extrabold">{project.title}</h3>
+                        <p className="text-muted-foreground text-base mt-2">{project.description}</p>
                     </div>
                     <div className="flex gap-2 mt-4">
-                        <Button variant="ghost" className="bg-etechs-primary/20 text-etechs-secondary dark:text-etechs-primary hover:bg-etechs-primary/30 font-bold rounded-xl h-10 px-4 transition-all">
-                        <Terminal className="w-5 h-5 mr-2" />
-                        View Source
+                        <Button variant="ghost" className="bg-etechs-primary/20 text-etechs-primary font-bold rounded-xl h-10 px-4">
+                          <Terminal className="w-5 h-5 mr-2" /> View Source
                         </Button>
                         <EditProjectDialog
                             project={project}
                             onSave={handleUpdateProject}
                             trigger={
-                                <Button variant="outline" className="font-bold rounded-xl h-10 px-4 bg-secondary/50 border-0 hover:bg-secondary transition-all">
-                                <Edit2 className="w-5 h-5 mr-2" />
-                                Edit
+                                <Button variant="outline" className="font-bold rounded-xl h-10 px-4 bg-secondary/50 border-0">
+                                  <Edit2 className="w-5 h-5 mr-2" /> Edit
                                 </Button>
                             }
                         />
                     </div>
                     </div>
                     <div className="flex-1 min-h-[160px] md:max-w-[320px] rounded-xl shadow-lg border border-border overflow-hidden">
-                    <img 
-                        src={project.imageUrl} 
-                        alt="Project Thumbnail" 
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                    />
+                      <img src={project.imageUrl} alt="Project" className="w-full h-full object-cover" />
                     </div>
                 </div>
             ))}
           </div>
         </section>
-
       </div>
   )
 }

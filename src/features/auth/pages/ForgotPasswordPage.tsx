@@ -58,7 +58,12 @@ export function ForgotPasswordPage() {
             setError("Vui lòng nhập email");
             return;
         }
-        sendOtpMutation.mutate({ data: { email: email.trim() } });
+        sendOtpMutation.mutate({ 
+            data: { 
+                destination: email.trim(),
+                purpose: "PASSWORD_RESET"
+            } 
+        });
     };
 
     const handleVerifyOtp = () => {

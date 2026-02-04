@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { transformPost, transformComment } from './postTransform';
-import { Models } from '../generated';
+import { transformPost } from './postTransform';
 
 describe('postTransform', () => {
   beforeEach(() => {

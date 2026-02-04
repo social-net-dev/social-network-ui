@@ -6,9 +6,9 @@ import { transformAuthor } from './userTransform';
  */
 export const transformRegisterResponse = (response: Models.RegisterResponse) => {
   return {
-    message: response.message || "OTP đã được gửi",
+    message: "OTP đã được gửi", // Standard message as it's missing from BE response
     userId: response.user_id,
-    email: response.email,
+    accountStatus: response.account_status,
   };
 };
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AdminAPI } from "@/lib/api/generated";
+import { getVerificationRequests } from "@/lib/api/manual-apis";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
@@ -10,26 +11,23 @@ export function AdminVerificationPanel({ showTitle = true }: { showTitle?: boole
     const [rejectReason, setRejectReason] = useState<{ [key: string]: string }>({});
     const [showRejectInput, setShowRejectInput] = useState<{ [key: string]: boolean }>({});
 
-    const { data: requests = [], isLoading } = AdminAPI.useAdminListReactivationRequestsAdminReactivationRequestsGet({
-        status: "PENDING"
-    }, {
-        query: {
-            select: (data: any) => data.data || data || []
-        }
+    const { data: requests = [], isLoading } = useQuery({
+        queryKey: ["admin", "verification-requests"],
+        queryFn: () => getVerificationRequests("PENDING"),
     });
 
-    const approveMutation = AdminAPI.useAdminApproveReactivationRequestAdminReactivationRequestsRequestIdApprovePost({
+    const approveMutation = AdminAPI.useApproveAdminVerificationRequestsRequestIdApprovePost({
         mutation: {
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: AdminAPI.getAdminListReactivationRequestsAdminReactivationRequestsGetQueryKey() });
+                queryClient.invalidateQueries({ queryKey: ["admin", "verification-requests"] });
             }
         }
     });
 
-    const rejectMutation = AdminAPI.useAdminRejectReactivationRequestAdminReactivationRequestsRequestIdRejectPost({
+    const rejectMutation = AdminAPI.useRejectAdminVerificationRequestsRequestIdRejectPost({
         mutation: {
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: AdminAPI.getAdminListReactivationRequestsAdminReactivationRequestsGetQueryKey() });
+                queryClient.invalidateQueries({ queryKey: ["admin", "verification-requests"] });
                 setRejectReason({});
                 setShowRejectInput({});
             },
@@ -37,7 +35,7 @@ export function AdminVerificationPanel({ showTitle = true }: { showTitle?: boole
     });
 
     const handleApprove = (requestId: string, role: string) => {
-        approveMutation.mutate({ requestId, params: { role } });
+        approveMutation.mutate({ requestId, data: { role } });
     };
 
     const handleRejectClick = (requestId: string) => {
@@ -46,7 +44,7 @@ export function AdminVerificationPanel({ showTitle = true }: { showTitle?: boole
 
     const handleReject = (requestId: string) => {
         const reason = rejectReason[requestId] || "Không phù hợp";
-        rejectMutation.mutate({ requestId, params: { reason } });
+        rejectMutation.mutate({ requestId, data: { reason } });
     };
 
     return (

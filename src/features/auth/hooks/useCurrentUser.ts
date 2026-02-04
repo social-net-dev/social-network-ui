@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/authStore'
 export function useCurrentUser() {
   const { isAuthenticated } = useAuthStore()
 
-  return UsersAPI.useGetUsersMeUsersMeGet({
+  return UsersAPI.useMeAliasUsersMeGet({
     query: {
       enabled: isAuthenticated,
       staleTime: 1000 * 60 * 10,

@@ -230,25 +230,31 @@ export function EditProjectDialog({
   trigger: React.ReactNode,
   mode?: 'add' | 'edit'
 }) {
-  const defaultProject = {
-    id: Math.random().toString(36).substr(2, 9),
+  const [formData, setFormData] = useState<Project>(project || {
+    id: '',
     title: '',
     category: '',
     description: '',
     imageUrl: 'https://via.placeholder.com/300',
     sourceLink: ''
-  }
-  
-  const [formData, setFormData] = useState<Project>(project || defaultProject)
+  })
   const [open, setOpen] = useState(false)
 
   const handleSave = () => {
-    onSave(formData)
+    const dataToSave = mode === 'add' && !formData.id 
+      ? { ...formData, id: crypto.randomUUID() } 
+      : formData;
+    
+    onSave(dataToSave)
     setOpen(false)
     if (mode === 'add') {
       setFormData({
-        ...defaultProject,
-        id: Math.random().toString(36).substr(2, 9)
+        id: '',
+        title: '',
+        category: '',
+        description: '',
+        imageUrl: 'https://via.placeholder.com/300',
+        sourceLink: ''
       })
     }
   }

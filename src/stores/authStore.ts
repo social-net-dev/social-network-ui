@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { User } from "@/types";
 import { AuthAPI } from "@/lib/api/generated";
 
 interface AuthState {
@@ -39,8 +38,8 @@ export const useAuthStore = create<AuthState>()(
                 try {
                     // Call backend logout API with current refresh token
                     if (refreshToken) {
-                        await AuthAPI.AuthAPI.logoutAuthLogoutPost({ 
-                            refresh_token: refreshToken 
+                        await AuthAPI.useLogoutAuthLogoutPost().mutateAsync({ 
+                            data: { refresh_token: refreshToken } 
                         });
                     }
                 } catch (error) {

@@ -26,22 +26,22 @@ export function useProfile(userIdParam?: string) {
   const queryClient = useQueryClient()
 
   // Own profile query
-  const meQuery = UsersAPI.useGetUsersMeUsersMeGet({
+  const meQuery = UsersAPI.useMeAliasUsersMeGet({
     query: {
       enabled: identifier === 'me',
-      select: transformUserMe
+      select: (data: any) => transformUserMe(data.data || data)
     }
   });
 
   // Public profile query
-  const publicQuery = ProfilesAPI.useGetProfileProfilesUserIdOrUsernameGet(identifier || '', {
+  const publicQuery = ProfilesAPI.useGetProfileProfilesUsernameGet(identifier || '', {
     query: {
       enabled: !!identifier && identifier !== 'me',
-      select: transformAuthor
+      select: (data: any) => transformAuthor(data.data || data)
     }
   });
 
-  const updateProfileMutation = UsersAPI.useUpdateProfileUsersMeProfilePatch({
+  const updateProfileMutation = UsersAPI.useUpdateMyProfileUsersMeProfilePatch({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
@@ -49,7 +49,7 @@ export function useProfile(userIdParam?: string) {
     }
   })
 
-  const updatePrivacyMutation = UsersAPI.useUpdatePrivacyUsersMePrivacyPatch({
+  const updatePrivacyMutation = ProfilesAPI.useUpdateMyPrivacyUsersMePrivacyPatch({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })

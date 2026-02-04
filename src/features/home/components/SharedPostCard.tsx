@@ -12,6 +12,14 @@ export function SharedPostCard({ post }: SharedPostCardProps) {
   const images = post.images ?? post.media_urls ?? post.media_paths ?? [];
   const { data: blobUrls = [], isLoading: loadingImages } = useMediaBlobs(images);
 
+  const createdAt = post.createdAt ?? post.created_at ?? new Date().toISOString();
+  const timeAgo = formatDistanceToNow(new Date(createdAt), {
+    addSuffix: true,
+    locale: vi,
+  });
+
+  const content = post.content ?? post.content_text ?? "";
+
   const a = post.author as any;
   const display = a?.display_name || "";
   const [first = "", last = ""] = display

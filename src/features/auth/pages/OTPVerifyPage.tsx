@@ -45,7 +45,7 @@ export function OTPVerifyPage() {
   const [error, setError] = useState("");
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const verifyMutation = AuthAPI.useVerifyOtpAuthVerifyOtpPost({
+  const verifyMutation = AuthAPI.useOtpVerifyAuthOtpVerifyPost({
     mutation: {
       onSuccess: async () => {
         if (typeof sessionStorage !== "undefined") {
@@ -66,7 +66,7 @@ export function OTPVerifyPage() {
     },
   });
 
-  const resendMutation = AuthAPI.useResendOtpAuthResendOtpPostUserIdPost({
+  const resendMutation = AuthAPI.useOtpSendAuthOtpSendPost({
     mutation: {
       onSuccess: () => {
         setResendSuccess(true);
@@ -94,18 +94,24 @@ export function OTPVerifyPage() {
 
     verifyMutation.mutate({ 
       data: {
-        user_id,
-        otpCode
+        destination: email, // Using email as destination
+        code: otpCode,
+        purpose: "REGISTRATION" // Assumption based on context
       }
     });
   };
 
   const handleResend = () => {
-    if (!user_id) {
-      setError("Thiếu user_id. Vui lòng đăng ký lại.");
+    if (!email) {
+      setError("Thiếu email. Vui lòng đăng ký lại.");
       return;
     }
-    resendMutation.mutate({ userId: user_id });
+    resendMutation.mutate({ 
+      data: { 
+        destination: email,
+        purpose: "REGISTRATION" 
+      } 
+    });
   };
 
   if (!user_id || !email) {

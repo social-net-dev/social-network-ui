@@ -44,7 +44,7 @@ export function usePostActions() {
   const sharePost = useCallback((postId: string, content?: string) => {
     return shareMutation.mutateAsync({ 
       postId, 
-      data: { content_text: content || "" } 
+      data: { message: content || "" } 
     });
   }, [shareMutation]);
 

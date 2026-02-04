@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { PostsV2API, PostsAPI } from "@/lib/api/generated";
+import { PostsV2API } from "@/lib/api/generated";
 import { transformPost } from "@/lib/api/transforms";
 import type { Post } from "../types/feed.types";
 import { queryKeys } from "@/lib/query-keys";
@@ -8,12 +8,12 @@ import { queryKeys } from "@/lib/query-keys";
 export function useFeed() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
 
   const pageSize = 10;
   
   const query = PostsV2API.useGetFeedV2FeedGet({
-    all_tenants: true,
+    page,
+    page_size: pageSize,
   }, {
     query: {
       refetchOnMount: "always",
@@ -33,7 +33,7 @@ export function useFeed() {
     return allPages;
   }, [page, queryClient]);
 
-  const hasMoreData = useMemo(() => {
+  const hasMore = useMemo(() => {
     const data = query.data as any;
     if (!data) return true;
     const totalPages = data.total_pages || data.data?.total_pages || 1;
@@ -62,7 +62,6 @@ export function useFeed() {
     },
     [createMutation],
   );
-
 
   const likePost = useCallback(
     (postId: string, liked: boolean) => {
@@ -103,17 +102,15 @@ export function useFeed() {
   }, [query.isPending, hasMore]);
 
   const refresh = useCallback(() => {
-    // Reset to first page and invalidate all feed queries so data is refetched.
     setPage(1);
-    setHasMore(true);
     queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-  }, [page, queryClient]);
+  }, [queryClient]);
 
   return {
     posts,
     isLoading: query.isPending,
     error: query.error,
-    hasMore: hasMoreData,
+    hasMore,
     createPost,
     likePost,
     loadMore,

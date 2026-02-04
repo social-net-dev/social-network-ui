@@ -41,3 +41,26 @@ export const deactivateAccount = (password: string) => {
     },
   });
 };
+
+/**
+ * List all users for admin
+ * GET /admin/users
+ */
+export const getAdminUsers = () => {
+  return customInstance<any[]>({
+    url: "/admin/users",
+    method: "GET",
+  });
+};
+
+/**
+ * List verification requests
+ * GET /admin/verification/requests
+ */
+export const getVerificationRequests = (status?: string) => {
+  return customInstance<any[]>({
+    url: "/admin/verification/requests",
+    method: "GET",
+    params: { status },
+  });
+};

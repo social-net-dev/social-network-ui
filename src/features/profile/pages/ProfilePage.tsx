@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useMemo } from 'react'
 import { useProfile } from '../hooks/useProfile'
+import type { Author } from '@/features/home/types/feed.types'
 import { ProfileHeader } from '../components/ProfileHeader'
 import { ProfileStats } from '../components/ProfileStats'
 import { PersonalInfoSidebar } from '../components/PersonalInfoSidebar'
@@ -14,7 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 function ProfilePage() {
   const navigate = useNavigate()
-  const { profile, isLoading, error } = useProfile()
+  const { profile: rawProfile, isLoading, error } = useProfile()
+  const profile = rawProfile as Author;
   const { user, isAuthenticated } = useAuthStore()
 
   const mockPosts = useMemo(() => {
@@ -56,15 +58,24 @@ function ProfilePage() {
 
   const isCurrentUser = isAuthenticated && user?.id === profile.id
   const stats = {
-    posts: profile.postsCount,
+    posts: profile.postsCount || 0,
     followers: profile.followers || 0,
     following: profile.following || 0,
+  }
+
+  const profileData = {
+    ...profile,
+    isOwner: isCurrentUser,
+    isFriend: false, // Default for now
+    avatar: profile.avatar || undefined,
+    createdAt: profile.createdAt || new Date().toISOString(),
+    updatedAt: profile.updatedAt || new Date().toISOString(),
   }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
       <ProfileHeader
-        profile={profile}
+        profile={profileData as any}
         isCurrentUser={isCurrentUser}
         onEdit={() => isCurrentUser && navigate('/settings')}
       />
@@ -89,7 +100,7 @@ function ProfilePage() {
                       <CardContent className="p-6">
                         <div className="flex items-center gap-3 mb-4">
                           <Avatar className="w-10 h-10 border border-border">
-                            <AvatarImage src={profile.avatar} />
+                            <AvatarImage src={profile.avatar || undefined} />
                             <AvatarFallback>{profile.displayName?.[0] || '?'}</AvatarFallback>
                           </Avatar>
                           <div>

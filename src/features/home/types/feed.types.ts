@@ -14,6 +14,17 @@ export interface Author {
   displayName: string;
   avatar: string | null;
   username?: string | null;
+  role?: string;
+  bio?: string;
+  birthDate?: string;
+  followers?: number;
+  following?: number;
+  postsCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  accountStatus?: string;
+  storageQuotaMb?: number;
+  privacy?: any;
   // Legacy support
   firstName?: string;
   lastName?: string;

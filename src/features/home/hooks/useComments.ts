@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { PostsAPI, PostsV2API } from "@/lib/api/generated";
 import { transformComment } from "@/lib/api/transforms";
 
@@ -49,9 +49,10 @@ export function useComments(postId: string) {
   const reactToComment = useCallback((commentId: string, reaction: string | null) => {
     return reactCommentMutation.mutateAsync({
       commentId,
-      data: { reaction: reaction || "" }
+      data: { reaction: reaction || "" },
+      params: { post_id: postId }
     });
-  }, [reactCommentMutation]);
+  }, [postId, reactCommentMutation]);
 
   const updateComment = useCallback((commentId: string, content: string) => {
     return updateCommentMutation.mutateAsync({
@@ -68,9 +69,9 @@ export function useComments(postId: string) {
         content_text: content,
         files: files as any
       },
-      params: {}
+      params: { post_id: postId }
     });
-  }, [replyMutation]);
+  }, [postId, replyMutation]);
 
   return {
     comments: query.data || [],
