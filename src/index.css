@@ -49,72 +49,72 @@
 }
 
 :root {
-  --radius: 0.75rem;
-  --background: oklch(1 0 0);
+  --radius: 0.625rem;
+  --background: oklch(0.99 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #0E4E5A;
-  --primary-foreground: #E2F046;
-  --secondary: #E2F046;
-  --secondary-foreground: #0E4E5A;
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: #E2F046;
-  --accent-foreground: #0E4E5A;
+  --primary: oklch(0.32 0.08 185);
+  --primary-foreground: oklch(0.95 0.12 110);
+  --secondary: oklch(0.85 0.12 110);
+  --secondary-foreground: oklch(0.32 0.08 185);
+  --muted: oklch(0.97 0.005 185);
+  --muted-foreground: oklch(0.55 0.02 185);
+  --accent: oklch(0.92 0.08 110);
+  --accent-foreground: oklch(0.32 0.08 185);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: #0E4E5A;
+  --border: oklch(0.9 0.01 185);
+  --input: oklch(0.92 0.01 185);
+  --ring: oklch(0.32 0.08 185);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
+  --sidebar: oklch(0.985 0.005 185);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #0E4E5A;
-  --sidebar-primary-foreground: #E2F046;
-  --sidebar-accent: #E2F046;
-  --sidebar-accent-foreground: #0E4E5A;
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: #0E4E5A;
+  --sidebar-primary: oklch(0.32 0.08 185);
+  --sidebar-primary-foreground: oklch(0.95 0.12 110);
+  --sidebar-accent: oklch(0.92 0.06 110);
+  --sidebar-accent-foreground: oklch(0.32 0.08 185);
+  --sidebar-border: oklch(0.9 0.01 185);
+  --sidebar-ring: oklch(0.32 0.08 185);
 }
 
 .dark {
-  --background: #02182B;
-  --foreground: #E2E8F0;
-  --card: #0A2737;
-  --card-foreground: #E2E8F0;
-  --popover: #0A2737;
-  --popover-foreground: #E2E8F0;
-  --primary: #E2F046;
-  --primary-foreground: #0E4E5A;
-  --secondary: #0E4E5A;
-  --secondary-foreground: #E2F046;
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: #E2F046;
-  --accent-foreground: #0E4E5A;
+  --background: oklch(0.12 0.02 210);
+  --foreground: oklch(0.95 0.01 210);
+  --card: oklch(0.18 0.03 210);
+  --card-foreground: oklch(0.95 0.01 210);
+  --popover: oklch(0.18 0.03 210);
+  --popover-foreground: oklch(0.95 0.01 210);
+  --primary: oklch(0.85 0.12 110);
+  --primary-foreground: oklch(0.25 0.04 185);
+  --secondary: oklch(0.32 0.06 185);
+  --secondary-foreground: oklch(0.95 0.12 110);
+  --muted: oklch(0.25 0.03 210);
+  --muted-foreground: oklch(0.65 0.02 210);
+  --accent: oklch(0.85 0.12 110);
+  --accent-foreground: oklch(0.25 0.04 185);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: #E2F046;
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.85 0.12 110);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: #0A2737;
-  --sidebar-foreground: #E2E8F0;
-  --sidebar-primary: #E2F046;
-  --sidebar-primary-foreground: #0E4E5A;
-  --sidebar-accent: #E2F046;
-  --sidebar-accent-foreground: #0E4E5A;
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: #E2F046;
+  --sidebar: oklch(0.18 0.03 210);
+  --sidebar-foreground: oklch(0.95 0.01 210);
+  --sidebar-primary: oklch(0.85 0.12 110);
+  --sidebar-primary-foreground: oklch(0.25 0.04 185);
+  --sidebar-accent: oklch(0.32 0.06 185);
+  --sidebar-accent-foreground: oklch(0.95 0.12 110);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.85 0.12 110);
 }
 
 @layer base {
@@ -130,4 +130,143 @@
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-heavy {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.dark .glass-heavy {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-fadeOut {
+  animation: fadeOut 0.3s ease-out;
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.animate-fadeInDown {
+  animation: fadeInDown 0.4s ease-out;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.3s ease-out;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.4s ease-out;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.transition-all-300 {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-colors-300 {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.dark .hover-lift:hover {
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.3);
 }
