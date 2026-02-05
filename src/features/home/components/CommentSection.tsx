@@ -1,46 +1,37 @@
-import { useState, useRef } from "react";
-import { Avatar } from "@/features/shared/components/Avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Send,
-  MessageCircle,
-  Image as ImageIcon,
-  X,
-  Heart,
-  Reply,
-  Trash2,
-  Edit,
-} from "lucide-react";
-import { useComments } from "../hooks/useComments";
-import { useMediaBlobs } from "../hooks/useMedia";
-import { getErrorMessage } from "@/lib/api/transforms";
-import type { FeedComment } from "../types/feed.types";
-import { cn } from "@/lib/utils";
+import { useState, useRef, useMemo } from 'react';
+import { Avatar } from '@/features/shared/components/Avatar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Send, MessageCircle, Image as ImageIcon, X, Heart, Reply, Trash2, Edit } from 'lucide-react';
+import { useComments } from '../hooks/useComments';
+import { useMediaBlobs } from '../hooks/useMedia';
+import { FormattedContent } from '@/features/shared/components/FormattedContent';
+import { getErrorMessage } from '@/lib/api/transforms';
+import type { FeedComment, ReactionType } from '../types/feed.types';
+import { cn } from '@/lib/utils';
 
 interface CommentSectionProps {
   postId: string;
   currentUserId?: string;
 }
 
-export function CommentSection({
-  postId,
-  currentUserId,
-}: CommentSectionProps) {
-  const { 
-    comments, 
-    isLoading, 
-    addComment, 
-    deleteComment, 
-    reactToComment, 
-    updateComment, 
-    replyToComment 
-  } = useComments(postId);
+export function CommentSection({ postId, currentUserId }: CommentSectionProps) {
+  const { comments, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, addComment, deleteComment, reactToComment, updateComment, replyToComment } = useComments(postId);
 
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const organizedComments = useMemo(() => {
+    const topLevel = comments.filter(c => !c.parentCommentId);
+    const replies = comments.filter(c => !!c.parentCommentId);
+
+    return topLevel.map(comment => ({
+      ...comment,
+      replies: replies.filter(r => r.parentCommentId === comment.id),
+    }));
+  }, [comments]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,22 +44,23 @@ export function CommentSection({
       } else {
         await addComment(content, files);
       }
-      setContent("");
+      setContent('');
       setFiles([]);
-      if (inputRef.current) inputRef.current.value = "";
-    } catch (error) {
-      alert(getErrorMessage(error));
+      if (inputRef.current) inputRef.current.value = '';
+    } catch {
+      // toast is already handled in hook, but we can keep alert as fallback if needed
+      // Actually we should use toast here too if we want, but let's stick to toast in hook
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const chosen = e.target.files;
     if (!chosen) return;
-    setFiles((prev) => [...prev, ...Array.from(chosen)].slice(0, 4));
+    setFiles(prev => [...prev, ...Array.from(chosen)].slice(0, 4));
   };
 
   const handleRemoveFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   if (isLoading && comments.length === 0) {
@@ -84,23 +76,30 @@ export function CommentSection({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <MessageCircle className="w-5 h-5 text-muted-foreground" />
-          <h4 className="font-semibold text-foreground">
-            Bình luận
-          </h4>
-          <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
-            {comments.length}
-          </span>
+          <h4 className="font-semibold text-foreground">Bình luận</h4>
+          <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{comments.length}</span>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="flex items-center gap-3 mb-6">
         <div className="flex-1">
-          <Input
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={replyToId ? "Viết phản hồi..." : "Viết bình luận..."}
-            className="flex-1 h-10 border-border/50 focus:border-primary focus:ring-primary/20 transition-all-300"
-          />
+          <div className="relative">
+            {replyToId && (
+              <div className="absolute -top-6 left-0 flex items-center gap-1 text-[10px] text-primary animate-fadeIn">
+                <span>Đang trả lời...</span>
+                <button
+                  onClick={() => {
+                    setReplyToId(null);
+                    setContent('');
+                  }}
+                  className="hover:underline font-bold text-destructive"
+                >
+                  Hủy
+                </button>
+              </div>
+            )}
+            <Input value={content} onChange={e => setContent(e.target.value)} placeholder={replyToId ? 'Viết phản hồi...' : 'Viết bình luận...'} className="flex-1 h-10 border-border/50 focus:border-primary focus:ring-primary/20 transition-all-300" />
+          </div>
           {files.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2 animate-fadeInUp">
               {files.map((file, index) => (
@@ -123,23 +122,59 @@ export function CommentSection({
         </Button>
       </form>
 
-      <div className="space-y-4">
-        {comments.map((comment) => (
-          <CommentItem 
-            key={comment.id} 
-            comment={comment} 
-            currentUserId={currentUserId}
-            onReply={(id: string, name: string) => {
-              setReplyToId(id);
-              setContent(`@${name} `);
-              inputRef.current?.focus();
-            }}
-            onDelete={deleteComment}
-            onUpdate={async (id, content) => { await updateComment(id, content); }}
-            onLike={async (id, reaction) => { await reactToComment(id, reaction); }}
-          />
+      <div className="space-y-6">
+        {organizedComments.map(comment => (
+          <div key={comment.id} className="space-y-4">
+            <CommentItem
+              comment={comment}
+              currentUserId={currentUserId}
+              onReply={(id: string, name: string) => {
+                setReplyToId(id);
+                setContent(`@${name} `);
+                inputRef.current?.focus();
+              }}
+              onDelete={deleteComment}
+              onUpdate={async (id, content) => {
+                await updateComment(id, content);
+              }}
+              onLike={async (id, reaction) => {
+                await reactToComment(id, reaction);
+              }}
+            />
+            {comment.replies.length > 0 && (
+              <div className="ml-10 space-y-4 border-l-2 border-muted/50 pl-4">
+                {comment.replies.map(reply => (
+                  <CommentItem
+                    key={reply.id}
+                    comment={reply}
+                    currentUserId={currentUserId}
+                    onReply={(id, name) => {
+                      setReplyToId(id);
+                      setContent(`@${name} `);
+                      inputRef.current?.focus();
+                    }}
+                    onDelete={deleteComment}
+                    onUpdate={async (id, content) => {
+                      await updateComment(id, content);
+                    }}
+                    onLike={async (id, reaction) => {
+                      await reactToComment(id, reaction);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         ))}
       </div>
+
+      {hasNextPage && (
+        <div className="mt-6 flex justify-center">
+          <Button variant="ghost" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="text-xs text-muted-foreground hover:text-primary">
+            {isFetchingNextPage ? 'Đang tải...' : 'Xem thêm bình luận'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -148,9 +183,9 @@ interface CommentItemProps {
   comment: FeedComment;
   currentUserId?: string;
   onReply: (id: string, name: string) => void;
-  onDelete: (id: string) => Promise<any>;
-  onUpdate: (id: string, content: string) => Promise<any>;
-  onLike: (id: string, reaction: string | null) => Promise<any>;
+  onDelete: (id: string) => Promise<void>;
+  onUpdate: (id: string, content: string) => Promise<void>;
+  onLike: (id: string, reaction: ReactionType | null) => Promise<void>;
 }
 
 function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, onLike }: CommentItemProps) {
@@ -176,71 +211,49 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, onLi
       </div>
       <div className="flex-1 min-w-0">
         <div className="bg-card rounded-lg px-4 py-3 shadow-sm border border-border/30">
-          <p className="font-semibold text-sm text-foreground mb-1.5">
-            {comment.author.displayName}
-          </p>
+          <p className="font-semibold text-sm text-foreground mb-1.5">{comment.author.displayName}</p>
           {isEditing ? (
             <div className="mt-2">
-              <textarea 
-                value={editContent} 
-                onChange={e => setEditContent(e.target.value)}
-                className="w-full p-3 text-sm border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-primary/20 transition-all-300 resize-none"
-                rows={2}
-              />
+              <textarea value={editContent} onChange={e => setEditContent(e.target.value)} className="w-full p-3 text-sm border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-primary/20 transition-all-300 resize-none" rows={2} />
               <div className="flex gap-2 mt-2">
-                <button onClick={handleSaveEdit} className="text-xs px-4 py-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors-300">Lưu</button>
-                <button onClick={() => setIsEditing(false)} className="text-xs px-4 py-1.5 border border-border rounded-lg hover:bg-muted/50 transition-colors-300">Hủy</button>
+                <button onClick={handleSaveEdit} className="text-xs px-4 py-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors-300">
+                  Lưu
+                </button>
+                <button onClick={() => setIsEditing(false)} className="text-xs px-4 py-1.5 border border-border rounded-lg hover:bg-muted/50 transition-colors-300">
+                  Hủy
+                </button>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-foreground/90 leading-relaxed">{comment.content}</p>
+            <FormattedContent content={comment.content} className="text-sm text-foreground/90 leading-relaxed block" />
           )}
           {mediaUrls.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {mediaUrls.map((url, i) => (
-                <img 
-                  key={i} 
-                  src={url} 
-                  className="w-24 h-24 object-cover rounded-lg hover:scale-[1.02] transition-transform duration-300 cursor-pointer" 
-                  alt="media" 
-                />
+                <img key={i} src={url} className="w-24 h-24 object-cover rounded-lg hover:scale-[1.02] transition-transform duration-300 cursor-pointer" alt="media" />
               ))}
             </div>
           )}
         </div>
         <div className="flex items-center gap-4 mt-2 ml-1">
-          <span className="text-xs text-muted-foreground">
-            {new Date(comment.createdAt).toLocaleDateString("vi-VN")}
-          </span>
-          <button 
-            onClick={() => onLike(comment.id, comment.userReaction ? null : "LIKE")} 
-            className={cn(
-              "text-xs flex items-center gap-1.5 transition-all-300",
-              comment.userReaction 
-                ? "text-red-500 dark:text-red-400" 
-                : "text-muted-foreground hover:text-red-500 dark:hover:text-red-400"
-            )}
-          >
-            <Heart className={cn("w-4 h-4 transition-transform", comment.userReaction ? "fill-current scale-110" : "")} />
+          <span className="text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleDateString('vi-VN')}</span>
+          <button onClick={() => onLike(comment.id, comment.userReaction ? null : 'LIKE')} className={cn('text-xs flex items-center gap-1.5 transition-all-300', comment.userReaction ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground hover:text-red-500 dark:hover:text-red-400')}>
+            <Heart className={cn('w-4 h-4 transition-transform', comment.userReaction ? 'fill-current scale-110' : '')} />
             {comment.stats.reactions > 0 && <span className="font-medium">{comment.stats.reactions}</span>}
           </button>
-          <button 
-            onClick={() => onReply(comment.id, comment.author.displayName)} 
-            className="text-xs flex items-center gap-1.5 text-muted-foreground hover:text-primary dark:hover:text-primary transition-colors-300"
-          >
+          <button onClick={() => onReply(comment.id, comment.author.displayName)} className="text-xs flex items-center gap-1.5 text-muted-foreground hover:text-primary dark:hover:text-primary transition-colors-300">
             <Reply className="w-4 h-4" />
             <span className="font-medium">Trả lời</span>
           </button>
           {isAuthor && (
             <>
-              <button 
-                onClick={() => setIsEditing(true)} 
-                className="text-xs text-muted-foreground hover:text-primary dark:hover:text-primary transition-colors-300"
-              >
+              <button onClick={() => setIsEditing(true)} className="text-xs text-muted-foreground hover:text-primary dark:hover:text-primary transition-colors-300">
                 <Edit className="w-4 h-4" />
               </button>
-              <button 
-                onClick={() => { if(confirm("Xóa bình luận?")) onDelete(comment.id); }} 
+              <button
+                onClick={() => {
+                  if (confirm('Xóa bình luận?')) onDelete(comment.id);
+                }}
                 className="text-xs text-muted-foreground hover:text-destructive transition-colors-300"
               >
                 <Trash2 className="w-4 h-4" />

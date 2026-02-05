@@ -1,121 +1,67 @@
-import { useState, useMemo, useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { PostsV2API } from "@/lib/api/generated";
-import { transformPost } from "@/lib/api/transforms";
-import type { Post } from "../types/feed.types";
-import { queryKeys } from "@/lib/query-keys";
+import { useCallback } from 'react';
+import { useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
+import { PostsV2API } from '@/lib/api/generated';
+import { transformPost } from '@/lib/api/transforms';
+import { queryKeys } from '@/lib/query-keys';
 
 export function useFeed() {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
-
   const pageSize = 10;
-  
-  const query = PostsV2API.useGetFeedV2FeedGet({
-    page,
-    page_size: pageSize,
-  }, {
-    query: {
-      refetchOnMount: "always",
-      staleTime: 0,
-    }
+
+  const query = useInfiniteQuery<Awaited<ReturnType<typeof PostsV2API.getFeedV2FeedGet>>, Error, InfiniteData<Awaited<ReturnType<typeof PostsV2API.getFeedV2FeedGet>>>, readonly unknown[], number>({
+    queryKey: queryKeys.feed.posts(1) as unknown as readonly unknown[],
+    queryFn: ({ pageParam = 1 }) =>
+      PostsV2API.getFeedV2FeedGet({
+        page: pageParam,
+        page_size: pageSize,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: lastPage => {
+      const currentPage = lastPage.page;
+      const totalPages = lastPage.total_pages;
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
-  const posts = useMemo(() => {
-    const allPages: Post[] = [];
-    for (let i = 1; i <= page; i++) {
-      const pageData = queryClient.getQueryData<any>(queryKeys.feed.posts(i));
-      const rawPosts = pageData?.data?.posts || pageData?.posts || pageData?.items || [];
-      if (Array.isArray(rawPosts)) {
-        allPages.push(...rawPosts.map(transformPost) as Post[]);
-      }
-    }
-    return allPages;
-  }, [page, queryClient]);
-
-  const hasMore = useMemo(() => {
-    const data = query.data as any;
-    if (!data) return true;
-    const totalPages = data.total_pages || data.data?.total_pages || 1;
-    return page < totalPages;
-  }, [query.data, page]);
+  const posts = query.data?.pages.flatMap(page => (page.posts || []).map(transformPost)) ?? [];
 
   const createMutation = PostsV2API.useCreatePostV2PostsPost({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.feed.posts(1) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
       },
-    }
+    },
   });
-
-  const reactMutation = PostsV2API.useReactToPostV2PostsPostIdReactionsPost();
 
   const createPost = useCallback(
     (content: string, files: File[]) => {
       return createMutation.mutateAsync({
         data: {
           content_text: content,
-          visibility: "PUBLIC",
+          visibility: 'PUBLIC',
           files,
-        }
+        },
       });
     },
-    [createMutation],
+    [createMutation]
   );
-
-  const likePost = useCallback(
-    (postId: string, liked: boolean) => {
-      const reaction = liked ? "LIKE" : null;
-      for (let i = 1; i <= page; i++) {
-        queryClient.setQueryData<any>(queryKeys.feed.posts(i), (old: any) => {
-          if (!old) return old;
-          const postsKey = old.posts ? 'posts' : 'items';
-          if (!old[postsKey]) return old;
-          
-          return {
-            ...old,
-            [postsKey]: old[postsKey].map((post: any) => {
-              if (post.id !== postId) return post;
-              const currentLikes = post.reaction_count ?? post.likes ?? 0;
-              const delta = liked ? 1 : -1;
-              return {
-                ...post,
-                user_reaction: reaction,
-                reaction_count: Math.max(0, currentLikes + delta),
-              };
-            }),
-          };
-        });
-      }
-      return reactMutation.mutateAsync({ 
-        postId, 
-        data: { reaction: reaction as string } 
-      });
-    },
-    [page, queryClient, reactMutation],
-  );
-
-  const loadMore = useCallback(() => {
-    if (!query.isPending && hasMore) {
-      setPage((prev) => prev + 1);
-    }
-  }, [query.isPending, hasMore]);
 
   const refresh = useCallback(() => {
-    setPage(1);
     queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
   }, [queryClient]);
 
   return {
     posts,
     isLoading: query.isPending,
+    isFetchingNextPage: query.isFetchingNextPage,
+    hasNextPage: query.hasNextPage,
+    fetchNextPage: query.fetchNextPage,
     error: query.error,
-    hasMore,
     createPost,
-    likePost,
-    loadMore,
     refresh,
     isCreating: createMutation.isPending,
-    isLiking: reactMutation.isPending,
   };
 }

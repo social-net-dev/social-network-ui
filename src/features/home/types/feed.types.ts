@@ -1,10 +1,11 @@
-import { z } from "zod";
+import { z } from 'zod';
+import type { ProfileVisibilityResponse } from '@/lib/api/generated/model';
 
 // ===========================
 // 🎯 FRONTEND MODELS (Chuẩn FE)
 // ===========================
 
-export type ReactionType = "LIKE" | "LOVE" | "HAHA" | "WOW" | "SAD" | "ANGRY";
+export type ReactionType = 'LIKE' | 'LOVE' | 'HAHA' | 'WOW' | 'SAD' | 'ANGRY';
 
 export interface Project {
   id: string;
@@ -45,7 +46,7 @@ export interface Author {
   updatedAt?: string;
   accountStatus?: string;
   storageQuotaMb?: number;
-  privacy?: any;
+  privacy?: ProfileVisibilityResponse;
   // Legacy support
   firstName?: string;
   lastName?: string;
@@ -109,11 +110,8 @@ export interface FeedComment {
 // ===========================
 
 export const CreatePostFormDataSchema = z.object({
-  content: z
-    .string()
-    .min(1, "Nội dung không được để trống")
-    .max(2000, "Nội dung tối đa 2000 ký tự"),
-  images: z.array(z.instanceof(File)).max(4, "Tối đa 4 hình ảnh").optional(),
+  content: z.string().min(1, 'Nội dung không được để trống').max(2000, 'Nội dung tối đa 2000 ký tự'),
+  images: z.array(z.instanceof(File)).max(4, 'Tối đa 4 hình ảnh').optional(),
 });
 
 export type CreatePostFormData = z.infer<typeof CreatePostFormDataSchema>;
@@ -152,9 +150,4 @@ export type Comment = FeedComment & {
 /**
  * Re-exporting Backend Models for use in transforms
  */
-export type { 
-  PostOut as IBackendPost, 
-  AuthorInfo as IBackendAuthor,
-  CommentOut as IBackendComment,
-  FeedResponse as IBackendFeedResponse 
-} from "@/lib/api/generated/model";
+export type { PostOut as IBackendPost, AuthorInfo as IBackendAuthor, CommentOut as IBackendComment, FeedResponse as IBackendFeedResponse } from '@/lib/api/generated/model';
