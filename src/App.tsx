@@ -7,6 +7,7 @@ import { GroupsPage } from '@/features/groups/pages/GroupsPage';
 import { MarketplacePage } from '@/features/marketplace/pages/MarketplacePage';
 import { SearchPage } from '@/features/search/pages/SearchPage';
 import { ProfilePage, ProfileSettingsPage, PersonalProfilePage } from '@/features/profile/routes';
+import { FieldDetailPage } from '@/features/fields/pages/FieldDetailPage';
 import { AdminAccountsPage } from '@/features/admin/pages/AdminAccountsPage';
 import { AdminVerificationPage } from '@/features/admin/pages/VerificationPage';
 import { DevToolsPage } from '@/features/dev/pages/DevToolsPage';
@@ -15,10 +16,10 @@ import { useAuthStore } from '@/stores/authStore';
 import { AppLayout } from '@/features/shared/layouts/AppLayout';
 import { GlobalLoading } from '@/components/ui/global-loading';
 import { Toaster } from '@/components/ui/sonner';
+import { ProtectedRoute, PublicRoute, AdminRoute } from '@/components/auth';
 
 function App() {
-  const { isAuthenticated, isLoading, user } = useAuthStore();
-  const isAdmin = (user?.role ?? '').toUpperCase().includes('ADMIN') || (user?.email ?? '').toLowerCase().startsWith('admin@');
+  const { isLoading } = useAuthStore();
 
   if (isLoading) {
     return <GlobalLoading />;
@@ -27,36 +28,43 @@ function App() {
   return (
     <>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/verify-otp" element={<OTPVerifyPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        {/* Public Routes - Only accessible when NOT logged in */}
+        <Route element={<PublicRoute />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-otp" element={<OTPVerifyPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        </Route>
 
         {/* DevTools - accessible in development only */}
         {import.meta.env.DEV && <Route path="/devtools" element={<DevToolsPage />} />}
 
-        {/* Protected Routes */}
-        <Route element={isAuthenticated ? <AppLayout /> : <Navigate to="/login" replace />}>
-          <Route path="/" element={<FeedPage />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/groups" element={<GroupsPage />} />
-          <Route path="/marketplace" element={<MarketplacePage />} />
+        {/* Protected Routes - Only accessible when logged in */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<FeedPage />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/fields/:fieldId" element={<FieldDetailPage />} />
+            <Route path="/groups" element={<GroupsPage />} />
+            <Route path="/marketplace" element={<MarketplacePage />} />
 
-          {/* Message routes */}
-          <Route path="/messages" element={<ConversationPage />} />
-          <Route path="/messages/:conversationId" element={<ConversationPage />} />
+            {/* Message routes */}
+            <Route path="/messages" element={<ConversationPage />} />
+            <Route path="/messages/:conversationId" element={<ConversationPage />} />
 
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/profile/me" element={<PersonalProfilePage />} />
-          <Route path="/profile/:userId" element={<ProfilePage />} />
-          <Route path="/recommendations" element={<RecommendationPage />} />
-          <Route path="/groups/:groupId" element={<GroupDetailPage />} />
-          <Route path="/settings" element={<ProfileSettingsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/me" element={<PersonalProfilePage />} />
+            <Route path="/profile/:userId" element={<ProfilePage />} />
+            <Route path="/recommendations" element={<RecommendationPage />} />
+            <Route path="/groups/:groupId" element={<GroupDetailPage />} />
+            <Route path="/settings" element={<ProfileSettingsPage />} />
 
-          {/* Admin routes */}
-          <Route path="/admin/accounts" element={isAdmin ? <AdminAccountsPage /> : <Navigate to="/" replace />} />
-          <Route path="/admin/verification" element={isAdmin ? <AdminVerificationPage /> : <Navigate to="/" replace />} />
+            {/* Admin routes */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin/accounts" element={<AdminAccountsPage />} />
+              <Route path="/admin/verification" element={<AdminVerificationPage />} />
+            </Route>
+          </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
