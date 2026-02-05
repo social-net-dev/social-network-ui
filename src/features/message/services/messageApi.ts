@@ -107,6 +107,11 @@ export const callGetPinnedMessages = (roomId: string) => {
   return api.get<string>(`/api/rooms/${encodeURIComponent(roomId)}/pinned`);
 };
 
+// GET /api/messages/{message_id}/readers
+export const callGetMessageReaders = (messageId: string) => {
+  return api.get<string>(`/api/messages/${encodeURIComponent(messageId)}/readers`);
+};
+
 // GET /api/rooms/{room_id}/search
 export const callSearchRoom = (params: ISearchRoomParams) => {
   const queryParams = new URLSearchParams({ q: params.q });

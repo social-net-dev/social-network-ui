@@ -7,95 +7,90 @@ import type { MessageOut } from '../types/message.types';
 export const deduplicateMessages = (wsMessages: MessageOut[], fetchedMessages: MessageOut[]): MessageOut[] => {
   // Put realtime `messages` first so WS broadcasts take precedence over REST/fetched entries
   const merged: MessageOut[] = [...wsMessages, ...fetchedMessages];
-  const out: MessageOut[] = [];
 
-  for (const m of merged) {
-    // skip if exact server id already included
-    if (m.id && out.find(x => x.id === m.id)) continue;
-
-    // skip if client_id already included
-    if (m.client_id && out.find(x => x.client_id === m.client_id)) continue;
-
-    // heuristic: if there's an existing message from same sender with matching attachments filenames
-    // and timestamps are very close, treat as duplicate and prefer server message (with id)
-    const extractNames = (arr: any[]) =>
-      (arr || [])
-        .map((x: any) => {
-          const filename = (x && (x.filename || x.url)) || '';
-          return String(filename).split('/').pop()?.toLowerCase() || '';
-        })
-        .filter(Boolean);
-
-    const aFiles = (m as any).attachments
-      ? extractNames((m as any).attachments)
-      : (m as any).attachment_urls
-        ? extractNames((m as any).attachment_urls.map((u: string) => ({ url: u })))
-        : (m as any).attachment_url
-          ? [
-              String((m as any).attachment_url)
-                .split('/')
-                .pop()
-                ?.toLowerCase() || '',
-            ]
-          : [];
-    let isDuplicate = false;
-
-    for (const ex of out) {
-      // match by id
-      if (m.id && ex.id === m.id) {
-        isDuplicate = true;
-        break;
-      }
-
-      // match by client_id
-      if (m.client_id && ex.client_id === m.client_id) {
-        isDuplicate = true;
-        break;
-      }
-
-      // compare sender + attachment filenames/urls and created_at proximity (lenient)
-      const exFiles = (ex as any).attachments
-        ? extractNames((ex as any).attachments)
-        : (ex as any).attachment_urls
-          ? extractNames((ex as any).attachment_urls.map((u: string) => ({ url: u })))
-          : (ex as any).attachment_url
-            ? [
-                String((ex as any).attachment_url)
-                  .split('/')
-                  .pop()
-                  ?.toLowerCase() || '',
-              ]
-            : [];
-
-      if (m.sender_id === ex.sender_id && aFiles.length > 0 && exFiles.length > 0) {
-        const common = aFiles.filter((f: string) => exFiles.includes(f));
-        if (common.length > 0) {
-          const ta = m.created_at ? Date.parse(m.created_at) : Date.now();
-          const tb = ex.created_at ? Date.parse(ex.created_at) : Date.now();
-
-          // allow larger window for dedupe (2 minutes)
-          if (Math.abs(ta - tb) < 120_000) {
-            // prefer server message (one that has id) over optimistic
-            if (m.id && !ex.id) {
-              const idx = out.indexOf(ex);
-              if (idx !== -1) out.splice(idx, 1, m);
-              isDuplicate = true;
-              break;
-            }
-            isDuplicate = true;
-            break;
-          }
-        }
+  // Helper: extract basenames from attachments/urls
+  const extractBasenames = (m: any) => {
+    const list: string[] = [];
+    if (m.attachments && Array.isArray(m.attachments)) {
+      for (const a of m.attachments) {
+        const filename =
+          String(a.filename || a.url || '')
+            .split('/')
+            .pop() || '';
+        if (filename) list.push(filename.toLowerCase());
       }
     }
+    if (m.attachment_urls && Array.isArray(m.attachment_urls)) {
+      for (const u of m.attachment_urls) {
+        const filename = String(u).split('/').pop() || '';
+        if (filename) list.push(filename.toLowerCase());
+      }
+    }
+    if (m.attachment_url) {
+      const filename = String(m.attachment_url).split('/').pop() || '';
+      if (filename) list.push(filename.toLowerCase());
+    }
+    return Array.from(new Set(list)).sort();
+  };
 
-    if (!isDuplicate) out.push(m);
+  // Signature: sender + attachments basenames + first 40 chars of message text
+  const signature = (m: MessageOut) => {
+    const files = extractBasenames(m as any).join('|');
+    const text = ((m as any).message || (m as any).ciphertext || '').toString().trim().slice(0, 40).replace(/\s+/g, ' ');
+    return `${m.sender_id || ''}::${files}::${text}`;
+  };
+
+  const map = new Map<string, MessageOut>();
+  const seenIds = new Set<string>();
+
+  for (const m of merged) {
+    // skip exact duplicate by server id
+    if (m.id && seenIds.has(String(m.id))) continue;
+
+    const sig = signature(m);
+    const existing = map.get(sig);
+
+    if (!existing) {
+      map.set(sig, m);
+      if (m.id) seenIds.add(String(m.id));
+      continue;
+    }
+
+    // If both exist, decide which to keep: prefer one with server id, else prefer newer created_at
+    const existingHasId = !!existing.id;
+    const currentHasId = !!m.id;
+
+    if (currentHasId && !existingHasId) {
+      map.set(sig, m);
+      if (m.id) seenIds.add(String(m.id));
+      continue;
+    }
+
+    if (currentHasId && existingHasId) {
+      // keep the one with later created_at
+      const ta = m.created_at ? Date.parse(m.created_at) : 0;
+      const tb = existing.created_at ? Date.parse(existing.created_at) : 0;
+      if (ta > tb) {
+        map.set(sig, m);
+        seenIds.add(String(m.id));
+      }
+      continue;
+    }
+
+    // Neither have id: pick latest
+    const ta = m.created_at ? Date.parse(m.created_at) : 0;
+    const tb = existing.created_at ? Date.parse(existing.created_at) : 0;
+    if (ta > tb) {
+      map.set(sig, m);
+    }
   }
 
-  // Sort by created_at
+  const out = Array.from(map.values());
+
+  // Sort by created_at asc
   out.sort((a, b) => {
-    const ta = a.created_at ? Date.parse(a.created_at) : Infinity;
-    const tb = b.created_at ? Date.parse(b.created_at) : Infinity;
+    const ta = a.created_at ? Date.parse(a.created_at) : 0;
+    const tb = b.created_at ? Date.parse(b.created_at) : 0;
     if (ta === tb) {
       const ia = a.id ?? a.client_id ?? '';
       const ib = b.id ?? b.client_id ?? '';

@@ -2,7 +2,25 @@ import { useEffect, useRef, useState } from 'react';
 import ChatClient from '../lib/chatClient';
 import type { MessageOut } from '../types/message.types';
 
-export function useChat({ room, userId, wsUrl, restBase, onReactionEvent, onMessage: onMessageCallback }: { room: string; userId: string; wsUrl: string; restBase: string; onReactionEvent?: (data: any) => void; onMessage?: (msg: MessageOut) => void }) {
+export function useChat({
+  room,
+  userId,
+  wsUrl,
+  restBase,
+  onReactionEvent,
+  onMessage: onMessageCallback,
+  onExternalMessage,
+  onRead,
+}: {
+  room: string;
+  userId: string;
+  wsUrl: string;
+  restBase: string;
+  onReactionEvent?: (data: any) => void;
+  onMessage?: (msg: MessageOut) => void;
+  onExternalMessage?: (msg: MessageOut) => void;
+  onRead?: (data: any) => void;
+}) {
   const [messages, setMessages] = useState<MessageOut[]>([]);
   const [status, setStatus] = useState<'connecting' | 'open' | 'closed' | 'error'>('connecting');
   const [lastError, setLastError] = useState<string | null>(null);
@@ -32,6 +50,10 @@ export function useChat({ room, userId, wsUrl, restBase, onReactionEvent, onMess
           };
           existing.onError = e => setLastError(String(e));
           existing.onMessage = m => {
+            if (m.room_id && m.room_id !== room) {
+              onExternalMessage?.(m);
+              return;
+            }
             setMessages(prev => {
               if (m.client_id) {
                 const idx = prev.findIndex(x => x.client_id === m.client_id);
@@ -111,6 +133,9 @@ export function useChat({ room, userId, wsUrl, restBase, onReactionEvent, onMess
               });
             });
           };
+          existing.onRead = data => {
+            onRead?.(data);
+          };
           return () => {
             // detach handlers only
             existing.onMessage = () => {};
@@ -118,6 +143,7 @@ export function useChat({ room, userId, wsUrl, restBase, onReactionEvent, onMess
             existing.onStatus = () => {};
             existing.onError = () => {};
             existing.onReaction = () => {};
+            existing.onRead = () => {};
           };
         }
       } catch {}
@@ -135,6 +161,10 @@ export function useChat({ room, userId, wsUrl, restBase, onReactionEvent, onMess
     };
     client.onError = e => setLastError(String(e));
     client.onMessage = m => {
+      if (m.room_id && m.room_id !== room) {
+        onExternalMessage?.(m);
+        return;
+      }
       // Call external callback first to remove optimistic from fetchedMessages
       if (onMessageCallback) {
         try {
@@ -221,6 +251,9 @@ export function useChat({ room, userId, wsUrl, restBase, onReactionEvent, onMess
           return msg;
         });
       });
+    };
+    client.onRead = data => {
+      onRead?.(data);
     };
     client.onAck = ack => {
       if (ack.client_id) {

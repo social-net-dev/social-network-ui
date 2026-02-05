@@ -14,10 +14,12 @@ interface MessageAreaProps {
   sendReaction?: (messageId: string, emoji: string, remove?: boolean) => Promise<void>;
   onRefresh: () => Promise<void>;
   endRef: React.RefObject<HTMLDivElement | null>;
+  messagesContainerRef?: React.RefObject<HTMLDivElement | null>;
   messageInput: React.ReactNode;
 }
 
-export const MessageArea: React.FC<MessageAreaProps> = ({ pinnedMessages, regularMessages, currentUserId, chatStatus, lastError, conversationTitle, sendReaction, onRefresh, endRef, messageInput }) => {
+export const MessageArea: React.FC<MessageAreaProps> = ({ pinnedMessages, regularMessages, currentUserId, chatStatus, lastError, conversationTitle, sendReaction, onRefresh, endRef, messagesContainerRef, messageInput }) => {
+  // Scrolling is handled by the parent `ConversationPage` to avoid conflicting jumps
   return (
     <div className="flex-1 flex flex-col bg-card rounded overflow-hidden min-h-0 relative">
       {/* Header (sticky) */}
@@ -32,7 +34,7 @@ export const MessageArea: React.FC<MessageAreaProps> = ({ pinnedMessages, regula
       </header>
 
       {/* Messages - scrollable */}
-      <section className="flex-1 min-h-0 overflow-y-auto space-y-3 px-4 py-3">
+      <section ref={messagesContainerRef as any} className="flex-1 min-h-0 overflow-y-auto space-y-3 px-4 py-3">
         {/* Pinned messages: sticky at top */}
         <PinnedMessages pinned={pinnedMessages as MessageFull[]} currentUserId={currentUserId} sendReaction={sendReaction} onRefresh={onRefresh} />
 

@@ -21,7 +21,7 @@ interface MessageBubbleProps {
   error?: string | null;
 }
 
-function ImageWithFallback({ src, alt }: { src: string; alt?: string }) {
+function ImageWithFallback({ src, alt, className, onNaturalSize }: { src: string; alt?: string; className?: string; onNaturalSize?: (w: number, h: number) => void }) {
   const [current, setCurrent] = useState<string>(src);
   const [failed, setFailed] = useState(false);
 
@@ -47,12 +47,55 @@ function ImageWithFallback({ src, alt }: { src: string; alt?: string }) {
   };
 
   return (
-    <div className="relative">
-      <img src={encodeURI(current)} alt={alt} onError={handleError} className="max-w-[220px] rounded-md object-cover" />
-      {failed && <div className="mt-1 text-xs text-gray-500 break-all max-w-[220px]">{src}</div>}
+    <div className="relative w-full h-full">
+      <img
+        src={encodeURI(current)}
+        alt={alt}
+        onError={handleError}
+        onLoad={e => {
+          try {
+            const img = e.currentTarget as HTMLImageElement;
+            onNaturalSize?.(img.naturalWidth || 1, img.naturalHeight || 1);
+          } catch (err) {}
+        }}
+        className={className || 'w-full h-full object-cover rounded-md'}
+      />
+      {failed && <div className="mt-1 text-xs text-gray-500 break-all w-full">{src}</div>}
     </div>
   );
 }
+
+// PairRow: render two images in one row with equal height and widths proportional
+// to their natural aspect ratios so sum of widths fills the container.
+const PairRow: React.FC<{ a: { url: string; filename?: string | null }; b: { url: string; filename?: string | null } }> = ({ a, b }) => {
+  const [aspectA, setAspectA] = useState<number>(1);
+  const [aspectB, setAspectB] = useState<number>(1);
+
+  return (
+    <div className="flex gap-1 overflow-hidden rounded-md h-48">
+      <div style={{ flex: aspectA }} className="overflow-hidden">
+        <ImageWithFallback
+          src={a.url}
+          alt={a.filename || 'img-a'}
+          className="w-full h-full object-cover"
+          onNaturalSize={(w, h) => {
+            if (w && h) setAspectA(w / h);
+          }}
+        />
+      </div>
+      <div style={{ flex: aspectB }} className="overflow-hidden">
+        <ImageWithFallback
+          src={b.url}
+          alt={b.filename || 'img-b'}
+          className="w-full h-full object-cover"
+          onNaturalSize={(w, h) => {
+            if (w && h) setAspectB(w / h);
+          }}
+        />
+      </div>
+    </div>
+  );
+};
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ displayText, isMine, isPinned, attachmentUrl, attachmentUrls, attachments, createdAt, status, error }) => {
   // Normalize attachments: prefer `attachments`, else fallback to `attachmentUrls`/`attachmentUrl`
@@ -116,32 +159,65 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ displayText, isMin
       return `/assets/icon-file/${file}`;
     }
   };
+  const imageAttachments = normalized.filter(a => a.is_image);
+  const fileAttachments = normalized.filter(a => !a.is_image);
+
   return (
     <div className={`inline-block p-3 rounded-2xl shadow-sm ${isMine ? 'bg-primary text-primary-foreground' : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'} ${status === 'failed' ? 'border-2 border-red-500' : ''}`}>
       {isPinned && <div className="absolute top-1 left-1 text-xs opacity-80">📌</div>}
 
-      {/* Render multiple attachments if present, otherwise single url */}
-      {normalized.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-2">
-          {normalized.map((a, i) =>
-            a.is_image ? (
-              <ImageWithFallback key={`${a.url}-${i}`} src={a.url} alt={a.filename || `attachment-${i}`} />
-            ) : (
-              <div key={`${a.url}-${i}`} className="w-40 min-h-[56px] flex flex-col items-start justify-center rounded bg-transparent p-2 text-sm">
-                <div className="flex items-center gap-3 w-full">
-                  <div className="w-8 h-8 flex items-center justify-center text-inherit">
-                    <img src={getAssetIconPath(a.filename, a.mime)} alt={a.filename || 'file'} className="w-7 h-7" />
-                  </div>
-                  <div className="truncate w-[150px] text-sm font-semibold text-inherit">{a.filename || a.url.split('/').pop()}</div>
+      {/* Images: Zalo-like grid when multiple, large single when one */}
+      {imageAttachments.length > 0 && (
+        <div className="mb-2 max-w-[420px] w-full">
+          {imageAttachments.length === 1 ? (
+            <div className="overflow-hidden rounded-md">
+              <ImageWithFallback src={imageAttachments[0].url} alt={imageAttachments[0].filename || 'image-0'} className="w-full h-auto object-cover rounded-md" />
+            </div>
+          ) : (
+            <>
+              {(() => {
+                const rows: React.ReactNode[] = [];
+                for (let i = 0; i < imageAttachments.length; i += 2) {
+                  const a = imageAttachments[i];
+                  const b = imageAttachments[i + 1];
+                  if (b) {
+                    rows.push(<PairRow key={`row-${i}`} a={a} b={b} />);
+                  } else {
+                    rows.push(
+                      <div key={`row-${i}`} className="overflow-hidden rounded-md h-64">
+                        <ImageWithFallback src={a.url} alt={a.filename || `image-${i}`} className="w-full h-full object-cover" />
+                      </div>
+                    );
+                  }
+                }
+                return rows;
+              })()}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Files: render as stacked file blocks */}
+      {fileAttachments.length > 0 && (
+        <div className="flex flex-col gap-2 mb-2 max-w-[420px]">
+          {fileAttachments.map((a, i) => (
+            <div key={`file-${i}`} className={`w-full rounded-lg p-3 flex items-center justify-between gap-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-100 dark:border-gray-800`}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 flex items-center justify-center">
+                  <img src={getAssetIconPath(a.filename, a.mime)} alt={a.filename || 'file'} className="w-8 h-8" />
                 </div>
-                <div className="mt-2">
-                  <a href={encodeURI(a.url) + `${a.url.includes('?') ? '&' : '?'}dl=1`} className="inline-block text-[12px] px-3 py-1 border rounded text-inherit border-current bg-transparent hover:bg-white/5" aria-label={`Tải xuống ${a.filename || 'file'}`}>
-                    Tải xuống
-                  </a>
+                <div className="flex flex-col">
+                  <div className="font-semibold truncate w-[260px] text-gray-900 dark:text-gray-100">{a.filename || a.url.split('/').pop()}</div>
+                  <div className="text-[12px] opacity-70">{a.mime || 'Tệp đính kèm'}</div>
                 </div>
               </div>
-            )
-          )}
+              <div className="flex items-center gap-2">
+                <a href={encodeURI(a.url) + `${a.url.includes('?') ? '&' : '?'}dl=1`} className="p-2 text-sm rounded-md bg-white/5 hover:bg-white/10" aria-label={`Tải xuống ${a.filename || 'file'}`}>
+                  ⬇️
+                </a>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

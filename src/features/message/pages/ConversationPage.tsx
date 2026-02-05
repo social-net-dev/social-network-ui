@@ -10,6 +10,8 @@ import { RoomSidebar } from '../components/RoomSidebar';
 import { MessageArea } from '../components/MessageArea';
 import { MessageInput } from '../components/MessageInput';
 import { filterOptimisticMessage } from '../utils/messageDedupe';
+import { callMarkRoomRead } from '../services/messageApi';
+import { useMessageStore } from '@/stores/messageStore';
 
 const ConversationPage: React.FC = () => {
   const params = useParams<{ conversationId?: string }>();
@@ -18,11 +20,16 @@ const ConversationPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const prevMessageCountRef = useRef<number>(0);
+  const prevRoomRef = useRef<string | null>(null);
+  const markReadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>(params.conversationId ?? searchParams.get('room_id') ?? undefined);
   const [overrideRoomId, setOverrideRoomId] = useState<string | undefined>(searchParams.get('room_id') ?? undefined);
   const [text, setText] = useState('');
+  const resetUnread = useMessageStore(state => state.resetUnread);
+  const incrementUnread = useMessageStore(state => state.incrementUnread);
 
   // Resolve userId and room: prefer URL query params
   const resolvedUserId = searchParams.get('user_id') ?? user?.id ?? 'anonymous';
@@ -123,6 +130,16 @@ const ConversationPage: React.FC = () => {
     wsUrl: import.meta.env.DEV ? 'ws://localhost:8000/ws' : '',
     restBase: import.meta.env.DEV ? 'http://localhost:8000' : '',
     onReactionEvent: handleReactionEvent,
+    onExternalMessage: msg => {
+      if (msg.room_id && msg.room_id !== resolvedRoom) {
+        incrementUnread(msg.room_id, 1);
+      }
+    },
+    onRead: data => {
+      if (data?.room_id && data?.user_id === resolvedUserId) {
+        resetUnread(data.room_id);
+      }
+    },
     onMessage: msg => {
       // If server echoes client_id, remove matching optimistic entry immediately
       if (msg.client_id) {
@@ -186,17 +203,94 @@ const ConversationPage: React.FC = () => {
     }
   }, [selectedConversationId, overrideRoomId, searchParams, resolvedUserId, setSearchParams]);
 
+  // Mark read when entering room
+  useEffect(() => {
+    if (!resolvedRoom || !resolvedUserId) return;
+    callMarkRoomRead({ room_id: resolvedRoom, user_id: resolvedUserId })
+      .then(() => {
+        resetUnread(resolvedRoom);
+      })
+      .catch(() => {
+        // ignore
+      });
+  }, [resolvedRoom, resolvedUserId, resetUnread]);
+
   // Auto-scroll when new messages arrive (not when reactions update)
   useEffect(() => {
     const currentCount = combinedMessages.length;
     const prevCount = prevMessageCountRef.current;
 
     if (currentCount > prevCount) {
-      endRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const container = messagesContainerRef.current;
+      // fallback to endRef if container not available
+      if (!container) {
+        endRef.current?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        // Check if user is near bottom (threshold) OR last message was sent by current user -> then scroll
+        const distanceFromBottom = container.scrollHeight - (container.scrollTop + container.clientHeight);
+        const threshold = 150; // px
+        const lastMsg = combinedMessages[combinedMessages.length - 1];
+        const shouldForceScroll = lastMsg?.sender_id === resolvedUserId || distanceFromBottom < threshold;
+
+        if (shouldForceScroll) {
+          const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+            try {
+              container.scrollTo({ top: container.scrollHeight, behavior });
+            } catch (e) {
+              container.scrollTop = container.scrollHeight;
+            }
+          };
+
+          // immediate scroll and one delayed attempt (images/media may load after)
+          scrollToBottom('smooth');
+          setTimeout(() => scrollToBottom('auto'), 200);
+        }
+      }
     }
 
     prevMessageCountRef.current = currentCount;
   }, [combinedMessages]);
+
+  // When switching rooms, always scroll to bottom after messages load/render
+  useEffect(() => {
+    if (prevRoomRef.current !== resolvedRoom) {
+      // small delay to allow messages to render; perform a couple attempts to handle media
+      const tryScroll = () => {
+        const container = messagesContainerRef.current;
+        if (!container) return;
+        try {
+          container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
+        } catch (e) {
+          container.scrollTop = container.scrollHeight;
+        }
+      };
+
+      tryScroll();
+      const t1 = setTimeout(tryScroll, 150);
+      const t2 = setTimeout(tryScroll, 400);
+      prevRoomRef.current = resolvedRoom;
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [resolvedRoom]);
+
+  // Debounce mark-read when new messages arrive in current room
+  useEffect(() => {
+    if (!resolvedRoom || !resolvedUserId) return;
+    if (markReadTimerRef.current) clearTimeout(markReadTimerRef.current);
+    markReadTimerRef.current = setTimeout(() => {
+      callMarkRoomRead({ room_id: resolvedRoom, user_id: resolvedUserId })
+        .then(() => resetUnread(resolvedRoom))
+        .catch(() => {
+          // ignore
+        });
+    }, 800);
+    return () => {
+      if (markReadTimerRef.current) clearTimeout(markReadTimerRef.current);
+    };
+  }, [combinedMessages.length, resolvedRoom, resolvedUserId, resetUnread]);
 
   // Handle room selection
   const handleRoomSelect = (roomId: string) => {
@@ -254,6 +348,7 @@ const ConversationPage: React.FC = () => {
         sendReaction={sendReaction}
         onRefresh={loadMessages}
         endRef={endRef}
+        messagesContainerRef={messagesContainerRef}
         messageInput={<MessageInput text={text} selectedFiles={selectedFiles} previews={previews} fileInputRef={fileInputRef} onTextChange={setText} onFileSelect={handleFileSelect} onRemoveFile={removeFile} onSend={handleSend} onAttachClick={() => fileInputRef.current?.click()} />}
       />
     </div>

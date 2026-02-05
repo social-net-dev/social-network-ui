@@ -20,6 +20,7 @@ export class ChatClient {
   public onError: (err: unknown) => void = () => {};
   public onStatus: (s: 'connecting' | 'open' | 'closed' | 'error') => void = () => {};
   public onReaction: (data: any) => void = () => {};
+  public onRead: (data: any) => void = () => {};
 
   constructor(opts: ChatClientOpts) {
     this.opts = opts;
@@ -33,10 +34,13 @@ export class ChatClient {
 
   private url() {
     const { wsUrl, room, userId } = this.opts;
-    if (!room || !userId) {
-      throw new Error('ChatClient: room_id and user_id are required');
+    if (!userId) {
+      throw new Error('ChatClient: user_id is required');
     }
-    return `${wsUrl}?user_id=${encodeURIComponent(userId)}&room_id=${encodeURIComponent(room)}`;
+    const params = new URLSearchParams();
+    params.set('user_id', String(userId));
+    if (room) params.set('room_id', String(room));
+    return `${wsUrl}?${params.toString()}`;
   }
 
   connect() {
@@ -107,6 +111,10 @@ export class ChatClient {
               this.onReaction(data);
             } else {
               console.warn('[ChatClient] onReaction handler not set!');
+            }
+          } else if (data.type === 'read') {
+            if (this.onRead) {
+              this.onRead(data);
             }
           }
         } catch (e) {
