@@ -64,44 +64,32 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
     ? new Date(profile.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
     : 'Tháng 1 năm 2024'
 
+  // Dynamic avatar and cover based on profile id from free sources (DiceBear & Picsum)
+  const fallbackAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`;
+  const coverUrl = `https://picsum.photos/seed/${profile.id}/1200/400`;
+
   return (
     <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden group">
       {/* Compact Cover Image */}
-      <div className="relative h-32 sm:h-40 bg-gradient-to-r from-etechs-secondary/80 to-etechs-primary/80">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+      <div className="relative h-32 sm:h-40 bg-etechs-secondary">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" 
+          style={{ backgroundImage: `url(${coverUrl})` }} 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
         
         {isCurrentUser && (
-          <Button 
-            size="sm" 
-            variant="secondary"
-            className="absolute top-4 right-4 h-8 bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
-          >
-            <Camera className="w-4 h-4 mr-2" />
-            Cập nhật ảnh bìa
-          </Button>
-        )}
-      </div>
-
-      <div className="px-6 pb-6">
-        <div className="relative flex flex-col sm:flex-row items-start sm:items-end -mt-12 sm:-mt-16 gap-4 sm:gap-6">
-          {/* Avatar Section */}
-          <div className="relative shrink-0 mx-auto sm:mx-0">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*" 
-              onChange={handleFileChange}
-            />
+// ...
             <Avatar 
               className={`w-24 h-24 sm:w-32 sm:h-32 border-4 border-card shadow-sm ring-1 ring-border/10 ${isCurrentUser ? 'cursor-pointer' : ''}`}
               onClick={handleAvatarClick}
             >
-              <AvatarImage src={profile.avatar || undefined} alt={profile.displayName} className="object-cover" />
+              <AvatarImage src={profile.avatar || fallbackAvatarUrl} alt={profile.displayName} className="object-cover" />
               <AvatarFallback className="text-2xl font-bold bg-muted text-muted-foreground">
                 {isUpdating ? <Loader2 className="w-6 h-6 animate-spin" /> : (initials || "?")}
               </AvatarFallback>
             </Avatar>
+
             {isCurrentUser && !isUpdating && (
               <div 
                 className="absolute bottom-0 right-0 p-1.5 bg-etechs-primary text-etechs-secondary rounded-full shadow-sm cursor-pointer border-2 border-card hover:scale-110 transition-transform"

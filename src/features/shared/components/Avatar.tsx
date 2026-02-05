@@ -17,7 +17,7 @@ const sizeClasses = {
 }
 
 export function Avatar({ user, src, alt, size = 'md', className }: AvatarProps) {
-  const avatarSrc = src || user?.avatar
+  const avatarSrc = src || user?.avatar || (user?.id ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}` : null)
   const initials = user?.firstName?.[0] && user?.lastName?.[0] 
     ? `${user.firstName[0]}${user.lastName[0]}` 
     : (user?.displayName?.[0] || '?')
