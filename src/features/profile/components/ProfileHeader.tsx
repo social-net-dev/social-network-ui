@@ -79,7 +79,28 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
         
         {isCurrentUser && (
-// ...
+          <Button 
+            size="sm" 
+            variant="secondary"
+            className="absolute top-4 right-4 h-8 bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+          >
+            <Camera className="w-4 h-4 mr-2" />
+            Cập nhật ảnh bìa
+          </Button>
+        )}
+      </div>
+
+      <div className="px-6 pb-6">
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-end -mt-12 sm:-mt-16 gap-4 sm:gap-6">
+          {/* Avatar Section */}
+          <div className="relative shrink-0 mx-auto sm:mx-0">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*" 
+              onChange={handleFileChange}
+            />
             <Avatar 
               className={`w-24 h-24 sm:w-32 sm:h-32 border-4 border-card shadow-sm ring-1 ring-border/10 ${isCurrentUser ? 'cursor-pointer' : ''}`}
               onClick={handleAvatarClick}
@@ -89,7 +110,6 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
                 {isUpdating ? <Loader2 className="w-6 h-6 animate-spin" /> : (initials || "?")}
               </AvatarFallback>
             </Avatar>
-
             {isCurrentUser && !isUpdating && (
               <div 
                 className="absolute bottom-0 right-0 p-1.5 bg-etechs-primary text-etechs-secondary rounded-full shadow-sm cursor-pointer border-2 border-card hover:scale-110 transition-transform"
