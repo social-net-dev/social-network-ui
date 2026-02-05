@@ -13,14 +13,18 @@ const parseBioInfo = (bio: string | null | undefined): { bioText: string; person
     if (bio.startsWith('{') && bio.endsWith('}')) {
       const parsed = JSON.parse(bio);
       // If it has our expected fields, it's our structured bio
-      if (parsed.school || parsed.class || parsed.favoriteSubjects || parsed.hobbies || parsed.bioText !== undefined) {
+      if (parsed.school || parsed.class || parsed.favoriteSubjects || parsed.hobbies || parsed.projects || parsed.bioText !== undefined) {
         return {
           bioText: parsed.bioText || '',
           personalInfo: {
             school: parsed.school,
             class: parsed.class,
+            degree: parsed.degree,
+            major: parsed.major,
+            graduationYear: parsed.graduationYear,
             favoriteSubjects: parsed.favoriteSubjects,
             hobbies: parsed.hobbies,
+            projects: parsed.projects,
           }
         };
       }

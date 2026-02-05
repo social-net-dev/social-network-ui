@@ -6,11 +6,24 @@ import { z } from "zod";
 
 export type ReactionType = "LIKE" | "LOVE" | "HAHA" | "WOW" | "SAD" | "ANGRY";
 
+export interface Project {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  imageUrl: string;
+  sourceLink?: string;
+}
+
 export interface PersonalInfo {
   school?: string;
   class?: string;
+  degree?: string;
+  major?: string;
+  graduationYear?: string;
   favoriteSubjects?: string[];
   hobbies?: string[];
+  projects?: Project[];
 }
 
 /**
