@@ -1,24 +1,22 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { User } from "@/types";
-import type { AuthResponse } from "@/features/auth/types/auth.types";
-import { authApi } from "@/features/auth/services/authApi";
+import { AuthAPI } from "@/lib/api/generated";
 
 interface AuthState {
-    user: User | null;
+    user: any | null; // Keep flexible until types are fully consolidated
     token: string | null;
     refreshToken: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    setAuth: (authResponse: AuthResponse) => void;
-    setUser: (user: User | null) => void;
+    setAuth: (authResponse: any) => void;
+    setUser: (user: any | null) => void;
     logout: () => Promise<void>;
     setLoading: (loading: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             user: null,
             token: null,
             refreshToken: null,
@@ -36,9 +34,14 @@ export const useAuthStore = create<AuthState>()(
             },
             setUser: (user) => set({ user }),
             logout: async () => {
+                const { refreshToken } = get();
                 try {
-                    // Call backend logout API to revoke tokens
-                    await authApi.logout();
+                    // Call backend logout API with current refresh token
+                    if (refreshToken) {
+                        await AuthAPI.useLogoutAuthLogoutPost().mutateAsync({ 
+                            data: { refresh_token: refreshToken } 
+                        });
+                    }
                 } catch (error) {
                     console.error("Logout error:", error);
                 } finally {

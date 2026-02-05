@@ -4,7 +4,7 @@
  * - Public auth paths (no token sent)
  * - Unwrap middleware response { success: true, data: T }
  * - Tenant header support
- * 
+ *
  * Used by:
  * - Manual API services (authApi, feedApi, etc.)
  * - Orval generated hooks (via axios-instance.ts mutator)
@@ -52,7 +52,11 @@ const PUBLIC_AUTH_PATHS = [
     "/auth/login",
     "/auth/register",
     "/auth/verify-otp",
+    "/auth/otp/verify",
     "/auth/resend-otp",
+    "/auth/otp/send",
+    "/auth/forgot-password",
+    "/auth/reset-password",
 ];
 
 function isPublicAuthRequest(url: string | undefined): boolean {
@@ -106,8 +110,8 @@ apiClient.interceptors.response.use(
             _retry?: boolean;
         };
 
-        // If 401 and not already retrying
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // If 401 and not already retrying, AND NOT a public auth request
+        if (error.response?.status === 401 && !originalRequest._retry && !isPublicAuthRequest(originalRequest.url)) {
             if (isRefreshing) {
                 // Wait for the refresh to complete
                 return new Promise((resolve, reject) => {
@@ -142,13 +146,9 @@ apiClient.interceptors.response.use(
             try {
                 // Call refresh token endpoint (etechs-middleware expects "refresh")
                 const refreshURL = baseURL.endsWith("/") ? `${baseURL}auth/refresh/` : `${baseURL}/auth/refresh/`;
-                const response = await axios.post(
-                    refreshURL,
-                    { refresh: refreshToken, refresh_token: refreshToken },
-                );
+                const response = await axios.post(refreshURL, { refresh: refreshToken, refresh_token: refreshToken });
                 const payload = response.data?.data ?? response.data;
-                const access_token =
-                    payload?.access_token ?? payload?.access;
+                const access_token = payload?.access_token ?? payload?.access;
 
                 // Save new token
                 localStorage.setItem("auth_token", access_token);

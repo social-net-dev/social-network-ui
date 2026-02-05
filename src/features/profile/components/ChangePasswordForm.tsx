@@ -3,11 +3,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { changePasswordApi } from "../services/changePasswordApi";
+import { changePassword } from "@/lib/api/manual-apis";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader } from "lucide-react";
+import { getErrorMessage } from "@/lib/api/transforms";
 
 const ChangePasswordSchema = z
     .object({
@@ -45,30 +46,14 @@ export function ChangePasswordForm() {
 
     const mutation = useMutation({
         mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
-            changePasswordApi.changePassword(currentPassword, newPassword),
+            changePassword(currentPassword, newPassword),
         onSuccess: () => {
             setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
             form.reset();
             setTimeout(() => setSuccessMessage(""), 3000);
         },
         onError: (error: any) => {
-            console.error("Change password error:", error);
-            let errorMsg = "Có lỗi xảy ra. Vui lòng thử lại.";
-
-            // Handle different error response formats
-            if (error?.response?.data?.detail) {
-                if (typeof error.response.data.detail === "string") {
-                    errorMsg = error.response.data.detail;
-                } else if (Array.isArray(error.response.data.detail)) {
-                    errorMsg = error.response.data.detail.map((e: any) => e.msg).join(", ");
-                }
-            } else if (error?.response?.data?.message) {
-                errorMsg = error.response.data.message;
-            } else if (error?.message) {
-                errorMsg = error.message;
-            }
-
-            form.setError("currentPassword", { message: errorMsg });
+            form.setError("currentPassword", { message: getErrorMessage(error) });
         },
     });
 
@@ -87,7 +72,6 @@ export function ChangePasswordForm() {
                 </div>
             )}
 
-            {/* Current Password */}
             <div className="space-y-2">
                 <Label htmlFor="currentPassword">Mật khẩu hiện tại *</Label>
                 <div className="relative">
@@ -96,13 +80,13 @@ export function ChangePasswordForm() {
                         type={showCurrentPassword ? "text" : "password"}
                         placeholder="Nhập mật khẩu hiện tại"
                         {...form.register("currentPassword")}
-                        className="pr-10 rounded-xl border-gray-200 dark:border-gray-800"
+                        className="pr-10 rounded-xl"
                         disabled={mutation.isPending}
                     />
                     <button
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                     >
                         {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -110,7 +94,6 @@ export function ChangePasswordForm() {
                 {form.formState.errors.currentPassword && <p className="text-sm text-red-500">{form.formState.errors.currentPassword.message}</p>}
             </div>
 
-            {/* New Password */}
             <div className="space-y-2">
                 <Label htmlFor="newPassword">Mật khẩu mới *</Label>
                 <div className="relative">
@@ -119,22 +102,20 @@ export function ChangePasswordForm() {
                         type={showNewPassword ? "text" : "password"}
                         placeholder="Nhập mật khẩu mới"
                         {...form.register("newPassword")}
-                        className="pr-10 rounded-xl border-gray-200 dark:border-gray-800"
+                        className="pr-10 rounded-xl"
                         disabled={mutation.isPending}
                     />
                     <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                     >
                         {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                 </div>
-                <p className="text-xs text-gray-500">Tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt</p>
                 {form.formState.errors.newPassword && <p className="text-sm text-red-500">{form.formState.errors.newPassword.message}</p>}
             </div>
 
-            {/* Confirm Password */}
             <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới *</Label>
                 <div className="relative">
@@ -143,13 +124,13 @@ export function ChangePasswordForm() {
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Xác nhận mật khẩu mới"
                         {...form.register("confirmPassword")}
-                        className="pr-10 rounded-xl border-gray-200 dark:border-gray-800"
+                        className="pr-10 rounded-xl"
                         disabled={mutation.isPending}
                     />
                     <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                     >
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -160,16 +141,9 @@ export function ChangePasswordForm() {
             <Button
                 type="submit"
                 disabled={mutation.isPending}
-                className="w-full bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 font-bold py-2 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-etechs-primary/50 active:scale-95"
+                className="w-full bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 font-bold py-2 rounded-xl"
             >
-                {mutation.isPending ? (
-                    <>
-                        <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        Đang xử lý...
-                    </>
-                ) : (
-                    "Thay đổi mật khẩu"
-                )}
+                {mutation.isPending ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : "Thay đổi mật khẩu"}
             </Button>
         </form>
     );

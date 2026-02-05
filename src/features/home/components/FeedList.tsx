@@ -1,5 +1,5 @@
 import { PostCard } from "./PostCard";
-import type { Post, Comment } from "../types/feed.types";
+import type { Post } from "../types/feed.types";
 
 interface FeedListProps {
   posts: Post[];
@@ -8,14 +8,9 @@ interface FeedListProps {
   onComment: (postId: string) => void;
   onShare: (postId: string) => void;
   selectedPostId?: string | null;
-  comments?: Record<string, Comment[]>;
-  loadingComments?: Record<string, boolean>;
-  onAddComment?: (postId: string, content: string, files?: File[]) => void;
-  onDeleteComment?: (postId: string, commentId: string) => void;
   onDelete?: (postId: string) => void;
   onEdit?: (postId: string, content: string) => void;
   currentUserId?: string;
-  onRefreshComment?: (postId: string) => void;
 }
 
 export function FeedList({
@@ -25,14 +20,9 @@ export function FeedList({
   onComment,
   onShare,
   selectedPostId,
-  comments = {},
-  loadingComments = {},
-  onAddComment,
-  onDeleteComment,
   onDelete,
   onEdit,
   currentUserId,
-  onRefreshComment,
 }: FeedListProps) {
   if (isLoading && posts.length === 0) {
     return (
@@ -103,21 +93,6 @@ export function FeedList({
           onEdit={onEdit}
           currentUserId={currentUserId}
           showComments={selectedPostId === post.id}
-          comments={comments[post.id] || []}
-          loadingComments={loadingComments[post.id] || false}
-          onAddComment={
-            onAddComment
-              ? (content, files) => onAddComment(post.id, content, files)
-              : undefined
-          }
-          onDeleteComment={
-            onDeleteComment
-              ? (commentId) => onDeleteComment(post.id, commentId)
-              : undefined
-          }
-          onRefreshComments={
-            onRefreshComment ? () => onRefreshComment(post.id) : undefined
-          }
         />
       ))}
       {isLoading && (

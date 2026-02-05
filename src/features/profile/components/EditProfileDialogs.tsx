@@ -6,29 +6,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
 import { Plus, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-
-// Interfaces for our mock data
-export interface AcademicBackground {
-  institution: string
-  degree: string
-  major: string
-  graduationYear: string
-  logoUrl?: string
-}
-
-export interface Project {
-  id: string
-  title: string
-  category: string
-  description: string
-  imageUrl: string
-  sourceLink?: string
-}
+import type { Project } from '@/features/home/types/feed.types'
 
 export interface Interest {
   label: string
   color?: string
-  icon?: any // For simplicity with Lucide icons
+  icon?: any 
 }
 
 // Edit Dialog for Basic Info
@@ -52,34 +35,34 @@ export function EditBasicInfoDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] rounded-3xl">
         <DialogHeader>
-          <DialogTitle>Edit Profile Info</DialogTitle>
+          <DialogTitle>Thông tin cá nhân</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="displayName" className="text-right">Display Name</Label>
-            <Input id="displayName" value={formData.displayName} onChange={(e) => setFormData({...formData, displayName: e.target.value})} className="col-span-3" />
+        <div className="grid gap-6 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="displayName">Tên hiển thị</Label>
+            <Input id="displayName" value={formData.displayName} onChange={(e) => setFormData({...formData, displayName: e.target.value})} className="rounded-xl" />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="username" className="text-right">Username</Label>
-            <Input id="username" value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="col-span-3" />
+          <div className="grid gap-2">
+            <Label htmlFor="username">Username</Label>
+            <Input id="username" value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="rounded-xl" />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-             <Label htmlFor="birthDate" className="text-right">Birth Date</Label>
-             <Input id="birthDate" type="date" value={formData.birthDate} onChange={(e) => setFormData({...formData, birthDate: e.target.value})} className="col-span-3" />
+          <div className="grid gap-2">
+             <Label htmlFor="birthDate">Ngày sinh</Label>
+             <Input id="birthDate" type="date" value={formData.birthDate} onChange={(e) => setFormData({...formData, birthDate: e.target.value})} className="rounded-xl" />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="location" className="text-right">Location</Label>
-            <Input id="location" value={formData.location || ''} onChange={(e) => setFormData({...formData, location: e.target.value})} className="col-span-3" placeholder="(Not saved to API)" />
+          <div className="grid gap-2">
+            <Label htmlFor="location">Vị trí (Thành phố)</Label>
+            <Input id="location" value={formData.location || ''} onChange={(e) => setFormData({...formData, location: e.target.value})} className="rounded-xl" placeholder="Ví dụ: TP. Hồ Chí Minh" />
           </div>
-           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="bio" className="text-right">Bio</Label>
-            <Textarea id="bio" value={formData.bio} onChange={(e) => setFormData({...formData, bio: e.target.value})} className="col-span-3" />
+           <div className="grid gap-2">
+            <Label htmlFor="bio">Giới thiệu ngắn</Label>
+            <Textarea id="bio" value={formData.bio} onChange={(e) => setFormData({...formData, bio: e.target.value})} className="rounded-xl min-h-[100px]" placeholder="Viết vài dòng giới thiệu về bản thân..." />
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSave}>Save changes</Button>
+          <Button onClick={handleSave} className="bg-etechs-primary text-etechs-secondary font-bold rounded-xl px-8 h-11">Lưu thay đổi</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -92,8 +75,8 @@ export function EditAcademicBackgroundDialog({
   onSave, 
   trigger 
 }: { 
-  data: AcademicBackground, 
-  onSave: (data: AcademicBackground) => void,
+  data: { school: string, degree: string, major: string, graduationYear: string }, 
+  onSave: (data: any) => void,
   trigger: React.ReactNode
 }) {
   const [formData, setFormData] = useState(data)
@@ -109,28 +92,28 @@ export function EditAcademicBackgroundDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Education</DialogTitle>
+          <DialogTitle>Chỉnh sửa học vấn</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="institution">Institution</Label>
-            <Input id="institution" value={formData.institution} onChange={(e) => setFormData({...formData, institution: e.target.value})} />
+            <Label htmlFor="school">Trường học</Label>
+            <Input id="school" value={formData.school} onChange={(e) => setFormData({...formData, school: e.target.value})} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="degree">Degree</Label>
-            <Input id="degree" value={formData.degree} onChange={(e) => setFormData({...formData, degree: e.target.value})} />
+            <Label htmlFor="degree">Bằng cấp/Vị trí</Label>
+            <Input id="degree" value={formData.degree} onChange={(e) => setFormData({...formData, degree: e.target.value})} placeholder="Ví dụ: Cử nhân, Sinh viên, Giảng viên" />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="major">Major</Label>
+            <Label htmlFor="major">Chuyên ngành</Label>
             <Input id="major" value={formData.major} onChange={(e) => setFormData({...formData, major: e.target.value})} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="year">Graduation Year</Label>
+            <Label htmlFor="year">Năm tốt nghiệp (dự kiến)</Label>
             <Input id="year" value={formData.graduationYear} onChange={(e) => setFormData({...formData, graduationYear: e.target.value})} />
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSave}>Save Education</Button>
+          <Button onClick={handleSave} className="bg-etechs-primary text-etechs-secondary">Lưu thông tin</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -155,17 +138,7 @@ export function EditInterestsDialog({
 
   const handleAddItem = () => {
     if (newItem.trim()) {
-      // Assign a random color for variety if none provided
-      const colors = [
-        "bg-red-100 text-red-800 border-red-200",
-        "bg-green-100 text-green-800 border-green-200",
-        "bg-blue-100 text-blue-800 border-blue-200",
-        "bg-yellow-100 text-yellow-800 border-yellow-200",
-        "bg-purple-100 text-purple-800 border-purple-200",
-      ]
-      const randomColor = colors[Math.floor(Math.random() * colors.length)]
-      
-      setItems([...items, { label: newItem, color: randomColor }])
+      setItems([...items, { label: newItem }])
       setNewItem('')
     }
   }
@@ -184,34 +157,35 @@ export function EditInterestsDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] rounded-3xl">
         <DialogHeader>
-          <DialogTitle>Edit {title}</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="flex gap-2">
             <Input 
-              placeholder="Add new interest..." 
+              placeholder="Nhập nội dung mới..." 
               value={newItem} 
               onChange={(e) => setNewItem(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
+              className="rounded-xl"
             />
-            <Button onClick={handleAddItem} size="icon"><Plus className="h-4 w-4" /></Button>
+            <Button onClick={handleAddItem} size="icon" className="bg-etechs-primary text-etechs-secondary rounded-xl"><Plus className="h-4 w-4" /></Button>
           </div>
-          <div className="flex flex-wrap gap-2 min-h-[100px] border rounded-md p-2 bg-muted/20">
+          <div className="flex flex-wrap gap-2 min-h-[100px] border border-border/50 rounded-2xl p-4 bg-muted/20">
             {items.map((item, index) => (
-              <Badge key={index} variant="secondary" className="flex items-center gap-1 pr-1">
+              <Badge key={index} variant="secondary" className="flex items-center gap-1 pr-1 pl-3 py-1.5 rounded-xl border-none bg-background shadow-sm">
                 {item.label}
-                <button onClick={() => handleRemoveItem(index)} className="hover:bg-muted rounded-full p-0.5 ml-1">
+                <button onClick={() => handleRemoveItem(index)} className="hover:bg-destructive hover:text-white rounded-full p-0.5 ml-1 transition-colors">
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
             ))}
-            {items.length === 0 && <span className="text-muted-foreground text-sm p-2">No interests added yet.</span>}
+            {items.length === 0 && <span className="text-muted-foreground text-xs p-2">Chưa có thông tin.</span>}
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSave}>Save Interests</Button>
+          <Button onClick={handleSave} className="bg-etechs-primary text-etechs-secondary font-bold rounded-xl h-11 px-8">Hoàn tất</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -230,25 +204,31 @@ export function EditProjectDialog({
   trigger: React.ReactNode,
   mode?: 'add' | 'edit'
 }) {
-  const defaultProject = {
-    id: Math.random().toString(36).substr(2, 9),
+  const [formData, setFormData] = useState<Project>(project || {
+    id: '',
     title: '',
     category: '',
     description: '',
-    imageUrl: 'https://via.placeholder.com/300',
+    imageUrl: '',
     sourceLink: ''
-  }
-  
-  const [formData, setFormData] = useState<Project>(project || defaultProject)
+  })
   const [open, setOpen] = useState(false)
 
   const handleSave = () => {
-    onSave(formData)
+    const dataToSave = mode === 'add' && !formData.id 
+      ? { ...formData, id: crypto.randomUUID() } 
+      : formData;
+    
+    onSave(dataToSave)
     setOpen(false)
     if (mode === 'add') {
       setFormData({
-        ...defaultProject,
-        id: Math.random().toString(36).substr(2, 9)
+        id: '',
+        title: '',
+        category: '',
+        description: '',
+        imageUrl: '',
+        sourceLink: ''
       })
     }
   }
@@ -256,34 +236,34 @@ export function EditProjectDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] rounded-3xl">
         <DialogHeader>
-          <DialogTitle>{mode === 'add' ? 'Add New Project' : 'Edit Project'}</DialogTitle>
+          <DialogTitle>{mode === 'add' ? 'Thêm dự án mới' : 'Chỉnh sửa dự án'}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-5 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="title">Project Title</Label>
-            <Input id="title" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} />
+            <Label htmlFor="title">Tên dự án</Label>
+            <Input id="title" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="rounded-xl" />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="category">Category</Label>
-            <Input id="category" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} placeholder="e.g. Research, Web App, Mobile" />
+            <Label htmlFor="category">Phân loại</Label>
+            <Input id="category" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} placeholder="Ví dụ: Nghiên cứu, Web App, Mobile" className="rounded-xl" />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+            <Label htmlFor="description">Mô tả dự án</Label>
+            <Textarea id="description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="rounded-xl min-h-[100px]" />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input id="imageUrl" value={formData.imageUrl} onChange={(e) => setFormData({...formData, imageUrl: e.target.value})} />
+            <Label htmlFor="imageUrl">URL hình ảnh minh họa</Label>
+            <Input id="imageUrl" value={formData.imageUrl} onChange={(e) => setFormData({...formData, imageUrl: e.target.value})} className="rounded-xl" placeholder="https://..." />
           </div>
            <div className="grid gap-2">
-            <Label htmlFor="sourceLink">Source/Demo Link</Label>
-            <Input id="sourceLink" value={formData.sourceLink} onChange={(e) => setFormData({...formData, sourceLink: e.target.value})} />
+            <Label htmlFor="sourceLink">Link mã nguồn/demo</Label>
+            <Input id="sourceLink" value={formData.sourceLink} onChange={(e) => setFormData({...formData, sourceLink: e.target.value})} className="rounded-xl" placeholder="GitHub link..." />
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSave}>Save Project</Button>
+          <Button onClick={handleSave} className="bg-etechs-primary text-etechs-secondary font-bold rounded-xl h-11 px-8">Lưu dự án</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,322 +1,245 @@
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
-import { School, Heart, Edit2, Save, X } from 'lucide-react'
-import { useProfile } from '../hooks/useProfile'
-
-interface PersonalInfo {
-  school?: string
-  class?: string
-  favoriteSubjects?: string[]
-  hobbies?: string[]
-}
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { School, Heart, Edit2, Save, X, Plus } from 'lucide-react';
+import { useProfile } from '../hooks/useProfile';
+import type { Author, PersonalInfo } from '@/features/home/types/feed.types';
 
 export function PersonalInfoSidebar() {
-  const { profile, updateProfile, isUpdating } = useProfile()
-  const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState<PersonalInfo>(() => {
-    const bio = profile?.bio || ''
-    const info: PersonalInfo = {}
+  const { profile: rawProfile, updateProfile, isUpdating } = useProfile();
+  const profile = rawProfile as Author;
+  const [isEditing, setIsEditing] = useState(false);
 
-    try {
-      const parsed = JSON.parse(bio)
-      if (parsed.school) info.school = parsed.school
-      if (parsed.class) info.class = parsed.class
-      if (parsed.favoriteSubjects) info.favoriteSubjects = parsed.favoriteSubjects
-      if (parsed.hobbies) info.hobbies = parsed.hobbies
-    } catch {
-      // If bio is not JSON, treat it as plain text
+  const [formData, setFormData] = useState<PersonalInfo>({
+    school: '',
+    class: '',
+    favoriteSubjects: [],
+    hobbies: [],
+  });
+
+  // Set initial display data if profile changes but not editing
+  const displayData = isEditing
+    ? formData
+    : profile?.personalInfo || {
+        school: '',
+        class: '',
+        favoriteSubjects: [],
+        hobbies: [],
+      };
+
+  const handleEdit = () => {
+    if (profile?.personalInfo) {
+      setFormData({
+        school: profile.personalInfo.school || '',
+        class: profile.personalInfo.class || '',
+        favoriteSubjects: profile.personalInfo.favoriteSubjects || [],
+        hobbies: profile.personalInfo.hobbies || [],
+      });
     }
-
-    return info
-  })
+    setIsEditing(true);
+  };
 
   const handleAddSubject = () => {
     setFormData(prev => ({
       ...prev,
-      favoriteSubjects: [...(prev.favoriteSubjects || []), '']
-    }))
-  }
+      favoriteSubjects: [...(prev.favoriteSubjects || []), ''],
+    }));
+  };
 
   const handleRemoveSubject = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      favoriteSubjects: prev.favoriteSubjects?.filter((_, i) => i !== index)
-    }))
-  }
+      favoriteSubjects: prev.favoriteSubjects?.filter((_, i) => i !== index),
+    }));
+  };
 
   const handleSubjectChange = (index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
-      favoriteSubjects: prev.favoriteSubjects?.map((s, i) => i === index ? value : s)
-    }))
-  }
+      favoriteSubjects: prev.favoriteSubjects?.map((s, i) => (i === index ? value : s)),
+    }));
+  };
 
   const handleAddHobby = () => {
     setFormData(prev => ({
       ...prev,
-      hobbies: [...(prev.hobbies || []), '']
-    }))
-  }
+      hobbies: [...(prev.hobbies || []), ''],
+    }));
+  };
 
   const handleRemoveHobby = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      hobbies: prev.hobbies?.filter((_, i) => i !== index)
-    }))
-  }
+      hobbies: prev.hobbies?.filter((_, i) => i !== index),
+    }));
+  };
 
   const handleHobbyChange = (index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
-      hobbies: prev.hobbies?.map((h, i) => i === index ? value : h)
-    }))
-  }
+      hobbies: prev.hobbies?.map((h, i) => (i === index ? value : h)),
+    }));
+  };
 
   const handleSave = async () => {
     try {
-      const currentBio = profile?.bio || ''
-      const existingInfo: Record<string, any> = {}
-
-      try {
-        const parsed = JSON.parse(currentBio)
-        Object.assign(existingInfo, parsed)
-      } catch {}
-
-      const updatedInfo = {
-        ...existingInfo,
-        school: formData.school,
-        class: formData.class,
+      // Construct the JSON bio payload
+      const bioPayload = JSON.stringify({
+        bioText: profile?.bio || '', // Preserve original bio text
+        ...formData,
         favoriteSubjects: formData.favoriteSubjects?.filter(s => s.trim()),
         hobbies: formData.hobbies?.filter(h => h.trim()),
-      }
-
-      const newBio = JSON.stringify(updatedInfo)
+      });
 
       await updateProfile({
         displayName: profile?.displayName || '',
-        bio: newBio,
-      })
+        bio: bioPayload,
+      });
 
-      setIsEditing(false)
-      alert('Cập nhật thông tin thành công!')
+      setIsEditing(false);
+      alert('Cập nhật thông tin thành công!');
     } catch (error) {
-      console.error(error)
-      alert('Cập nhật thất bại!')
+      console.error(error);
+      alert('Cập nhật thất bại!');
     }
-  }
+  };
 
   const handleCancel = () => {
-    const bio = profile?.bio || ''
-    const info: PersonalInfo = {}
-
-    try {
-      const parsed = JSON.parse(bio)
-      if (parsed.school) info.school = parsed.school
-      if (parsed.class) info.class = parsed.class
-      if (parsed.favoriteSubjects) info.favoriteSubjects = parsed.favoriteSubjects
-      if (parsed.hobbies) info.hobbies = parsed.hobbies
-    } catch {}
-
-    setFormData(info)
-    setIsEditing(false)
-  }
+    if (profile?.personalInfo) {
+      setFormData({
+        school: profile.personalInfo.school || '',
+        class: profile.personalInfo.class || '',
+        favoriteSubjects: profile.personalInfo.favoriteSubjects || [],
+        hobbies: profile.personalInfo.hobbies || [],
+      });
+    }
+    setIsEditing(false);
+  };
 
   return (
     <Card className="rounded-xl border-border shadow-sm bg-card">
       <CardHeader className="pb-3 pt-5 px-5 flex items-center justify-between">
         <CardTitle className="text-base font-semibold">Thông tin cá nhân</CardTitle>
         {!isEditing ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setIsEditing(true)}
-            className="h-8 px-2 text-muted-foreground hover:text-foreground"
-          >
+          <Button size="sm" variant="ghost" onClick={handleEdit} className="h-8 w-8 p-0">
             <Edit2 className="w-3.5 h-3.5" />
           </Button>
         ) : (
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleCancel}
-              disabled={isUpdating}
-              className="h-8 px-2 text-muted-foreground hover:text-foreground"
-            >
+            <Button size="sm" variant="ghost" onClick={handleCancel} disabled={isUpdating} className="h-8 w-8 p-0">
               <X className="w-3.5 h-3.5" />
             </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isUpdating}
-              className="h-8 px-2 bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90"
-            >
-              {isUpdating ? <span className="animate-spin text-xs">⏳</span> : <Save className="w-3.5 h-3.5" />}
+            <Button size="sm" onClick={handleSave} disabled={isUpdating} className="h-8 w-8 p-0 bg-etechs-primary text-etechs-secondary">
+              {isUpdating ? '...' : <Save className="w-3.5 h-3.5" />}
             </Button>
           </div>
         )}
       </CardHeader>
-
-      <Separator className="mb-5" />
-
-      <CardContent className="px-5 pb-5 space-y-5">
+      <Separator />
+      <CardContent className="px-5 py-5 space-y-6">
         {isEditing ? (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="school">Trường</Label>
-              <Input
-                id="school"
-                value={formData.school || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, school: e.target.value }))}
-                placeholder="Nhập tên trường..."
-                className="rounded-xl border-gray-200 dark:border-gray-800"
-              />
+              <Label>Trường</Label>
+              <Input value={formData.school || ''} onChange={e => setFormData({ ...formData, school: e.target.value })} placeholder="Tên trường học" />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="class">Lớp</Label>
-              <Input
-                id="class"
-                value={formData.class || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, class: e.target.value }))}
-                placeholder="Nhập tên lớp..."
-                className="rounded-xl border-gray-200 dark:border-gray-800"
-              />
+              <Label>Lớp</Label>
+              <Input value={formData.class || ''} onChange={e => setFormData({ ...formData, class: e.target.value })} placeholder="Tên lớp" />
             </div>
 
             <div className="space-y-2">
               <Label>Môn học yêu thích</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="space-y-2">
                 {formData.favoriteSubjects?.map((subject, index) => (
-                  <div key={index} className="flex items-center gap-1">
-                    <Input
-                      value={subject}
-                      onChange={(e) => handleSubjectChange(index, e.target.value)}
-                      placeholder="Môn học..."
-                      className="h-8 w-32 rounded-lg border-gray-200 dark:border-gray-800"
-                    />
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleRemoveSubject(index)}
-                      className="h-8 w-8 text-muted-foreground hover:text-red-500"
-                    >
-                      <X className="w-3.5 h-3.5" />
+                  <div key={index} className="flex gap-2">
+                    <Input value={subject} onChange={e => handleSubjectChange(index, e.target.value)} className="h-8" />
+                    <Button size="icon" variant="ghost" onClick={() => handleRemoveSubject(index)} className="h-8 w-8">
+                      <X className="w-3 h-3" />
                     </Button>
                   </div>
                 ))}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleAddSubject}
-                  className="h-8 px-3 rounded-lg border-dashed text-muted-foreground hover:border-etechs-primary hover:text-etechs-primary"
-                >
-                  + Thêm
+                <Button variant="outline" size="sm" onClick={handleAddSubject} className="w-full h-8 border-dashed">
+                  <Plus className="w-3 h-3 mr-1" /> Thêm môn học
                 </Button>
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Sở thích</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="space-y-2">
                 {formData.hobbies?.map((hobby, index) => (
-                  <div key={index} className="flex items-center gap-1">
-                    <Input
-                      value={hobby}
-                      onChange={(e) => handleHobbyChange(index, e.target.value)}
-                      placeholder="Sở thích..."
-                      className="h-8 w-32 rounded-lg border-gray-200 dark:border-gray-800"
-                    />
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleRemoveHobby(index)}
-                      className="h-8 w-8 text-muted-foreground hover:text-red-500"
-                    >
-                      <X className="w-3.5 h-3.5" />
+                  <div key={index} className="flex gap-2">
+                    <Input value={hobby} onChange={e => handleHobbyChange(index, e.target.value)} className="h-8" />
+                    <Button size="icon" variant="ghost" onClick={() => handleRemoveHobby(index)} className="h-8 w-8">
+                      <X className="w-3 h-3" />
                     </Button>
                   </div>
                 ))}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleAddHobby}
-                  className="h-8 px-3 rounded-lg border-dashed text-muted-foreground hover:border-etechs-primary hover:text-etechs-primary"
-                >
-                  + Thêm
+                <Button variant="outline" size="sm" onClick={handleAddHobby} className="w-full h-8 border-dashed">
+                  <Plus className="w-3 h-3 mr-1" /> Thêm sở thích
                 </Button>
               </div>
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            {formData.school && (
+          <div className="space-y-5">
+            {displayData.school && (
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-etechs-primary/10 text-etechs-primary">
-                  <School className="w-4 h-4" />
-                </div>
+                <School className="w-4 h-4 text-etechs-primary mt-0.5" />
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Trường học</p>
-                  <p className="text-sm font-medium text-foreground">{formData.school}</p>
+                  <p className="text-xs text-muted-foreground">Trường học</p>
+                  <p className="text-sm font-medium">{displayData.school}</p>
+                </div>
+              </div>
+            )}
+            {displayData.class && (
+              <div className="flex items-start gap-3">
+                <School className="w-4 h-4 text-blue-500 mt-0.5" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Lớp</p>
+                  <p className="text-sm font-medium">{displayData.class}</p>
                 </div>
               </div>
             )}
 
-            {formData.class && (
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                  <School className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Lớp</p>
-                  <p className="text-sm font-medium text-foreground">{formData.class}</p>
-                </div>
-              </div>
-            )}
-
-            {formData.favoriteSubjects && formData.favoriteSubjects.length > 0 && (
+            {displayData.favoriteSubjects && displayData.favoriteSubjects.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Heart className="w-4 h-4 text-muted-foreground" />
+                  <Heart className="w-4 h-4 text-pink-500" />
                   <p className="text-xs text-muted-foreground">Môn học yêu thích</p>
                 </div>
-                <div className="flex flex-wrap gap-2 pl-6">
-                  {formData.favoriteSubjects.filter(s => s.trim()).map((subject, index) => (
-                    <Badge key={index} variant="secondary" className="rounded-lg px-3 py-1">
-                      {subject}
+                <div className="flex flex-wrap gap-2">
+                  {displayData.favoriteSubjects.map((s, i) => (
+                    <Badge key={i} variant="secondary">
+                      {s}
                     </Badge>
                   ))}
                 </div>
               </div>
             )}
 
-            {formData.hobbies && formData.hobbies.length > 0 && (
+            {displayData.hobbies && displayData.hobbies.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground pl-1">Sở thích</p>
-                <div className="flex flex-wrap gap-2 pl-1">
-                  {formData.hobbies.filter(h => h.trim()).map((hobby, index) => (
-                    <Badge key={index} className="rounded-lg px-3 py-1 bg-etechs-primary/10 text-etechs-primary dark:text-etechs-primary">
-                      {hobby}
+                <p className="text-xs text-muted-foreground">Sở thích</p>
+                <div className="flex flex-wrap gap-2">
+                  {displayData.hobbies.map((h, i) => (
+                    <Badge key={i} className="bg-teal-100 text-teal-800 hover:bg-teal-200 dark:bg-teal-900/30 dark:text-teal-400 border-0">
+                      {h}
                     </Badge>
                   ))}
                 </div>
               </div>
             )}
 
-            {!formData.school && !formData.class && !formData.favoriteSubjects?.length && !formData.hobbies?.length && (
-              <div className="text-center py-8 text-muted-foreground">
-                <p className="text-sm">Chưa có thông tin cá nhân</p>
-                <p className="text-xs mt-1">Nhấn vào icon chỉnh sửa để thêm thông tin</p>
-              </div>
-            )}
+            {!displayData.school && !displayData.class && !displayData.favoriteSubjects?.length && !displayData.hobbies?.length && <p className="text-sm text-center text-muted-foreground py-4">Chưa có thông tin cá nhân</p>}
           </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

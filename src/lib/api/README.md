@@ -1,78 +1,60 @@
-# API Layer
+# API Layer (Single Source of Truth)
 
 ## Structure
+
+Toàn bộ hệ thống API được thống nhất về một nguồn duy nhất sử dụng **Orval** để generate code từ OpenAPI spec của backend.
 
 ```
 src/lib/api/
 ├── generated/           # Auto-generated từ OpenAPI spec (via Orval)
-│   ├── auth/           # Auth hooks (useLogin, useRegister, etc.)
-│   ├── feed/           # Feed hooks (useGetFeed, useCreatePost, etc.)
-│   └── model/          # Shared TypeScript types
-└── README.md           # This file
+│   ├── index.ts        # Barrel exports với namespaces (AuthAPI, PostsV2API, v.v.)
+│   ├── auth/           # Auth hooks
+│   ├── posts-v2/       # Feed/Posts hooks
+│   └── model/          # TypeScript models (Backend schema)
+├── transforms/          # Layer chuyển đổi dữ liệu BE -> FE (camelCase, format)
+├── manual-apis.ts       # Các endpoints hiếm hoi thiếu trong OpenAPI spec
+└── axios-instance.ts    # Orval mutator wrapper
 ```
 
-## Manual APIs (Current)
+## Nguồn sự thật duy nhất (Single Source of Truth)
 
-Manual APIs vẫn ở `src/features/*/services/`:
-- `src/features/auth/services/authApi.ts`
-- `src/features/home/services/feedApi.ts`
-- `src/features/profile/services/profileApi.ts`
-- etc.
+🚫 **KHÔNG** tự viết manual API services trong `src/features/*/services/`.
+🚫 **KHÔNG** tự viết manual TypeScript interfaces cho dữ liệu từ API.
 
-## Generate API Client
+✅ **LUÔN LUÔN** sử dụng generated hooks từ `@/lib/api/generated`.
+✅ **SỬ DỤNG** transform layer tại `@/lib/api/transforms` để format dữ liệu cho UI.
 
-**Khi backend đã có OpenAPI spec:**
+## Quy trình làm việc
 
-1. Đảm bảo backend running và có `/openapi.json` endpoint
-2. Chạy command:
-   ```bash
-   pnpm gen:api
-   ```
-3. Check output trong `src/lib/api/generated/`
+### 1. Khi Backend thay đổi API
+Đảm bảo backend đang chạy, sau đó chạy command:
+```bash
+pnpm gen:api
+```
 
-## Usage Example (After Generate)
+### 2. Cách sử dụng mới (Example)
+
+Nên sử dụng các **Smart Hooks** tại `src/lib/api/hooks/` thay vì gọi trực tiếp generated hooks nếu có logic biến đổi dữ liệu phức tạp.
 
 ```typescript
-// BEFORE (Manual API với React Query)
-import { feedApi } from '@/features/home/services/feedApi';
-import { useQuery } from '@tanstack/react-query';
+import { useUser } from '@/lib/api/hooks/useUser';
 
-const { data } = useQuery({
-  queryKey: ['feed', page],
-  queryFn: () => feedApi.getPosts(page, 10),
-});
+// Tự động transform BE -> FE và xử lý cache
+const { user, isLoading } = useUser('me'); 
 
-// AFTER (Orval Generated Hook)
-import { useGetFeed } from '@/lib/api/generated/feed/feed';
-
-const { data } = useGetFeed({ page, limit: 10 });
+// user lúc này đã có type Author chuẩn FE (camelCase)
+console.log(user.displayName); 
 ```
 
-## Migration Guide
+### 3. Transform Layer & Smart Hooks
+- **Transforms**: Nơi định nghĩa logic convert `snake_case` (BE) -> `camelCase` (FE).
+- **Smart Hooks**: Wrapper quanh generated hooks, sử dụng option `select` để tự động transform dữ liệu ngay khi nhận được từ server.
 
-Khi migrate từ manual API sang Orval:
+## Axios & Authentication
+Hệ thống sử dụng chung một `apiClient` tại `src/lib/api.ts` hỗ trợ:
+- Tự động đính kèm Token & Tenant ID.
+- Refresh Token logic với hàng đợi (Queue).
+- Unwrap middleware response `{ success: true, data: T }`.
 
-1. **Giữ nguyên manual API file** - Đừng xóa ngay
-2. **Tạo component mới** dùng generated hook để test
-3. **So sánh kết quả** giữa manual và generated
-4. **Replace dần** trong các component
-5. **Cuối cùng** mới xóa manual API file
-
-## Axios Instance
-
-Tất cả API calls (manual và generated) đều dùng chung axios instance tại:
-- `src/lib/api.ts` - Unified instance với refresh token, unwrap middleware
-
-Orval mutator được config tại:
-- `src/lib/axios-instance.ts` - Wrapper cho Orval
-
-## Troubleshooting
-
-### "Cannot find module '@/lib/api/generated/...'"
-→ Chưa generate. Chạy `pnpm gen:api` trước.
-
-### "Network Error" khi generate
-→ Backend chưa running hoặc `/openapi.json` endpoint không tồn tại.
-
-### Types không khớp với manual API
-→ Có thể do backend thay đổi schema. Re-generate và update manual types.
+## Quy định (ESLint)
+Đã cấu hình rule `no-restricted-imports` để ngăn chặn việc tạo lại các manual API services. Nếu bạn cố gắng import từ `**/services/*Api`, linter sẽ báo lỗi.

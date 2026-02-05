@@ -1,9 +1,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
-import { authApi } from "../services/authApi";
+import { AuthAPI } from "@/lib/api/generated";
+import { transformAuthResponse, getErrorMessage } from "@/lib/api/transforms";
 import { LoginFormDataSchema, type LoginFormData } from "../types/auth.types";
 
 export function useLogin() {
@@ -19,24 +19,32 @@ export function useLogin() {
         },
     });
 
-    const mutation = useMutation({
-        mutationFn: (data: LoginFormData) => authApi.login(data),
-        onSuccess: (response) => {
-            setAuth(response);
-            // Redirect admin users to accounts management, others to home
-            const redirectPath = response.user?.role === "ADMIN" ? "/admin/accounts" : "/";
-            navigate(redirectPath);
+    const mutation = AuthAPI.useLoginAuthLoginPost({
+        mutation: {
+            onSuccess: (response) => {
+                const data = transformAuthResponse(response);
+                setAuth(data);
+                // Redirect admin users to accounts management, others to home
+                const redirectPath = data.user?.role === "ADMIN" ? "/admin/accounts" : "/";
+                navigate(redirectPath);
+            },
         },
     });
 
     const onSubmit = (data: LoginFormData) => {
-        mutation.mutate(data);
+        mutation.mutate({ 
+            data: {
+                username: data.email, 
+                password: data.password,
+                remember_me: data.rememberMe
+            } 
+        });
     };
 
     return {
         form,
         onSubmit,
-        error: (mutation.error as any)?.response?.data?.detail || (mutation.error instanceof Error ? mutation.error.message : null),
+        error: getErrorMessage(mutation.error),
         isSuccess: mutation.isSuccess,
         isLoading: mutation.isPending,
     };
