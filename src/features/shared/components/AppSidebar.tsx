@@ -16,11 +16,10 @@ import { NavUser } from "./sidebar/NavUser"
 import { Logo } from "./Logo"
 import { Link } from "react-router-dom"
 import { useNotifications } from "@/features/notifications/hooks/useNotifications"
-import { useMessages } from "@/features/messages/hooks/useMessages"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { unreadCount } = useNotifications()
-  const { unreadCount: unreadMessagesCount } = useMessages()
+  const unreadMessagesCount = 0 // TODO: implement unread count for messages
   
   const menuItems = [
     { icon: Home, label: "Trang chủ", path: "/" },

@@ -9,7 +9,7 @@ interface Props {
   onRefresh: () => Promise<void>;
 }
 
-export const PinnedMessages: React.FC<Props> = ({ pinned, currentUserId, sendReaction, onRefresh }) => {
+export const PinnedMessages: React.FC<Props> = ({ pinned, onRefresh }) => {
   const [expanded, setExpanded] = useState(false);
 
   const count = pinned?.length || 0;
