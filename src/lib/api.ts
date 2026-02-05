@@ -48,7 +48,16 @@ const processQueue = (error: AxiosError | null) => {
 // ============================================
 // PUBLIC AUTH PATHS (No token sent)
 // ============================================
-const PUBLIC_AUTH_PATHS = ["/auth/login", "/auth/register", "/auth/verify-otp", "/auth/otp/verify", "/auth/resend-otp"];
+const PUBLIC_AUTH_PATHS = [
+    "/auth/login",
+    "/auth/register",
+    "/auth/verify-otp",
+    "/auth/otp/verify",
+    "/auth/resend-otp",
+    "/auth/otp/send",
+    "/auth/forgot-password",
+    "/auth/reset-password",
+];
 
 function isPublicAuthRequest(url: string | undefined): boolean {
     if (!url) return false;
@@ -101,8 +110,8 @@ apiClient.interceptors.response.use(
             _retry?: boolean;
         };
 
-        // If 401 and not already retrying
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // If 401 and not already retrying, AND NOT a public auth request
+        if (error.response?.status === 401 && !originalRequest._retry && !isPublicAuthRequest(originalRequest.url)) {
             if (isRefreshing) {
                 // Wait for the refresh to complete
                 return new Promise((resolve, reject) => {

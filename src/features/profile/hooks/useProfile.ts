@@ -61,7 +61,7 @@ export function useProfile(userIdParam?: string) {
       data: {
         display_name: data.displayName,
         username: data.username || null,
-        birth_date: data.birthDate,
+        birth_date: data.birthDate && data.birthDate.trim() !== "" ? data.birthDate : null,
         bio: data.bio
       }
     }),

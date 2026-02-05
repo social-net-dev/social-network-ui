@@ -32,12 +32,11 @@ export function useLogin() {
     });
 
     const onSubmit = (data: LoginFormData) => {
-        // Orval mutation expects body in a specific format
-        // Based on generated code: (data: {params?: ..., data: BodyLoginAuthLoginPost})
         mutation.mutate({ 
             data: {
-                username: data.email, // Backend expects 'username' in OAuth2 form
-                password: data.password
+                username: data.email, 
+                password: data.password,
+                remember_me: data.rememberMe
             } 
         });
     };

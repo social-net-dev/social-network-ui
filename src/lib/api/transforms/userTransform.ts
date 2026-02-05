@@ -42,6 +42,7 @@ export const transformAuthor = (author: Models.AuthorInfo | Models.PublicProfile
       displayName: 'Người dùng',
       avatar: null,
       username: '',
+      role: 'USER',
     };
   }
 
