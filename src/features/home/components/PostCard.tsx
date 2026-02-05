@@ -42,21 +42,23 @@ export function PostCard({
   const [editContent, setEditContent] = useState("");
   const [showMenu, setShowMenu] = useState(false);
 
-  const createdAt = post.createdAt ?? post.created_at ?? new Date().toISOString();
+  const createdAt = post.createdAt || new Date().toISOString();
   const timeAgo = formatDistanceToNow(new Date(createdAt), {
     addSuffix: true,
     locale: vi,
   });
 
-  const content = post.content ?? post.content_text ?? "";
-  const images = post.images ?? post.media_urls ?? post.media_paths ?? [];
+  const content = post.content || "";
+  const images = post.mediaUrls || [];
   const { data: blobUrls = [], isLoading: loadingImages } = useMediaBlobs(images);
-  const likes = post.likes ?? post.reaction_count ?? 0;
-  const commentsCount = post.comments ?? post.comment_count ?? 0;
-  const shares = post.shares ?? post.share_count ?? 0;
-  const likedByCurrentUser = !!post.likedByCurrentUser || !!post.user_reaction;
-  const isAuthor = currentUserId === (post.author_id || (post.author as any)?.id);
-  const sharedPost = post.shared_post;
+  
+  const likes = post.stats?.reactions ?? 0;
+  const commentsCount = post.stats?.comments ?? 0;
+  const shares = post.stats?.shares ?? 0;
+  const likedByCurrentUser = !!post.userReaction;
+  
+  const isAuthor = currentUserId === post.author.id;
+  const sharedPost = post.sharedPost;
 
   const handleDelete = () => {
     if (!onDelete) return;

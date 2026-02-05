@@ -9,70 +9,47 @@ interface SharedPostCardProps {
 }
 
 export function SharedPostCard({ post }: SharedPostCardProps) {
-  const images = post.images ?? post.media_urls ?? post.media_paths ?? [];
+  const images = post.mediaUrls || [];
   const { data: blobUrls = [], isLoading: loadingImages } = useMediaBlobs(images);
 
-  const createdAt = post.createdAt ?? post.created_at ?? new Date().toISOString();
+  const createdAt = post.createdAt || new Date().toISOString();
   const timeAgo = formatDistanceToNow(new Date(createdAt), {
     addSuffix: true,
     locale: vi,
   });
 
-  const content = post.content ?? post.content_text ?? "";
-
-  const a = post.author as any;
-  const display = a?.display_name || "";
-  const [first = "", last = ""] = display
-    ? display.split(" ")
-    : [a?.firstName || "", a?.lastName || ""];
-  const userForAvatar = {
-    id: a?.id || "",
-    firstName: a?.firstName ?? first ?? "",
-    lastName: a?.lastName ?? last ?? "",
-    email: a?.email ?? "",
-    avatar: a?.avatar ?? a?.avatar_path ?? null,
-  };
+  const content = post.content || "";
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 mt-3">
-      <div className="flex items-center space-x-3 mb-3">
-        <Avatar user={userForAvatar} size="sm" />
-        <div>
-          <h4 className="font-semibold text-sm text-gray-900 dark:text-white">
-            {display || `${first} ${last}`}
+    <div className="bg-muted/50 rounded-xl p-4 border border-border/50 mb-4 animate-fadeIn">
+      <div className="flex items-center gap-3 mb-3">
+        <Avatar user={post.author} size="sm" />
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm font-semibold text-foreground truncate">
+            {post.author.displayName}
           </h4>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{timeAgo}</p>
+          <p className="text-[10px] text-muted-foreground">{timeAgo}</p>
         </div>
       </div>
-
-      {content && (
-        <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 whitespace-pre-wrap">
-          {content}
-        </p>
-      )}
+      
+      <p className="text-xs text-foreground/80 leading-relaxed mb-3 line-clamp-3">
+        {content}
+      </p>
 
       {images.length > 0 && (
-        <div className="grid gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {loadingImages ? (
-            <div className="w-full h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-          ) : blobUrls.length === 1 ? (
-            <img
-              src={blobUrls[0]}
-              alt="Shared post"
-              className="w-full rounded-lg max-h-64 object-cover"
-            />
-          ) : blobUrls.length > 1 ? (
-            <div className="grid grid-cols-2 gap-1">
-              {blobUrls.slice(0, 4).map((url, idx) => (
-                <img
-                  key={idx}
-                  src={url}
-                  alt={`Shared ${idx + 1}`}
-                  className="w-full h-24 object-cover rounded"
-                />
-              ))}
-            </div>
-          ) : null}
+            <div className="col-span-2 h-32 bg-muted/30 rounded-lg animate-pulse" />
+          ) : (
+            blobUrls.slice(0, 2).map((url, i) => (
+              <img 
+                key={i} 
+                src={url} 
+                className="h-32 w-full object-cover rounded-lg border border-border/30" 
+                alt="Shared content" 
+              />
+            ))
+          )}
         </div>
       )}
     </div>

@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import {
     Save,
     User,
@@ -164,16 +163,6 @@ export function ProfileSettingsPage() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-32">
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        <BreadcrumbItem><BreadcrumbLink href="/">Trang chủ</BreadcrumbLink></BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem><BreadcrumbLink href="/profile">Hồ sơ</BreadcrumbLink></BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem><BreadcrumbPage>Cài đặt</BreadcrumbPage></BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-
                 <div className="flex flex-col gap-2">
                     <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">Cài đặt hồ sơ</h1>
                     <p className="text-gray-500 dark:text-gray-400">Quản lý chi tiết cá nhân, trình độ học vấn và quyền riêng tư của bạn.</p>

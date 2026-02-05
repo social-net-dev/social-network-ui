@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import * as Models from '@/lib/api/generated/model'
 import type { Author } from '@/features/home/types/feed.types'
 
 /**

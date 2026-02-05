@@ -1,5 +1,4 @@
 import { z } from "zod";
-import * as Models from "@/lib/api/generated/model";
 
 // ===========================
 // 🎯 FRONTEND MODELS (Chuẩn FE)
