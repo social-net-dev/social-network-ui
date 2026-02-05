@@ -36,7 +36,7 @@ export function NavMain({ items }: NavMainProps) {
                   <span>{item.label}</span>
                 </Link>
               </SidebarMenuButton>
-              {item.badge && item.badge > 0 && (
+              {typeof item.badge === 'number' && item.badge > 0 && (
                 <SidebarMenuBadge
                   className={cn(
                     isActive 
