@@ -42,10 +42,6 @@ export function MainLayout({ children, showSidebar = true }: MainLayoutProps) {
               >
                 {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </Button>
-
-              {user && (
-                <Avatar user={user} size="sm" className="cursor-pointer" />
-              )}
             </div>
           </div>
         </header>
