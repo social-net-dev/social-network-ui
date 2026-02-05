@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useMemo } from 'react'
 import { useProfile } from '../hooks/useProfile'
 import type { Author } from '@/features/home/types/feed.types'
@@ -9,30 +9,58 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAuthStore } from '@/stores/authStore'
-import { FileText, Heart, MessageSquare, Share2, Clock } from 'lucide-react'
+import { FileText, Loader2 } from 'lucide-react'
 import { ActivityFeed } from '../components/ActivityFeed'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { StorageQuotaCard } from '../components/StorageQuotaCard'
+import { PostsV2API, PostsAPI } from '@/lib/api/generated'
+import { transformPost } from '@/lib/api/transforms'
+import { PostCard } from '@/features/home/components/PostCard'
+import { usePostActions } from '@/features/home/hooks/usePostActions'
 
 function ProfilePage() {
   const navigate = useNavigate()
-  const { profile: rawProfile, isLoading, error } = useProfile()
+  const { userId } = useParams()
+  const { profile: rawProfile, isLoading: isProfileLoading, error, isMe } = useProfile()
   const profile = rawProfile as Author;
-  const { user, isAuthenticated } = useAuthStore()
+  const { user: currentUser, isAuthenticated } = useAuthStore()
+  const { deletePost, updatePost, likePost } = usePostActions();
 
-  const mockPosts = useMemo(() => {
-    if (!profile || profile.postsCount === 0) return []
+  // Fetch actual posts for the current user if it's "me"
+  const { data: myPostsResponse, isLoading: isMyPostsLoading } = PostsV2API.useGetMyPostsV2PostsMeListGet({
+    page: 1,
+    page_size: 10
+  }, {
+    query: {
+      enabled: !!isMe && isAuthenticated,
+      select: (data: any) => {
+        const posts = data?.data || data || [];
+        return Array.isArray(posts) ? posts.map(transformPost) : [];
+      }
+    }
+  });
 
-    return Array.from({ length: 3 }, (_, i) => ({
-      id: i.toString(),
-      content: `Bài viết thứ ${i + 1} của tôi về công nghệ AI và phát triển phần mềm. Hy vọng mọi người thích nó! #AI #ETECHS #SoftwareDevelopment`,
-      likes: 124 + i * 10,
-      comments: 12 + i,
-      shares: 5 + i,
-      createdAt: `2024-01-${(10 + i).toString().padStart(2, '0')}T00:00:00.000Z`,
-    }))
-  }, [profile?.postsCount])
+  // Fetch posts for other users
+  const { data: publicPostsResponse, isLoading: isPublicPostsLoading } = PostsAPI.useProfilePostsProfilesUsernamePostsGet(
+    (profile?.username || userId || '') as string, 
+    {
+      query: {
+        enabled: !isMe && !!(profile?.username || userId),
+        select: (data: any) => {
+          const posts = data?.data || data || [];
+          return Array.isArray(posts) ? posts.map(transformPost) : [];
+        }
+      }
+    }
+  );
 
-  if (isLoading) {
+  const posts = useMemo(() => {
+    if (isMe) return myPostsResponse || [];
+    return publicPostsResponse || [];
+  }, [isMe, myPostsResponse, publicPostsResponse]);
+
+  const isPostsLoading = isMe ? isMyPostsLoading : isPublicPostsLoading;
+
+  if (isProfileLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -56,9 +84,9 @@ function ProfilePage() {
     )
   }
 
-  const isCurrentUser = isAuthenticated && user?.id === profile.id
+  const isCurrentUser = isAuthenticated && currentUser?.id === profile.id
   const stats = {
-    posts: profile.postsCount || 0,
+    posts: profile.postsCount || posts.length || 0,
     followers: profile.followers || 0,
     following: profile.following || 0,
   }
@@ -93,47 +121,23 @@ function ProfilePage() {
             </TabsList>
 
             <TabsContent value="posts" className="mt-6 space-y-6 outline-none animate-fadeInUp">
-              {mockPosts.length > 0 ? (
+              {isPostsLoading ? (
+                <div className="flex justify-center py-12">
+                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : posts.length > 0 ? (
                 <div className="space-y-6">
-                  {mockPosts.map((post, index) => (
-                    <Card key={post.id} className="border-border/50 shadow-sm bg-card rounded-xl overflow-hidden transition-all-300 hover:shadow-md hover-lift" style={{ animationDelay: `${index * 50}ms` }}>
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                          <Avatar className="w-11 h-11 border border-border ring-2 ring-transparent hover:ring-primary/20 transition-all-300">
-                            <AvatarImage src={profile.avatar || undefined} />
-                            <AvatarFallback className="bg-primary/10 text-primary font-semibold">{profile.displayName?.[0] || '?'}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-foreground truncate hover:text-primary transition-colors-300 cursor-pointer">
-                              {profile.displayName}
-                            </p>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                              <Clock className="w-3 h-3" />
-                              {new Date(post.createdAt).toLocaleDateString('vi-VN')}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="text-foreground/90 mb-5 leading-relaxed text-sm">
-                          {post.content}
-                        </p>
-                        <div className="flex items-center justify-between pt-4 border-t border-border/30">
-                          <div className="flex gap-4">
-                            <button className="flex items-center gap-2 text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition-colors-300 px-2 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30">
-                              <Heart className="w-5 h-5" />
-                              <span className="text-sm font-medium">{post.likes}</span>
-                            </button>
-                            <button className="flex items-center gap-2 text-muted-foreground hover:text-blue-500 dark:hover:text-blue-400 transition-colors-300 px-2 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30">
-                              <MessageSquare className="w-5 h-5" />
-                              <span className="text-sm font-medium">{post.comments}</span>
-                            </button>
-                            <button className="flex items-center gap-2 text-muted-foreground hover:text-green-500 dark:hover:text-green-400 transition-colors-300 px-2 py-1.5 rounded-lg hover:bg-green-50 dark:hover:bg-green-950/30">
-                              <Share2 className="w-5 h-5" />
-                              <span className="text-sm font-medium">{post.shares}</span>
-                            </button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                  {posts.map((post) => (
+                    <PostCard 
+                      key={post.id} 
+                      post={post} 
+                      currentUserId={currentUser?.id}
+                      onLike={(id, liked) => likePost?.(id, liked)}
+                      onComment={() => {}}
+                      onShare={() => {}}
+                      onDelete={(id) => deletePost?.(id)}
+                      onEdit={(id, content) => updatePost?.(id, content)}
+                    />
                   ))}
                   <Button variant="ghost" className="w-full rounded-xl py-5 border-2 border-dashed border-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all-300 hover-lift">
                     Xem tất cả bài viết
@@ -157,6 +161,9 @@ function ProfilePage() {
         </div>
 
         <div className="w-full lg:w-80 space-y-6 shrink-0">
+          {isMe && profile.storageQuotaMb && (
+            <StorageQuotaCard quotaMb={profile.storageQuotaMb} />
+          )}
           <PersonalInfoSidebar />
           <ActivityFeed limit={5} />
         </div>

@@ -13,8 +13,8 @@ interface ProfileHeaderProps {
 }
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  VERIFIED: { label: "ĐÃ XÁC THỰC", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-  UNVERIFIED: { label: "CHƯA XÁC THỰC", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  VERIFIED: { label: "ĐÃ XÁC MINH", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  UNVERIFIED: { label: "CHƯA XÁC MINH", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
   LOCKED: { label: "BỊ KHÓA", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
   DISABLED: { label: "VÔ HIỆU HÓA", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400" },
   DEACTIVATED: { label: "ĐÃ HỦY KÍCH HOẠT", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400" },
@@ -124,16 +124,18 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
                     <span className="text-muted-foreground text-base font-medium">@{profile.username}</span>
                   )}
 
-                  {statusConfig && (
-                    <Badge variant="secondary" className={`${statusConfig.className} border-0 h-5 px-2 text-[10px] uppercase font-bold tracking-wider`}>
-                      {statusConfig.label}
-                    </Badge>
-                  )}
-                  {roleConfig && (
-                    <Badge variant="secondary" className={`${roleConfig.className} border-0 h-5 px-2 text-[10px] uppercase font-bold tracking-wider`}>
-                      {roleConfig.label}
-                    </Badge>
-                  )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {statusConfig && (
+                        <Badge variant="secondary" className={`${statusConfig.className} border-0 h-5 px-2 text-[10px] uppercase font-bold tracking-wider`}>
+                        {statusConfig.label}
+                        </Badge>
+                    )}
+                    {roleConfig && (
+                        <Badge variant="secondary" className={`${roleConfig.className} border-0 h-5 px-2 text-[10px] uppercase font-bold tracking-wider`}>
+                        {roleConfig.label}
+                        </Badge>
+                    )}
+                  </div>
                 </div>
                 {profile.email && (
                   <p className="text-muted-foreground text-sm font-medium">{profile.email}</p>

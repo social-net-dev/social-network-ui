@@ -30,6 +30,15 @@ export function usePostActions() {
     }
   });
 
+  const reactMutation = PostsV2API.useReactToPostV2PostsPostIdReactionsPost({
+    mutation: {
+      onSuccess: () => {
+        // We can invalidate specific post or the whole feed
+        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+      }
+    }
+  });
+
   const deletePost = useCallback((postId: string) => {
     return deleteMutation.mutateAsync({ postId });
   }, [deleteMutation]);
@@ -48,12 +57,22 @@ export function usePostActions() {
     });
   }, [shareMutation]);
 
+  const likePost = useCallback((postId: string, liked: boolean) => {
+    const reaction = liked ? "LIKE" : null;
+    return reactMutation.mutateAsync({ 
+        postId, 
+        data: { reaction: reaction as string } 
+    });
+  }, [reactMutation]);
+
   return {
     deletePost,
     updatePost,
     sharePost,
+    likePost,
     isDeleting: deleteMutation.isPending,
     isUpdating: updateMutation.isPending,
     isSharing: shareMutation.isPending,
+    isLiking: reactMutation.isPending,
   };
 }

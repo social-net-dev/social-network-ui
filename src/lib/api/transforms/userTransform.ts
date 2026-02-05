@@ -52,11 +52,14 @@ export const transformAuthor = (author: Models.AuthorInfo | Models.PublicProfile
 
   return {
     id: author.id,
-    displayName: author.display_name || 'Người dùng',
+    displayName: author.display_name || author.username || 'Người dùng',
     avatar: appendAuthToken(author.avatar_path),
     username: author.username || '',
     bio: bioText,
     personalInfo,
+    role: (author as any).role || 'USER',
+    accountStatus: (author as any).account_status || 'UNVERIFIED',
+    createdAt: (author as any).created_at,
     // Support legacy fields if needed by components
     firstName: (author.display_name || 'Người dùng').split(' ')[0] || '',
     lastName: (author.display_name || 'Người dùng').split(' ').slice(1).join(' ') || '',
