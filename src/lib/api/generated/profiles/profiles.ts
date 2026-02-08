@@ -48,7 +48,7 @@ export const getProfileProfilesUsernameGet = (
       
       
       return customInstance<PublicProfileResponse>(
-      {url: `/profiles/${username}`, method: 'GET', signal
+      {url: `/profiles/${username}/`, method: 'GET', signal
     },
       options);
     }
@@ -58,7 +58,7 @@ export const getProfileProfilesUsernameGet = (
 
 export const getGetProfileProfilesUsernameGetQueryKey = (username: string,) => {
     return [
-    `/profiles/${username}`
+    `/profiles/${username}/`
     ] as const;
     }
 
@@ -138,7 +138,7 @@ export const updateMyPrivacyUsersMePrivacyPatch = (
       
       
       return customInstance<ProfileVisibilityResponse>(
-      {url: `/users/me/privacy`, method: 'PATCH',
+      {url: `/users/me/privacy/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: profileVisibilityUpdateRequest, signal
     },

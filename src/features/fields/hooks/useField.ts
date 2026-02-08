@@ -11,7 +11,7 @@ export function useField(fieldId: string) {
   const fieldQuery = useQuery({
     queryKey: ['fields', fieldId],
     queryFn: async () => {
-      const response = await apiClient.get<FieldResponse>(`/fields/${fieldId}`);
+      const response = await apiClient.get<FieldResponse>(`/fields/${fieldId}/`);
       return response.data.field;
     },
     enabled: !!fieldId,
@@ -20,7 +20,7 @@ export function useField(fieldId: string) {
   const postsQuery = useInfiniteQuery({
     queryKey: ['fields', fieldId, 'posts'],
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await apiClient.get<FieldPostsResponse>(`/fields/${fieldId}/posts`, {
+      const response = await apiClient.get<FieldPostsResponse>(`/fields/${fieldId}/posts/`, {
         params: { page: pageParam, limit: 10 },
       });
       return response.data;
@@ -35,7 +35,7 @@ export function useField(fieldId: string) {
 
   const followMutation = useMutation({
     mutationFn: async () => {
-      return apiClient.post(`/fields/${fieldId}/follow`);
+      return apiClient.post(`/fields/${fieldId}/follow/`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fields', fieldId] });
@@ -48,7 +48,7 @@ export function useField(fieldId: string) {
 
   const unfollowMutation = useMutation({
     mutationFn: async () => {
-      return apiClient.delete(`/fields/${fieldId}/follow`);
+      return apiClient.delete(`/fields/${fieldId}/follow/`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fields', fieldId] });

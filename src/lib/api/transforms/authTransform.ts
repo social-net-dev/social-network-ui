@@ -20,8 +20,9 @@ export const transformAuthResponse = (data: any) => {
   // Manual check of the actual response structure from dev-tools/interceptors
   const innerData = data?.data || data;
   return {
-    user: transformAuthor(innerData.user),
-    token: innerData.token || innerData.access_token,
-    refreshToken: innerData.refresh_token || innerData.refreshToken,
+    user: innerData?.user ? transformAuthor(innerData.user) : null,
+    token: innerData?.access || innerData?.token || innerData?.access_token,
+    refreshToken: innerData?.refresh || innerData?.refresh_token || innerData?.refreshToken,
+    tenantSlug: innerData?.tenant_slug || innerData?.tenantSlug,
   };
 };

@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { useMemo } from 'react';
 import { useProfile } from '../hooks/useProfile';
 import type { Author, FeedPost } from '@/features/home/types/feed.types';
 import { ProfileHeader } from '../components/ProfileHeader';
@@ -12,49 +11,36 @@ import { useAuthStore } from '@/stores/authStore';
 import { FileText, Loader2 } from 'lucide-react';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { StorageQuotaCard } from '../components/StorageQuotaCard';
-import { PostsV2API, PostsAPI, Models } from '@/lib/api/generated';
-import { getGetMyPostsV2PostsMeListGetQueryKey } from '@/lib/api/generated/posts-v2/posts-v2';
-import { getProfilePostsProfilesUsernamePostsGetQueryKey } from '@/lib/api/generated/posts/posts';
+import { useQuery } from '@tanstack/react-query';
+import { getPostsByUserId } from '@/lib/api/manual-apis';
 import { transformPost } from '@/lib/api/transforms';
 import { PostCard } from '@/features/home/components/PostCard';
 import { usePostActions } from '@/features/home/hooks/usePostActions';
 
+const USER_POSTS_QUERY_KEY = ['user-posts'] as const;
+
 function ProfilePage() {
   const navigate = useNavigate();
-  const { userId } = useParams();
+  const { userId: _userId } = useParams();
   const { profile: rawProfile, isLoading: isProfileLoading, error, isMe } = useProfile();
   const profile = rawProfile as Author;
   const { user: currentUser, isAuthenticated } = useAuthStore();
 
-  const myPostsParams = { page: 1, page_size: 10 };
-  const publicPostsIdentifier = (profile?.username || userId || '') as string;
+  const postsUserId = isMe ? currentUser?.id : profile?.id;
+  const currentQueryKey = [...USER_POSTS_QUERY_KEY, postsUserId] as unknown as readonly unknown[];
+  const { deletePost, updatePost, likePost } = usePostActions(currentQueryKey);
 
-  const currentQueryKey = isMe ? getGetMyPostsV2PostsMeListGetQueryKey(myPostsParams) : getProfilePostsProfilesUsernamePostsGetQueryKey(publicPostsIdentifier);
-
-  const { deletePost, updatePost, likePost } = usePostActions(currentQueryKey as unknown as readonly unknown[]);
-
-  // Fetch actual posts for the current user if it's "me"
-  const { data: myPostsResponse, isLoading: isMyPostsLoading } = PostsV2API.useGetMyPostsV2PostsMeListGet(myPostsParams, {
-    query: {
-      enabled: !!isMe && isAuthenticated,
-      select: (data: Models.PostOut[]) => data.map(transformPost),
+  const { data: postsList, isLoading: isPostsLoading } = useQuery({
+    queryKey: [...USER_POSTS_QUERY_KEY, postsUserId],
+    queryFn: async () => {
+      const res = await getPostsByUserId(postsUserId!);
+      const list = (res as { posts?: unknown[] })?.posts ?? (Array.isArray(res) ? res : []);
+      return (list as any[]).map(transformPost);
     },
+    enabled: !!postsUserId,
   });
 
-  // Fetch posts for other users
-  const { data: publicPostsResponse, isLoading: isPublicPostsLoading } = PostsAPI.useProfilePostsProfilesUsernamePostsGet(publicPostsIdentifier, {
-    query: {
-      enabled: !isMe && !!publicPostsIdentifier,
-      select: (data: Models.PostOut[]) => data.map(transformPost),
-    },
-  });
-
-  const posts = useMemo<FeedPost[]>(() => {
-    if (isMe) return myPostsResponse || [];
-    return publicPostsResponse || [];
-  }, [isMe, myPostsResponse, publicPostsResponse]);
-
-  const isPostsLoading = isMe ? isMyPostsLoading : isPublicPostsLoading;
+  const posts: FeedPost[] = postsList ?? [];
 
   if (isProfileLoading) {
     return (

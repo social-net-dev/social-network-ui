@@ -12,7 +12,7 @@ export function useChat({ room, userId, wsUrl, restBase, onReactionEvent, onMess
     // clear previous room messages when room/user changes to avoid cross-room leakage
     setMessages([]);
     const resolvedWs = wsUrl || import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'ws://localhost:8000/ws' : 'wss://api.example.com/ws');
-    const resolvedRest = restBase || import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8000' : 'https://api.example.com');
+    const resolvedRest = restBase || import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8000/api' : 'https://api.example.com');
     console.debug('useChat: connecting', {
       room,
       userId,

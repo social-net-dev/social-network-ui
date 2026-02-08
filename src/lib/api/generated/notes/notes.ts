@@ -47,7 +47,7 @@ export const listNotesNotesGet = (
       
       
       return customInstance<NoteResponse[]>(
-      {url: `/notes`, method: 'GET', signal
+      {url: `/notes/`, method: 'GET', signal
     },
       options);
     }
@@ -57,7 +57,7 @@ export const listNotesNotesGet = (
 
 export const getListNotesNotesGetQueryKey = () => {
     return [
-    `/notes`
+    `/notes/`
     ] as const;
     }
 
@@ -137,7 +137,7 @@ export const createNoteNotesPost = (
       
       
       return customInstance<NoteResponse>(
-      {url: `/notes`, method: 'POST',
+      {url: `/notes/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: noteCreate, signal
     },

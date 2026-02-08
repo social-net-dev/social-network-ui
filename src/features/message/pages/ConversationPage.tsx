@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { getApiBaseUrl, getChatWebSocketUrl } from '@/lib/config';
 import { useConversations } from '../hooks/useConversations';
 import { useChat } from '../hooks/useChat';
 import { useRoomManager } from '../hooks/useRoomManager';
@@ -120,8 +121,8 @@ const ConversationPage: React.FC = () => {
   } = useChat({
     room: resolvedRoom,
     userId: resolvedUserId,
-    wsUrl: import.meta.env.DEV ? 'ws://localhost:8000/ws' : '',
-    restBase: import.meta.env.DEV ? 'http://localhost:8000' : '',
+    wsUrl: getChatWebSocketUrl(),
+    restBase: getApiBaseUrl(),
     onReactionEvent: handleReactionEvent,
     onMessage: msg => {
       // If server echoes client_id, remove matching optimistic entry immediately

@@ -71,7 +71,7 @@ if(bodyCreatePostV2PostsPost.files !== undefined) {
  }
 
       return customInstance<PostOut>(
-      {url: `/v2/posts`, method: 'POST',
+      {url: `/posts/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -135,7 +135,7 @@ export const getPostV2PostsPostIdGet = (
       
       
       return customInstance<PostOut>(
-      {url: `/v2/posts/${postId}`, method: 'GET', signal
+      {url: `/posts/${postId}/`, method: 'GET', signal
     },
       options);
     }
@@ -145,7 +145,7 @@ export const getPostV2PostsPostIdGet = (
 
 export const getGetPostV2PostsPostIdGetQueryKey = (postId: string,) => {
     return [
-    `/v2/posts/${postId}`
+    `/posts/${postId}/`
     ] as const;
     }
 
@@ -237,7 +237,7 @@ if(bodyUpdatePostV2PostsPostIdPut.files !== undefined) {
  }
 
       return customInstance<PostOut>(
-      {url: `/v2/posts/${postId}`, method: 'PUT',
+      {url: `/posts/${postId}/`, method: 'PUT',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -301,7 +301,7 @@ export const deletePostV2PostsPostIdDelete = (
       
       
       return customInstance<void>(
-      {url: `/v2/posts/${postId}`, method: 'DELETE', signal
+      {url: `/posts/${postId}/`, method: 'DELETE', signal
     },
       options);
     }
@@ -364,7 +364,7 @@ export const getPostCommentsV2PostsPostIdCommentsGet = (
       
       
       return customInstance<CommentOut[]>(
-      {url: `/v2/posts/${postId}/comments`, method: 'GET',
+      {url: `/posts/${postId}/comments/`, method: 'GET',
         params, signal
     },
       options);
@@ -376,7 +376,7 @@ export const getPostCommentsV2PostsPostIdCommentsGet = (
 export const getGetPostCommentsV2PostsPostIdCommentsGetQueryKey = (postId: string,
     params?: GetPostCommentsV2PostsPostIdCommentsGetParams,) => {
     return [
-    `/v2/posts/${postId}/comments`, ...(params ? [params] : [])
+    `/posts/${postId}/comments/`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -468,7 +468,7 @@ if(bodyCommentOnPostV2PostsPostIdCommentsPost.files !== undefined) {
  }
 
       return customInstance<CommentOut>(
-      {url: `/v2/posts/${postId}/comments`, method: 'POST',
+      {url: `/posts/${postId}/comments/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -532,7 +532,7 @@ export const getMyPostsV2PostsMeListGet = (
       
       
       return customInstance<PostOut[]>(
-      {url: `/v2/posts/me/list`, method: 'GET',
+      {url: `/posts/me/list/`, method: 'GET',
         params, signal
     },
       options);
@@ -543,7 +543,7 @@ export const getMyPostsV2PostsMeListGet = (
 
 export const getGetMyPostsV2PostsMeListGetQueryKey = (params?: GetMyPostsV2PostsMeListGetParams,) => {
     return [
-    `/v2/posts/me/list`, ...(params ? [params] : [])
+    `/posts/me/list`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -631,7 +631,7 @@ if(bodyUpdateCommentV2PostsPostIdCommentsCommentIdPut.files !== undefined) {
  }
 
       return customInstance<CommentOut>(
-      {url: `/v2/posts/${postId}/comments/${commentId}`, method: 'PUT',
+      {url: `/posts/${postId}/comments/${commentId}/`, method: 'PUT',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -696,7 +696,7 @@ export const deleteCommentV2PostsPostIdCommentsCommentIdDelete = (
       
       
       return customInstance<void>(
-      {url: `/v2/posts/${postId}/comments/${commentId}`, method: 'DELETE', signal
+      {url: `/posts/${postId}/comments/${commentId}/`, method: 'DELETE', signal
     },
       options);
     }
@@ -765,7 +765,7 @@ if(bodyReplyToCommentV2CommentsCommentIdRepliesPost.files !== undefined) {
  }
 
       return customInstance<CommentOut>(
-      {url: `/v2/comments/${commentId}/replies`, method: 'POST',
+      {url: `/comments/${commentId}/replies/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData,
         params, signal
@@ -831,7 +831,7 @@ export const getCommentRepliesV2CommentsCommentIdRepliesGet = (
       
       
       return customInstance<CommentOut[]>(
-      {url: `/v2/comments/${commentId}/replies`, method: 'GET',
+      {url: `/comments/${commentId}/replies/`, method: 'GET',
         params, signal
     },
       options);
@@ -843,7 +843,7 @@ export const getCommentRepliesV2CommentsCommentIdRepliesGet = (
 export const getGetCommentRepliesV2CommentsCommentIdRepliesGetQueryKey = (commentId: string,
     params?: GetCommentRepliesV2CommentsCommentIdRepliesGetParams,) => {
     return [
-    `/v2/comments/${commentId}/replies`, ...(params ? [params] : [])
+    `/comments/${commentId}/replies/`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -931,7 +931,7 @@ export const reactToCommentV2CommentsCommentIdReactionsPost = (
       
       
       return customInstance<ReactionOut>(
-      {url: `/v2/comments/${commentId}/reactions`, method: 'POST',
+      {url: `/comments/${commentId}/reactions/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: reactRequest,
         params, signal
@@ -996,7 +996,7 @@ export const removeCommentReactionV2CommentsCommentIdReactionsDelete = (
       
       
       return customInstance<void>(
-      {url: `/v2/comments/${commentId}/reactions`, method: 'DELETE', signal
+      {url: `/comments/${commentId}/reactions/`, method: 'DELETE', signal
     },
       options);
     }
@@ -1059,7 +1059,7 @@ export const reactToPostV2PostsPostIdReactionsPost = (
       
       
       return customInstance<ReactionOut>(
-      {url: `/v2/posts/${postId}/reactions`, method: 'POST',
+      {url: `/posts/${postId}/reactions/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: reactRequest, signal
     },
@@ -1123,7 +1123,7 @@ export const removeReactionV2PostsPostIdReactionsDelete = (
       
       
       return customInstance<void>(
-      {url: `/v2/posts/${postId}/reactions`, method: 'DELETE', signal
+      {url: `/posts/${postId}/reactions/`, method: 'DELETE', signal
     },
       options);
     }
@@ -1186,7 +1186,7 @@ export const sharePostV2PostsPostIdSharePost = (
       
       
       return customInstance<PostOut>(
-      {url: `/v2/posts/${postId}/share`, method: 'POST',
+      {url: `/posts/${postId}/share/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: shareCreateRequest, signal
     },
@@ -1250,7 +1250,7 @@ export const unsharePostV2PostsSharePostIdShareDelete = (
       
       
       return customInstance<void>(
-      {url: `/v2/posts/${sharePostId}/share`, method: 'DELETE', signal
+      {url: `/posts/${sharePostId}/share/`, method: 'DELETE', signal
     },
       options);
     }
@@ -1312,7 +1312,7 @@ export const getFeedV2FeedGet = (
       
       
       return customInstance<FeedResponse>(
-      {url: `/v2/feed`, method: 'GET',
+      {url: `/feed/`, method: 'GET',
         params, signal
     },
       options);
@@ -1323,7 +1323,7 @@ export const getFeedV2FeedGet = (
 
 export const getGetFeedV2FeedGetQueryKey = (params?: GetFeedV2FeedGetParams,) => {
     return [
-    `/v2/feed`, ...(params ? [params] : [])
+    `/feed/`, ...(params ? [params] : [])
     ] as const;
     }
 

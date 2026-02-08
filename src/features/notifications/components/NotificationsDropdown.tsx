@@ -12,7 +12,7 @@ import { NotificationItem } from "./NotificationItem";
 import { Link } from "react-router-dom";
 
 export function NotificationsDropdown() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+  const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading } =
     useNotifications();
 
   return (
@@ -48,7 +48,11 @@ export function NotificationsDropdown() {
         </div>
         <Separator />
         
-        {notifications.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-sm text-muted-foreground">Đang tải...</p>
+          </div>
+        ) : notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Bell className="h-12 w-12 text-muted-foreground/50 mb-3" />
             <p className="text-sm text-muted-foreground">

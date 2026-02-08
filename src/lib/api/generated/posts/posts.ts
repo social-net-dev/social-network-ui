@@ -76,7 +76,7 @@ if(bodyCreatePostPostsPost.files !== undefined) {
  }
 
       return customInstance<PostOut>(
-      {url: `/posts`, method: 'POST',
+      {url: `/posts/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -140,7 +140,7 @@ export const getPostPostsPostIdGet = (
       
       
       return customInstance<PostDetailOut>(
-      {url: `/posts/${postId}`, method: 'GET', signal
+      {url: `/posts/${postId}/`, method: 'GET', signal
     },
       options);
     }
@@ -232,7 +232,7 @@ export const updatePostPostsPostIdPut = (
       
       
       return customInstance<PostOut>(
-      {url: `/posts/${postId}`, method: 'PUT',
+      {url: `/posts/${postId}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: postUpdateRequest, signal
     },
@@ -296,7 +296,7 @@ export const deletePostPostsPostIdDelete = (
       
       
       return customInstance<unknown>(
-      {url: `/posts/${postId}`, method: 'DELETE', signal
+      {url: `/posts/${postId}/`, method: 'DELETE', signal
     },
       options);
     }
@@ -361,7 +361,7 @@ export const updatePostMediaPostsPostIdMediaPut = (
 bodyUpdatePostMediaPostsPostIdMediaPut.files.forEach(value => formData.append(`files`, value));
 
       return customInstance<PostOut>(
-      {url: `/posts/${postId}/media`, method: 'PUT',
+      {url: `/posts/${postId}/media/`, method: 'PUT',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -426,7 +426,7 @@ export const getPostMediaUrlsPostsPostIdMediaGet = (
       
       
       return customInstance<GetPostMediaUrlsPostsPostIdMediaGet200>(
-      {url: `/posts/${postId}/media`, method: 'GET',
+      {url: `/posts/${postId}/media/`, method: 'GET',
         params, signal
     },
       options);
@@ -529,7 +529,7 @@ export const viewMediaFileMediaViewGet = (
       
       
       return customInstance<unknown>(
-      {url: `/media/view`, method: 'GET',
+      {url: `/media/view/`, method: 'GET',
         params, signal
     },
       options);
@@ -627,7 +627,7 @@ export const streamMediaFileMediaStreamGet = (
       
       
       return customInstance<unknown>(
-      {url: `/media/stream`, method: 'GET',
+      {url: `/media/stream/`, method: 'GET',
         params, signal
     },
       options);
@@ -724,7 +724,7 @@ export const feedFeedGet = (
       
       
       return customInstance<FeedResponse>(
-      {url: `/feed`, method: 'GET',
+      {url: `/feed/`, method: 'GET',
         params, signal
     },
       options);
@@ -815,7 +815,7 @@ export const profilePostsProfilesUsernamePostsGet = (
       
       
       return customInstance<PostOut[]>(
-      {url: `/profiles/${username}/posts`, method: 'GET', signal
+      {url: `/profiles/${username}/posts/`, method: 'GET', signal
     },
       options);
     }
@@ -906,7 +906,7 @@ export const reactPostsPostIdReactPost = (
       
       
       return customInstance<ReactionOut>(
-      {url: `/posts/${postId}/react`, method: 'POST',
+      {url: `/posts/${postId}/react/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: reactRequest, signal
     },
@@ -969,7 +969,7 @@ export const unreactPostsPostIdReactDelete = (
       
       
       return customInstance<unknown>(
-      {url: `/posts/${postId}/react`, method: 'DELETE', signal
+      {url: `/posts/${postId}/react/`, method: 'DELETE', signal
     },
       options);
     }
@@ -1031,7 +1031,7 @@ export const listReactionsPostsPostIdReactionsGet = (
       
       
       return customInstance<ReactionOut[]>(
-      {url: `/posts/${postId}/reactions`, method: 'GET', signal
+      {url: `/posts/${postId}/reactions/`, method: 'GET', signal
     },
       options);
     }
@@ -1128,7 +1128,7 @@ if(bodyCreateCommentPostsPostIdCommentsPost.files !== undefined) {
  }
 
       return customInstance<CommentOut>(
-      {url: `/posts/${postId}/comments`, method: 'POST',
+      {url: `/posts/${postId}/comments/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -1198,7 +1198,7 @@ export const listCommentsPostsPostIdCommentsGet = (
       
       
       return customInstance<CommentOut[]>(
-      {url: `/posts/${postId}/comments`, method: 'GET',
+      {url: `/posts/${postId}/comments/`, method: 'GET',
         params, signal
     },
       options);
@@ -1300,7 +1300,7 @@ export const updateCommentPostsPostIdCommentsCommentIdPut = (
 formUrlEncoded.append(`content_text`, bodyUpdateCommentPostsPostIdCommentsCommentIdPut.content_text);
 
       return customInstance<CommentOut>(
-      {url: `/posts/${postId}/comments/${commentId}`, method: 'PUT',
+      {url: `/posts/${postId}/comments/${commentId}/`, method: 'PUT',
       headers: {'Content-Type': 'application/x-www-form-urlencoded', },
        data: formUrlEncoded, signal
     },
@@ -1365,7 +1365,7 @@ export const deleteCommentPostsPostIdCommentsCommentIdDelete = (
       
       
       return customInstance<unknown>(
-      {url: `/posts/${postId}/comments/${commentId}`, method: 'DELETE', signal
+      {url: `/posts/${postId}/comments/${commentId}/`, method: 'DELETE', signal
     },
       options);
     }
@@ -1431,7 +1431,7 @@ export const updateCommentMediaPostsPostIdCommentsCommentIdMediaPut = (
 bodyUpdateCommentMediaPostsPostIdCommentsCommentIdMediaPut.files.forEach(value => formData.append(`files`, value));
 
       return customInstance<CommentOut>(
-      {url: `/posts/${postId}/comments/${commentId}/media`, method: 'PUT',
+      {url: `/posts/${postId}/comments/${commentId}/media/`, method: 'PUT',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -1497,7 +1497,7 @@ export const sharePostPostsPostIdSharePost = (
       
       
       return customInstance<PostOut>(
-      {url: `/posts/${postId}/share`, method: 'POST',
+      {url: `/posts/${postId}/share/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: shareCreateRequest, signal
     },
@@ -1561,7 +1561,7 @@ export const listSharesPostsPostIdSharesGet = (
       
       
       return customInstance<ShareOut[]>(
-      {url: `/posts/${postId}/shares`, method: 'GET', signal
+      {url: `/posts/${postId}/shares/`, method: 'GET', signal
     },
       options);
     }
@@ -1653,7 +1653,7 @@ export const deleteSharePostsPostIdSharesShareIdDelete = (
       
       
       return customInstance<unknown>(
-      {url: `/posts/${postId}/shares/${shareId}`, method: 'DELETE', signal
+      {url: `/posts/${postId}/shares/${shareId}/`, method: 'DELETE', signal
     },
       options);
     }
@@ -1717,7 +1717,7 @@ export const reactCommentPostsPostIdCommentsCommentIdReactPost = (
       
       
       return customInstance<CommentReactionOut>(
-      {url: `/posts/${postId}/comments/${commentId}/react`, method: 'POST',
+      {url: `/posts/${postId}/comments/${commentId}/react/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: reactRequest, signal
     },
@@ -1782,7 +1782,7 @@ export const unreactCommentPostsPostIdCommentsCommentIdReactDelete = (
       
       
       return customInstance<unknown>(
-      {url: `/posts/${postId}/comments/${commentId}/react`, method: 'DELETE', signal
+      {url: `/posts/${postId}/comments/${commentId}/react/`, method: 'DELETE', signal
     },
       options);
     }
@@ -1845,7 +1845,7 @@ export const listCommentReactionsPostsPostIdCommentsCommentIdReactionsGet = (
       
       
       return customInstance<CommentReactionOut[]>(
-      {url: `/posts/${postId}/comments/${commentId}/reactions`, method: 'GET', signal
+      {url: `/posts/${postId}/comments/${commentId}/reactions/`, method: 'GET', signal
     },
       options);
     }
@@ -1949,7 +1949,7 @@ if(bodyCreateReplyPostsPostIdCommentsCommentIdRepliesPost.files !== undefined) {
  }
 
       return customInstance<CommentOut>(
-      {url: `/posts/${postId}/comments/${commentId}/replies`, method: 'POST',
+      {url: `/posts/${postId}/comments/${commentId}/replies/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -2014,7 +2014,7 @@ export const listRepliesPostsPostIdCommentsCommentIdRepliesGet = (
       
       
       return customInstance<CommentOut[]>(
-      {url: `/posts/${postId}/comments/${commentId}/replies`, method: 'GET', signal
+      {url: `/posts/${postId}/comments/${commentId}/replies/`, method: 'GET', signal
     },
       options);
     }

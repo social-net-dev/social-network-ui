@@ -1,82 +1,91 @@
 import { useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Notification } from "@/types/notification";
+import api from "@/lib/api";
+import { useNotificationSocket } from "./useNotificationSocket";
+import { mapBackendNotificationToUi, type BackendNotificationRaw } from "../utils/mapBackendNotification";
 
-// Mock data - sẽ được thay thế bằng API thực sau
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "1",
-    type: "like",
-    title: "Nguyễn Văn A đã thích bài viết của bạn",
-    message: '"Chuyến đi Đà Lạt cuối tuần này thật tuyệt vời!"',
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 5), // 5 phút trước
-    avatar: "https://i.pravatar.cc/150?img=1",
-    postId: "post-1",
-    userId: "user-1",
-  },
-  {
-    id: "2",
-    type: "comment",
-    title: "Trần Thị B đã bình luận về bài viết của bạn",
-    message: "Chỗ này nhìn đẹp quá! Bạn ở đâu vậy?",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 15), // 15 phút trước
-    avatar: "https://i.pravatar.cc/150?img=2",
-    postId: "post-1",
-    userId: "user-2",
-  },
-  {
-    id: "3",
-    type: "follow",
-    title: "Lê Văn C đã bắt đầu theo dõi bạn",
-    message: "",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 phút trước
-    avatar: "https://i.pravatar.cc/150?img=3",
-    userId: "user-3",
-  },
-  {
-    id: "4",
-    type: "mention",
-    title: "Phạm Thị D đã nhắc đến bạn trong một bài viết",
-    message: "Hôm nay đi cà phê cùng @you và mấy đứa bạn...",
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 giờ trước
-    avatar: "https://i.pravatar.cc/150?img=4",
-    postId: "post-2",
-    userId: "user-4",
-  },
-  {
-    id: "5",
-    type: "like",
-    title: "Hoàng Văn E và 3 người khác đã thích ảnh của bạn",
-    message: "",
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 giờ trước
-    avatar: "https://i.pravatar.cc/150?img=5",
-    postId: "post-3",
-    userId: "user-5",
-  },
-];
+const NOTIFICATIONS_QUERY_KEY = ["notifications"];
+
+interface NotificationsListResponse {
+  notifications: BackendNotificationRaw[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+  unread_count: number;
+}
+
+async function fetchNotifications(): Promise<NotificationsListResponse> {
+  const res = await api.get<NotificationsListResponse>("notifications/", {
+    params: { page: 1, page_size: 50 },
+  });
+  return res.data;
+}
 
 export function useNotifications() {
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const queryClient = useQueryClient();
+  const [unreadCountFromWs, setUnreadCountFromWs] = useState<number | null>(null);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const { data, isLoading, isError } = useQuery({
+    queryKey: NOTIFICATIONS_QUERY_KEY,
+    queryFn: fetchNotifications,
+    staleTime: 60 * 1000,
+  });
 
-  const markAsRead = useCallback((notificationId: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
-    );
-  }, []);
+  const notifications: Notification[] = (data?.notifications ?? []).map(mapBackendNotificationToUi);
+  const unreadCount = unreadCountFromWs ?? data?.unread_count ?? notifications.filter((n) => !n.isRead).length;
 
-  const markAllAsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-  }, []);
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      try {
+        await api.post(`notifications/${notificationId}/mark-read/`);
+        await queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+      } catch {
+        // ignore
+      }
+    },
+    [queryClient]
+  );
+
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await api.post("notifications/mark-all-read/");
+      await queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+      setUnreadCountFromWs(0);
+    } catch {
+      // ignore
+    }
+  }, [queryClient]);
+
+  useNotificationSocket({
+    enabled: true,
+    onNotification: useCallback(
+      (payload: BackendNotificationRaw) => {
+        queryClient.setQueryData<NotificationsListResponse>(NOTIFICATIONS_QUERY_KEY, (prev) => {
+          if (!prev) return prev;
+          const exists = prev.notifications.some((n) => n.id === payload.id);
+          if (exists) return prev;
+          return {
+            ...prev,
+            notifications: [payload, ...prev.notifications],
+            unread_count: prev.unread_count + 1,
+          };
+        });
+        setUnreadCountFromWs((c) => (c !== null ? c + 1 : null));
+      },
+      [queryClient]
+    ),
+    onUnreadCount: useCallback((count: number) => {
+      setUnreadCountFromWs(count);
+    }, []),
+  });
 
   return {
     notifications,
     unreadCount,
+    isLoading,
+    isError,
     markAsRead,
     markAllAsRead,
   };

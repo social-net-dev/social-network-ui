@@ -49,7 +49,7 @@ export const listRequestsAdminVerificationRequestsGet = (
       
       
       return customInstance<unknown>(
-      {url: `/admin/verification/requests`, method: 'GET',
+      {url: `/admin/verification/requests/`, method: 'GET',
         params, signal
     },
       options);
@@ -60,7 +60,7 @@ export const listRequestsAdminVerificationRequestsGet = (
 
 export const getListRequestsAdminVerificationRequestsGetQueryKey = (params?: ListRequestsAdminVerificationRequestsGetParams,) => {
     return [
-    `/admin/verification/requests`, ...(params ? [params] : [])
+    `/admin/verification/requests/`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -141,7 +141,7 @@ export const approveAdminVerificationRequestsRequestIdApprovePost = (
       
       
       return customInstance<VerificationRequestOut>(
-      {url: `/admin/verification/requests/${requestId}/approve`, method: 'POST',
+      {url: `/admin/verification/requests/${requestId}/approve/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: approveRequest, signal
     },
@@ -205,7 +205,7 @@ export const rejectAdminVerificationRequestsRequestIdRejectPost = (
       
       
       return customInstance<VerificationRequestOut>(
-      {url: `/admin/verification/requests/${requestId}/reject`, method: 'POST',
+      {url: `/admin/verification/requests/${requestId}/reject/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: rejectRequest, signal
     },

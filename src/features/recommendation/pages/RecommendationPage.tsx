@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GraduationCap, Search, Sparkles, Users } from "lucide-react";
+import api from "@/lib/api";
 
 const TAB_OPTIONS = [
     { value: "ALL", label: "Tất cả" },
@@ -16,7 +18,7 @@ const TAB_OPTIONS = [
 
 type TabValue = (typeof TAB_OPTIONS)[number]["value"];
 
-type Suggestion = {
+export type Suggestion = {
     id: string;
     name: string;
     username: string;
@@ -30,86 +32,50 @@ type Suggestion = {
     avatar?: string;
 };
 
-const MOCK_SUGGESTIONS: Suggestion[] = [
-    {
-        id: "u1",
-        name: "Lê Công Thảo",
-        username: "lecongthao",
-        role: "Học sinh",
-        className: "Lớp 11A1",
-        school: "THPT Nguyễn Du",
-        field: "Toán học",
-        hats: 4,
-        mutuals: 6,
-        tags: ["CLASS", "SCHOOL"],
-        avatar: "https://i.pravatar.cc/120?img=10",
-    },
-    {
-        id: "u2",
-        name: "Nguyễn Minh Anh",
-        username: "minhanh",
-        role: "Giáo viên",
-        className: "Khối 11",
-        school: "THPT Nguyễn Du",
-        field: "Vật lý",
-        hats: 7,
-        mutuals: 12,
-        tags: ["SCHOOL", "FIELD"],
-        avatar: "https://i.pravatar.cc/120?img=32",
-    },
-    {
-        id: "u3",
-        name: "Trần Hoàng Phúc",
-        username: "hoangphuc",
-        role: "Giảng viên",
-        className: "Lớp 12C2",
-        school: "THPT Trần Phú",
-        field: "Tin học",
-        hats: 9,
-        mutuals: 20,
-        tags: ["FIELD"],
-        avatar: "https://i.pravatar.cc/120?img=15",
-    },
-    {
-        id: "u4",
-        name: "Phạm Thu Hà",
-        username: "thuhap",
-        role: "Học sinh",
-        className: "Lớp 11B2",
-        school: "THPT Nguyễn Du",
-        field: "Hóa học",
-        hats: 3,
-        mutuals: 4,
-        tags: ["CLASS", "SCHOOL"],
-        avatar: "https://i.pravatar.cc/120?img=45",
-    },
-    {
-        id: "u5",
-        name: "Đỗ Quang Huy",
-        username: "quanghuy",
-        role: "Giáo viên",
-        className: "Khối 10",
-        school: "THPT Lê Quý Đôn",
-        field: "Sinh học",
-        hats: 6,
-        mutuals: 8,
-        tags: ["SCHOOL", "FIELD"],
-        avatar: "https://i.pravatar.cc/120?img=11",
-    },
-    {
-        id: "u6",
-        name: "Bùi Ngọc Lan",
-        username: "ngoclan",
-        role: "Học sinh",
-        className: "Lớp 10A2",
-        school: "THPT Lê Quý Đôn",
-        field: "Ngữ văn",
-        hats: 5,
-        mutuals: 7,
-        tags: ["CLASS", "FIELD"],
-        avatar: "https://i.pravatar.cc/120?img=25",
-    },
-];
+interface ApiSuggestion {
+    id: string;
+    name: string;
+    role?: string;
+    tags?: string[];
+    connected_via?: string;
+    target_name?: string;
+}
+
+function mapApiToSuggestion(r: ApiSuggestion): Suggestion {
+    const tags = (r.tags || []) as Array<"CLASS" | "SCHOOL" | "FIELD">;
+    const roleMap: Record<string, "Học sinh" | "Giáo viên" | "Giảng viên"> = {
+        TEACH_AT_SCHOOL: "Giáo viên",
+        TEACHES: "Giáo viên",
+        STUDY_AT_SCHOOL: "Học sinh",
+        STUDY_IN: "Học sinh",
+    };
+    const role = (r.role && roleMap[r.role]) || "Học sinh";
+    const username = (r.name || "").toLowerCase().replace(/\s+/g, "").slice(0, 20) || r.id?.slice(0, 8) || "user";
+    return {
+        id: r.id,
+        name: r.name || "Người dùng",
+        username,
+        role,
+        className: r.target_name || "—",
+        school: r.connected_via === "School" ? r.target_name || "—" : "—",
+        field: tags.includes("FIELD") ? r.target_name || "—" : "—",
+        hats: 0,
+        mutuals: 0,
+        tags: tags.length ? tags : (r.role ? ["SCHOOL"] : ["CLASS", "SCHOOL", "FIELD"]),
+        avatar: undefined,
+    };
+}
+
+async function fetchSuggestions(filter: TabValue, schoolId?: number, classId?: number, fieldId?: number): Promise<Suggestion[]> {
+    const params = new URLSearchParams({ filter });
+    if (schoolId != null && schoolId > 0) params.set("school_id", String(schoolId));
+    if (classId != null && classId > 0) params.set("class_id", String(classId));
+    if (fieldId != null && fieldId > 0) params.set("field_id", String(fieldId));
+    const res = await api.get<{ suggestions: ApiSuggestion[] }>(`recommendations/suggestions/?${params.toString()}`);
+    const data = res.data;
+    const list = Array.isArray(data?.suggestions) ? data.suggestions : [];
+    return list.map(mapApiToSuggestion);
+}
 
 function getInitials(name: string) {
     return name
@@ -124,10 +90,19 @@ export function RecommendationPage() {
     const [activeTab, setActiveTab] = useState<TabValue>("ALL");
     const [query, setQuery] = useState("");
     const [minHats, setMinHats] = useState(0);
+    const schoolId = 1;
+    const classId = 1;
+    const fieldId = 1;
+
+    const { data: apiSuggestions = [], isLoading } = useQuery({
+        queryKey: ["recommendations", "suggestions", activeTab, schoolId, classId, fieldId],
+        queryFn: () => fetchSuggestions(activeTab, schoolId, classId, fieldId),
+        staleTime: 60 * 1000,
+    });
 
     const suggestions = useMemo(() => {
-        const filteredByTab = activeTab === "ALL" ? MOCK_SUGGESTIONS : MOCK_SUGGESTIONS.filter((item) => item.tags.includes(activeTab));
-
+        const filteredByTab =
+            activeTab === "ALL" ? apiSuggestions : apiSuggestions.filter((item) => item.tags.includes(activeTab));
         return filteredByTab.filter((item) => {
             const matchesQuery = [item.name, item.username, item.school, item.field, item.className]
                 .join(" ")
@@ -136,7 +111,7 @@ export function RecommendationPage() {
             const matchesHats = item.hats >= minHats;
             return matchesQuery && matchesHats;
         });
-    }, [activeTab, query, minHats]);
+    }, [activeTab, query, minHats, apiSuggestions]);
 
     return (
         <div className="space-y-6">
@@ -194,61 +169,69 @@ export function RecommendationPage() {
 
                 {TAB_OPTIONS.map((tab) => (
                     <TabsContent key={tab.value} value={tab.value} className="space-y-6 mt-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-                            {suggestions.length === 0 ? (
-                                <Card className="border-dashed md:col-span-2 xl:col-span-4">
-                                    <CardContent className="py-12 text-center text-gray-500">
-                                        Không có gợi ý phù hợp. Hãy thử giảm bộ lọc hoặc tìm kiếm khác.
-                                    </CardContent>
-                                </Card>
-                            ) : (
-                                suggestions.map((user) => (
-                                    <Card key={user.id} className="border-none shadow-lg bg-white dark:bg-card overflow-hidden">
-                                        <div className="relative h-28 bg-gradient-to-br from-etechs-primary/30 via-white to-etechs-secondary/10 dark:from-etechs-secondary/30 dark:to-etechs-primary/10">
-                                            <Avatar className="size-16 absolute left-1/2 -bottom-8 -translate-x-1/2 ring-4 ring-white dark:ring-[#0a1f29]">
-                                                <AvatarImage src={user.avatar} alt={user.name} />
-                                                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                                            </Avatar>
-                                        </div>
-                                        <CardContent className="pt-10 pb-4 px-4 flex flex-col gap-3">
-                                            <div className="text-center space-y-0.5">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{user.name}</h3>
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        {user.role}
-                                                    </Badge>
-                                                </div>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {user.className} • {user.school}
-                                                </p>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">Lĩnh vực: {user.field}</p>
-                                            </div>
-
-                                            <div className="flex flex-wrap justify-center gap-2">
-                                                {user.tags.includes("CLASS") && <Badge variant="outline">Chung lớp</Badge>}
-                                                {user.tags.includes("SCHOOL") && <Badge variant="outline">Chung trường</Badge>}
-                                                {user.tags.includes("FIELD") && <Badge variant="outline">Chung lĩnh vực</Badge>}
-                                                <Badge variant="outline" className="flex items-center gap-1">
-                                                    <Users className="h-3 w-3" /> {user.mutuals} bạn chung
-                                                </Badge>
-                                            </div>
-
-                                            <div className="flex items-center justify-center gap-2 text-amber-600 font-semibold text-sm">
-                                                <GraduationCap className="h-5 w-5" />
-                                                <span>{user.hats} nón</span>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 gap-2">
-                                                <Button className="rounded-full">Kết nối</Button>
-                                                <Button variant="outline" className="rounded-full">
-                                                    Bỏ qua
-                                                </Button>
-                                            </div>
+                        {isLoading ? (
+                            <div className="py-12 text-center text-gray-500">Đang tải gợi ý...</div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+                                {suggestions.length === 0 ? (
+                                    <Card className="border-dashed md:col-span-2 xl:col-span-4">
+                                        <CardContent className="py-12 text-center text-gray-500">
+                                            Không có gợi ý phù hợp. Hãy thử giảm bộ lọc hoặc tìm kiếm khác.
                                         </CardContent>
                                     </Card>
-                                ))
-                            )}
-                        </div>
+                                ) : (
+                                    suggestions.map((user) => (
+                                        <Card key={user.id} className="border-none shadow-lg bg-white dark:bg-card overflow-hidden">
+                                            <div className="relative h-28 bg-gradient-to-br from-etechs-primary/30 via-white to-etechs-secondary/10 dark:from-etechs-secondary/30 dark:to-etechs-primary/10">
+                                                <Avatar className="size-16 absolute left-1/2 -bottom-8 -translate-x-1/2 ring-4 ring-white dark:ring-[#0a1f29]">
+                                                    <AvatarImage src={user.avatar} alt={user.name} />
+                                                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                                                </Avatar>
+                                            </div>
+                                            <CardContent className="pt-10 pb-4 px-4 flex flex-col gap-3">
+                                                <div className="text-center space-y-0.5">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{user.name}</h3>
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            {user.role}
+                                                        </Badge>
+                                                    </div>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                        {user.className} • {user.school}
+                                                    </p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Lĩnh vực: {user.field}</p>
+                                                </div>
+
+                                                <div className="flex flex-wrap justify-center gap-2">
+                                                    {user.tags.includes("CLASS") && <Badge variant="outline">Chung lớp</Badge>}
+                                                    {user.tags.includes("SCHOOL") && <Badge variant="outline">Chung trường</Badge>}
+                                                    {user.tags.includes("FIELD") && <Badge variant="outline">Chung lĩnh vực</Badge>}
+                                                    {user.mutuals > 0 && (
+                                                        <Badge variant="outline" className="flex items-center gap-1">
+                                                            <Users className="h-3 w-3" /> {user.mutuals} bạn chung
+                                                        </Badge>
+                                                    )}
+                                                </div>
+
+                                                {user.hats > 0 && (
+                                                    <div className="flex items-center justify-center gap-2 text-amber-600 font-semibold text-sm">
+                                                        <GraduationCap className="h-5 w-5" />
+                                                        <span>{user.hats} nón</span>
+                                                    </div>
+                                                )}
+
+                                                <div className="grid grid-cols-1 gap-2">
+                                                    <Button className="rounded-full">Kết nối</Button>
+                                                    <Button variant="outline" className="rounded-full">
+                                                        Bỏ qua
+                                                    </Button>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))
+                                )}
+                            </div>
+                        )}
                     </TabsContent>
                 ))}
             </Tabs>

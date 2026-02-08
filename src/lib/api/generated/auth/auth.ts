@@ -58,7 +58,7 @@ formData.append(`cccd_front`, bodyRegisterAuthRegisterPost.cccd_front);
 formData.append(`cccd_back`, bodyRegisterAuthRegisterPost.cccd_back);
 
       return customInstance<RegisterResponse>(
-      {url: `/auth/register`, method: 'POST',
+      {url: `/auth/register/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -139,7 +139,7 @@ if(bodyLoginAuthLoginPost.client_secret !== undefined && bodyLoginAuthLoginPost.
  }
 
       return customInstance<TokenResponse>(
-      {url: `/auth/login`, method: 'POST',
+      {url: `/auth/login/`, method: 'POST',
       headers: {'Content-Type': 'application/x-www-form-urlencoded', },
        data: formUrlEncoded, signal
     },
@@ -202,7 +202,7 @@ export const refreshAuthRefreshPost = (
       
       
       return customInstance<TokenResponse>(
-      {url: `/auth/refresh`, method: 'POST',
+      {url: `/auth/refresh/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: refreshRequest, signal
     },
@@ -265,7 +265,7 @@ export const logoutAuthLogoutPost = (
       
       
       return customInstance<unknown>(
-      {url: `/auth/logout`, method: 'POST',
+      {url: `/auth/logout/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: logoutRequest, signal
     },
@@ -328,7 +328,7 @@ export const otpSendAuthOtpSendPost = (
       
       
       return customInstance<unknown>(
-      {url: `/auth/otp/send`, method: 'POST',
+      {url: `/auth/resend-otp/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: otpSendRequest, signal
     },
@@ -391,7 +391,7 @@ export const otpVerifyAuthOtpVerifyPost = (
       
       
       return customInstance<unknown>(
-      {url: `/auth/otp/verify`, method: 'POST',
+      {url: `/auth/verify-otp/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: otpVerifyRequest, signal
     },
@@ -455,7 +455,7 @@ export const forgotPasswordAuthForgotPasswordPost = (
       
       
       return customInstance<unknown>(
-      {url: `/auth/forgot-password`, method: 'POST',
+      {url: `/auth/forgot-password/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: otpSendRequest, signal
     },
@@ -523,7 +523,7 @@ formUrlEncoded.append(`otp_code`, bodyResetPasswordAuthResetPasswordPost.otp_cod
 formUrlEncoded.append(`new_password`, bodyResetPasswordAuthResetPasswordPost.new_password);
 
       return customInstance<unknown>(
-      {url: `/auth/reset-password`, method: 'POST',
+      {url: `/auth/reset-password/`, method: 'POST',
       headers: {'Content-Type': 'application/x-www-form-urlencoded', },
        data: formUrlEncoded, signal
     },

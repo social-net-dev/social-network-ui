@@ -14,7 +14,7 @@ import type { AxiosRequestConfig, AxiosResponse } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 import { getApiBaseUrl } from "@/lib/config";
 
-// baseURL: dev -> social-be trực tiếp; production -> /api (Caddy -> social-be)
+// baseURL: dev -> etechs-middleware (http://localhost:8000/api); production -> /api (Caddy -> etechs-middleware)
 const baseURL = getApiBaseUrl();
 
 const apiClient = axios.create({
@@ -52,9 +52,7 @@ const PUBLIC_AUTH_PATHS = [
     "/auth/login",
     "/auth/register",
     "/auth/verify-otp",
-    "/auth/otp/verify",
     "/auth/resend-otp",
-    "/auth/otp/send",
     "/auth/forgot-password",
     "/auth/reset-password",
 ];

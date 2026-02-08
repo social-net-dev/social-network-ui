@@ -37,7 +37,7 @@ export const healthHealthGet = (
       
       
       return customInstance<unknown>(
-      {url: `/health`, method: 'GET', signal
+      {url: `/health/`, method: 'GET', signal
     },
       options);
     }

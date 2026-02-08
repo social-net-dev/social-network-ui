@@ -36,20 +36,20 @@ export async function fetchConversationMessages() {
 
 // Fetch rooms for a given user. Backend expected to return IRoomUser[]
 export const fetchRoomsForUser = (userId: string) => {
-  return api.get<IRoomUser[]>(`/api/users/${encodeURIComponent(userId)}/rooms`);
+  return api.get<IRoomUser[]>(`users/${encodeURIComponent(userId)}/rooms/`);
 };
 
 export const callCreateRoom = (payload: ICreateRoom) => {
-  return api.post<IRoom>(`/api/rooms/`, payload);
+  return api.post<IRoom>(`rooms/`, payload);
 };
 
 export const callFetchMessagesRoom = (roomId: string) => {
-  return api.get<IMessage[]>(`/api/rooms/${encodeURIComponent(roomId)}/messages`);
+  return api.get<IMessage[]>(`rooms/${encodeURIComponent(roomId)}/messages/`);
 };
 
 // POST /api/rooms/{room_id}/messages
 export const callPostMessage = (roomId: string, payload: IPostMessageRequest) => {
-  return api.post<IPostMessageResponse>(`/api/rooms/${encodeURIComponent(roomId)}/messages`, payload);
+  return api.post<IPostMessageResponse>(`rooms/${encodeURIComponent(roomId)}/messages/`, payload);
 };
 
 // POST /api/rooms/{room_id}/upload
@@ -66,19 +66,19 @@ export const callUploadFile = (roomId: string, params: IUploadFileRequest) => {
   const queryParams = new URLSearchParams();
   if (params.sender_id) queryParams.set('sender_id', params.sender_id);
   if ((params as any).client_id) queryParams.set('client_id', (params as any).client_id);
-  return api.post<string>(`/api/rooms/${encodeURIComponent(roomId)}/upload?${queryParams.toString()}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+  return api.post<string>(`rooms/${encodeURIComponent(roomId)}/upload/?${queryParams.toString()}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
 
 // DELETE /api/messages/{message_id}
 export const callDeleteMessage = (params: IDeleteMessageParams) => {
   const queryParams = new URLSearchParams();
   if (params.user_id) queryParams.set('user_id', params.user_id);
-  return api.delete<string>(`/api/messages/${encodeURIComponent(params.message_id)}`);
+  return api.delete<string>(`messages/${encodeURIComponent(params.message_id)}/`);
 };
 
 // POST /api/messages/{message_id}/reactions
 export const callAddReaction = (messageId: string, payload: IReactionRequest) => {
-  return api.post<string>(`/api/messages/${encodeURIComponent(messageId)}/reactions`, payload);
+  return api.post<string>(`messages/${encodeURIComponent(messageId)}/reactions/`, payload);
 };
 
 // DELETE /api/messages/{message_id}/reactions
@@ -87,57 +87,57 @@ export const callRemoveReaction = (params: IRemoveReactionParams) => {
     user_id: params.user_id,
     emoji: params.emoji,
   });
-  return api.delete<string>(`/api/messages/${encodeURIComponent(params.message_id)}/reactions?${queryParams.toString()}`);
+  return api.delete<string>(`messages/${encodeURIComponent(params.message_id)}/reactions/?${queryParams.toString()}`);
 };
 
 // POST /api/messages/{message_id}/pin
 export const callPinMessage = (params: IPinMessageParams) => {
   const queryParams = new URLSearchParams();
   if (params.pin !== undefined) queryParams.set('pin', String(params.pin));
-  return api.post<string>(`/api/messages/${encodeURIComponent(params.message_id)}/pin?${queryParams.toString()}`);
+  return api.post<string>(`messages/${encodeURIComponent(params.message_id)}/pin/?${queryParams.toString()}`);
 };
 
 // POST /api/messages/{message_id}/unpin
 export const callUnpinMessage = (messageId: string) => {
-  return api.post<string>(`/api/messages/${encodeURIComponent(messageId)}/unpin`);
+  return api.post<string>(`messages/${encodeURIComponent(messageId)}/unpin/`);
 };
 
 // GET /api/rooms/{room_id}/pinned
 export const callGetPinnedMessages = (roomId: string) => {
-  return api.get<string>(`/api/rooms/${encodeURIComponent(roomId)}/pinned`);
+  return api.get<string>(`rooms/${encodeURIComponent(roomId)}/pinned/`);
 };
 
 // GET /api/rooms/{room_id}/search
 export const callSearchRoom = (params: ISearchRoomParams) => {
   const queryParams = new URLSearchParams({ q: params.q });
   if (params.limit) queryParams.set('limit', String(params.limit));
-  return api.get<string>(`/api/rooms/${encodeURIComponent(params.room_id)}/search?${queryParams.toString()}`);
+  return api.get<string>(`rooms/${encodeURIComponent(params.room_id)}/search/?${queryParams.toString()}`);
 };
 
 // POST /api/rooms/{room_id}/read
 export const callMarkRoomRead = (params: IMarkReadParams) => {
   const queryParams = new URLSearchParams({ user_id: params.user_id });
-  return api.post<string>(`/api/rooms/${encodeURIComponent(params.room_id)}/read?${queryParams.toString()}`);
+  return api.post<string>(`rooms/${encodeURIComponent(params.room_id)}/read/?${queryParams.toString()}`);
 };
 
 // POST /api/rooms/{room_id}/members
 export const callAddMember = (roomId: string, payload: IAddMemberRequest) => {
-  return api.post<string>(`/api/rooms/${encodeURIComponent(roomId)}/members`, payload);
+  return api.post<string>(`rooms/${encodeURIComponent(roomId)}/members/`, payload);
 };
 
 // DELETE /api/rooms/{room_id}/members/{user_id}
 export const callRemoveMember = (roomId: string, userId: string) => {
-  return api.delete<string>(`/api/rooms/${encodeURIComponent(roomId)}/members/${encodeURIComponent(userId)}`);
+  return api.delete<string>(`rooms/${encodeURIComponent(roomId)}/members/${encodeURIComponent(userId)}/`);
 };
 
 // POST /api/rooms/{room_id}/members/{user_id}/role
 export const callSetMemberRole = (roomId: string, userId: string, payload: ISetRoleRequest) => {
-  return api.post<string>(`/api/rooms/${encodeURIComponent(roomId)}/members/${encodeURIComponent(userId)}/role`, payload);
+  return api.post<string>(`rooms/${encodeURIComponent(roomId)}/members/${encodeURIComponent(userId)}/role/`, payload);
 };
 
 // GET /api/rooms/{room_id}
 export const callGetRoom = (roomId: string) => {
-  return api.get<IRoomDetails>(`/api/rooms/${encodeURIComponent(roomId)}`);
+  return api.get<IRoomDetails>(`rooms/${encodeURIComponent(roomId)}/`);
 };
 
 // DELETE /api/rooms/{room_id}
@@ -145,5 +145,5 @@ export const callDeleteRoom = (params: IDeleteRoomParams) => {
   const queryParams = new URLSearchParams();
   if (params.hard !== undefined) queryParams.set('hard', String(params.hard));
   if (params.user_id) queryParams.set('user_id', params.user_id);
-  return api.delete<string>(`/api/rooms/${encodeURIComponent(params.room_id)}?${queryParams.toString()}`);
+  return api.delete<string>(`rooms/${encodeURIComponent(params.room_id)}/?${queryParams.toString()}`);
 };

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AuthAPI } from '@/lib/api/generated';
 import { getErrorMessage } from '@/lib/api/transforms';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Mail, RefreshCw } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+import { resendRegisterOtp, verifyRegisterOtp } from '@/lib/api/manual-apis';
 
 const OTP_STORAGE_EMAIL = 'otp_verify_email';
 const OTP_STORAGE_USER_ID = 'otp_verify_user_id';
@@ -33,36 +34,38 @@ export function OTPVerifyPage() {
   const [error, setError] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const verifyMutation = AuthAPI.useOtpVerifyAuthOtpVerifyPost({
-    mutation: {
-      onSuccess: async () => {
-        if (typeof sessionStorage !== 'undefined') {
-          sessionStorage.removeItem(OTP_STORAGE_EMAIL);
-          sessionStorage.removeItem(OTP_STORAGE_USER_ID);
-        }
-        navigate('/login', {
-          state: {
-            email,
-            message: 'Xác thực OTP thành công! Tài khoản của bạn hiện là chưa xác minh với dung lượng 100MB. Vui lòng đăng nhập.',
-          },
-        });
-      },
-      onError: (err: any) => {
-        setError(getErrorMessage(err));
-      },
+  const verifyMutation = useMutation({
+    mutationFn: async () => {
+      return verifyRegisterOtp(user_id, otpCode);
+    },
+    onSuccess: async () => {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(OTP_STORAGE_EMAIL);
+        sessionStorage.removeItem(OTP_STORAGE_USER_ID);
+      }
+      navigate('/login', {
+        state: {
+          email,
+          message: 'Xác thực OTP thành công! Vui lòng đăng nhập.',
+        },
+      });
+    },
+    onError: (err: any) => {
+      setError(getErrorMessage(err));
     },
   });
 
-  const resendMutation = AuthAPI.useOtpSendAuthOtpSendPost({
-    mutation: {
-      onSuccess: () => {
-        setResendSuccess(true);
-        setError('');
-        setTimeout(() => setResendSuccess(false), 3000);
-      },
-      onError: (err: any) => {
-        setError(getErrorMessage(err));
-      },
+  const resendMutation = useMutation({
+    mutationFn: async () => {
+      return resendRegisterOtp(user_id);
+    },
+    onSuccess: () => {
+      setResendSuccess(true);
+      setError('');
+      setTimeout(() => setResendSuccess(false), 3000);
+    },
+    onError: (err: any) => {
+      setError(getErrorMessage(err));
     },
   });
 
@@ -78,14 +81,7 @@ export function OTPVerifyPage() {
       setError('Thiếu thông tin email. Vui lòng đăng ký lại.');
       return;
     }
-
-    verifyMutation.mutate({
-      data: {
-        destination: email,
-        code: otpCode,
-        purpose: 'REGISTRATION',
-      },
-    });
+    verifyMutation.mutate();
   };
 
   const handleResend = () => {
@@ -93,12 +89,7 @@ export function OTPVerifyPage() {
       setError('Thiếu email. Vui lòng đăng ký lại.');
       return;
     }
-    resendMutation.mutate({
-      data: {
-        destination: email,
-        purpose: 'REGISTRATION',
-      },
-    });
+    resendMutation.mutate();
   };
 
   if (!user_id || !email) {

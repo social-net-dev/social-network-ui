@@ -64,10 +64,10 @@ Chỉnh `.env`:
 
 | Biến | Mô tả | Ví dụ |
 |------|--------|--------|
-| `VITE_API_BASE_URL` | URL của **social-be** (BFF). UI gọi API qua đây. | `http://localhost:8000` |
+| `VITE_API_BASE_URL` | URL API backend (**etechs-middleware**). UI gọi thẳng middleware. | `http://localhost:8000/api` (dev) hoặc `/api` (production) |
 | `VITE_ENABLE_MOCK_API` | Bật API giả (không cần backend). | `true` / `false` |
 
-* **Chạy với backend thật** (social-be + etechs-middleware): đặt `VITE_API_BASE_URL=http://localhost:8000` và `VITE_ENABLE_MOCK_API=false` (hoặc bỏ dòng này).
+* **Chạy với backend thật** (etechs-middleware): đặt `VITE_API_BASE_URL=http://localhost:8000/api` và `VITE_ENABLE_MOCK_API=false` (hoặc bỏ dòng này). Mặc định dev đã dùng `http://localhost:8000/api`.
 * **Chạy chỉ với dữ liệu giả**: `VITE_ENABLE_MOCK_API=true`.
 
 ### 4. Chạy Development Server

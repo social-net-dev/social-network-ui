@@ -54,7 +54,7 @@ export const meMeGet = (
       
       
       return customInstance<UserMeResponse>(
-      {url: `/me`, method: 'GET', signal
+      {url: `/auth/me/`, method: 'GET', signal
     },
       options);
     }
@@ -63,8 +63,8 @@ export const meMeGet = (
 
 
 export const getMeMeGetQueryKey = () => {
-    return [
-    `/me`
+    return     [
+    `/auth/me/`
     ] as const;
     }
 
@@ -144,7 +144,7 @@ export const meAliasUsersMeGet = (
       
       
       return customInstance<UserMeResponse>(
-      {url: `/users/me`, method: 'GET', signal
+      {url: `/users/me/`, method: 'GET', signal
     },
       options);
     }
@@ -234,7 +234,7 @@ export const updateMyProfileUsersMeProfilePatch = (
       
       
       return customInstance<UserMeResponse>(
-      {url: `/users/me/profile`, method: 'PATCH',
+      {url: `/users/me/profile/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: updateProfileRequest, signal
     },
@@ -299,7 +299,7 @@ export const uploadMyAvatarUsersMeAvatarPost = (
 formData.append(`file`, bodyUploadMyAvatarUsersMeAvatarPost.file);
 
       return customInstance<UserMeResponse>(
-      {url: `/users/me/avatar`, method: 'POST',
+      {url: `/users/me/avatar/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },
@@ -362,7 +362,7 @@ export const selfDeactivateUsersMeDeactivatePost = (
       
       
       return customInstance<UserMeResponse>(
-      {url: `/users/me/deactivate`, method: 'POST', signal
+      {url: `/users/me/deactivate/`, method: 'POST', signal
     },
       options);
     }
@@ -423,7 +423,7 @@ export const selfReactivateUsersMeReactivatePost = (
       
       
       return customInstance<UserMeResponse>(
-      {url: `/users/me/reactivate`, method: 'POST', signal
+      {url: `/users/me/reactivate/`, method: 'POST', signal
     },
       options);
     }
@@ -484,7 +484,7 @@ export const createReactivationRequestUsersMeReactivationRequestsPost = (
       
       
       return customInstance<ReactivationRequestOut>(
-      {url: `/users/me/reactivation-requests`, method: 'POST',
+      {url: `/users/me/reactivation-requests/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: reactivationRequestCreate, signal
     },
@@ -547,7 +547,7 @@ export const adminListReactivationRequestsAdminReactivationRequestsGet = (
       
       
       return customInstance<ReactivationRequestOut[]>(
-      {url: `/admin/reactivation/requests`, method: 'GET',
+      {url: `/admin/reactivation/requests/`, method: 'GET',
         params, signal
     },
       options);
@@ -639,7 +639,7 @@ export const adminApproveReactivationRequestAdminReactivationRequestsRequestIdAp
       
       
       return customInstance<ReactivationRequestOut>(
-      {url: `/admin/reactivation/requests/${requestId}/approve`, method: 'POST',
+      {url: `/admin/reactivation/requests/${requestId}/approve/`, method: 'POST',
         params, signal
     },
       options);
@@ -702,7 +702,7 @@ export const adminRejectReactivationRequestAdminReactivationRequestsRequestIdRej
       
       
       return customInstance<ReactivationRequestOut>(
-      {url: `/admin/reactivation/requests/${requestId}/reject`, method: 'POST',
+      {url: `/admin/reactivation/requests/${requestId}/reject/`, method: 'POST',
         params, signal
     },
       options);
@@ -764,7 +764,7 @@ export const adminLockUserAdminUsersUserIdLockPost = (
       
       
       return customInstance<AdminUserStatusResponse>(
-      {url: `/admin/users/${userId}/lock`, method: 'POST', signal
+      {url: `/admin/users/${userId}/lock/`, method: 'POST', signal
     },
       options);
     }
@@ -825,7 +825,7 @@ export const adminUnlockUserAdminUsersUserIdUnlockPost = (
       
       
       return customInstance<AdminUserStatusResponse>(
-      {url: `/admin/users/${userId}/unlock`, method: 'POST', signal
+      {url: `/admin/users/${userId}/unlock/`, method: 'POST', signal
     },
       options);
     }
@@ -886,7 +886,7 @@ export const adminDisableUserAdminUsersUserIdDisablePost = (
       
       
       return customInstance<AdminUserStatusResponse>(
-      {url: `/admin/users/${userId}/disable`, method: 'POST', signal
+      {url: `/admin/users/${userId}/disable/`, method: 'POST', signal
     },
       options);
     }
@@ -947,7 +947,7 @@ export const adminReactivateUserAdminUsersUserIdReactivatePost = (
       
       
       return customInstance<AdminUserStatusResponse>(
-      {url: `/admin/users/${userId}/reactivate`, method: 'POST', signal
+      {url: `/admin/users/${userId}/reactivate/`, method: 'POST', signal
     },
       options);
     }

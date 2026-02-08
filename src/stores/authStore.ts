@@ -6,6 +6,7 @@ interface AuthState {
     user: any | null; // Keep flexible until types are fully consolidated
     token: string | null;
     refreshToken: string | null;
+    tenantSlug?: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     setAuth: (authResponse: any) => void;
@@ -20,15 +21,20 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             token: null,
             refreshToken: null,
+            tenantSlug: null,
             isAuthenticated: false,
             isLoading: true,
             setAuth: (authResponse) => {
                 localStorage.setItem("auth_token", authResponse.token);
                 localStorage.setItem("refresh_token", authResponse.refreshToken);
+                if (authResponse.tenantSlug) {
+                    localStorage.setItem("tenant_slug", authResponse.tenantSlug);
+                }
                 set({
                     user: authResponse.user,
                     token: authResponse.token,
                     refreshToken: authResponse.refreshToken,
+                    tenantSlug: authResponse.tenantSlug ?? null,
                     isAuthenticated: true,
                 });
             },
@@ -48,10 +54,12 @@ export const useAuthStore = create<AuthState>()(
                     // Clear local state and storage regardless
                     localStorage.removeItem("auth_token");
                     localStorage.removeItem("refresh_token");
+                    localStorage.removeItem("tenant_slug");
                     set({
                         user: null,
                         token: null,
                         refreshToken: null,
+                        tenantSlug: null,
                         isAuthenticated: false,
                     });
                 }

@@ -48,7 +48,7 @@ export const createFriendRequestFriendsRequestsPost = (
       
       
       return customInstance<FriendRequestOut>(
-      {url: `/friends/requests`, method: 'POST',
+      {url: `/friends/requests/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: friendRequestCreate, signal
     },
@@ -111,7 +111,7 @@ export const listIncomingRequestsFriendsRequestsIncomingGet = (
       
       
       return customInstance<FriendRequestOut[]>(
-      {url: `/friends/requests/incoming`, method: 'GET', signal
+      {url: `/friends/requests/incoming/`, method: 'GET', signal
     },
       options);
     }
@@ -201,7 +201,7 @@ export const listOutgoingRequestsFriendsRequestsOutgoingGet = (
       
       
       return customInstance<FriendRequestOut[]>(
-      {url: `/friends/requests/outgoing`, method: 'GET', signal
+      {url: `/friends/requests/outgoing/`, method: 'GET', signal
     },
       options);
     }
@@ -291,7 +291,7 @@ export const acceptRequestFriendsRequestsRequestIdAcceptPost = (
       
       
       return customInstance<FriendRequestOut>(
-      {url: `/friends/requests/${requestId}/accept`, method: 'POST', signal
+      {url: `/friends/requests/${requestId}/accept/`, method: 'POST', signal
     },
       options);
     }
@@ -352,7 +352,7 @@ export const rejectRequestFriendsRequestsRequestIdRejectPost = (
       
       
       return customInstance<FriendRequestOut>(
-      {url: `/friends/requests/${requestId}/reject`, method: 'POST', signal
+      {url: `/friends/requests/${requestId}/reject/`, method: 'POST', signal
     },
       options);
     }
@@ -413,7 +413,7 @@ export const cancelRequestFriendsRequestsRequestIdCancelPost = (
       
       
       return customInstance<FriendRequestOut>(
-      {url: `/friends/requests/${requestId}/cancel`, method: 'POST', signal
+      {url: `/friends/requests/${requestId}/cancel/`, method: 'POST', signal
     },
       options);
     }
@@ -474,7 +474,7 @@ export const listFriendsFriendsGet = (
       
       
       return customInstance<FriendOut[]>(
-      {url: `/friends`, method: 'GET', signal
+      {url: `/friends/`, method: 'GET', signal
     },
       options);
     }

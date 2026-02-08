@@ -253,20 +253,21 @@ export class ChatClient {
 
   private async _sendViaREST(message: MessageIn) {
     const { restBase } = this.opts;
-    const url = `${restBase}/api/rooms/${encodeURIComponent(message.room_id)}/messages`;
+    const url = `${restBase.replace(/\/$/, '')}/rooms/${encodeURIComponent(message.room_id)}/messages/`;
     const body = {
       room_id: message.room_id,
       sender_id: message.sender_id,
       content: message.content,
       client_id: message.client_id,
     };
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const token = typeof localStorage !== 'undefined' && localStorage.getItem('auth_token');
+    if (token) headers['Authorization'] = `Bearer ${token.replace(/"/g, '')}`;
+    const tenant = typeof localStorage !== 'undefined' && localStorage.getItem('tenant_slug');
+    if (tenant) headers['X-Tenant-Slug'] = tenant.replace(/"/g, '');
     let res: Response;
     try {
-      res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
     } catch (networkErr) {
       throw new Error(`REST request failed: ${String(networkErr)}`);
     }

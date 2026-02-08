@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthAPI } from "@/lib/api/generated";
 import { getErrorMessage } from "@/lib/api/transforms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, Loader, ArrowLeft } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { forgotPassword, resetPassword } from "@/lib/api/manual-apis";
 
 type Step = "email" | "otp" | "password";
 
@@ -14,6 +15,7 @@ export function ForgotPasswordPage() {
     const [step, setStep] = useState<Step>("email");
     const [email, setEmail] = useState("");
     const [otp, setOtp] = useState("");
+    const [userId, setUserId] = useState<string>("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -21,35 +23,39 @@ export function ForgotPasswordPage() {
     const [error, setError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
 
-    const sendOtpMutation = AuthAPI.useOtpSendAuthOtpSendPost({
-        mutation: {
-            onSuccess: () => {
-                setStep("otp");
-                setSuccessMessage("Mã OTP đã được gửi tới email của bạn");
-                setError("");
-            },
-            onError: (err: any) => {
-                setError(getErrorMessage(err));
-            },
-        }
+    const sendOtpMutation = useMutation({
+        mutationFn: async () => {
+            return forgotPassword(email.trim());
+        },
+        onSuccess: (res) => {
+            const uid = (res as any)?.user_id || "";
+            if (uid) setUserId(uid);
+            setStep("otp");
+            setSuccessMessage("Mã OTP đã được gửi tới email của bạn");
+            setError("");
+        },
+        onError: (err: any) => {
+            setError(getErrorMessage(err));
+        },
     });
 
-    const resetPasswordMutation = AuthAPI.useResetPasswordAuthResetPasswordPost({
-        mutation: {
-            onSuccess: () => {
-                setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
-                setTimeout(() => {
-                    navigate("/login", { state: { message: "Mật khẩu đã thay đổi. Vui lòng đăng nhập lại." } });
-                }, 1500);
-            },
-            onError: (err: any) => {
-                const detail = getErrorMessage(err);
-                setError(detail);
-                if (typeof detail === "string" && detail.toLowerCase().includes("otp")) {
-                    setStep("otp");
-                }
-            },
-        }
+    const resetPasswordMutation = useMutation({
+        mutationFn: async () => {
+            return resetPassword(userId, otp, password);
+        },
+        onSuccess: () => {
+            setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
+            setTimeout(() => {
+                navigate("/login", { state: { message: "Mật khẩu đã thay đổi. Vui lòng đăng nhập lại." } });
+            }, 1500);
+        },
+        onError: (err: any) => {
+            const detail = getErrorMessage(err);
+            setError(detail);
+            if (typeof detail === "string" && detail.toLowerCase().includes("otp")) {
+                setStep("otp");
+            }
+        },
     });
 
     const handleSendOtp = () => {
@@ -58,12 +64,7 @@ export function ForgotPasswordPage() {
             setError("Vui lòng nhập email");
             return;
         }
-        sendOtpMutation.mutate({ 
-            data: { 
-                destination: email.trim(),
-                purpose: "PASSWORD_RESET"
-            } 
-        });
+        sendOtpMutation.mutate();
     };
 
     const handleVerifyOtp = () => {
@@ -84,14 +85,13 @@ export function ForgotPasswordPage() {
             setError("Mật khẩu xác nhận không khớp");
             return;
         }
+        if (!userId) {
+            setError("Thiếu user_id. Vui lòng bấm 'Gửi Mã OTP' lại.");
+            setStep("email");
+            return;
+        }
 
-        resetPasswordMutation.mutate({ 
-            data: {
-                email: email.trim(),
-                otp_code: otp,
-                new_password: password
-            }
-        });
+        resetPasswordMutation.mutate();
     };
 
     return (

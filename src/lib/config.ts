@@ -13,8 +13,48 @@ export const getApiBaseUrl = (): string => {
   }
 
   if (import.meta.env.DEV) {
-    return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    // Dev: gọi thẳng etechs-middleware (Django API dưới /api/)
+    return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
   }
 
   return import.meta.env.VITE_API_BASE_URL || "/api";
+};
+
+/**
+ * WebSocket URL cho notifications (etechs-middleware: ws/notifications/).
+ * Từ API base URL suy ra host: http(s) -> ws(s), bỏ suffix /api.
+ */
+export const getNotificationWebSocketUrl = (): string => {
+  const base = getApiBaseUrl().trim().replace(/\/$/, "");
+  if (base.startsWith("http://")) {
+    const host = base.slice(7).replace(/\/api$/, "").replace(/\/+$/, "") || "localhost:8000";
+    return `ws://${host}/ws/notifications/`;
+  }
+  if (base.startsWith("https://")) {
+    const host = base.slice(8).replace(/\/api$/, "").replace(/\/+$/, "") || window?.location?.host || "localhost";
+    return `wss://${host}/ws/notifications/`;
+  }
+  // Relative path (e.g. /api) -> same origin
+  const protocol = typeof window !== "undefined" && window.location?.protocol === "https:" ? "wss:" : "ws:";
+  const origin = typeof window !== "undefined" ? window.location.host : "localhost";
+  return `${protocol}//${origin}/ws/notifications/`;
+};
+
+/**
+ * WebSocket URL cho chat (etechs-middleware: ws/ hoặc ws/chat/).
+ * UI kết nối với query user_id & room_id.
+ */
+export const getChatWebSocketUrl = (): string => {
+  const base = getApiBaseUrl().trim().replace(/\/$/, "");
+  if (base.startsWith("http://")) {
+    const host = base.slice(7).replace(/\/api$/, "").replace(/\/+$/, "") || "localhost:8000";
+    return `ws://${host}/ws`;
+  }
+  if (base.startsWith("https://")) {
+    const host = base.slice(8).replace(/\/api$/, "").replace(/\/+$/, "") || window?.location?.host || "localhost";
+    return `wss://${host}/ws`;
+  }
+  const protocol = typeof window !== "undefined" && window.location?.protocol === "https:" ? "wss:" : "ws:";
+  const origin = typeof window !== "undefined" ? window.location.host : "localhost";
+  return `${protocol}//${origin}/ws`;
 };
