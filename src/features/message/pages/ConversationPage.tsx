@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+
 import { useConversations } from '../hooks/useConversations';
 import { useChat } from '../hooks/useChat';
 import { useRoomManager } from '../hooks/useRoomManager';
@@ -28,6 +29,7 @@ const ConversationPage: React.FC = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>(params.conversationId ?? searchParams.get('room_id') ?? undefined);
   const [overrideRoomId, setOverrideRoomId] = useState<string | undefined>(searchParams.get('room_id') ?? undefined);
   const [text, setText] = useState('');
+
   const resetUnread = useMessageStore(state => state.resetUnread);
   const incrementUnread = useMessageStore(state => state.incrementUnread);
 
@@ -127,6 +129,7 @@ const ConversationPage: React.FC = () => {
   } = useChat({
     room: resolvedRoom,
     userId: resolvedUserId,
+
     wsUrl: import.meta.env.DEV ? 'ws://localhost:8000/ws' : '',
     restBase: import.meta.env.DEV ? 'http://localhost:8000' : '',
     onReactionEvent: handleReactionEvent,
@@ -140,6 +143,7 @@ const ConversationPage: React.FC = () => {
         resetUnread(data.room_id);
       }
     },
+
     onMessage: msg => {
       // If server echoes client_id, remove matching optimistic entry immediately
       if (msg.client_id) {

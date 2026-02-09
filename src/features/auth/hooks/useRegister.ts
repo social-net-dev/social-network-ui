@@ -1,14 +1,12 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import { authApi } from "../services/authApi";
+import { AuthAPI } from "@/lib/api/generated";
+import { getErrorMessage, transformRegisterResponse } from "@/lib/api/transforms";
 import { RegisterFormDataSchema, type RegisterFormData } from "../types/auth.types";
 
 export function useRegister() {
     const navigate = useNavigate();
-    const [error, setError] = useState<string | null>(null);
-    const [isSuccess, setIsSuccess] = useState(false);
 
     const form = useForm<RegisterFormData>({
         resolver: zodResolver(RegisterFormDataSchema),
@@ -22,32 +20,44 @@ export function useRegister() {
         },
     });
 
-    const onSubmit = async (data: RegisterFormData) => {
-        try {
-            setError(null);
-            const res = await authApi.register(data);
-            setIsSuccess(true);
+    const mutation = AuthAPI.useRegisterAuthRegisterPost({
+        mutation: {
+            onSuccess: (response, variables) => {
+                const data = transformRegisterResponse(response);
+                const user_id = data.userId || "";
+                
+                sessionStorage.setItem("otp_verify_email", variables.data.email);
+                sessionStorage.setItem("otp_verify_user_id", user_id);
 
-            const user_id = res.user_id != null ? String(res.user_id) : "";
-            sessionStorage.setItem("otp_verify_email", data.email);
-            sessionStorage.setItem("otp_verify_user_id", user_id);
+                navigate("/verify-otp", {
+                    state: { email: variables.data.email, user_id },
+                    replace: true,
+                });
+            },
+        },
+    });
 
-            navigate("/verify-otp", {
-                state: { email: data.email, user_id },
-                replace: true,
-            });
-        } catch (err: any) {
-            const errorMessage = err.response?.data?.detail || err.message || "Đăng ký thất bại";
-            setError(errorMessage);
-            setIsSuccess(false);
-        }
+    const onSubmit = (data: RegisterFormData) => {
+        // Prepare multipart form data as required by Orval/Axios
+        mutation.mutate({
+            data: {
+                email: data.email,
+                password: data.password,
+                display_name: data.displayName,
+                role: data.role,
+                consent: data.consent,
+                phone: data.phone,
+                cccd_front: data.idCardFront,
+                cccd_back: data.idCardBack,
+            }
+        });
     };
 
     return {
         form,
         onSubmit,
-        error,
-        isSuccess,
-        isLoading: form.formState.isSubmitting,
+        error: getErrorMessage(mutation.error),
+        isSuccess: mutation.isSuccess,
+        isLoading: mutation.isPending,
     };
 }

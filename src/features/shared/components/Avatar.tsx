@@ -17,8 +17,10 @@ const sizeClasses = {
 }
 
 export function Avatar({ user, src, alt, size = 'md', className }: AvatarProps) {
-  const avatarSrc = src || user?.avatar
-  const initials = user?.firstName?.[0] && user?.lastName?.[0] ? `${user.firstName[0]}${user.lastName[0]}` : '?'
+  const avatarSrc = src || user?.avatar || (user?.id ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}` : null)
+  const initials = user?.firstName?.[0] && user?.lastName?.[0] 
+    ? `${user.firstName[0]}${user.lastName[0]}` 
+    : (user?.displayName?.[0] || '?')
 
   return (
     <div
@@ -29,7 +31,7 @@ export function Avatar({ user, src, alt, size = 'md', className }: AvatarProps) 
       )}
     >
       {avatarSrc ? (
-        <img src={avatarSrc} alt={alt || user?.firstName} className="w-full h-full object-cover" />
+        <img src={avatarSrc} alt={alt || user?.firstName || 'Avatar'} className="w-full h-full object-cover" />
       ) : (
         <span className="uppercase">{initials}</span>
       )}

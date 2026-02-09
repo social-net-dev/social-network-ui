@@ -159,6 +159,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ displayText, isMin
       return `/assets/icon-file/${file}`;
     }
   };
+
   const imageAttachments = normalized.filter(a => a.is_image);
   const fileAttachments = normalized.filter(a => !a.is_image);
 

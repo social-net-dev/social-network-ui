@@ -20,6 +20,7 @@ interface MessageAreaProps {
 
 export const MessageArea: React.FC<MessageAreaProps> = ({ pinnedMessages, regularMessages, currentUserId, chatStatus, lastError, conversationTitle, sendReaction, onRefresh, endRef, messagesContainerRef, messageInput }) => {
   // Scrolling is handled by the parent `ConversationPage` to avoid conflicting jumps
+
   return (
     <div className="flex-1 flex flex-col bg-card rounded overflow-hidden min-h-0 relative">
       {/* Header (sticky) */}

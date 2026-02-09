@@ -1,6 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
-import { profileApi } from '../services/profileApi'
+import { ProfilesAPI, UsersAPI } from '@/lib/api/generated'
+import { useUser } from '@/lib/api/hooks/useUser'
 import type {
   EditProfileFormData,
   ProfileVisibilityUpdateRequest
@@ -10,7 +11,8 @@ import { useAuthStore } from '@/stores/authStore'
 
 export function useProfile(userIdParam?: string) {
   const params = useParams()
-  const { user, isAuthenticated } = useAuthStore()
+  const { user: currentUser, isAuthenticated } = useAuthStore()
+  const queryClient = useQueryClient()
 
   let identifier = userIdParam || params.userId
 
@@ -18,52 +20,57 @@ export function useProfile(userIdParam?: string) {
     identifier = 'me'
   }
 
-  if (identifier && user?.username && identifier === user.username) {
+  if (identifier && currentUser?.username && identifier === currentUser.username) {
     identifier = 'me'
   }
 
-  const queryClient = useQueryClient()
+  // Use the Smart Hook for fetching profile
+  const { user, isLoading, error, isMe } = useUser(identifier as any)
 
-  const query = useQuery({
-    queryKey: queryKeys.profile.detail(identifier || 'me'),
-    queryFn: () => profileApi.getProfile(identifier),
-    enabled: !!identifier,
+  const updateProfileMutation = UsersAPI.useUpdateMyProfileUsersMeProfilePatch({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: UsersAPI.getMeAliasUsersMeGetQueryKey() })
+        queryClient.invalidateQueries({ queryKey: queryKeys.profile.all })
+      },
+    }
   })
 
-  const updateProfileMutation = useMutation({
-    mutationFn: (data: EditProfileFormData) => profileApi.updateProfile(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
-      if (identifier && identifier !== 'me') {
-        queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail(identifier) })
-      }
-    },
+  const updatePrivacyMutation = ProfilesAPI.useUpdateMyPrivacyUsersMePrivacyPatch({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: UsersAPI.getMeAliasUsersMeGetQueryKey() })
+      },
+    }
   })
 
-  const updatePrivacyMutation = useMutation({
-    mutationFn: (data: ProfileVisibilityUpdateRequest) => profileApi.updatePrivacy(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
-    },
-  })
-
-  const uploadAvatarMutation = useMutation({
-    mutationFn: (file: File) => profileApi.uploadAvatar(file),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail('me') })
-      if (identifier && identifier !== 'me') {
-        queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail(identifier) })
-      }
-    },
+  const uploadAvatarMutation = UsersAPI.useUploadMyAvatarUsersMeAvatarPost({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: UsersAPI.getMeAliasUsersMeGetQueryKey() })
+      },
+    }
   })
 
   return {
-    profile: query.data,
-    isLoading: query.isPending,
-    error: query.error,
-    updateProfile: updateProfileMutation.mutateAsync,
-    updatePrivacy: updatePrivacyMutation.mutateAsync,
-    uploadAvatar: uploadAvatarMutation.mutateAsync,
+    profile: user,
+    isLoading,
+    error,
+    isMe,
+    updateProfile: (data: EditProfileFormData) => updateProfileMutation.mutateAsync({
+      data: {
+        display_name: data.displayName,
+        username: data.username || null,
+        birth_date: data.birthDate && data.birthDate.trim() !== "" ? data.birthDate : null,
+        bio: data.bio
+      }
+    }),
+    updatePrivacy: (data: ProfileVisibilityUpdateRequest) => updatePrivacyMutation.mutateAsync({
+      data: data as any
+    }),
+    uploadAvatar: (file: File) => uploadAvatarMutation.mutateAsync({
+      data: { file }
+    }),
     isUpdating: updateProfileMutation.isPending || updatePrivacyMutation.isPending || uploadAvatarMutation.isPending,
   }
 }

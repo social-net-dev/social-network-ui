@@ -1,10 +1,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
-import { authApi } from "../services/authApi";
+import { transformAuthResponse, getErrorMessage } from "@/lib/api/transforms";
 import { LoginFormDataSchema, type LoginFormData } from "../types/auth.types";
+import { useMutation } from "@tanstack/react-query";
+import apiClient from "@/lib/api";
+import { loginMiddleware } from "@/lib/api/manual-apis";
 
 export function useLogin() {
     const navigate = useNavigate();
@@ -20,23 +22,37 @@ export function useLogin() {
     });
 
     const mutation = useMutation({
-        mutationFn: (data: LoginFormData) => authApi.login(data),
-        onSuccess: (response) => {
-            setAuth(response);
-            // Redirect admin users to accounts management, others to home
-            const redirectPath = response.user?.role === "ADMIN" ? "/admin/accounts" : "/";
+        mutationFn: async (payload: { email: string; password: string }) => {
+            return loginMiddleware(payload.email, payload.password);
+        },
+        onSuccess: async (response) => {
+            const data = transformAuthResponse(response);
+            setAuth(data);
+
+            // Fetch /auth/me/ to hydrate user (optional, but improves UX)
+            try {
+                const meRes = await apiClient.get("auth/me/");
+                useAuthStore.getState().setUser(meRes.data);
+            } catch {
+                // ignore
+            }
+
+            const redirectPath = data.user?.role === "ADMIN" ? "/admin/accounts" : "/";
             navigate(redirectPath);
         },
     });
 
     const onSubmit = (data: LoginFormData) => {
-        mutation.mutate(data);
+        mutation.mutate({
+            email: data.email,
+            password: data.password,
+        });
     };
 
     return {
         form,
         onSubmit,
-        error: (mutation.error as any)?.response?.data?.detail || (mutation.error instanceof Error ? mutation.error.message : null),
+        error: getErrorMessage(mutation.error),
         isSuccess: mutation.isSuccess,
         isLoading: mutation.isPending,
     };

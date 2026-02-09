@@ -30,7 +30,9 @@ export function useChat({
     // clear previous room messages when room/user changes to avoid cross-room leakage
     setMessages([]);
     const resolvedWs = wsUrl || import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'ws://localhost:8000/ws' : 'wss://api.example.com/ws');
+
     const resolvedRest = restBase || import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8000' : 'https://api.example.com');
+
     console.debug('useChat: connecting', {
       room,
       userId,
@@ -54,6 +56,7 @@ export function useChat({
               onExternalMessage?.(m);
               return;
             }
+
             setMessages(prev => {
               if (m.client_id) {
                 const idx = prev.findIndex(x => x.client_id === m.client_id);
@@ -133,6 +136,7 @@ export function useChat({
               });
             });
           };
+
           existing.onRead = data => {
             onRead?.(data);
           };
@@ -143,6 +147,7 @@ export function useChat({
             existing.onStatus = () => {};
             existing.onError = () => {};
             existing.onReaction = () => {};
+
             existing.onRead = () => {};
           };
         }
@@ -165,6 +170,7 @@ export function useChat({
         onExternalMessage?.(m);
         return;
       }
+
       // Call external callback first to remove optimistic from fetchedMessages
       if (onMessageCallback) {
         try {
@@ -252,9 +258,11 @@ export function useChat({
         });
       });
     };
+
     client.onRead = data => {
       onRead?.(data);
     };
+
     client.onAck = ack => {
       if (ack.client_id) {
         if (ack.status === 'ok') {

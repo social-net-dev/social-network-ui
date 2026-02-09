@@ -34,6 +34,7 @@ export class ChatClient {
 
   private url() {
     const { wsUrl, room, userId } = this.opts;
+
     if (!userId) {
       throw new Error('ChatClient: user_id is required');
     }
@@ -261,13 +262,16 @@ export class ChatClient {
 
   private async _sendViaREST(message: MessageIn) {
     const { restBase } = this.opts;
+
     const url = `${restBase}/api/rooms/${encodeURIComponent(message.room_id)}/messages`;
+
     const body = {
       room_id: message.room_id,
       sender_id: message.sender_id,
       content: message.content,
       client_id: message.client_id,
     };
+
     let res: Response;
     try {
       res = await fetch(url, {

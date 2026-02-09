@@ -1,4 +1,5 @@
-import api from '@/lib/axios';
+import api from '@/lib/api';
+
 import type {
   IRoom,
   IRoomUser,
@@ -66,6 +67,7 @@ export const callUploadFile = (roomId: string, params: IUploadFileRequest) => {
   const queryParams = new URLSearchParams();
   if (params.sender_id) queryParams.set('sender_id', params.sender_id);
   if ((params as any).client_id) queryParams.set('client_id', (params as any).client_id);
+
   return api.post<string>(`/api/rooms/${encodeURIComponent(roomId)}/upload?${queryParams.toString()}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
 
@@ -73,6 +75,7 @@ export const callUploadFile = (roomId: string, params: IUploadFileRequest) => {
 export const callDeleteMessage = (params: IDeleteMessageParams) => {
   const queryParams = new URLSearchParams();
   if (params.user_id) queryParams.set('user_id', params.user_id);
+
   return api.delete<string>(`/api/messages/${encodeURIComponent(params.message_id)}`);
 };
 
@@ -87,6 +90,7 @@ export const callRemoveReaction = (params: IRemoveReactionParams) => {
     user_id: params.user_id,
     emoji: params.emoji,
   });
+
   return api.delete<string>(`/api/messages/${encodeURIComponent(params.message_id)}/reactions?${queryParams.toString()}`);
 };
 
@@ -116,12 +120,14 @@ export const callGetMessageReaders = (messageId: string) => {
 export const callSearchRoom = (params: ISearchRoomParams) => {
   const queryParams = new URLSearchParams({ q: params.q });
   if (params.limit) queryParams.set('limit', String(params.limit));
+
   return api.get<string>(`/api/rooms/${encodeURIComponent(params.room_id)}/search?${queryParams.toString()}`);
 };
 
 // POST /api/rooms/{room_id}/read
 export const callMarkRoomRead = (params: IMarkReadParams) => {
   const queryParams = new URLSearchParams({ user_id: params.user_id });
+
   return api.post<string>(`/api/rooms/${encodeURIComponent(params.room_id)}/read?${queryParams.toString()}`);
 };
 
@@ -150,5 +156,6 @@ export const callDeleteRoom = (params: IDeleteRoomParams) => {
   const queryParams = new URLSearchParams();
   if (params.hard !== undefined) queryParams.set('hard', String(params.hard));
   if (params.user_id) queryParams.set('user_id', params.user_id);
+
   return api.delete<string>(`/api/rooms/${encodeURIComponent(params.room_id)}?${queryParams.toString()}`);
 };

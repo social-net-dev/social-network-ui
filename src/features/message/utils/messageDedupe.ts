@@ -91,6 +91,7 @@ export const deduplicateMessages = (wsMessages: MessageOut[], fetchedMessages: M
   out.sort((a, b) => {
     const ta = a.created_at ? Date.parse(a.created_at) : 0;
     const tb = b.created_at ? Date.parse(b.created_at) : 0;
+
     if (ta === tb) {
       const ia = a.id ?? a.client_id ?? '';
       const ib = b.id ?? b.client_id ?? '';

@@ -1,5 +1,9 @@
 import { z } from "zod";
-import type { User } from "@/types";
+import * as Models from "@/lib/api/generated/model";
+
+/**
+ * UI-specific Form Schemas
+ */
 
 export const LoginFormDataSchema = z.object({
     email: z.string().email("Email không hợp lệ"),
@@ -29,34 +33,26 @@ export const RegisterFormDataSchema = z.object({
 export type RegisterFormData = z.infer<typeof RegisterFormDataSchema>;
 
 export const OTPVerifySchema = z.object({
-    user_id: z.string().uuid("user_id phải là UUID"),
+    email: z.string().email("Email không hợp lệ"),
     otpCode: z.string().length(6, "Mã OTP phải có 6 chữ số"),
 });
 
 export type OTPVerifyData = z.infer<typeof OTPVerifySchema>;
 
-export interface AuthResponse {
-    user: User;
+/**
+ * Re-exporting Backend Models using unified names
+ */
+
+export type AuthResponse = {
+    user: Models.AuthorInfo;
     token: string;
     refreshToken: string;
 }
 
-export interface RegisterResponse {
-    message: string;
-    user_id: string; // UUID from etechs-middleware
-    email?: string;
-}
-
-export interface OTPResponse {
-    message: string;
-}
-
-export interface RefreshTokenResponse {
-    access_token: string;
-    token_type: string;
-}
+export type RegisterResponse = Models.RegisterResponse;
 
 export interface AuthError {
     message: string;
     code?: string;
+    detail?: any;
 }

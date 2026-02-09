@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchRoomsForUser, callCreateRoom } from '../services/messageApi';
 import type { IRoomUser } from '../types/message.types';
+
 import { useMessageStore } from '@/stores/messageStore';
 import ChatClient from '../lib/chatClient';
 
@@ -12,6 +13,7 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
   const [rooms, setRooms] = useState<IRoomUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const setRoomsUnread = useMessageStore(state => state.setRoomsUnread);
   const incrementUnread = useMessageStore(state => state.incrementUnread);
 
@@ -47,6 +49,7 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
     setError(null);
     try {
       const res = await fetchRoomsForUser(userId);
+
       const nextRooms = res.data || [];
       setRooms(nextRooms);
       setRoomsUnread(nextRooms);

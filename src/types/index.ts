@@ -1,52 +1,34 @@
 import { z } from "zod";
+import * as Models from "@/lib/api/generated/model";
+import * as ZodModels from "@/lib/api/generated/zod";
+import type { Author as FEAuthor, FeedPost as FEPost, FeedComment as FEComment, ReactionType as FEReactionType } from "@/features/home/types/feed.types";
 
-export const UserSchema = z.object({
-    id: z.string(),
-    username: z.string().optional(),
-    displayName: z.string().optional(),
-    firstName: z.string(),
-    lastName: z.string(),
-    email: z.string().email(),
-    avatar: z.string().url().optional(),
-    bio: z.string().optional(),
-    followers: z.number().optional(),
-    following: z.number().optional(),
-    postsCount: z.number().optional(),
-    createdAt: z.string().optional(),
-    updatedAt: z.string().optional(),
-    role: z.enum(["USER", "ADMIN"]).optional(),
-    account_status: z.enum(["UNVERIFIED", "PENDING", "VERIFIED", "REJECTED", "LOCKED", "DISABLED", "DEACTIVATED", "TERMINATED"]).optional(),
-    storage_quota_mb: z.number().optional(),
-});
+/**
+ * Single Source of Truth for Types
+ * This file re-exports types from Orval and defines Frontend-specific views.
+ */
 
-export type User = z.infer<typeof UserSchema>;
+// Re-export all backend models
+export { Models };
 
-export const PostSchema = z.object({
-    id: z.string(),
-    authorId: z.string(),
-    author: UserSchema,
-    content: z.string(),
-    images: z.array(z.string().url()),
-    likes: z.number(),
-    comments: z.number(),
-    shares: z.number(),
-    likedByCurrentUser: z.boolean(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-});
+// Re-export all validation schemas
+export { ZodModels };
 
-export type Post = z.infer<typeof PostSchema>;
+// Define Aliases for clarity
+export type User = FEAuthor;
+export type Post = FEPost;
+export type Comment = FEComment;
+export type ReactionType = FEReactionType;
 
-export const CommentSchema = z.object({
-    id: z.string(),
-    postId: z.string(),
-    authorId: z.string(),
-    author: UserSchema,
-    content: z.string(),
-    likes: z.number(),
-    likedByCurrentUser: z.boolean(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-});
+// Standard Response Wrapper (Matching etechs-middleware)
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  error?: string;
+}
 
-export type Comment = z.infer<typeof CommentSchema>;
+// Validation Schemas (Derived from Orval if possible, or defined manually for UI)
+export const UserSchema = z.any(); // We prefer using FEAuthor type
+export const PostSchema = z.any();
+export const CommentSchema = z.any();

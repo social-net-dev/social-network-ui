@@ -4,10 +4,10 @@
 {$APP_DOMAIN} {
   encode gzip zstd
 
-  # Backend API – path bắt đầu /api (vd /api/auth/login/)
+  # Backend API – proxy /api thẳng tới etechs-middleware (không qua social-be)
   @api path /api*
   handle @api {
-    reverse_proxy social-be:8000 {
+    reverse_proxy etechs-middleware:8000 {
       header_up X-Real-IP {remote_host}
       header_up X-Forwarded-For {remote_host}
       header_up X-Forwarded-Proto {scheme}
@@ -16,9 +16,20 @@
     }
   }
 
-  # Health check
+  # WebSocket (Channels) – proxy /ws tới etechs-middleware
+  @ws path /ws*
+  handle @ws {
+    reverse_proxy etechs-middleware:8000 {
+      header_up X-Real-IP {remote_host}
+      header_up X-Forwarded-For {remote_host}
+      header_up X-Forwarded-Proto {scheme}
+      header_up Host {host}
+    }
+  }
+
+  # Health check – etechs-middleware (Django /health/)
   handle /health {
-    reverse_proxy social-be:8000
+    reverse_proxy etechs-middleware:8000
   }
 
   # SPA static site
