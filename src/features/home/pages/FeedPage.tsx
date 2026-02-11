@@ -3,6 +3,7 @@ import { useFeed } from '../hooks/useFeed';
 import { CreatePostTrigger } from '../components/CreatePostTrigger';
 import { FeedList } from '../components/FeedList';
 import { ShareDialog } from '../components/ShareDialog';
+import { SearchUsersMini } from '../components/SearchUsersMini';
 import { Button } from '@/components/ui/button';
 import { usePostActions } from '../hooks/usePostActions';
 import { useAuthStore } from '@/stores/authStore';
@@ -193,6 +194,9 @@ export function FeedPage() {
       </div>
 
       <div className="lg:sticky lg:top-24 h-[calc(100vh-7rem)] overflow-y-auto pr-1 space-y-6 sidebar-scroll">
+        {/* Search Users Mini */}
+        <SearchUsersMini />
+
         <Card className="border-none shadow-xl bg-white dark:bg-card overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">

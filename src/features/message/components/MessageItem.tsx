@@ -12,10 +12,12 @@ interface MessageItemProps {
   currentUserId: string;
   onRefresh?: () => void;
   sendReaction?: (messageId: string, emoji: string, remove?: boolean) => Promise<void>;
+  decryptedText?: string;
 }
 
-const MessageItem: React.FC<MessageItemProps> = ({ message, isMine, currentUserId, onRefresh, sendReaction }) => {
-  const displayText = message.message ?? message.ciphertext ?? '';
+const MessageItem: React.FC<MessageItemProps> = ({ message, isMine, currentUserId, onRefresh, sendReaction, decryptedText }) => {
+  // 🔑 Priority: _plaintext (own messages) > decryptedText > message.message > ciphertext
+  const displayText = (message as any)._plaintext || decryptedText || message.message || message.ciphertext || '';
   const reactions: IReaction[] = (message as any).reactions ?? [];
 
   const handleDelete = async () => {

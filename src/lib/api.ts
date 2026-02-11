@@ -69,7 +69,9 @@ apiClient.interceptors.request.use(
       }
       const tenantSlug = localStorage.getItem('tenant_slug');
       if (tenantSlug) {
-        config.headers['X-Tenant-Slug'] = tenantSlug.replace(/"/g, '');
+        const cleanSlug = tenantSlug.replace(/"/g, '');
+        config.headers['X-Tenant-Slug'] = cleanSlug;
+        console.log(`[Request Interceptor] 🔑 Auto-added X-Tenant-Slug: ${cleanSlug} to ${config.url}`);
       }
     }
     return config;

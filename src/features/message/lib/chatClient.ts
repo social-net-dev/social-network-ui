@@ -53,10 +53,21 @@ export class ChatClient {
       try {
         this.onStatus('connecting');
       } catch {}
-      this.ws = new WebSocket(this.url());
-      console.debug('ChatClient: connecting to', this.url());
+
+      const wsUrl = this.url();
+      console.log('======================== WebSocket Connection Attempt ========================');
+      console.log('[ChatClient] 🔌 Connecting to:', wsUrl);
+      console.log('[ChatClient] 📋 Connection params:', {
+        user_id: this.opts.userId.substring(0, 8) + '...',
+        room_id: this.opts.room,
+        wsUrl: this.opts.wsUrl,
+      });
+      console.log('==============================================================================');
+
+      this.ws = new WebSocket(wsUrl);
+
       this.ws.onopen = () => {
-        console.debug('ChatClient: websocket open');
+        console.log('[ChatClient] ✅ WebSocket connected successfully:', wsUrl);
         this.connecting = false;
         if (this.retryTimer) {
           clearTimeout(this.retryTimer);
@@ -74,6 +85,21 @@ export class ChatClient {
       this.ws.onmessage = ev => {
         try {
           const data = JSON.parse(ev.data);
+          console.log('\\n\ud83d\udce1 ==================== WebSocket Message Received ====================');
+          console.log('\ud83d\udce8 [ChatClient] RAW WebSocket Message:', {
+            type: data.type,
+            id: data.id,
+            room_id: data.room_id,
+            sender_id: data.sender_id?.substring(0, 8) + '...',
+            current_connection_room: this.opts.room,
+            is_correct_room: data.room_id === this.opts.room || data.type !== 'message',
+            has_encrypted_key: !!data.encrypted_key,
+            has_iv: !!data.iv,
+            encrypted_key_preview: data.encrypted_key?.substring(0, 30) + '...',
+            iv_preview: data.iv?.substring(0, 20) + '...',
+            ciphertext_preview: data.ciphertext?.substring(0, 30) + '...',
+          });
+          console.log('======================================================================\\n');
           console.debug('ChatClient: message received', data);
           if (data.type === 'ack') {
             // ACK cho reaction cũng đi qua onReaction nếu có action
@@ -96,6 +122,9 @@ export class ChatClient {
               created_at: data.created_at ?? new Date().toISOString(),
               client_id: data.client_id ?? undefined,
               _status: 'sent',
+              // 🔑 E2EE fields - CRITICAL for realtime decryption
+              encrypted_key: data.encrypted_key ?? undefined,
+              iv: data.iv ?? undefined,
               // backend now returns attachments array with metadata
               attachments: data.attachments ?? null,
               // legacy fallback
@@ -104,6 +133,13 @@ export class ChatClient {
               pinned: data.pinned ?? false,
               reactions: data.reactions ?? [],
             } as MessageOut;
+            console.log('[ChatClient] 📥 Message mapped from WebSocket:', {
+              id: out.id,
+              has_encrypted_key: !!out.encrypted_key,
+              has_iv: !!out.iv,
+              encrypted_key_length: out.encrypted_key?.length,
+              iv_length: out.iv?.length,
+            });
             this.onMessage(out);
           } else if (data.type === 'reaction' || data.type === 'reaction_removed') {
             // broadcast reaction event to hook
@@ -123,11 +159,39 @@ export class ChatClient {
         }
       };
       this.ws.onclose = ev => {
-        console.error('ChatClient: websocket closed', {
+        console.log('======================== WebSocket Closed ========================');
+        console.error('[ChatClient] ❌ WebSocket closed:', {
           code: ev.code,
+          code_meaning:
+            ev.code === 1006
+              ? 'ABNORMAL CLOSURE (backend rejected or crashed)'
+              : ev.code === 1000
+                ? 'NORMAL CLOSURE'
+                : ev.code === 1001
+                  ? 'GOING AWAY'
+                  : ev.code === 1002
+                    ? 'PROTOCOL ERROR'
+                    : ev.code === 1003
+                      ? 'UNSUPPORTED DATA'
+                      : ev.code === 1005
+                        ? 'NO STATUS RECEIVED'
+                        : ev.code === 1011
+                          ? 'SERVER ERROR'
+                          : 'UNKNOWN',
           reason: ev.reason || '(no reason)',
           wasClean: ev.wasClean,
+          url: this.url(),
         });
+
+        if (ev.code === 1006) {
+          console.error('[ChatClient] 🔍 Error 1006 Diagnosis:');
+          console.error('  - Backend WebSocket server may not be running on port 8001');
+          console.error('  - Backend may be rejecting authentication');
+          console.error('  - Room ID may not exist');
+          console.error('  - Check backend logs for connection errors');
+        }
+        console.log('==================================================================');
+
         try {
           this.onStatus('closed');
         } catch {}
@@ -241,13 +305,31 @@ export class ChatClient {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
           return reject(new Error('WS not open'));
         }
-        const payload = {
+        const payload: any = {
           action: 'message',
           room_id: message.room_id,
           message: message.content,
           client_id: message.client_id,
         };
+        // 🔑 Include E2EE fields if present
+        if (message.encrypted_key) {
+          payload.encrypted_key = message.encrypted_key;
+        }
+        if (message.iv) {
+          payload.iv = message.iv;
+        }
         try {
+          console.log('\\n\ud83d\udce4 ==================== Sending Message via WS ====================');
+          console.log('[ChatClient] \ud83d\udce4 Sending via WS:', {
+            action: payload.action,
+            room_id: payload.room_id,
+            has_encrypted_key: !!payload.encrypted_key,
+            has_iv: !!payload.iv,
+            encrypted_key_length: payload.encrypted_key?.length,
+            iv_length: payload.iv?.length,
+            client_id: payload.client_id?.substring(0, 8) + '...',
+          });
+          console.log('==================================================================\\n');
           this.ws.send(JSON.stringify(payload));
           resolve();
         } catch (e) {
@@ -265,12 +347,28 @@ export class ChatClient {
 
     const url = `${restBase}/api/rooms/${encodeURIComponent(message.room_id)}/messages`;
 
-    const body = {
+    const body: any = {
       room_id: message.room_id,
       sender_id: message.sender_id,
       content: message.content,
       client_id: message.client_id,
     };
+
+    // 🔑 Include E2EE fields if present
+    if (message.encrypted_key) {
+      body.encrypted_key = message.encrypted_key;
+    }
+    if (message.iv) {
+      body.iv = message.iv;
+    }
+
+    console.log('[ChatClient] 📤 Sending via REST:', {
+      url,
+      has_encrypted_key: !!body.encrypted_key,
+      has_iv: !!body.iv,
+      encrypted_key_length: body.encrypted_key?.length,
+      iv_length: body.iv?.length,
+    });
 
     let res: Response;
     try {

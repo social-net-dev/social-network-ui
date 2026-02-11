@@ -1,6 +1,7 @@
 import React from 'react';
 import MessageItem from './MessageItem';
 import PinnedMessages from './PinnedMessages';
+import { SetDisplayName } from './SetDisplayName';
 import { groupMessagesByDate } from '../utils/messageHelpers';
 import type { MessageOut, MessageFull } from '../types/message.types';
 
@@ -16,21 +17,34 @@ interface MessageAreaProps {
   endRef: React.RefObject<HTMLDivElement | null>;
   messagesContainerRef?: React.RefObject<HTMLDivElement | null>;
   messageInput: React.ReactNode;
+  decryptedMessages?: Record<string, string>;
+  roomId?: string;
 }
 
-export const MessageArea: React.FC<MessageAreaProps> = ({ pinnedMessages, regularMessages, currentUserId, chatStatus, lastError, conversationTitle, sendReaction, onRefresh, endRef, messagesContainerRef, messageInput }) => {
+export const MessageArea: React.FC<MessageAreaProps> = ({ pinnedMessages, regularMessages, currentUserId, chatStatus, lastError, conversationTitle, sendReaction, onRefresh, endRef, messagesContainerRef, messageInput, decryptedMessages = {}, roomId }) => {
   // Scrolling is handled by the parent `ConversationPage` to avoid conflicting jumps
 
   return (
     <div className="flex-1 flex flex-col bg-card rounded overflow-hidden min-h-0 relative">
       {/* Header (sticky) */}
       <header className="border-b pb-3 pt-4 px-4 flex-shrink-0 sticky top-0 z-20 bg-card">
-        <div className="text-lg font-semibold">
-          {conversationTitle ?? 'Cuộc trò chuyện'}
-          <span className="ml-3 text-sm align-middle">
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${chatStatus === 'open' ? 'bg-green-100 text-green-800' : chatStatus === 'connecting' ? 'bg-yellow-100 text-yellow-800' : chatStatus === 'error' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>{chatStatus}</span>
-          </span>
-          {lastError && <div className="text-xs text-red-500 mt-1">Lỗi kết nối: {lastError}</div>}
+        <div className="flex items-center justify-between">
+          <div className="text-lg font-semibold">
+            {conversationTitle ?? 'Cuộc trò chuyện'}
+            <span className="ml-3 text-sm align-middle">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${chatStatus === 'open' ? 'bg-green-100 text-green-800' : chatStatus === 'connecting' ? 'bg-yellow-100 text-yellow-800' : chatStatus === 'error' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
+                {chatStatus}
+              </span>
+            </span>
+            {lastError && <div className="text-xs text-red-500 mt-1">Lỗi kết nối: {lastError}</div>}
+          </div>
+
+          {/* Display Name Setting */}
+          {roomId && (
+            <div className="ml-4">
+              <SetDisplayName roomId={roomId} userId={currentUserId} onSuccess={onRefresh} />
+            </div>
+          )}
         </div>
       </header>
 
@@ -49,7 +63,7 @@ export const MessageArea: React.FC<MessageAreaProps> = ({ pinnedMessages, regula
             )}
             <div className="space-y-3">
               {group.messages.map((m, msgIdx) => (
-                <MessageItem key={m.id ?? m.client_id ?? `${groupIdx}-${msgIdx}`} message={m} isMine={m.sender_id === currentUserId} currentUserId={currentUserId} sendReaction={sendReaction} onRefresh={onRefresh} />
+                <MessageItem key={m.id ?? m.client_id ?? `${groupIdx}-${msgIdx}`} message={m} isMine={m.sender_id === currentUserId} currentUserId={currentUserId} sendReaction={sendReaction} onRefresh={onRefresh} decryptedText={decryptedMessages[m.id] || decryptedMessages[m.client_id || '']} />
               ))}
             </div>
           </div>

@@ -20,25 +20,25 @@ export interface MockUser {
 // ============================================
 export const mockUsers: MockUser[] = [
   {
-    id: "user-001",
-    email: "demo@etechs.com",
-    username: "demo_user",
-    display_name: "Demo User",
-    avatar_path: "https://github.com/shadcn.png",
+    id: 'bd8565ff-be35-454a-b873-db6c84498afd', // UUID format to match tenant_slug
+    email: 'demo@etechs.com',
+    username: 'demo_user',
+    display_name: 'Demo User',
+    avatar_path: 'https://github.com/shadcn.png',
   },
   {
-    id: "user-002",
-    email: "nguyen.van.a@etechs.com",
-    username: "nguyenvana",
-    display_name: "Nguyễn Văn A",
-    avatar_path: "https://i.pravatar.cc/150?u=user002",
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    email: 'nguyen.van.a@etechs.com',
+    username: 'nguyenvana',
+    display_name: 'Nguyễn Văn A',
+    avatar_path: 'https://i.pravatar.cc/150?u=user002',
   },
   {
-    id: "user-003",
-    email: "tran.thi.b@etechs.com",
-    username: "tranthib",
-    display_name: "Trần Thị B",
-    avatar_path: "https://i.pravatar.cc/150?u=user003",
+    id: 'f9e8d7c6-b5a4-3210-9876-fedcba098765',
+    email: 'tran.thi.b@etechs.com',
+    username: 'tranthib',
+    display_name: 'Trần Thị B',
+    avatar_path: 'https://i.pravatar.cc/150?u=user003',
   },
 ];
 
@@ -52,11 +52,11 @@ export const createMockUser = (override: Partial<MockUser> = {}): MockUser => ({
   id: `user-${Date.now()}`,
   email: `user${Date.now()}@etechs.com`,
   username: `user_${Date.now()}`,
-  display_name: "New User",
+  display_name: 'New User',
   avatar_path: null,
   ...override,
 });
 
 export const findMockUserById = (id: string): MockUser | undefined => {
-  return mockUsers.find((u) => u.id === id);
+  return mockUsers.find(u => u.id === id);
 };

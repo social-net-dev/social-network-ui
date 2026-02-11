@@ -44,6 +44,9 @@ export interface IMessage {
   attachment_urls?: string[] | null;
   pinned?: boolean;
   reactions?: IReaction[];
+  // E2EE fields - REQUIRED for decryption
+  encrypted_key?: string;
+  iv?: string;
 }
 
 export type MessageIn = {
@@ -51,6 +54,9 @@ export type MessageIn = {
   sender_id: string;
   content: string;
   client_id?: string;
+  // E2EE fields
+  encrypted_key?: string;
+  iv?: string;
 };
 
 export type MessageOut = {
@@ -63,6 +69,11 @@ export type MessageOut = {
   client_id?: string | null;
   _status?: 'sending' | 'sent' | 'failed';
   _error?: string | null;
+  // E2EE fields
+  encrypted_key?: string;
+  iv?: string;
+  // 🔑 Store original plaintext for displaying own encrypted messages
+  _plaintext?: string;
 };
 
 export interface IReaction {
@@ -94,6 +105,9 @@ export interface IPostMessageRequest {
   room_id: string;
   sender_id: string;
   content: string;
+  // E2EE fields
+  encrypted_key?: string;
+  iv?: string;
 }
 
 export interface IPostMessageResponse {
@@ -102,6 +116,9 @@ export interface IPostMessageResponse {
   sender_id: string;
   ciphertext: string;
   created_at: string;
+  // E2EE fields
+  encrypted_key?: string;
+  iv?: string;
 }
 
 export interface IUploadFileRequest {
@@ -163,4 +180,34 @@ export interface IDeleteRoomParams {
   room_id: string;
   hard?: boolean;
   user_id?: string | null;
+}
+
+// E2EE types
+export interface IEncryptedMessage {
+  ciphertext: string;
+  encryptedKey: string;
+  iv: string;
+}
+
+// Display name types
+export interface IDisplayNameRequest {
+  display_name: string;
+}
+
+export interface IDisplayNameResponse {
+  room_id: string;
+  user_id: string;
+  display_name: string;
+}
+
+// Public key management types
+export interface IPublicKeyRequest {
+  user_id: string;
+  public_key: string;
+}
+
+export interface IPublicKeyResponse {
+  user_id: string;
+  public_key: string;
+  updated_at?: string;
 }

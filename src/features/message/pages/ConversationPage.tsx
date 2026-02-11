@@ -6,12 +6,14 @@ import { useChat } from '../hooks/useChat';
 import { useRoomManager } from '../hooks/useRoomManager';
 import { useMessageManager } from '../hooks/useMessageManager';
 import { useFileUpload } from '../hooks/useFileUpload';
+import { useE2EEMessaging } from '../hooks/useE2EEMessaging';
 import { useAuthStore } from '@/stores/authStore';
 import { RoomSidebar } from '../components/RoomSidebar';
 import { MessageArea } from '../components/MessageArea';
 import { MessageInput } from '../components/MessageInput';
+import { E2EEDebugPanel } from '../components/E2EEDebugPanel';
 import { filterOptimisticMessage } from '../utils/messageDedupe';
-import { callMarkRoomRead } from '../services/messageApi';
+import { callMarkRoomRead, callGetRoomMemberPublicKeys } from '../services/messageApi';
 import { useMessageStore } from '@/stores/messageStore';
 
 const ConversationPage: React.FC = () => {
@@ -29,6 +31,8 @@ const ConversationPage: React.FC = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>(params.conversationId ?? searchParams.get('room_id') ?? undefined);
   const [overrideRoomId, setOverrideRoomId] = useState<string | undefined>(searchParams.get('room_id') ?? undefined);
   const [text, setText] = useState('');
+  const [decryptedMessages, setDecryptedMessages] = useState<Record<string, string>>({});
+  const [recipientId, setRecipientId] = useState<string | null>(null);
 
   const resetUnread = useMessageStore(state => state.resetUnread);
   const incrementUnread = useMessageStore(state => state.incrementUnread);
@@ -130,8 +134,8 @@ const ConversationPage: React.FC = () => {
     room: resolvedRoom,
     userId: resolvedUserId,
 
-    wsUrl: import.meta.env.DEV ? 'ws://localhost:8000/ws' : '',
-    restBase: import.meta.env.DEV ? 'http://localhost:8000' : '',
+    wsUrl: import.meta.env.DEV ? 'ws://localhost:8001/ws' : '',
+    restBase: import.meta.env.DEV ? 'http://localhost:8001' : '',
     onReactionEvent: handleReactionEvent,
     onExternalMessage: msg => {
       if (msg.room_id && msg.room_id !== resolvedRoom) {
@@ -180,6 +184,123 @@ const ConversationPage: React.FC = () => {
       alert('Tải ảnh thất bại');
     },
   });
+
+  // E2EE hook
+  const {
+    isReady: e2eeReady,
+    encryptForRecipient,
+    decryptIncoming,
+  } = useE2EEMessaging({
+    roomId: resolvedRoom,
+    userId: resolvedUserId,
+    enabled: true, // Enable E2EE by default
+  });
+
+  // Fetch recipient ID when room changes (for E2EE encryption)
+  useEffect(() => {
+    if (!resolvedRoom || !resolvedUserId) {
+      setRecipientId(null);
+      return;
+    }
+
+    const fetchRecipient = async () => {
+      try {
+        console.log('[ConversationPage] 🎯 Fetching recipient for encryption');
+        console.log('[ConversationPage] Current state:', {
+          room: resolvedRoom,
+          current_user: resolvedUserId.substring(0, 8) + '...',
+          e2ee_ready: e2eeReady,
+        });
+
+        const response = await callGetRoomMemberPublicKeys(resolvedRoom);
+        const members = response.data?.members || [];
+
+        console.log('[ConversationPage] 📊 Room members:');
+        members.forEach((m, idx) => {
+          console.log(`  [${idx}] user_id: ${m.user_id.substring(0, 8)}..., is_me: ${m.user_id === resolvedUserId}, has_public_key: ${!!m.public_key}`);
+        });
+
+        // Find first member who is not current user (for 1-1 direct chat)
+        const recipient = members.find(m => m.user_id !== resolvedUserId);
+
+        if (recipient) {
+          setRecipientId(recipient.user_id);
+          console.log('[ConversationPage] ✅ RECIPIENT SET:', {
+            recipient_id: recipient.user_id.substring(0, 8) + '...',
+            has_public_key: !!recipient.public_key,
+            public_key_preview: recipient.public_key?.substring(0, 40) + '...',
+          });
+        } else {
+          setRecipientId(null);
+          console.warn('[ConversationPage] ⚠️ No recipient found (group chat or only you)');
+        }
+      } catch (error) {
+        console.error('[ConversationPage] ❌ Failed to fetch recipient:', error);
+        setRecipientId(null);
+      }
+    };
+
+    fetchRecipient();
+  }, [resolvedRoom, resolvedUserId, e2eeReady]);
+
+  // Decrypt messages when they arrive
+  useEffect(() => {
+    if (!e2eeReady) {
+      console.log('[ConversationPage] ⏸️ E2EE not ready, skipping decrypt');
+      return;
+    }
+
+    const decrypt = async () => {
+      console.log('\n🔐 ==================== DECRYPTING MESSAGES ====================');
+      console.log('[ConversationPage] Total messages to process:', combinedMessages.length);
+      console.log('[ConversationPage] Already decrypted:', Object.keys(decryptedMessages).length);
+
+      const decrypted: Record<string, string> = {};
+      let skipped = 0;
+      let attempted = 0;
+      let succeeded = 0;
+
+      for (const msg of combinedMessages) {
+        // Skip if already decrypted
+        if (decryptedMessages[msg.id]) {
+          decrypted[msg.id] = decryptedMessages[msg.id];
+          skipped++;
+          continue;
+        }
+
+        attempted++;
+        console.log(`\n[ConversationPage] Processing message ${attempted}/${combinedMessages.length - skipped}:`, {
+          id: msg.id?.substring(0, 8) + '...',
+          sender: msg.sender_id?.substring(0, 8) + '...',
+          has_encrypted_key: !!msg.encrypted_key,
+          has_iv: !!msg.iv,
+        });
+
+        // Try to decrypt
+        const text = await decryptIncoming(msg);
+        if (text) {
+          decrypted[msg.id] = text;
+          succeeded++;
+          console.log(`[ConversationPage] ✅ Decrypted successfully`);
+        } else {
+          console.log(`[ConversationPage] ⚠️ No text returned`);
+        }
+      }
+
+      console.log('\n[ConversationPage] 📊 Decrypt Summary:', {
+        total: combinedMessages.length,
+        skipped,
+        attempted,
+        succeeded,
+        failed: attempted - succeeded,
+      });
+      console.log('================================================================\n');
+
+      setDecryptedMessages(decrypted);
+    };
+
+    decrypt();
+  }, [combinedMessages, e2eeReady]);
 
   // If URL param changes, sync it into state
   useEffect(() => {
@@ -327,8 +448,54 @@ const ConversationPage: React.FC = () => {
         clearFiles();
         setText('');
       } else if (text.trim()) {
-        // Send text only via WebSocket
-        await send(text.trim());
+        // Send text only via WebSocket with E2EE if ready
+        let encrypted = null;
+
+        console.log('[ConversationPage] 📤 SENDING MESSAGE:', {
+          text_preview: text.substring(0, 20) + '...',
+          e2ee_ready: e2eeReady,
+          recipient_id: recipientId?.substring(0, 8) + '...',
+          current_user: resolvedUserId.substring(0, 8) + '...',
+        });
+
+        if (e2eeReady && recipientId) {
+          console.log('[ConversationPage] 🔐 E2EE enabled, encrypting...');
+
+          // Encrypt message for the recipient
+          encrypted = await encryptForRecipient(text.trim(), recipientId);
+
+          if (encrypted) {
+            console.log('[ConversationPage] ✅ Encrypted payload:', {
+              ciphertext_length: encrypted.ciphertext.length,
+              encrypted_key_length: (encrypted as any).encrypted_key?.length ?? (encrypted as any).encryptedKey?.length,
+              iv_length: encrypted.iv.length,
+              ciphertext_preview: encrypted.ciphertext.substring(0, 40) + '...',
+            });
+
+            // Send encrypted message via WebSocket (pass original plaintext for display)
+            await send(
+              encrypted.ciphertext,
+              {
+                encrypted_key: (encrypted as any).encrypted_key ?? (encrypted as any).encryptedKey,
+                iv: encrypted.iv,
+              },
+              text.trim()
+            );
+          } else {
+            console.warn('[ConversationPage] ⚠️ Encryption failed, sending plaintext');
+            await send(text.trim());
+          }
+        } else {
+          // E2EE not ready or no recipient, send plaintext
+          if (!e2eeReady) {
+            console.log('[ConversationPage] 📢 E2EE not ready, sending plaintext');
+          }
+          if (!recipientId) {
+            console.log('[ConversationPage] 📢 No recipient ID, sending plaintext');
+          }
+          await send(text.trim());
+        }
+
         setText('');
       }
     } catch (e) {
@@ -353,8 +520,13 @@ const ConversationPage: React.FC = () => {
         onRefresh={loadMessages}
         endRef={endRef}
         messagesContainerRef={messagesContainerRef}
+        decryptedMessages={decryptedMessages}
+        roomId={resolvedRoom}
         messageInput={<MessageInput text={text} selectedFiles={selectedFiles} previews={previews} fileInputRef={fileInputRef} onTextChange={setText} onFileSelect={handleFileSelect} onRemoveFile={removeFile} onSend={handleSend} onAttachClick={() => fileInputRef.current?.click()} />}
       />
+
+      {/* E2EE Debug Panel - Chỉ hiện trong dev mode */}
+      {selectedConversationId && <E2EEDebugPanel roomId={selectedConversationId} />}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ChatClient from '../lib/chatClient';
 import type { MessageOut } from '../types/message.types';
+import { saveSentMessagePlaintext } from '../lib/messageCache';
 
 export function useChat({
   room,
@@ -29,22 +30,31 @@ export function useChat({
   useEffect(() => {
     // clear previous room messages when room/user changes to avoid cross-room leakage
     setMessages([]);
-    const resolvedWs = wsUrl || import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'ws://localhost:8000/ws' : 'wss://api.example.com/ws');
+    const resolvedWs = wsUrl || import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'ws://localhost:8001/ws' : 'wss://api.example.com/ws');
 
-    const resolvedRest = restBase || import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8000' : 'https://api.example.com');
+    const resolvedRest = restBase || import.meta.env.VITE_API_URL_MESSAGE || (import.meta.env.DEV ? 'http://localhost:8001' : 'https://api.example.com');
 
-    console.debug('useChat: connecting', {
+    console.log('\n🔄 ==================== useChat EFFECT ====================');
+    console.log('[useChat] 🔌 Setting up WebSocket for:', {
       room,
-      userId,
+      userId: userId.substring(0, 8) + '...',
       resolvedWs,
       resolvedRest,
     });
+    console.log('=========================================================\n');
     const optsObj = { wsUrl: resolvedWs, restBase: resolvedRest, room, userId };
     // reuse existing client when options match to avoid duplicate sockets
     if (clientRef.current && typeof (clientRef.current as any).getOpts === 'function') {
       try {
         const existingOpts = (clientRef.current as any).getOpts();
+        console.log('[useChat] 🔍 Checking existing connection:', {
+          existing_room: existingOpts.room,
+          new_room: room,
+          will_reuse: JSON.stringify(existingOpts) === JSON.stringify(optsObj),
+        });
+
         if (JSON.stringify(existingOpts) === JSON.stringify(optsObj)) {
+          console.log('[useChat] ♻️ REUSING existing WebSocket connection');
           const existing = clientRef.current;
           existing.onStatus = s => {
             setStatus(s);
@@ -52,7 +62,16 @@ export function useChat({
           };
           existing.onError = e => setLastError(String(e));
           existing.onMessage = m => {
+            console.log('[useChat] 📨 RECEIVED message via WebSocket:', {
+              message_id: m.id,
+              message_room: m.room_id,
+              current_room: room,
+              sender: m.sender_id?.substring(0, 8) + '...',
+              is_for_this_room: m.room_id === room,
+            });
+
             if (m.room_id && m.room_id !== room) {
+              console.log('[useChat] 📭 Message for different room, calling onExternalMessage');
               onExternalMessage?.(m);
               return;
             }
@@ -62,7 +81,9 @@ export function useChat({
                 const idx = prev.findIndex(x => x.client_id === m.client_id);
                 if (idx !== -1) {
                   const copy = [...prev];
-                  copy[idx] = { ...copy[idx], ...m, id: m.id, _status: 'sent' };
+                  // 🔑 CRITICAL: Preserve _plaintext from optimistic message when merging with server broadcast
+                  const optimisticPlaintext = copy[idx]._plaintext;
+                  copy[idx] = { ...copy[idx], ...m, id: m.id, _status: 'sent', _plaintext: optimisticPlaintext };
                   return copy;
                 }
               }
@@ -74,16 +95,25 @@ export function useChat({
           existing.onAck = ack => {
             if (ack.client_id && ack.status === 'ok') {
               setMessages(prev =>
-                prev.map(item =>
-                  item.id === ack.client_id
-                    ? {
-                        ...item,
-                        id: ack.server_id ?? item.id,
-                        _status: 'sent',
-                        created_at: ack.created_at ?? item.created_at,
-                      }
-                    : item
-                )
+                prev.map(item => {
+                  if (item.id === ack.client_id) {
+                    // 💾 Save plaintext to cache with server ID for later retrieval
+                    if ((item as any)._plaintext && ack.server_id) {
+                      saveSentMessagePlaintext(ack.server_id, userId, (item as any)._plaintext);
+                      console.log('[useChat] 💾 Cached plaintext with server ID:', ack.server_id.substring(0, 8) + '...');
+                    }
+
+                    return {
+                      ...item,
+                      id: ack.server_id ?? item.id,
+                      _status: 'sent',
+                      created_at: ack.created_at ?? item.created_at,
+                      // 🔑 Preserve _plaintext when updating from ACK
+                      _plaintext: item._plaintext,
+                    };
+                  }
+                  return item;
+                })
               );
             } else if (ack.client_id && ack.status === 'error') {
               setMessages(prev => prev.map(item => (item.id === ack.client_id ? { ...item, _status: 'failed' } : item)));
@@ -154,6 +184,7 @@ export function useChat({
       } catch {}
     }
 
+    console.log('[useChat] 🆕 CREATING NEW WebSocket connection for room:', room);
     const client = new ChatClient({
       wsUrl: resolvedWs,
       restBase: resolvedRest,
@@ -166,7 +197,19 @@ export function useChat({
     };
     client.onError = e => setLastError(String(e));
     client.onMessage = m => {
+      // DEBUG: log raw incoming message to verify encrypted metadata
+      console.log('[useChat] 📨 RECEIVED message via WebSocket (new client):', {
+        message_id: m.id,
+        message_room: m.room_id,
+        current_room: room,
+        sender: m.sender_id?.substring(0, 8) + '...',
+        is_for_this_room: m.room_id === room,
+        has_encrypted_key: !!m.encrypted_key,
+        has_iv: !!m.iv,
+      });
+
       if (m.room_id && m.room_id !== room) {
+        console.log('[useChat] 📭 Message for different room, calling onExternalMessage');
         onExternalMessage?.(m);
         return;
       }
@@ -185,8 +228,10 @@ export function useChat({
           const idx = prev.findIndex(x => x.client_id === m.client_id);
           if (idx !== -1) {
             const copy = [...prev];
+            // 🔑 CRITICAL: Preserve _plaintext from optimistic message
+            const optimisticPlaintext = copy[idx]._plaintext;
             // merge into existing optimistic item
-            copy[idx] = { ...copy[idx], ...m, id: m.id, _status: 'sent' };
+            copy[idx] = { ...copy[idx], ...m, id: m.id, _status: 'sent', _plaintext: optimisticPlaintext };
             return copy;
           }
         }
@@ -267,16 +312,25 @@ export function useChat({
       if (ack.client_id) {
         if (ack.status === 'ok') {
           setMessages(prev =>
-            prev.map(item =>
-              item.client_id === ack.client_id
-                ? {
-                    ...item,
-                    id: ack.server_id ?? item.id,
-                    _status: 'sent',
-                    created_at: ack.created_at ?? item.created_at,
-                  }
-                : item
-            )
+            prev.map(item => {
+              if (item.client_id === ack.client_id) {
+                // 💾 Save plaintext to cache with server ID for later retrieval
+                if ((item as any)._plaintext && ack.server_id) {
+                  saveSentMessagePlaintext(ack.server_id, userId, (item as any)._plaintext);
+                  console.log('[useChat] 💾 Cached plaintext with server ID:', ack.server_id.substring(0, 8) + '...');
+                }
+
+                return {
+                  ...item,
+                  id: ack.server_id ?? item.id,
+                  _status: 'sent',
+                  created_at: ack.created_at ?? item.created_at,
+                  // 🔑 Preserve _plaintext when updating from ACK
+                  _plaintext: item._plaintext,
+                };
+              }
+              return item;
+            })
           );
         } else if (ack.status === 'error') {
           setMessages(prev => prev.map(item => (item.client_id === ack.client_id ? { ...item, _status: 'failed' } : item)));
@@ -285,23 +339,34 @@ export function useChat({
     };
     clientRef.current = client;
     return () => {
+      console.log('[useChat] 🔌 CLEANUP: Closing WebSocket for room:', room);
       client.close();
       clientRef.current = null;
     };
   }, [room, userId, wsUrl, restBase]);
 
-  const send = async (content: string) => {
+  const send = async (content: string, encryptedData?: { encrypted_key: string; iv: string }, originalPlaintext?: string) => {
     const client_id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const optimistic: MessageOut = {
       id: client_id,
       room_id: room,
       sender_id: userId,
-      message: content,
-      ciphertext: null,
+      message: encryptedData ? undefined : content, // Don't show plaintext if encrypted
+      ciphertext: encryptedData ? content : null, // Use content as ciphertext if encrypted
       created_at: null,
       client_id,
       _status: 'sending',
+      encrypted_key: encryptedData?.encrypted_key,
+      iv: encryptedData?.iv,
+      _plaintext: originalPlaintext || (encryptedData ? undefined : content), // 🔑 Store original plaintext for own messages
     };
+
+    // 💾 Save plaintext to cache for later retrieval (after reload)
+    if (originalPlaintext && encryptedData) {
+      saveSentMessagePlaintext(client_id, userId, originalPlaintext);
+      console.log('[useChat] 💾 Cached plaintext for sent message:', client_id.substring(0, 8) + '...');
+    }
+
     setMessages(prev => [...prev, optimistic]);
     try {
       await clientRef.current!.send({
@@ -309,6 +374,8 @@ export function useChat({
         sender_id: userId,
         content,
         client_id,
+        encrypted_key: encryptedData?.encrypted_key,
+        iv: encryptedData?.iv,
       });
     } catch (e) {
       const errMsg = e instanceof Error ? e.message : String(e);

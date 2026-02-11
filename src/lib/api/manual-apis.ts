@@ -16,7 +16,7 @@ export type MiddlewareLoginResponse = {
 
 export const loginMiddleware = (email: string, password: string) => {
   return customInstance<MiddlewareLoginResponse>({
-    url: 'api/auth/login/',
+    url: '/auth/login/',
     method: 'POST',
     data: { email, password },
     headers: {

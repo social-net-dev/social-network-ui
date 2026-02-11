@@ -11,12 +11,13 @@ export const authHandlers = [
   // ============================================
   http.post('*api/auth/login', async () => {
     await delay(500);
+    // Match backend format EXACTLY: { access, refresh, tenant_slug }
     return HttpResponse.json({
       success: true,
       data: {
-        access_token: `mock-access-token-${Date.now()}`,
-        refresh_token: `mock-refresh-token-${Date.now()}`,
-        tenant_slug: 'mock-tenant',
+        access: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock-${Date.now()}`,
+        refresh: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh-${Date.now()}`,
+        tenant_slug: `t-${currentMockUser.id}`, // Format: t-{uuid}
       },
     });
   }),
@@ -69,7 +70,7 @@ export const authHandlers = [
     return HttpResponse.json({
       success: true,
       data: {
-        access_token: `mock-refreshed-token-${Date.now()}`,
+        access: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refreshed-${Date.now()}`,
       },
     });
   }),
@@ -86,13 +87,33 @@ export const authHandlers = [
   }),
 
   // ============================================
-  // GET /users/me
+  // GET /users/me & /auth/me
   // ============================================
-  http.get('*/users/me', async () => {
+  http.get('*/users/me*', async () => {
     await delay(300);
     return HttpResponse.json({
       success: true,
-      data: currentMockUser,
+      data: {
+        ...currentMockUser,
+        role: 'USER',
+        tenant_slug: `t-${currentMockUser.id}`,
+        is_active: true,
+        created_at: new Date().toISOString(),
+      },
+    });
+  }),
+
+  http.get('*/auth/me*', async () => {
+    await delay(300);
+    return HttpResponse.json({
+      success: true,
+      data: {
+        ...currentMockUser,
+        role: 'USER',
+        tenant_slug: `t-${currentMockUser.id}`,
+        is_active: true,
+        created_at: new Date().toISOString(),
+      },
     });
   }),
 ];
