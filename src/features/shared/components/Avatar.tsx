@@ -1,5 +1,6 @@
 import type { User } from '@/types'
 import { cn } from '@/lib/utils'
+import { getApiBaseUrl } from '@/lib/config'
 
 interface AvatarProps {
   user?: User | null
@@ -17,7 +18,12 @@ const sizeClasses = {
 }
 
 export function Avatar({ user, src, alt, size = 'md', className }: AvatarProps) {
-  const avatarSrc = src || user?.avatar || (user?.id ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}` : null)
+  let avatarSrc = src || user?.avatar || (user?.id ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}` : null)
+  // If backend returns media paths (e.g. /media/stream/...), prefix with API base so <img> can fetch it.
+  if (avatarSrc && avatarSrc.startsWith('/media/')) {
+    const base = getApiBaseUrl().replace(/\/+$/, '')
+    avatarSrc = `${base}${avatarSrc}`
+  }
   const initials = user?.firstName?.[0] && user?.lastName?.[0] 
     ? `${user.firstName[0]}${user.lastName[0]}` 
     : (user?.displayName?.[0] || '?')

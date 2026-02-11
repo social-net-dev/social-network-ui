@@ -3,7 +3,6 @@
  * Separate from main API (port 8000) because message is a different microservice
  */
 import axios from 'axios';
-import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { getMessageApiUrl } from '@/lib/config';
 
 const messageApiClient = axios.create({

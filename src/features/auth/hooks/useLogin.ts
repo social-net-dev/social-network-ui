@@ -10,7 +10,7 @@ import { loginMiddleware } from '@/lib/api/manual-apis';
 
 export function useLogin() {
   const navigate = useNavigate();
-  const setAuth = useAuthStore(state => state.setAuth);
+  const setAuth = useAuthStore((state: { setAuth: (authResponse: any) => void }) => state.setAuth);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(LoginFormDataSchema),
@@ -25,7 +25,7 @@ export function useLogin() {
     mutationFn: async (payload: { email: string; password: string }) => {
       return loginMiddleware(payload.email, payload.password);
     },
-    onSuccess: async response => {
+    onSuccess: async (response: any) => {
       // Response đã được axios interceptor unwrap: { access, refresh, tenant_slug }
       // Truyền TRỰC TIẾP cho authStore - KHÔNG transform, KHÔNG modify!
       console.log('[useLogin] Backend response (after unwrap):', response);

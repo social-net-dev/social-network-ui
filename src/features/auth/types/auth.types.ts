@@ -25,8 +25,9 @@ export const RegisterFormDataSchema = z.object({
     displayName: z.string().min(2, "Tên hiển thị tối thiểu 2 ký tự"),
     phone: z.string().optional(),
     role: z.enum(["STUDENT", "INSTRUCTOR"]),
-    idCardFront: z.instanceof(File, { message: "Vui lòng upload ảnh CCCD mặt trước" }),
-    idCardBack: z.instanceof(File, { message: "Vui lòng upload ảnh CCCD mặt sau" }),
+    // CCCD không bắt buộc
+    idCardFront: z.instanceof(File).optional(),
+    idCardBack: z.instanceof(File).optional(),
     consent: z.boolean().refine((val) => val === true, "Vui lòng đồng ý điều khoản"),
 });
 

@@ -147,11 +147,11 @@ export function RegisterForm() {
                 {form.formState.errors.role && <p className="text-sm text-red-500">{form.formState.errors.role.message}</p>}
             </div>
 
-            {/* Row 3: ID Card Images Side by Side */}
+            {/* Row 3: CCCD (không bắt buộc) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* ID Card Front */}
                 <div className="space-y-2">
-                    <Label htmlFor="idCardFront">CCCD mặt trước *</Label>
+                    <Label htmlFor="idCardFront">CCCD mặt trước</Label>
                     {idCardFrontPreview ? (
                         <div className="relative">
                             <img src={idCardFrontPreview} alt="CCCD mặt trước" className="w-full h-32 object-cover rounded-md border" />
@@ -170,7 +170,7 @@ export function RegisterForm() {
                             className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-[#1b7a78] dark:border-gray-600"
                         >
                             <Upload className="h-8 w-8 text-gray-400 mb-1" />
-                            <span className="text-xs text-gray-500">Click để upload</span>
+                            <span className="text-xs text-gray-500">Click để upload (tuỳ chọn)</span>
                             <input
                                 id="idCardFront"
                                 type="file"
@@ -186,7 +186,7 @@ export function RegisterForm() {
 
                 {/* ID Card Back */}
                 <div className="space-y-2">
-                    <Label htmlFor="idCardBack">CCCD mặt sau *</Label>
+                    <Label htmlFor="idCardBack">CCCD mặt sau</Label>
                     {idCardBackPreview ? (
                         <div className="relative">
                             <img src={idCardBackPreview} alt="CCCD mặt sau" className="w-full h-32 object-cover rounded-md border" />
@@ -205,7 +205,7 @@ export function RegisterForm() {
                             className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-[#1b7a78] dark:border-gray-600"
                         >
                             <Upload className="h-8 w-8 text-gray-400 mb-1" />
-                            <span className="text-xs text-gray-500">Click để upload</span>
+                            <span className="text-xs text-gray-500">Click để upload (tuỳ chọn)</span>
                             <input
                                 id="idCardBack"
                                 type="file"

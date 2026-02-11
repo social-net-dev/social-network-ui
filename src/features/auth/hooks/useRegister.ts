@@ -39,6 +39,8 @@ export function useRegister() {
 
     const onSubmit = (data: RegisterFormData) => {
         // Prepare multipart form data as required by Orval/Axios
+        // NOTE: Orval model types still require cccd_front/cccd_back, so we cast here
+        // and rely on the generated client to append only when provided.
         mutation.mutate({
             data: {
                 email: data.email,
@@ -47,9 +49,9 @@ export function useRegister() {
                 role: data.role,
                 consent: data.consent,
                 phone: data.phone,
-                cccd_front: data.idCardFront,
-                cccd_back: data.idCardBack,
-            }
+                ...(data.idCardFront ? { cccd_front: data.idCardFront as any } : {}),
+                ...(data.idCardBack ? { cccd_back: data.idCardBack as any } : {}),
+            } as any
         });
     };
 

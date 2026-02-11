@@ -8,6 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GraduationCap, Search, Sparkles, Users } from "lucide-react";
 import api from "@/lib/api";
+import { FriendsAPI } from "@/lib/api/generated";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiBaseUrl } from "@/lib/config";
+import { appendAuthToken } from "@/lib/api/transforms/common";
 
 const TAB_OPTIONS = [
     { value: "ALL", label: "Tất cả" },
@@ -35,6 +39,8 @@ export type Suggestion = {
 interface ApiSuggestion {
     id: string;
     name: string;
+    username?: string | null;
+    avatar_path?: string | null;
     role?: string;
     tags?: string[];
     connected_via?: string;
@@ -50,7 +56,11 @@ function mapApiToSuggestion(r: ApiSuggestion): Suggestion {
         STUDY_IN: "Học sinh",
     };
     const role = (r.role && roleMap[r.role]) || "Học sinh";
-    const username = (r.name || "").toLowerCase().replace(/\s+/g, "").slice(0, 20) || r.id?.slice(0, 8) || "user";
+    const username =
+        (r.username || "").trim() ||
+        (r.name || "").toLowerCase().replace(/\s+/g, "").slice(0, 20) ||
+        r.id?.slice(0, 8) ||
+        "user";
     return {
         id: r.id,
         name: r.name || "Người dùng",
@@ -62,7 +72,11 @@ function mapApiToSuggestion(r: ApiSuggestion): Suggestion {
         hats: 0,
         mutuals: 0,
         tags: tags.length ? tags : (r.role ? ["SCHOOL"] : ["CLASS", "SCHOOL", "FIELD"]),
-        avatar: undefined,
+        avatar: r.avatar_path
+            ? (r.avatar_path.startsWith("http")
+                ? r.avatar_path
+                : `${getApiBaseUrl().replace(/\/+$/, "")}${appendAuthToken(r.avatar_path)}`)
+            : undefined,
     };
 }
 
@@ -93,6 +107,17 @@ export function RecommendationPage() {
     const schoolId = 1;
     const classId = 1;
     const fieldId = 1;
+    const queryClient = useQueryClient();
+
+    const connectMutation = useMutation({
+        mutationFn: async (addressee_username: string) => {
+            return FriendsAPI.createFriendRequestFriendsRequestsPost({ addressee_username });
+        },
+        onSuccess: () => {
+            // refresh suggestions (optional) + notifications list
+            queryClient.invalidateQueries({ queryKey: ["recommendations", "suggestions"] });
+        },
+    });
 
     const { data: apiSuggestions = [], isLoading } = useQuery({
         queryKey: ["recommendations", "suggestions", activeTab, schoolId, classId, fieldId],
@@ -221,7 +246,16 @@ export function RecommendationPage() {
                                                 )}
 
                                                 <div className="grid grid-cols-1 gap-2">
-                                                    <Button className="rounded-full">Kết nối</Button>
+                                                    <Button
+                                                        className="rounded-full"
+                                                        disabled={connectMutation.isPending || !user.username}
+                                                        onClick={() => {
+                                                            if (!user.username) return;
+                                                            connectMutation.mutate(user.username);
+                                                        }}
+                                                    >
+                                                        {connectMutation.isPending ? "Đang gửi..." : "Kết nối"}
+                                                    </Button>
                                                     <Button variant="outline" className="rounded-full">
                                                         Bỏ qua
                                                     </Button>

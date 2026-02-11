@@ -54,8 +54,12 @@ if(bodyRegisterAuthRegisterPost.role !== undefined && bodyRegisterAuthRegisterPo
  formData.append(`role`, bodyRegisterAuthRegisterPost.role);
  }
 formData.append(`consent`, bodyRegisterAuthRegisterPost.consent.toString())
-formData.append(`cccd_front`, bodyRegisterAuthRegisterPost.cccd_front);
-formData.append(`cccd_back`, bodyRegisterAuthRegisterPost.cccd_back);
+if(bodyRegisterAuthRegisterPost.cccd_front !== undefined && bodyRegisterAuthRegisterPost.cccd_front !== null) {
+ formData.append(`cccd_front`, bodyRegisterAuthRegisterPost.cccd_front);
+}
+if(bodyRegisterAuthRegisterPost.cccd_back !== undefined && bodyRegisterAuthRegisterPost.cccd_back !== null) {
+ formData.append(`cccd_back`, bodyRegisterAuthRegisterPost.cccd_back);
+}
 
       return customInstance<RegisterResponse>(
       {url: `/auth/register/`, method: 'POST',

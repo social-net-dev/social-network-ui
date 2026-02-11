@@ -1,5 +1,6 @@
 import type { Notification, NotificationType } from "@/types/notification";
 import { getApiBaseUrl } from "@/lib/config";
+import { appendAuthToken } from "@/lib/api/transforms/common";
 
 /** Backend notification item (API list + WS payload) */
 export interface BackendNotificationRaw {
@@ -58,11 +59,20 @@ function buildTitle(notification_type: string, actorDisplayName: string): string
 
 function avatarPathToUrl(avatarPath: string | null | undefined): string | undefined {
   if (!avatarPath?.trim()) return undefined;
-  const base = getApiBaseUrl().trim().replace(/\/api\/?$/, "");
+  if (avatarPath.startsWith("http")) return avatarPath;
+
+  // New backend format: already a media endpoint path (e.g. /media/stream/?path=...)
+  if (avatarPath.startsWith("/media/")) {
+    const apiBase = getApiBaseUrl().replace(/\/+$/, "");
+    return `${apiBase}${appendAuthToken(avatarPath)}`;
+  }
+
+  // Legacy: treat as static media path under /media/<path>
+  const apiBase = getApiBaseUrl().trim().replace(/\/api\/?$/, "");
   const protocol = typeof window !== "undefined" ? window.location.protocol : "http:";
-  const host = base.startsWith("http") ? base : `${protocol}//${typeof window !== "undefined" ? window.location.host : "localhost"}${base || ""}`;
+  const host = apiBase.startsWith("http") ? apiBase : `${protocol}//${typeof window !== "undefined" ? window.location.host : "localhost"}${apiBase || ""}`;
   const mediaBase = host.replace(/\/+$/, "") + "/media/";
-  return avatarPath.startsWith("http") ? avatarPath : mediaBase + avatarPath.replace(/^\//, "");
+  return mediaBase + avatarPath.replace(/^\//, "");
 }
 
 export function mapBackendNotificationToUi(raw: BackendNotificationRaw): Notification {

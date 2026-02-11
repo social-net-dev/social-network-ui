@@ -12,6 +12,7 @@ import { AdminAccountsPage } from '@/features/admin/pages/AdminAccountsPage';
 import { AdminVerificationPage } from '@/features/admin/pages/VerificationPage';
 import { DevToolsPage } from '@/features/dev/pages/DevToolsPage';
 import { ConversationPage } from '@/features/message/routes';
+import { FriendRequestsPage } from '@/features/friends/pages/FriendRequestsPage';
 import { useAuthStore } from '@/stores/authStore';
 import { AppLayout } from '@/features/shared/layouts/AppLayout';
 import { GlobalLoading } from '@/components/ui/global-loading';
@@ -51,6 +52,7 @@ function App() {
             {/* Message routes */}
             <Route path="/messages" element={<ConversationPage />} />
             <Route path="/messages/:conversationId" element={<ConversationPage />} />
+            <Route path="/friends/requests" element={<FriendRequestsPage />} />
 
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/me" element={<PersonalProfilePage />} />
