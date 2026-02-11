@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/features/shared/components/Avatar";
 import { useAuthStore } from "@/stores/authStore";
-import { Image, X } from "lucide-react";
+import { Image, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { POST_TYPES, ACADEMIC_FIELDS } from "../constants/fields";
 
 interface CreatePostFormProps {
-  onSubmit: (content: string, files: File[]) => void;
+  onSubmit: (content: string, files: File[], postType?: string, fieldId?: string) => void;
   isLoading?: boolean;
 }
 
@@ -18,6 +19,9 @@ export function CreatePostForm({
   const [content, setContent] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [postType, setPostType] = useState("SOCIAL");
+  const [fieldId, setFieldId] = useState("");
+  const [showOptions, setShowOptions] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -30,9 +34,12 @@ export function CreatePostForm({
     if (!content.trim()) return;
     try {
       setIsSubmitting(true);
-      await onSubmit(content, files);
+      await onSubmit(content, files, postType, fieldId);
       setContent("");
       setFiles([]);
+      setPostType("SOCIAL");
+      setFieldId("");
+      setShowOptions(false);
       if (inputRef.current) inputRef.current.value = "";
     } catch (err) {
       console.error("Failed to create post:", err);
@@ -59,6 +66,69 @@ export function CreatePostForm({
           <Avatar user={user} size="md" className="ring-2 ring-transparent hover:ring-primary/20 transition-all-300" />
         </div>
         <div className="flex-1 min-w-0">
+          {/* Post Type & Field Selectors */}
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <div className="flex items-center gap-1">
+              {POST_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setPostType(t.value)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all-300 border",
+                    postType === t.value
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:border-border"
+                  )}
+                >
+                  {t.icon} {t.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowOptions(!showOptions)}
+              className="px-2 py-1.5 rounded-full text-xs text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all-300"
+            >
+              <ChevronDown className={cn("w-4 h-4 transition-transform", showOptions && "rotate-180")} />
+            </button>
+          </div>
+
+          {showOptions && (
+            <div className="mb-3 animate-fadeIn">
+              <p className="text-xs text-muted-foreground mb-2">Chọn lĩnh vực (tuỳ chọn):</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setFieldId("")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-medium transition-all-300 border",
+                    !fieldId
+                      ? "bg-secondary text-secondary-foreground border-secondary"
+                      : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                  )}
+                >
+                  Tất cả
+                </button>
+                {ACADEMIC_FIELDS.map((f) => (
+                  <button
+                    key={f.value}
+                    type="button"
+                    onClick={() => setFieldId(fieldId === f.value ? "" : f.value)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-full text-xs font-medium transition-all-300 border",
+                      fieldId === f.value
+                        ? f.color + " border-current"
+                        : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                    )}
+                  >
+                    {f.icon} {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}

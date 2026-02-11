@@ -2,7 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { customInstance } from '@/lib/axios-instance';
 
 /**
- * Hook to fetch media as blob and create object URL
+ * Hook to fetch media as blob and create object URL.
+ * URLs with access_token query params (from buildMediaUrl) are fetched
+ * directly via the authed API client.
  */
 export function useMediaBlob(url: string | null | undefined) {
   return useQuery({
@@ -10,20 +12,25 @@ export function useMediaBlob(url: string | null | undefined) {
     queryFn: async () => {
       if (!url) return '';
 
-      // If it's an absolute URL (external), return as is
-      if (url.startsWith('http')) {
-        return url;
-      }
+      // Absolute URLs (external CDN): return as-is
+      if (url.startsWith('http')) return url;
 
-      const res = await customInstance<Blob>({
-        url,
-        method: 'GET',
-        responseType: 'blob',
-      });
-      return URL.createObjectURL(res);
+      // Fetch via authenticated API client as blob
+      try {
+        const res = await customInstance<Blob>({
+          url,
+          method: 'GET',
+          responseType: 'blob',
+        });
+        return URL.createObjectURL(res);
+      } catch (e) {
+        console.error('Failed to fetch media blob:', url, e);
+        return '';
+      }
     },
     enabled: !!url,
-    staleTime: Infinity, // Media blobs don't change often
+    staleTime: 1000 * 60 * 30, // Cache blobs for 30 minutes
+    gcTime: 1000 * 60 * 60,    // Keep in GC for 1 hour
   });
 }
 
@@ -32,14 +39,14 @@ export function useMediaBlob(url: string | null | undefined) {
  */
 export function useMediaBlobs(urls: string[]) {
   return useQuery({
-    queryKey: ['media-blobs', urls],
+    queryKey: ['media-blobs', ...urls],
     queryFn: async () => {
       if (!urls || urls.length === 0) return [];
+
       const promises = urls.map(async url => {
-        // If it's an absolute URL (external), return as is
-        if (url.startsWith('http')) {
-          return url;
-        }
+        // Absolute URLs: return as-is
+        if (url.startsWith('http')) return url;
+        if (!url) return '';
 
         try {
           const res = await customInstance<Blob>({
@@ -56,6 +63,7 @@ export function useMediaBlobs(urls: string[]) {
       return Promise.all(promises);
     },
     enabled: urls.length > 0,
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
   });
 }

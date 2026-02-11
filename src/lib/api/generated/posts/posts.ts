@@ -76,7 +76,7 @@ if(bodyCreatePostPostsPost.files !== undefined) {
  }
 
       return customInstance<PostOut>(
-      {url: `/posts/`, method: 'POST',
+      {url: `/posts/create/`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData, signal
     },

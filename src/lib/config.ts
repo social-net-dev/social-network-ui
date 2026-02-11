@@ -14,7 +14,7 @@ export const getApiBaseUrl = (): string => {
 
   if (import.meta.env.DEV) {
     // Dev: gọi thẳng etechs-middleware (Django API dưới /api/)
-    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api';
   }
 
   return import.meta.env.VITE_API_BASE_URL || '/api';
@@ -41,8 +41,8 @@ export const getNotificationWebSocketUrl = (): string => {
       base
         .slice(7)
         .replace(/\/api$/, '')
-        .replace(/\/+$/, '') || 'localhost:8000';
-    return `ws://${host}/ws/notifications/`;
+        .replace(/\/+$/, '') || 'localhost:8001';
+    return `ws://${host}/ws/social/notifications/`;
   }
   if (base.startsWith('https://')) {
     const host =
@@ -52,12 +52,12 @@ export const getNotificationWebSocketUrl = (): string => {
         .replace(/\/+$/, '') ||
       window?.location?.host ||
       'localhost';
-    return `wss://${host}/ws/notifications/`;
+    return `wss://${host}/ws/social/notifications/`;
   }
   // Relative path (e.g. /api) -> same origin
   const protocol = typeof window !== 'undefined' && window.location?.protocol === 'https:' ? 'wss:' : 'ws:';
   const origin = typeof window !== 'undefined' ? window.location.host : 'localhost';
-  return `${protocol}//${origin}/ws/notifications/`;
+  return `${protocol}//${origin}/ws/social/notifications/`;
 };
 
 /**

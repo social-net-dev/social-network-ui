@@ -12,11 +12,11 @@ import { NotificationItem } from "./NotificationItem";
 import { Link } from "react-router-dom";
 
 export function NotificationsDropdown() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading } =
+  const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading, refetch } =
     useNotifications();
 
   return (
-    <Popover>
+    <Popover onOpenChange={(open) => { if (open) refetch(); }}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"

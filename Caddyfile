@@ -7,7 +7,7 @@
   # Backend API – proxy /api thẳng tới etechs-middleware (không qua social-be)
   @api path /api*
   handle @api {
-    reverse_proxy etechs-middleware:8000 {
+    reverse_proxy etechs-middleware:8001 {
       header_up X-Real-IP {remote_host}
       header_up X-Forwarded-For {remote_host}
       header_up X-Forwarded-Proto {scheme}
@@ -19,7 +19,7 @@
   # WebSocket (Channels) – proxy /ws tới etechs-middleware
   @ws path /ws*
   handle @ws {
-    reverse_proxy etechs-middleware:8000 {
+    reverse_proxy etechs-middleware:8001 {
       header_up X-Real-IP {remote_host}
       header_up X-Forwarded-For {remote_host}
       header_up X-Forwarded-Proto {scheme}
@@ -29,7 +29,7 @@
 
   # Health check – etechs-middleware (Django /health/)
   handle /health {
-    reverse_proxy etechs-middleware:8000
+    reverse_proxy etechs-middleware:8001
   }
 
   # SPA static site

@@ -41,13 +41,13 @@ export function FeedPage() {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [sharePostId, setSharePostId] = useState<string | null>(null);
 
-  const handleCreatePost = async (content: string, files: File[], hashtags: string[]) => {
+  const handleCreatePost = async (content: string, files: File[], hashtags: string[], postType?: string, fieldId?: string) => {
     try {
       setIsCreating(true);
       // V2 API doesn't support separate hashtags field, append to content
       const contentWithHashtags = hashtags.length > 0 ? `${content}\n\n${hashtags.map(tag => `#${tag}`).join(' ')}` : content;
 
-      await createPost(contentWithHashtags, files);
+      await createPost(contentWithHashtags, files, postType, fieldId);
     } catch (err) {
       console.error('Failed to create post:', err);
     } finally {
@@ -179,7 +179,7 @@ export function FeedPage() {
           </div>
         )}
 
-        <FeedList posts={posts} isLoading={isLoading} onLike={handleLike} onComment={handleComment} onShare={handleShare} onDelete={handleDeletePost} onEdit={handleEditPost} selectedPostId={selectedPostId} currentUserId={currentUser?.id} />
+        <FeedList posts={posts} isLoading={isLoading} onLike={handleLike} onComment={handleComment} onShare={handleShare} onDelete={handleDeletePost} onEdit={handleEditPost} selectedPostId={selectedPostId} currentUserId={currentUser?.id || currentUser?.user_id} />
 
         {/* Sentinel for Infinite Scroll */}
         <div ref={loadMoreRef} className="flex justify-center pt-4 pb-8 min-h-16">

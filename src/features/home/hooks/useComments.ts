@@ -200,14 +200,13 @@ export function useComments(postId: string) {
         stats: { reactions: 0, replies: 0 },
       };
 
-      updateCache(comments => {
-        const parentIndex = comments.findIndex(c => c.id === commentId);
-        if (parentIndex !== -1) {
-          // Trả lời cho top-level comment, chèn sau parent hoặc sau replies hiện tại
-          // Đơn giản là push vào mảng, CommentSection sẽ tổ chức lại
-          return [...comments, newReply];
-        }
-        return comments;
+      // Optimistic: append reply to the flat list
+      queryClient.setQueryData<InfiniteData<FeedComment[]>>(queryKey, old => {
+        if (!old) return { pages: [[newReply]], pageParams: [1] };
+        return {
+          ...old,
+          pages: old.pages.map((page, i) => (i === 0 ? [...page, newReply] : page)),
+        };
       });
 
       try {
@@ -227,7 +226,7 @@ export function useComments(postId: string) {
         throw err;
       }
     },
-    [postId, replyMutation, queryClient, queryKey, user, updateCache]
+    [postId, replyMutation, queryClient, queryKey, user]
   );
 
   const comments = query.data?.pages.flat() || [];

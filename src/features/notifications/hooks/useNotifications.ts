@@ -30,7 +30,8 @@ export function useNotifications() {
   const { data, isLoading, isError } = useQuery({
     queryKey: NOTIFICATIONS_QUERY_KEY,
     queryFn: fetchNotifications,
-    staleTime: 60 * 1000,
+    staleTime: 10 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   const notifications: Notification[] = (data?.notifications ?? []).map(mapBackendNotificationToUi);
@@ -39,7 +40,7 @@ export function useNotifications() {
   const markAsRead = useCallback(
     async (notificationId: string) => {
       try {
-        await api.post(`notifications/${notificationId}/mark-read/`);
+        await api.post(`notifications/${notificationId}/read/`);
         await queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
       } catch {
         // ignore
@@ -50,7 +51,7 @@ export function useNotifications() {
 
   const markAllAsRead = useCallback(async () => {
     try {
-      await api.post("notifications/mark-all-read/");
+      await api.post("notifications/read-all/");
       await queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
       setUnreadCountFromWs(0);
     } catch {
@@ -62,7 +63,8 @@ export function useNotifications() {
     enabled: true,
     onNotification: useCallback(
       (payload: BackendNotificationRaw) => {
-        queryClient.setQueryData<NotificationsListResponse>(NOTIFICATIONS_QUERY_KEY, (prev) => {
+        // Optimistically add to cache if data exists
+        const updated = queryClient.setQueryData<NotificationsListResponse>(NOTIFICATIONS_QUERY_KEY, (prev) => {
           if (!prev) return prev;
           const exists = prev.notifications.some((n) => n.id === payload.id);
           if (exists) return prev;
@@ -72,7 +74,11 @@ export function useNotifications() {
             unread_count: prev.unread_count + 1,
           };
         });
-        setUnreadCountFromWs((c) => (c !== null ? c + 1 : null));
+        // If cache was empty (query not yet fetched), trigger a refetch
+        if (!updated) {
+          queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+        }
+        setUnreadCountFromWs((c) => (c !== null ? c + 1 : (updated?.unread_count ?? 1)));
       },
       [queryClient]
     ),
@@ -81,6 +87,10 @@ export function useNotifications() {
     }, []),
   });
 
+  const refetch = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+  }, [queryClient]);
+
   return {
     notifications,
     unreadCount,
@@ -88,5 +98,6 @@ export function useNotifications() {
     isError,
     markAsRead,
     markAllAsRead,
+    refetch,
   };
 }

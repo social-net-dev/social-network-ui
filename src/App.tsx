@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage, RegisterPage, OTPVerifyPage, ForgotPasswordPage } from '@/features/auth/routes';
 import { FeedPage } from '@/features/home/pages/FeedPage';
+import { ExplorePage } from '@/features/home/pages/ExplorePage';
 import { RecommendationPage } from '@/features/recommendation/pages/RecommendationPage';
 import { GroupDetailPage } from '@/features/groups/pages/GroupDetailPage';
 import { GroupsPage } from '@/features/groups/pages/GroupsPage';
@@ -13,6 +14,7 @@ import { AdminVerificationPage } from '@/features/admin/pages/VerificationPage';
 import { DevToolsPage } from '@/features/dev/pages/DevToolsPage';
 import { ConversationPage } from '@/features/message/routes';
 import { FriendRequestsPage } from '@/features/friends/pages/FriendRequestsPage';
+import { FriendsListPage } from '@/features/friends/pages/FriendsListPage';
 import { useAuthStore } from '@/stores/authStore';
 import { AppLayout } from '@/features/shared/layouts/AppLayout';
 import { GlobalLoading } from '@/components/ui/global-loading';
@@ -44,6 +46,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/" element={<FeedPage />} />
+            <Route path="/explore" element={<ExplorePage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/fields/:fieldId" element={<FieldDetailPage />} />
             <Route path="/groups" element={<GroupsPage />} />
@@ -52,6 +55,7 @@ function App() {
             {/* Message routes */}
             <Route path="/messages" element={<ConversationPage />} />
             <Route path="/messages/:conversationId" element={<ConversationPage />} />
+            <Route path="/friends" element={<FriendsListPage />} />
             <Route path="/friends/requests" element={<FriendRequestsPage />} />
 
             <Route path="/profile" element={<ProfilePage />} />

@@ -1,15 +1,39 @@
+import { useState, useRef, useEffect } from 'react';
 import { useProfile } from '../hooks/useProfile';
+import { useUserPosts } from '../hooks/useUserPosts';
+import { usePostActions } from '@/features/home/hooks/usePostActions';
+import { useAuthStore } from '@/stores/authStore';
 import type { Author, Project } from '@/features/home/types/feed.types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Edit2, Share2, MapPin, BadgeCheck, School, PlusCircle, BookOpen, Heart, Terminal, Globe, Trash2 } from 'lucide-react';
+import { Edit2, Share2, MapPin, BadgeCheck, School, PlusCircle, BookOpen, Heart, Terminal, Globe, Trash2, FileText, User, Loader2 } from 'lucide-react';
 import { EditBasicInfoDialog, EditAcademicBackgroundDialog, EditInterestsDialog, EditProjectDialog } from '../components/EditProfileDialogs';
 import { StorageQuotaCard } from '../components/StorageQuotaCard';
+import { PostCard } from '@/features/home/components/PostCard';
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
+import { queryKeys } from '@/lib/query-keys';
 
 export function PersonalProfilePage() {
   const { profile: rawProfile, updateProfile, isLoading } = useProfile();
   const profile = rawProfile as Author;
+  const { user: currentUser } = useAuthStore();
+  const [activeTab, setActiveTab] = useState<'about' | 'posts'>('about');
+
+  // Personal feed
+  const { posts, total, isLoading: postsLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useUserPosts('me');
+  const { deletePost, updatePost, likePost } = usePostActions(queryKeys.feed.userPosts('me') as unknown as readonly unknown[]);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const entry = useIntersectionObserver(loadMoreRef, { threshold: 0.1 });
+  const isVisible = !!entry?.isIntersecting;
+
+  useEffect(() => {
+    if (isVisible && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [isVisible, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   // Derived projects list
   const projects = profile?.personalInfo?.projects || [];
@@ -165,7 +189,37 @@ export function PersonalProfilePage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Tab Switcher */}
+      <div className="flex items-center gap-2 border-b border-border pb-0">
+        <button
+          onClick={() => setActiveTab('about')}
+          className={`flex items-center gap-2 px-6 py-3 font-bold text-sm transition-all border-b-2 -mb-[1px] ${
+            activeTab === 'about'
+              ? 'border-etechs-primary text-etechs-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+          }`}
+        >
+          <User className="w-4 h-4" />
+          Giới thiệu
+        </button>
+        <button
+          onClick={() => setActiveTab('posts')}
+          className={`flex items-center gap-2 px-6 py-3 font-bold text-sm transition-all border-b-2 -mb-[1px] ${
+            activeTab === 'posts'
+              ? 'border-etechs-primary text-etechs-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          Bài viết {total > 0 && <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px] font-bold">{total}</Badge>}
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'about' ? (
+        <>
+          {/* About Tab */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - Stats & Quota */}
         <div className="space-y-8">
           {profile.storageQuotaMb && <StorageQuotaCard quotaMb={profile.storageQuotaMb} />}
@@ -287,6 +341,7 @@ export function PersonalProfilePage() {
                 title="Lĩnh vực quan tâm"
                 interests={academicInterests}
                 onSave={handleUpdateAcademicInterests}
+                predefinedList
                 trigger={
                   <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-blue-500 rounded-xl">
                     <Edit2 className="w-4 h-4" />
@@ -387,6 +442,66 @@ export function PersonalProfilePage() {
           )}
         </div>
       </section>
+        </>
+      ) : (
+        /* Posts Tab */
+        <div className="max-w-2xl mx-auto space-y-4">
+          {postsLoading && posts.length === 0 ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-card rounded-2xl shadow-lg p-6 animate-pulse border border-border">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-muted" />
+                    <div className="flex-1">
+                      <div className="h-4 bg-muted rounded w-1/3 mb-2" />
+                      <div className="h-3 bg-muted rounded w-1/4" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-muted rounded" />
+                    <div className="h-4 bg-muted rounded w-5/6" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="bg-card rounded-2xl shadow-lg p-12 text-center border border-border">
+              <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
+              <h3 className="text-xl font-bold text-muted-foreground mb-2">Chưa có bài viết nào</h3>
+              <p className="text-sm text-muted-foreground/60">Hãy tạo bài viết đầu tiên từ trang chủ!</p>
+            </div>
+          ) : (
+            <>
+              {posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onLike={(postId, liked) => likePost(postId, liked)}
+                  onComment={(postId) => setSelectedPostId(selectedPostId === postId ? null : postId)}
+                  onShare={() => {}}
+                  onDelete={(postId) => deletePost(postId)}
+                  onEdit={(postId, content) => updatePost(postId, content)}
+                  currentUserId={currentUser?.id || currentUser?.user_id}
+                  showComments={selectedPostId === post.id}
+                />
+              ))}
+
+              {/* Infinite scroll sentinel */}
+              <div ref={loadMoreRef} className="flex justify-center pt-4 pb-8 min-h-16">
+                {isFetchingNextPage && (
+                  <div className="flex items-center gap-2 text-primary font-medium">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Đang tải thêm...</span>
+                  </div>
+                )}
+                {!hasNextPage && posts.length > 0 && (
+                  <p className="text-muted-foreground text-sm">Đã xem hết bài viết</p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

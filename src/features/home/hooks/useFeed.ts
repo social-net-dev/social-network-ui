@@ -4,18 +4,48 @@ import type { InfiniteData } from '@tanstack/react-query';
 import { PostsV2API } from '@/lib/api/generated';
 import { transformPost } from '@/lib/api/transforms';
 import { queryKeys } from '@/lib/query-keys';
+import apiClient from '@/lib/api';
 
-export function useFeed() {
+// Response shape from enriched backend feed endpoint
+interface FeedPageResponse {
+  posts: any[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+}
+
+interface UseFeedOptions {
+  fieldId?: string;
+  postType?: string;
+}
+
+export function useFeed(options?: UseFeedOptions) {
   const queryClient = useQueryClient();
   const pageSize = 10;
+  const fieldId = options?.fieldId || '';
+  const postType = options?.postType || '';
 
-  const query = useInfiniteQuery<Awaited<ReturnType<typeof PostsV2API.getFeedV2FeedGet>>, Error, InfiniteData<Awaited<ReturnType<typeof PostsV2API.getFeedV2FeedGet>>>, readonly unknown[], number>({
-    queryKey: queryKeys.feed.posts(1) as unknown as readonly unknown[],
-    queryFn: ({ pageParam = 1 }) =>
-      PostsV2API.getFeedV2FeedGet({
+  const query = useInfiniteQuery<FeedPageResponse, Error, InfiniteData<FeedPageResponse>, readonly unknown[], number>({
+    queryKey: [...(queryKeys.feed.posts(1) as unknown as readonly unknown[]), fieldId, postType],
+    queryFn: async ({ pageParam = 1 }) => {
+      const raw: any = await PostsV2API.getFeedV2FeedGet({
         page: pageParam,
         page_size: pageSize,
-      }),
+        ...(fieldId ? { field_id: fieldId } : {}),
+        ...(postType ? { post_type: postType } : {}),
+      } as any);
+      // Handle both wrapped { data: { posts, ... } } and direct { posts, ... } responses
+      const data = raw?.data || raw;
+      const rawPosts = data?.posts || data?.items || (Array.isArray(data) ? data : []);
+      return {
+        posts: rawPosts.map(transformPost),
+        page: data?.page || pageParam,
+        page_size: data?.page_size || pageSize,
+        total: data?.total || 0,
+        total_pages: data?.total_pages || 1,
+      } as FeedPageResponse;
+    },
     initialPageParam: 1,
     getNextPageParam: lastPage => {
       const currentPage = lastPage.page;
@@ -26,27 +56,27 @@ export function useFeed() {
     staleTime: 0,
   });
 
-  const posts = query.data?.pages.flatMap(page => (page.posts || []).map(transformPost)) ?? [];
-
-  const createMutation = PostsV2API.useCreatePostV2PostsPost({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-      },
-    },
-  });
+  const posts = query.data?.pages.flatMap(page => page.posts || []) ?? [];
 
   const createPost = useCallback(
-    (content: string, files: File[]) => {
-      return createMutation.mutateAsync({
-        data: {
-          content_text: content,
-          visibility: 'PUBLIC',
-          files,
-        },
+    async (content: string, files: File[], postType?: string, fieldId?: string) => {
+      // Build FormData manually because the Orval-generated function
+      // does not include post_type / field_id in FormData construction.
+      const fd = new FormData();
+      fd.append('content_text', content);
+      fd.append('visibility', 'PUBLIC');
+      fd.append('post_type', postType || 'SOCIAL');
+      fd.append('field_id', fieldId || '');
+      if (files?.length) {
+        files.forEach(f => fd.append('files', f));
+      }
+      const res = await apiClient.post('/posts/create/', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+      return res.data;
     },
-    [createMutation]
+    [queryClient]
   );
 
   const refresh = useCallback(() => {
@@ -62,6 +92,6 @@ export function useFeed() {
     error: query.error,
     createPost,
     refresh,
-    isCreating: createMutation.isPending,
+    isCreating: false,
   };
 }

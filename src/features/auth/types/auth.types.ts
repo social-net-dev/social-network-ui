@@ -22,13 +22,18 @@ export const RegisterFormDataSchema = z.object({
         .regex(/[a-z]/, "Phải chứa ít nhất 1 chữ thường")
         .regex(/[0-9]/, "Phải chứa ít nhất 1 số")
         .regex(/[!@#$%^&*(),.?":{}|<>]/, "Phải chứa ít nhất 1 ký tự đặc biệt"),
+    confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu"),
     displayName: z.string().min(2, "Tên hiển thị tối thiểu 2 ký tự"),
     phone: z.string().optional(),
     role: z.enum(["STUDENT", "INSTRUCTOR"]),
+    gender: z.enum(["MALE", "FEMALE", "OTHER", ""]),
     // CCCD không bắt buộc
     idCardFront: z.instanceof(File).optional(),
     idCardBack: z.instanceof(File).optional(),
     consent: z.boolean().refine((val) => val === true, "Vui lòng đồng ý điều khoản"),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Mật khẩu xác nhận không khớp",
+    path: ["confirmPassword"],
 });
 
 export type RegisterFormData = z.infer<typeof RegisterFormDataSchema>;

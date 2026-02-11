@@ -10,6 +10,17 @@ import { SharedPostCard } from './SharedPostCard';
 import { FormattedContent } from '@/features/shared/components/FormattedContent';
 import { useMediaBlobs } from '../hooks/useMedia';
 import { cn } from '@/lib/utils';
+import { POST_TYPES, ACADEMIC_FIELDS } from '../constants/fields';
+
+const ROLE_MAP: Record<string, { label: string; class: string }> = {
+  STUDENT: { label: 'Người học', class: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
+  INSTRUCTOR: { label: 'Người dạy', class: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' },
+};
+
+const STATUS_MAP: Record<string, { label: string; class: string }> = {
+  VERIFIED: { label: 'Đã xác minh', class: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' },
+  UNVERIFIED: { label: 'Chưa xác minh', class: 'bg-gray-100 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400' },
+};
 
 interface PostProps {
   post: PostType;
@@ -73,12 +84,38 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
               <Avatar user={post.author} size="md" className="ring-2 ring-transparent hover:ring-primary/20 transition-all-300" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground truncate hover:text-primary transition-colors-300 cursor-pointer">{post.author.displayName}</h3>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                {timeAgo}
-                {sharedPost && <span className="w-1 h-1 bg-muted-foreground/50 rounded-full"></span>}
-                {sharedPost && <span className="text-primary">đã chia sẻ</span>}
-              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-foreground truncate hover:text-primary transition-colors-300 cursor-pointer">{post.author.displayName}</h3>
+                {post.author.role && ROLE_MAP[post.author.role] && (
+                  <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-semibold', ROLE_MAP[post.author.role].class)}>
+                    {ROLE_MAP[post.author.role].label}
+                  </span>
+                )}
+                {post.author.accountStatus && STATUS_MAP[post.author.accountStatus] && (
+                  <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', STATUS_MAP[post.author.accountStatus].class)}>
+                    {STATUS_MAP[post.author.accountStatus].label}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  {timeAgo}
+                  {sharedPost && <span className="w-1 h-1 bg-muted-foreground/50 rounded-full"></span>}
+                  {sharedPost && <span className="text-primary">đã chia sẻ</span>}
+                </p>
+                {post.postType && post.postType !== 'SOCIAL' && (() => {
+                  const pt = POST_TYPES.find(t => t.value === post.postType);
+                  return pt ? (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">{pt.icon} {pt.label}</span>
+                  ) : null;
+                })()}
+                {post.fieldId && (() => {
+                  const f = ACADEMIC_FIELDS.find(af => af.value === post.fieldId);
+                  return f ? (
+                    <span className={cn('px-1.5 py-0.5 rounded-full text-[10px] font-medium', f.color)}>{f.icon} {f.label}</span>
+                  ) : null;
+                })()}
+              </div>
             </div>
           </div>
           {isAuthor && (
@@ -164,7 +201,7 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
 
       {showComments && (
         <div className="border-t border-border/50">
-          <CommentSection postId={post.id} currentUserId={currentUserId} />
+          <CommentSection postId={post.id} currentUserId={currentUserId} postAuthorId={post.author.id} />
         </div>
       )}
     </article>
