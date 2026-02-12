@@ -9,6 +9,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 import App from './App.tsx';
 import { Agentation } from 'agentation';
+import { cleanupLocalStorage } from './features/message/lib/localStorageCleanup';
 
 const enableMocking = async () => {
   const isMockEnabled = import.meta.env.VITE_USE_MOCK === 'true' || import.meta.env.VITE_ENABLE_MOCK_API === 'true';
@@ -22,6 +23,9 @@ const enableMocking = async () => {
 };
 
 enableMocking().then(() => {
+  // 🧹 Clean up old E2EE cache và message plaintext
+  cleanupLocalStorage();
+
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <ErrorBoundary>

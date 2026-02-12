@@ -181,6 +181,11 @@ export const callSetPublicKey = (payload: IPublicKeyRequest) => {
   return messageApiClient.post<IPublicKeyResponse>('/api/users/public_key', payload);
 };
 
+// PUT /api/users/public_key (update/overwrite current user's public key)
+export const callUpdatePublicKey = (payload: IPublicKeyRequest) => {
+  return messageApiClient.put<IPublicKeyResponse>('/api/users/public_key', payload);
+};
+
 // GET /api/rooms/{room_id}/members/public_keys (get all member public keys in a room)
 export const callGetRoomMemberPublicKeys = (roomId: string) => {
   return messageApiClient.get<{ members: Array<{ user_id: string; public_key: string }> }>(`/api/rooms/${encodeURIComponent(roomId)}/members/public_keys`);

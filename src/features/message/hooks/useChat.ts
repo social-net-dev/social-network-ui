@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import ChatClient from '../lib/chatClient';
 import type { MessageOut } from '../types/message.types';
-import { saveSentMessagePlaintext } from '../lib/messageCache';
 
 export function useChat({
   room,
@@ -97,18 +96,11 @@ export function useChat({
               setMessages(prev =>
                 prev.map(item => {
                   if (item.id === ack.client_id) {
-                    // 💾 Save plaintext to cache with server ID for later retrieval
-                    if ((item as any)._plaintext && ack.server_id) {
-                      saveSentMessagePlaintext(ack.server_id, userId, (item as any)._plaintext);
-                      console.log('[useChat] 💾 Cached plaintext with server ID:', ack.server_id.substring(0, 8) + '...');
-                    }
-
                     return {
                       ...item,
                       id: ack.server_id ?? item.id,
                       _status: 'sent',
                       created_at: ack.created_at ?? item.created_at,
-                      // 🔑 Preserve _plaintext when updating from ACK
                       _plaintext: item._plaintext,
                     };
                   }
@@ -228,10 +220,21 @@ export function useChat({
           const idx = prev.findIndex(x => x.client_id === m.client_id);
           if (idx !== -1) {
             const copy = [...prev];
-            // 🔑 CRITICAL: Preserve _plaintext from optimistic message
+            // 🔑 CRITICAL: Preserve _plaintext and E2EE keys from optimistic message
             const optimisticPlaintext = copy[idx]._plaintext;
+            const optimisticEncryptedKeyRecipient = copy[idx].encrypted_key_recipient;
+            const optimisticEncryptedKeySender = copy[idx].encrypted_key_sender;
             // merge into existing optimistic item
-            copy[idx] = { ...copy[idx], ...m, id: m.id, _status: 'sent', _plaintext: optimisticPlaintext };
+            copy[idx] = {
+              ...copy[idx],
+              ...m,
+              id: m.id,
+              _status: 'sent',
+              _plaintext: optimisticPlaintext,
+              // Preserve E2EE keys if WebSocket message doesn't have them (backend issue)
+              encrypted_key_recipient: m.encrypted_key_recipient ?? optimisticEncryptedKeyRecipient,
+              encrypted_key_sender: m.encrypted_key_sender ?? optimisticEncryptedKeySender,
+            };
             return copy;
           }
         }
@@ -314,18 +317,11 @@ export function useChat({
           setMessages(prev =>
             prev.map(item => {
               if (item.client_id === ack.client_id) {
-                // 💾 Save plaintext to cache with server ID for later retrieval
-                if ((item as any)._plaintext && ack.server_id) {
-                  saveSentMessagePlaintext(ack.server_id, userId, (item as any)._plaintext);
-                  console.log('[useChat] 💾 Cached plaintext with server ID:', ack.server_id.substring(0, 8) + '...');
-                }
-
                 return {
                   ...item,
                   id: ack.server_id ?? item.id,
                   _status: 'sent',
                   created_at: ack.created_at ?? item.created_at,
-                  // 🔑 Preserve _plaintext when updating from ACK
                   _plaintext: item._plaintext,
                 };
               }
@@ -345,7 +341,16 @@ export function useChat({
     };
   }, [room, userId, wsUrl, restBase]);
 
-  const send = async (content: string, encryptedData?: { encrypted_key: string; iv: string }, originalPlaintext?: string) => {
+  const send = async (
+    content: string,
+    encryptedData?: {
+      encrypted_key?: string; // Backward compat
+      encrypted_key_recipient?: string; // Double encryption: key for recipient
+      encrypted_key_sender?: string; // Double encryption: key for sender
+      iv: string;
+    },
+    originalPlaintext?: string
+  ) => {
     const client_id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const optimistic: MessageOut = {
       id: client_id,
@@ -356,16 +361,13 @@ export function useChat({
       created_at: null,
       client_id,
       _status: 'sending',
-      encrypted_key: encryptedData?.encrypted_key,
+      // 🔑 Double Encryption Model: store BOTH encrypted keys
+      encrypted_key: encryptedData?.encrypted_key, // Backward compat
+      encrypted_key_recipient: encryptedData?.encrypted_key_recipient,
+      encrypted_key_sender: encryptedData?.encrypted_key_sender,
       iv: encryptedData?.iv,
-      _plaintext: originalPlaintext || (encryptedData ? undefined : content), // 🔑 Store original plaintext for own messages
+      _plaintext: originalPlaintext || (encryptedData ? undefined : content), // 🔑 Store original plaintext for display
     };
-
-    // 💾 Save plaintext to cache for later retrieval (after reload)
-    if (originalPlaintext && encryptedData) {
-      saveSentMessagePlaintext(client_id, userId, originalPlaintext);
-      console.log('[useChat] 💾 Cached plaintext for sent message:', client_id.substring(0, 8) + '...');
-    }
 
     setMessages(prev => [...prev, optimistic]);
     try {
@@ -374,7 +376,10 @@ export function useChat({
         sender_id: userId,
         content,
         client_id,
+        // 🔑 Send BOTH encrypted keys to backend (Double Encryption Model)
         encrypted_key: encryptedData?.encrypted_key,
+        encrypted_key_recipient: encryptedData?.encrypted_key_recipient,
+        encrypted_key_sender: encryptedData?.encrypted_key_sender,
         iv: encryptedData?.iv,
       });
     } catch (e) {

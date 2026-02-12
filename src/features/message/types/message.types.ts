@@ -45,7 +45,9 @@ export interface IMessage {
   pinned?: boolean;
   reactions?: IReaction[];
   // E2EE fields - REQUIRED for decryption
-  encrypted_key?: string;
+  encrypted_key?: string; // For recipient (backward compat: may also be named encrypted_key_recipient)
+  encrypted_key_recipient?: string; // Double encryption: key for recipient
+  encrypted_key_sender?: string; // Double encryption: key for sender (to decrypt own messages after reload)
   iv?: string;
 }
 
@@ -54,8 +56,10 @@ export type MessageIn = {
   sender_id: string;
   content: string;
   client_id?: string;
-  // E2EE fields
-  encrypted_key?: string;
+  // E2EE fields - Double encryption model
+  encrypted_key?: string; // Backward compat or alias for encrypted_key_recipient
+  encrypted_key_recipient?: string; // Key encrypted with recipient's public key
+  encrypted_key_sender?: string; // Key encrypted with sender's public key (for sender to decrypt own messages)
   iv?: string;
 };
 
@@ -67,8 +71,11 @@ export type MessageOut = {
   ciphertext?: string | null;
   created_at?: string | null;
   client_id?: string | null;
-  _status?: 'sending' | 'sent' | 'failed';
-  _error?: string | null;
+  _status?: 'sent' | 'delivered' | 'read';
+  // Double encryption model
+  // Backward compat or alias for encrypted_key_recipient
+  encrypted_key_recipient?: string; // Key encrypted with recipient's public key
+  encrypted_key_sender?: string; // Key encrypted with sender's public key (for sender to decrypt own messages)
   // E2EE fields
   encrypted_key?: string;
   iv?: string;

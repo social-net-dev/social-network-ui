@@ -27,9 +27,18 @@ export const useE2EEStore = create<E2EEState>((set, get) => ({
 
   initialize: async (userId: string) => {
     try {
-      console.log(`[E2EE Store] Initializing for user: ${userId}`);
+      console.log(`\n🚀 [E2EE Store] ==================== INITIALIZE START ====================`);
+      console.log(`[E2EE Store] 👤 User ID: ${userId}`);
+      console.log(`[E2EE Store] 📊 localStorage items BEFORE init: ${localStorage.length}`);
 
       const keyPair = await getOrGenerateKeyPair(userId);
+
+      console.log(`[E2EE Store] 📊 localStorage items AFTER getOrGenerateKeyPair: ${localStorage.length}`);
+      console.log(`[E2EE Store] 🔍 Verifying save:`, {
+        publicExists: !!localStorage.getItem(`e2ee_public_key_${userId}`),
+        privateExists: !!localStorage.getItem(`e2ee_private_key_${userId}`),
+      });
+
       const publicKeyString = await exportPublicKey(keyPair.publicKey);
       const privateKeyString = await exportPrivateKey(keyPair.privateKey);
 
@@ -44,6 +53,7 @@ export const useE2EEStore = create<E2EEState>((set, get) => ({
       console.log('[E2EE Store] 🔑 Public key fingerprint:', publicKeyString.substring(0, 40) + '...');
       console.log('[E2EE Store] 🔐 Private key fingerprint:', privateKeyString.substring(0, 40) + '...');
       console.log('[E2EE Store] 📋 Verify localStorage key:', `e2ee_public_key_${userId}`);
+      console.log(`[E2EE Store] ==================== INITIALIZE END ====================\n`);
     } catch (error) {
       console.error('[E2EE Store] Initialization failed:', error);
       set({ isInitialized: false });

@@ -1,4 +1,6 @@
 import type { MessageIn, MessageOut, ServerAck } from '../types/message.types';
+import { getMessageApiUrl, getApiBaseUrl } from '@/lib/config';
+import { appendAuthToken } from '@/lib/api/transforms/common';
 
 type ChatClientOpts = {
   wsUrl: string;
@@ -101,6 +103,45 @@ export class ChatClient {
           });
           console.log('======================================================================\\n');
           console.debug('ChatClient: message received', data);
+          const resolveAttachmentUrl = (url: string | null | undefined): string | null => {
+            if (!url) return null;
+            try {
+              const apiBase = new URL(getApiBaseUrl());
+              const msgBase = new URL(getMessageApiUrl());
+
+              // Absolute URL
+              if (url.startsWith('http')) {
+                try {
+                  const u = new URL(url);
+                  if (u.origin === apiBase.origin && (u.pathname.startsWith('/files') || u.pathname.startsWith('/media') || u.pathname.startsWith('/api/media') || u.pathname.startsWith('/media/stream'))) {
+                    const swapped = url.replace(apiBase.origin, msgBase.origin);
+                    try {
+                      const swappedUrl = new URL(swapped);
+                      if (swappedUrl.origin === msgBase.origin) {
+                        const separator = swapped.includes('?') ? '&' : '?';
+                        const token = localStorage.getItem('auth_token')?.replace(/"/g, '');
+                        return token ? `${swapped}${separator}access_token=${encodeURIComponent(token)}` : swapped;
+                      }
+                    } catch (e) {
+                      return swapped;
+                    }
+                    return swapped;
+                  }
+                } catch (e) {
+                  return url;
+                }
+                return url;
+              }
+
+              // Relative paths → prefix with message service base and append auth token
+              const msgBaseStr = getMessageApiUrl().replace(/\/$/, '');
+              const full = `${msgBaseStr}${url.startsWith('/') ? '' : '/'}${url}`;
+              return appendAuthToken(full);
+            } catch (e) {
+              return url;
+            }
+          };
+
           if (data.type === 'ack') {
             // ACK cho reaction cũng đi qua onReaction nếu có action
             if (data.action === 'reaction_added' || data.action === 'reaction_removed') {
@@ -123,21 +164,28 @@ export class ChatClient {
               client_id: data.client_id ?? undefined,
               _status: 'sent',
               // 🔑 E2EE fields - CRITICAL for realtime decryption
-              encrypted_key: data.encrypted_key ?? undefined,
+              // Double encryption support: return both recipient/sender encrypted keys
+              encrypted_key_recipient: data.encrypted_key_recipient ?? data.encrypted_key ?? undefined,
+              encrypted_key_sender: data.encrypted_key_sender ?? undefined,
+              // Backward compat alias
+              encrypted_key: data.encrypted_key ?? data.encrypted_key_recipient ?? undefined,
               iv: data.iv ?? undefined,
               // backend now returns attachments array with metadata
-              attachments: data.attachments ?? null,
+              // Normalize attachment URLs so realtime messages use message service host
+              attachments: (data.attachments ?? null) ? (data.attachments as any[]).map(a => ({ ...a, url: resolveAttachmentUrl(a.url) })) : null,
               // legacy fallback
-              attachment_url: data.attachment_url ?? null,
-              attachment_urls: data.attachment_urls ?? null,
+              attachment_url: resolveAttachmentUrl(data.attachment_url ?? null),
+              attachment_urls: data.attachment_urls ? (data.attachment_urls as string[]).map((u: string) => resolveAttachmentUrl(u)) : null,
               pinned: data.pinned ?? false,
               reactions: data.reactions ?? [],
             } as MessageOut;
             console.log('[ChatClient] 📥 Message mapped from WebSocket:', {
               id: out.id,
+              has_encrypted_key_recipient: !!out.encrypted_key_recipient,
+              has_encrypted_key_sender: !!out.encrypted_key_sender,
               has_encrypted_key: !!out.encrypted_key,
-              has_iv: !!out.iv,
-              encrypted_key_length: out.encrypted_key?.length,
+              encrypted_key_recipient_length: out.encrypted_key_recipient?.length,
+              encrypted_key_sender_length: out.encrypted_key_sender?.length,
               iv_length: out.iv?.length,
             });
             this.onMessage(out);
@@ -311,20 +359,32 @@ export class ChatClient {
           message: message.content,
           client_id: message.client_id,
         };
-        // 🔑 Include E2EE fields if present
-        if (message.encrypted_key) {
-          payload.encrypted_key = message.encrypted_key;
+        // 🔑 Include E2EE fields if present (Double Encryption Model)
+        // Send BOTH encrypted keys so backend stores both
+        if ((message as any).encrypted_key_recipient) {
+          payload.encrypted_key_recipient = (message as any).encrypted_key_recipient;
         }
-        if (message.iv) {
-          payload.iv = message.iv;
+        if ((message as any).encrypted_key_sender) {
+          payload.encrypted_key_sender = (message as any).encrypted_key_sender;
+        }
+        // Backward compat: if only encrypted_key (old format), send it
+        if ((message as any).encrypted_key && !(message as any).encrypted_key_recipient) {
+          payload.encrypted_key = (message as any).encrypted_key;
+        }
+        if ((message as any).iv) {
+          payload.iv = (message as any).iv;
         }
         try {
-          console.log('\\n\ud83d\udce4 ==================== Sending Message via WS ====================');
-          console.log('[ChatClient] \ud83d\udce4 Sending via WS:', {
+          console.log('\n📤 ==================== Sending Message via WS ====================');
+          console.log('[ChatClient] 📤 Sending via WS:', {
             action: payload.action,
             room_id: payload.room_id,
+            has_encrypted_key_recipient: !!payload.encrypted_key_recipient,
+            has_encrypted_key_sender: !!payload.encrypted_key_sender,
             has_encrypted_key: !!payload.encrypted_key,
             has_iv: !!payload.iv,
+            encrypted_key_recipient_length: payload.encrypted_key_recipient?.length,
+            encrypted_key_sender_length: payload.encrypted_key_sender?.length,
             encrypted_key_length: payload.encrypted_key?.length,
             iv_length: payload.iv?.length,
             client_id: payload.client_id?.substring(0, 8) + '...',
@@ -354,8 +414,16 @@ export class ChatClient {
       client_id: message.client_id,
     };
 
-    // 🔑 Include E2EE fields if present
-    if (message.encrypted_key) {
+    // 🔑 Include E2EE fields if present (Double Encryption Model)
+    // Send BOTH encrypted keys so backend stores both
+    if (message.encrypted_key_recipient) {
+      body.encrypted_key_recipient = message.encrypted_key_recipient;
+    }
+    if (message.encrypted_key_sender) {
+      body.encrypted_key_sender = message.encrypted_key_sender;
+    }
+    // Backward compat: if only encrypted_key (old format), send it
+    if (message.encrypted_key && !message.encrypted_key_recipient) {
       body.encrypted_key = message.encrypted_key;
     }
     if (message.iv) {
@@ -364,9 +432,12 @@ export class ChatClient {
 
     console.log('[ChatClient] 📤 Sending via REST:', {
       url,
+      has_encrypted_key_recipient: !!body.encrypted_key_recipient,
+      has_encrypted_key_sender: !!body.encrypted_key_sender,
       has_encrypted_key: !!body.encrypted_key,
       has_iv: !!body.iv,
-      encrypted_key_length: body.encrypted_key?.length,
+      encrypted_key_recipient_length: body.encrypted_key_recipient?.length,
+      encrypted_key_sender_length: body.encrypted_key_sender?.length,
       iv_length: body.iv?.length,
     });
 

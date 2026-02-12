@@ -186,6 +186,99 @@ export async function encryptMessage(plaintext: string, recipientPublicKey: Cryp
 }
 
 /**
+ * DOUBLE ENCRYPTION - Encrypt cho CẢ RECIPIENT VÀ SENDER
+ *
+ * Như vậy:
+ * - Recipient decrypt bằng private key của họ
+ * - Sender decrypt bằng private key của mình (sau reload)
+ * - Không cần cache plaintext
+ * - Không cần backend lưu plaintext
+ *
+ * @returns {
+ *   ciphertext: string,
+ *   encrypted_key_recipient: string,  // AES key encrypted cho recipient
+ *   encrypted_key_sender: string,     // AES key encrypted cho sender
+ *   iv: string
+ * }
+ */
+export async function encryptMessageForBoth(
+  plaintext: string,
+  recipientPublicKey: CryptoKey,
+  senderPublicKey: CryptoKey
+): Promise<{
+  ciphertext: string;
+  encrypted_key_recipient: string;
+  encrypted_key_sender: string;
+  iv: string;
+}> {
+  console.log('🔐 ==================== DOUBLE ENCRYPTION START ====================');
+  console.log('[E2EE] Encrypting for BOTH recipient and sender');
+
+  // Generate random AES key for this message
+  const aesKey = await window.crypto.subtle.generateKey(
+    {
+      name: 'AES-GCM',
+      length: 256,
+    },
+    true,
+    ['encrypt', 'decrypt']
+  );
+
+  // Generate random IV
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+  // Encrypt message with AES
+  const encoder = new TextEncoder();
+  const encodedMessage = encoder.encode(plaintext);
+  const encryptedMessage = await window.crypto.subtle.encrypt(
+    {
+      name: 'AES-GCM',
+      iv: iv,
+    },
+    aesKey,
+    encodedMessage
+  );
+
+  // Export AES key
+  const exportedAesKey = await window.crypto.subtle.exportKey('raw', aesKey);
+
+  // Encrypt AES key cho RECIPIENT
+  const encryptedAesKeyForRecipient = await window.crypto.subtle.encrypt(
+    {
+      name: 'RSA-OAEP',
+    },
+    recipientPublicKey,
+    exportedAesKey
+  );
+
+  // Encrypt AES key cho SENDER (chính mình)
+  const encryptedAesKeyForSender = await window.crypto.subtle.encrypt(
+    {
+      name: 'RSA-OAEP',
+    },
+    senderPublicKey,
+    exportedAesKey
+  );
+
+  const result = {
+    ciphertext: arrayBufferToBase64(encryptedMessage),
+    encrypted_key_recipient: arrayBufferToBase64(encryptedAesKeyForRecipient),
+    encrypted_key_sender: arrayBufferToBase64(encryptedAesKeyForSender),
+    iv: arrayBufferToBase64(iv.buffer),
+  };
+
+  console.log('[E2EE] ✅ Double encryption complete:', {
+    ciphertext_length: result.ciphertext.length,
+    key_for_recipient_length: result.encrypted_key_recipient.length,
+    key_for_sender_length: result.encrypted_key_sender.length,
+    iv_length: result.iv.length,
+  });
+  console.log('🔐 ==================== DOUBLE ENCRYPTION END ======================\n');
+
+  return result;
+}
+
+/**
  * Decrypt message using private RSA key to decrypt AES key, then decrypt message
  */
 export async function decryptMessage(ciphertext: string, encryptedKey: string, iv: string, privateKey: CryptoKey): Promise<string> {
@@ -268,10 +361,21 @@ export async function saveKeyPair(keyPair: KeyPair, userId: string): Promise<voi
   const privateKeyStr = await exportPrivateKey(keyPair.privateKey);
 
   const storageKeys = getStorageKeys(userId);
+
+  console.log(`[E2EE saveKeyPair] 💾 Saving keys for user: ${userId}`);
+  console.log(`[E2EE saveKeyPair] 🔑 Public key length: ${publicKeyStr.length}`);
+  console.log(`[E2EE saveKeyPair] 🔐 Private key length: ${privateKeyStr.length}`);
+  console.log(`[E2EE saveKeyPair] 📦 Storage key: ${storageKeys.publicKey}`);
+
   localStorage.setItem(storageKeys.publicKey, publicKeyStr);
   localStorage.setItem(storageKeys.privateKey, privateKeyStr);
 
-  console.log(`[E2EE] Keys saved for user: ${userId}`);
+  // VERIFY immediately after saving
+  const verifyPublic = localStorage.getItem(storageKeys.publicKey);
+  const verifyPrivate = localStorage.getItem(storageKeys.privateKey);
+  console.log(`[E2EE saveKeyPair] ✅ VERIFY: Public key saved: ${!!verifyPublic} (length: ${verifyPublic?.length})`);
+  console.log(`[E2EE saveKeyPair] ✅ VERIFY: Private key saved: ${!!verifyPrivate} (length: ${verifyPrivate?.length})`);
+  console.log(`[E2EE saveKeyPair] 📊 Total localStorage items: ${localStorage.length}`);
 }
 
 /**
@@ -279,15 +383,24 @@ export async function saveKeyPair(keyPair: KeyPair, userId: string): Promise<voi
  */
 export async function loadKeyPair(userId: string): Promise<KeyPair | null> {
   const storageKeys = getStorageKeys(userId);
+
+  console.log(`\n🔍 [E2EE loadKeyPair] ==================== LOAD START ====================`);
+  console.log(`[E2EE loadKeyPair] 👤 User: ${userId.substring(0, 8)}...`);
+  console.log(`[E2EE loadKeyPair] 📦 Looking for key: ${storageKeys.publicKey}`);
+  console.log(`[E2EE loadKeyPair] 📊 Total localStorage items: ${localStorage.length}`);
+  console.log(`[E2EE loadKeyPair] 🗂️ All localStorage keys:`, Object.keys(localStorage));
+
   const publicKeyStr = localStorage.getItem(storageKeys.publicKey);
   const privateKeyStr = localStorage.getItem(storageKeys.privateKey);
 
-  console.log(`[E2EE loadKeyPair] Checking localStorage for user: ${userId.substring(0, 8)}...`);
-  console.log('[E2EE loadKeyPair] Public key exists:', !!publicKeyStr);
-  console.log('[E2EE loadKeyPair] Private key exists:', !!privateKeyStr);
+  console.log('[E2EE loadKeyPair] 🔑 Public key exists:', !!publicKeyStr, `(length: ${publicKeyStr?.length})`);
+  console.log('[E2EE loadKeyPair] 🔐 Private key exists:', !!privateKeyStr, `(length: ${privateKeyStr?.length})`);
 
   if (!publicKeyStr || !privateKeyStr) {
-    console.warn('[E2EE loadKeyPair] Keys not found in localStorage for user:', userId.substring(0, 8) + '...');
+    console.warn('[E2EE loadKeyPair] ❌ Keys NOT FOUND in localStorage!');
+    console.warn('[E2EE loadKeyPair] 📊 This means localStorage was cleared or keys were never saved');
+    console.warn(`[E2EE loadKeyPair] 🔍 Expected key: ${storageKeys.publicKey}`);
+    console.log(`[E2EE loadKeyPair] ==================== LOAD END (FAILED) ====================\n`);
     return null;
   }
 
@@ -296,9 +409,11 @@ export async function loadKeyPair(userId: string): Promise<KeyPair | null> {
     const privateKey = await importPrivateKey(privateKeyStr);
     console.log(`[E2EE loadKeyPair] ✅ Keys loaded successfully for user: ${userId.substring(0, 8)}...`);
     console.log('[E2EE loadKeyPair] 🔑 Public key fingerprint:', publicKeyStr.substring(0, 40) + '...');
+    console.log(`[E2EE loadKeyPair] ==================== LOAD END (SUCCESS) ====================\n`);
     return { publicKey, privateKey };
   } catch (error) {
     console.error('[E2EE loadKeyPair] ❌ Failed to import keys:', error);
+    console.log(`[E2EE loadKeyPair] ==================== LOAD END (ERROR) ====================\n`);
     return null;
   }
 }
@@ -307,20 +422,29 @@ export async function loadKeyPair(userId: string): Promise<KeyPair | null> {
  * Get or generate key pair for specific user
  */
 export async function getOrGenerateKeyPair(userId?: string): Promise<KeyPair> {
+  console.log(`\n🔐 [E2EE getOrGenerateKeyPair] ======== START ========`);
+  console.log(`[E2EE getOrGenerateKeyPair] 👤 userId provided: ${!!userId} (${userId?.substring(0, 8)}...)`);
+
   if (!userId) {
-    console.warn('[E2EE] No userId provided, generating temporary keys');
+    console.warn('[E2EE getOrGenerateKeyPair] ❌ No userId provided, generating temporary keys');
+    console.log(`[E2EE getOrGenerateKeyPair] ======== END (TEMP) ========\n`);
     return await generateKeyPair();
   }
 
+  console.log(`[E2EE getOrGenerateKeyPair] 📥 Attempting to load existing keys...`);
   let keyPair = await loadKeyPair(userId);
 
   if (!keyPair) {
-    console.log(`[E2EE] Generating new key pair for user: ${userId}`);
+    console.log(`[E2EE getOrGenerateKeyPair] ⚠️ No existing keys found, generating NEW key pair...`);
     keyPair = await generateKeyPair();
+    console.log(`[E2EE getOrGenerateKeyPair] 💾 Saving new key pair to localStorage...`);
     await saveKeyPair(keyPair, userId);
-    console.log(`[E2EE] ✅ New key pair saved for user: ${userId}`);
+    console.log(`[E2EE getOrGenerateKeyPair] ✅ New key pair generated and saved for user: ${userId}`);
+  } else {
+    console.log(`[E2EE getOrGenerateKeyPair] ✅ Existing keys LOADED from localStorage`);
   }
 
+  console.log(`[E2EE getOrGenerateKeyPair] ======== END ========\n`);
   return keyPair;
 }
 
@@ -356,4 +480,95 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes.buffer;
+}
+
+// ============================================
+// SHARED ROOM KEY ENCRYPTION (NEW - V2)
+// ============================================
+
+/**
+ * Encrypt message with shared room key (AES-GCM)
+ *
+ * This is the NEW recommended approach for room-based messaging:
+ * - All members share the same room key
+ * - Both sender and receiver can decrypt
+ * - No need to cache plaintext
+ * - Simpler than RSA key exchange
+ *
+ * @param plaintext - Message to encrypt
+ * @param roomKey - Shared AES key for the room
+ * @returns Object with ciphertext and iv (no encrypted_key needed)
+ */
+export async function encryptWithRoomKey(plaintext: string, roomKey: CryptoKey): Promise<{ ciphertext: string; iv: string }> {
+  console.log('🔐 [Room E2EE] Encrypting with shared room key...');
+
+  // Generate random IV
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+  // Encrypt message with room's AES key
+  const encoder = new TextEncoder();
+  const encodedMessage = encoder.encode(plaintext);
+
+  const encryptedMessage = await window.crypto.subtle.encrypt(
+    {
+      name: 'AES-GCM',
+      iv: iv,
+    },
+    roomKey,
+    encodedMessage
+  );
+
+  const result = {
+    ciphertext: arrayBufferToBase64(encryptedMessage),
+    iv: arrayBufferToBase64(iv.buffer),
+  };
+
+  console.log('✅ [Room E2EE] Encryption complete:', {
+    plaintext_length: plaintext.length,
+    ciphertext_length: result.ciphertext.length,
+    iv_length: result.iv.length,
+  });
+
+  return result;
+}
+
+/**
+ * Decrypt message with shared room key (AES-GCM)
+ *
+ * @param ciphertext - Encrypted message (base64)
+ * @param iv - Initialization vector (base64)
+ * @param roomKey - Shared AES key for the room
+ * @returns Decrypted plaintext
+ */
+export async function decryptWithRoomKey(ciphertext: string, iv: string, roomKey: CryptoKey): Promise<string> {
+  console.log('🔓 [Room E2EE] Decrypting with shared room key...', {
+    ciphertext_length: ciphertext.length,
+    iv_length: iv.length,
+  });
+
+  try {
+    // Convert from base64
+    const ciphertextBuffer = base64ToArrayBuffer(ciphertext);
+    const ivBuffer = base64ToArrayBuffer(iv);
+
+    // Decrypt with room key
+    const decryptedBuffer = await window.crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        iv: new Uint8Array(ivBuffer),
+      },
+      roomKey,
+      ciphertextBuffer
+    );
+
+    // Decode to string
+    const decoder = new TextDecoder();
+    const plaintext = decoder.decode(decryptedBuffer);
+
+    console.log('✅ [Room E2EE] Decryption successful, plaintext length:', plaintext.length);
+    return plaintext;
+  } catch (error) {
+    console.error('❌ [Room E2EE] Decryption failed:', error);
+    throw new Error('Failed to decrypt message with room key');
+  }
 }

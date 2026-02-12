@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useE2EEStore } from '@/stores/e2eeStore';
-import { encryptMessage, decryptMessage } from '@/features/message/lib/e2ee';
-import { callGetRoomMemberPublicKeys, callSetPublicKey } from '@/features/message/services/messageApi';
+import { encryptMessageForBoth, decryptMessage } from '@/features/message/lib/e2ee';
+import { callGetRoomMemberPublicKeys, callSetPublicKey, callUpdatePublicKey } from '@/features/message/services/messageApi';
 import type { MessageOut } from '@/features/message/types/message.types';
-import { getSentMessagePlaintext, cleanOldMessageCache } from '@/features/message/lib/messageCache';
 
 export interface UseE2EEMessagingProps {
   roomId: string;
@@ -12,7 +11,21 @@ export interface UseE2EEMessagingProps {
 }
 
 /**
- * Hook để xử lý E2EE trong messaging
+ * Hook xử lý E2EE sử dụng RSA KEYPAIR EXCHANGE
+ *
+ * ARCHITECTURE (CHUẨN):
+ * 1. Mỗi user có RSA keypair (public/private) - persist trong localStorage
+ * 2. Public keys được share qua backend
+ * 3. Sender encrypt tin nhắn:
+ *    - Generate random AES key
+ *    - Encrypt message bằng AES key
+ *    - Encrypt AES key bằng RECIPIENT's PUBLIC KEY
+ * 4. Recipient decrypt:
+ *    - Decrypt AES key bằng PRIVATE KEY của mình
+ *    - Decrypt message bằng AES key
+ * 5. Sender KHÔNG decrypt được tin của mình (đúng với E2EE!)
+ *    - Hiển thị từ message.message field (plaintext từ backend)
+ *    - Hoặc dùng _plaintext trong memory (optimistic update)
  */
 export const useE2EEMessaging = ({ roomId, userId, enabled = true }: UseE2EEMessagingProps) => {
   const [isReady, setIsReady] = useState(false);
@@ -27,70 +40,76 @@ export const useE2EEMessaging = ({ roomId, userId, enabled = true }: UseE2EEMess
 
     const init = async () => {
       try {
-        console.log(`[E2EE] 🚀 Starting initialization for user: ${userId} in room: ${roomId}`);
+        console.log(`\n🔐 ==================== E2EE INIT ====================`);
+        console.log(`[E2EE] User: ${userId.substring(0, 8)}...`);
+        console.log(`[E2EE] Room: ${roomId.substring(0, 8)}...`);
+        console.log(`[E2EE] Architecture: RSA Keypair Exchange`);
+        console.log(`=====================================================\n`);
 
-        // 🧹 Clean old message cache on init
-        cleanOldMessageCache();
-
-        // Step 1: Initialize local key pair with user-specific storage
+        // Step 1: Initialize local RSA keypair
         if (!isInitialized) {
           await initialize(userId);
-          console.log(`[E2EE] ✅ Key pair generated for user: ${userId}`);
+          console.log(`[E2EE] ✅ RSA keypair initialized`);
         }
 
-        // Step 2: Get the current public key from store (wait for it to be available)
+        // Step 2: Get my public key
         const state = useE2EEStore.getState();
-        const currentPublicKey = state.publicKeyString;
+        const myPublicKey = state.publicKeyString;
 
-        if (!currentPublicKey) {
+        if (!myPublicKey) {
           throw new Error('Public key not available after initialization');
         }
 
-        // Step 3: Upload public key to server
+        // Step 3: Upload public key to backend (ALWAYS overwrite if exists)
         try {
           await callSetPublicKey({
             user_id: userId,
-            public_key: currentPublicKey,
+            public_key: myPublicKey,
           });
-          console.log('[E2EE] ✅ Public key uploaded to server for user:', userId);
+          console.log('[E2EE] ✅ Public key uploaded to backend');
         } catch (error: any) {
-          // If already exists, it's fine
-          if (error?.response?.status !== 409) {
-            console.error('[E2EE] ❌ Failed to upload public key:', error);
+          if (error?.response?.status === 409) {
+            // Key already exists → UPDATE/OVERWRITE with new key
+            console.log('[E2EE] ⚠️ Public key conflict - attempting to UPDATE with new key...');
+            try {
+              await callUpdatePublicKey({
+                user_id: userId,
+                public_key: myPublicKey,
+              });
+              console.log('[E2EE] ✅ Public key UPDATED successfully (overwrote old key)');
+            } catch (updateError) {
+              console.error('[E2EE] ❌ Failed to UPDATE public key:', updateError);
+              console.error('[E2EE] 🚨 CRITICAL: New public key NOT saved to backend!');
+              console.error('[E2EE] 🚨 Other users will encrypt with OLD key → you CANNOT decrypt!');
+            }
           } else {
-            console.log('[E2EE] ℹ️ Public key already exists on server');
+            console.error('[E2EE] ❌ Failed to upload public key:', error);
           }
         }
 
-        // Step 4: Fetch public keys of all room members
+        // Step 4: Fetch public keys of room members
         if (roomId) {
           try {
             const response = await callGetRoomMemberPublicKeys(roomId);
             const members = response.data?.members || [];
 
-            let foundRecipientKey = false;
+            console.log(`[E2EE] 📦 Found ${members.length} room members`);
+
             members.forEach(member => {
               if (member.user_id !== userId && member.public_key) {
                 setUserPublicKey(member.user_id, member.public_key);
-                foundRecipientKey = true;
-                console.log(`[E2EE] 🔑 Loaded public key for user: ${member.user_id.substring(0, 8)}...`);
+                console.log(`[E2EE] 🔑 Loaded public key for: ${member.user_id.substring(0, 8)}...`);
               }
             });
-
-            if (!foundRecipientKey) {
-              console.warn('[E2EE] ⚠️ No recipient public keys found yet. They may not have initialized E2EE.');
-            }
-
-            console.log(`[E2EE] 📦 Total members: ${members.length}, Keys loaded: ${foundRecipientKey ? 'Yes' : 'No'}`);
           } catch (error) {
             console.error('[E2EE] ❌ Failed to load member public keys:', error);
           }
         }
 
         setIsReady(true);
-        console.log('[E2EE] ✅ Ready for encrypted messaging');
+        console.log(`✅ [E2EE] Ready for encrypted messaging\n`);
       } catch (error) {
-        console.error('[E2EE] ❌ Initialization failed:', error);
+        console.error('❌ [E2EE] Initialization failed:', error);
         setIsReady(false);
       }
     };
@@ -99,176 +118,222 @@ export const useE2EEMessaging = ({ roomId, userId, enabled = true }: UseE2EEMess
   }, [roomId, userId, enabled, isInitialized, initialize, setUserPublicKey]);
 
   /**
-   * Encrypt a message for a specific recipient
+   * Encrypt tin nhắn cho CẢ RECIPIENT VÀ SENDER (Double Encryption)
+   * - Generate random AES key
+   * - Encrypt message bằng AES
+   * - Encrypt AES key 2 LẦN:
+   *   1. Bằng RECIPIENT's PUBLIC KEY
+   *   2. Bằng SENDER's PUBLIC KEY (chính mình!)
+   *
+   * Như vậy cả 2 bên đều decrypt được!
    */
   const encryptForRecipient = async (plaintext: string, recipientId: string) => {
-    if (!enabled || !isReady) {
-      console.warn('[E2EE] ⚠️ Cannot encrypt - E2EE not ready. enabled:', enabled, 'isReady:', isReady);
+    if (!enabled || !isReady || !keyPair) {
+      console.warn('[E2EE] ⚠️ Cannot encrypt - E2EE not ready');
       return null;
     }
 
     try {
-      // Debug: Verify we're not encrypting for ourselves
-      const currentState = useE2EEStore.getState();
+      console.log(`\n🔐 [E2EE] Encrypting for BOTH recipient and sender...`);
+      console.log(`   Recipient: ${recipientId.substring(0, 8)}...`);
 
-      console.log('\n🎯 ==================== ENCRYPT FOR RECIPIENT ====================');
-      console.log('[E2EE] Current User ID:', currentState.currentUserId);
-      console.log('[E2EE] Target Recipient ID:', recipientId);
-      console.log('[E2EE] Room ID:', roomId);
-      console.log('================================================================');
+      // 🚨 CRITICAL FIX: ALWAYS fetch FRESH public key from server!
+      // Cache có thể bị stale nếu recipient clear localStorage hoặc login từ device khác
+      // → PHẢI refetch để đảm bảo dùng public key MỚI NHẤT!
+      let recipientPublicKey: CryptoKey | null = null;
+      let retries = 0;
+      const MAX_RETRIES = 3;
+      const RETRY_DELAY = 1000; // 1 second
 
-      if (currentState.currentUserId === recipientId) {
-        console.error('[E2EE] ❌ FATAL ERROR: Trying to encrypt for YOURSELF!');
-        console.error('[E2EE] This is a bug - you should never encrypt for yourself');
-        return null;
-      }
+      if (roomId) {
+        // Retry logic: Đôi khi recipient chưa POST public key lên backend (race condition)
+        while (retries < MAX_RETRIES && !recipientPublicKey) {
+          console.log(`[E2EE] 🔄 Fetching FRESH recipient public key (attempt ${retries + 1}/${MAX_RETRIES})...`);
 
-      // Try to get recipient's public key
-      let recipientPublicKey = await getUserPublicKey(recipientId);
+          try {
+            const response = await callGetRoomMemberPublicKeys(roomId);
+            const members = response.data?.members || [];
+            const recipientMember = members.find(m => m.user_id === recipientId);
 
-      // If not found, retry fetching from server
-      if (!recipientPublicKey && roomId) {
-        console.log('[E2EE] 🔄 Public key not in cache, fetching from server...');
-        try {
-          const response = await callGetRoomMemberPublicKeys(roomId);
-          const members = response.data?.members || [];
+            if (recipientMember?.public_key) {
+              // Update cache with FRESH key
+              setUserPublicKey(recipientId, recipientMember.public_key);
+              recipientPublicKey = await getUserPublicKey(recipientId);
+              console.log('[E2EE] ✅ Fetched FRESH recipient public key from server');
+              break; // Success!
+            } else {
+              console.warn(`[E2EE] ⚠️ Recipient not found or no public key (attempt ${retries + 1}/${MAX_RETRIES})`);
+              console.warn(`[E2EE]    Total members: ${members.length}, Looking for: ${recipientId.substring(0, 8)}...`);
 
-          console.log(
-            '[E2EE] 📊 Room members:',
-            members.map(m => ({
-              user_id: m.user_id?.substring(0, 8) + '...',
-              has_public_key: !!m.public_key,
-              public_key_preview: m.public_key?.substring(0, 40) + '...',
-            }))
-          );
+              if (retries < MAX_RETRIES - 1) {
+                console.log(`[E2EE] ⏳ Waiting ${RETRY_DELAY}ms before retry (recipient may still be initializing E2EE)...`);
+                await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+                retries++;
+              } else {
+                break; // Max retries reached
+              }
+            }
+          } catch (error) {
+            console.error(`[E2EE] ❌ Failed to fetch public key (attempt ${retries + 1}/${MAX_RETRIES}):`, error);
 
-          const recipientMember = members.find(m => m.user_id === recipientId);
-
-          if (recipientMember?.public_key) {
-            setUserPublicKey(recipientId, recipientMember.public_key);
-            recipientPublicKey = await getUserPublicKey(recipientId);
-            console.log('[E2EE] ✅ Fetched recipient public key from server');
+            if (retries < MAX_RETRIES - 1) {
+              console.log(`[E2EE] ⏳ Waiting ${RETRY_DELAY}ms before retry...`);
+              await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+              retries++;
+            } else {
+              // Last resort: Try cache
+              console.log('[E2EE] 🔄 All fetch attempts failed, trying cached public key...');
+              recipientPublicKey = await getUserPublicKey(recipientId);
+              break;
+            }
           }
-        } catch (error) {
-          console.error('[E2EE] ❌ Failed to fetch recipient public key:', error);
         }
+      } else {
+        // No roomId - use cache only (should not happen in production)
+        console.warn('[E2EE] ⚠️ No roomId, using cached public key');
+        recipientPublicKey = await getUserPublicKey(recipientId);
       }
 
       if (!recipientPublicKey) {
-        console.error('[E2EE] ❌ No public key for recipient:', recipientId, '- They may not have initialized E2EE yet');
+        console.error('[E2EE] ❌ No public key for recipient after all retries:', recipientId);
+        console.error('[E2EE] 🚨 POSSIBLE CAUSES:');
+        console.error('[E2EE]    1. Recipient has not initialized E2EE yet (not generated keypair)');
+        console.error("[E2EE]    2. Recipient's public key not uploaded to backend");
+        console.error('[E2EE]    3. Backend API /api/rooms/{room_id}/members/public_keys not working');
+        console.error('[E2EE]    4. Wrong recipientId (not in this room)');
         return null;
       }
 
-      const encrypted = await encryptMessage(plaintext, recipientPublicKey);
-      console.log('[E2EE] ✅ Encryption succeeded\n');
-      // Normalize keys to snake_case so the rest of the app / API receives
-      // `encrypted_key` and `iv` (server and useChat expect snake_case)
+      // Get MY public key (to encrypt for myself)
+      const state = useE2EEStore.getState();
+      const myPublicKeyString = state.publicKeyString;
+      if (!myPublicKeyString) {
+        console.error('[E2EE] ❌ My public key not available');
+        return null;
+      }
+
+      const { importPublicKey } = await import('@/features/message/lib/e2ee');
+      const myPublicKey = await importPublicKey(myPublicKeyString);
+
+      console.log('[E2EE] 🔑 Got both public keys, encrypting...');
+
+      // DOUBLE ENCRYPT: cho recipient + cho chính mình
+      const encrypted = await encryptMessageForBoth(plaintext, recipientPublicKey, myPublicKey);
+
+      console.log(`✅ [E2EE] Double encryption successful!`);
+      console.log(`   Ciphertext: ${encrypted.ciphertext.length} chars`);
+      console.log(`   Key for recipient: ${encrypted.encrypted_key_recipient.length} chars`);
+      console.log(`   Key for sender: ${encrypted.encrypted_key_sender.length} chars`);
+      console.log(`   IV: ${encrypted.iv.length} chars\n`);
+
       return {
         ciphertext: encrypted.ciphertext,
-        encrypted_key: (encrypted as any).encryptedKey || (encrypted as any).encrypted_key,
+        encrypted_key_recipient: encrypted.encrypted_key_recipient,
+        encrypted_key_sender: encrypted.encrypted_key_sender,
         iv: encrypted.iv,
       };
     } catch (error) {
-      console.error('[E2EE] ❌ Encryption failed:', error);
+      console.error('❌ [E2EE] Encryption failed:', error);
       return null;
     }
   };
 
   /**
-   * Decrypt an incoming message
+   * Decrypt tin nhắn
+   * - CẢ SENDER VÀ RECIPIENT đều decrypt được!
+   * - Sender dùng encrypted_key_sender
+   * - Recipient dùng encrypted_key (hoặc encrypted_key_recipient)
    */
   const decryptIncoming = async (message: MessageOut): Promise<string | null> => {
-    console.log('\n🔓 ==================== DECRYPT INCOMING START ====================');
-    console.log('[E2EE decrypt] Message ID:', message.id);
-    console.log('[E2EE decrypt] Sender ID:', message.sender_id?.substring(0, 8) + '...');
-    console.log('[E2EE decrypt] Has encrypted_key:', !!message.encrypted_key);
-    console.log('[E2EE decrypt] Has iv:', !!message.iv);
-    console.log('[E2EE decrypt] Has ciphertext:', !!message.ciphertext);
-
     if (!enabled || !isReady || !keyPair) {
-      console.log('[E2EE decrypt] ⚠️ E2EE not ready - returning raw message');
-      console.log('  - enabled:', enabled);
-      console.log('  - isReady:', isReady);
-      console.log('  - hasKeyPair:', !!keyPair);
-      console.log('==================================================================\n');
       return message.message || message.ciphertext || null;
     }
 
     const currentUserId = useE2EEStore.getState().currentUserId;
     const isMine = message.sender_id === currentUserId;
 
-    console.log('[E2EE decrypt] Current User ID:', currentUserId?.substring(0, 8) + '...');
-    console.log('[E2EE decrypt] Is my message?:', isMine);
-
-    // 🔑 PRIORITY 1: If this is my own message, try to get plaintext from cache
-    if (isMine) {
-      console.log('[E2EE decrypt] 📤 This is MY message - checking cache...');
-
-      // Try _plaintext first (in-memory, recent messages)
+    // Check if message has E2EE fields
+    if (!message.ciphertext || !message.iv) {
+      console.warn('[E2EE] ⚠️ Message missing ciphertext or iv:', message.id);
+      // Try _plaintext or message field
       if ((message as any)._plaintext) {
-        console.log('[E2EE decrypt] ✅ Using in-memory _plaintext');
-        console.log('==================================================================\n');
         return (message as any)._plaintext;
       }
-
-      // Try cache (after reload)
-      const cachedPlaintext = getSentMessagePlaintext(message.id, currentUserId);
-      if (cachedPlaintext) {
-        console.log('[E2EE decrypt] ✅ Retrieved from cache');
-        console.log('==================================================================\n');
-        return cachedPlaintext;
-      }
-
-      // No cache, cannot decrypt (encrypted for recipient)
-      console.log('[E2EE decrypt] ⚠️ No cache found - cannot decrypt my own message');
-      console.log('[E2EE decrypt] (I encrypted for recipient, not for myself)');
-      console.log('==================================================================\n');
-
-      if (message.message) {
-        return message.message;
-      }
-      return `[Tin nhắn đã gửi - không thể hiển thị sau reload]`;
-    }
-
-    // Check if message has E2EE fields
-    if (!message.encrypted_key || !message.iv || !message.ciphertext) {
-      console.log('[E2EE decrypt] ⚠️ Message missing E2EE fields - returning plaintext/ciphertext');
-      console.log('==================================================================\n');
       return message.message || message.ciphertext || null;
     }
 
-    // This is someone else's message TO ME - decrypt it!
-    console.log('[E2EE decrypt] 📨 Decrypting message from:', message.sender_id?.substring(0, 8) + '...');
-    console.log('[E2EE decrypt] Using my private key...');
+    // Determine which encrypted_key to use
+    let encryptedKeyToUse: string | null = null;
 
+    if (isMine) {
+      // I'm the sender - use encrypted_key_sender
+      encryptedKeyToUse = (message as any).encrypted_key_sender || null;
+
+      // Fallback: nếu chưa có encrypted_key_sender (old messages), dùng _plaintext
+      if (!encryptedKeyToUse) {
+        if ((message as any)._plaintext) {
+          console.log('[E2EE] ℹ️ Using _plaintext for my old message');
+          return (message as any)._plaintext;
+        }
+        if (message.message) {
+          return message.message;
+        }
+        console.log('[E2EE] ⚠️ My message but no encrypted_key_sender - old format');
+        return '[Tin đã gửi - format cũ]';
+      }
+
+      console.log(`🔓 [E2EE] Decrypting MY message ${message.id.substring(0, 8)}... (using encrypted_key_sender)`);
+      console.log(`   encrypted_key_sender length: ${encryptedKeyToUse.length}`);
+      console.log(`   FULL encrypted_key_sender: ${encryptedKeyToUse}`);
+    } else {
+      // I'm the recipient - use encrypted_key or encrypted_key_recipient
+      encryptedKeyToUse = (message as any).encrypted_key_recipient || message.encrypted_key || null;
+
+      if (!encryptedKeyToUse) {
+        console.warn('[E2EE] ⚠️ No encrypted_key for recipient in message:', message.id);
+        return message.message || '🔒 [Không thể giải mã - thiếu key]';
+      }
+
+      console.log(`🔓 [E2EE] Decrypting message from ${message.sender_id?.substring(0, 8)}... (using encrypted_key_recipient)`);
+      console.log(`   encrypted_key length: ${encryptedKeyToUse.length}`);
+      console.log(`   FULL encrypted_key: ${encryptedKeyToUse}`);
+    }
+
+    // Decrypt
     try {
-      const decrypted = await decryptMessage(message.ciphertext, message.encrypted_key, message.iv, keyPair.privateKey);
-      console.log('[E2EE decrypt] ✅✅✅ SUCCESS - Message decrypted!');
-      console.log('[E2EE decrypt] Plaintext preview:', decrypted.substring(0, 30) + '...');
-      console.log('==================================================================\n');
+      const decrypted = await decryptMessage(message.ciphertext, encryptedKeyToUse, message.iv, keyPair.privateKey);
+
+      console.log(`✅ [E2EE] Decryption successful!`);
       return decrypted;
     } catch (error) {
-      console.error('\n❌❌❌ DECRYPTION FAILED ❌❌❌');
-      console.error('[E2EE decrypt] Message ID:', message.id);
-      console.error('[E2EE decrypt] Sent by:', message.sender_id?.substring(0, 8) + '...');
-      console.error('[E2EE decrypt] I am:', currentUserId?.substring(0, 8) + '...');
-      console.error('[E2EE decrypt] Error:', error);
-      console.error('[E2EE decrypt] 💡 POSSIBLE CAUSES:');
-      console.error('  1. OLD MESSAGE: Encrypted with old keys before you regenerated');
-      console.error('  2. WRONG RECIPIENT: Sender encrypted for someone else, not you');
-      console.error('  3. KEY MISMATCH: Sender used your OLD public key');
-      console.error('  4. CORRUPT DATA: encrypted_key or iv corrupted');
-      console.error('\n🔧 HOW TO FIX:');
-      console.error('  - Ask sender to send a NEW message (not old ones)');
-      console.error('  - Both users clear localStorage and regenerate E2EE keys');
-      console.error('  - Check sender encrypted for YOUR user_id');
-      console.error('==================================================================\n');
-      return '🔒 [Không thể giải mã - tin nhắn không dành cho bạn hoặc key không khớp]';
+      console.error(`❌ [E2EE] Decryption failed for message ${message.id}:`, error);
+      console.error(`   Is mine:`, isMine);
+      console.error(`   Used key type:`, isMine ? 'encrypted_key_sender' : 'encrypted_key_recipient');
+      console.error(`   encrypted_key used (first 100 chars):`, encryptedKeyToUse?.substring(0, 100));
+
+      // Check if this is OperationError (wrong key)
+      if (error instanceof Error && error.name === 'OperationError') {
+        console.error(`   🚨 OperationError = Message encrypted with OLD PUBLIC KEY!`);
+        console.error(`   This happens when:`);
+        console.error(`   1. You cleared localStorage and generated NEW keypair`);
+        console.error(`   2. But this message was encrypted with OLD public key`);
+        console.error(`   3. NEW private key CANNOT decrypt OLD encrypted keys`);
+        console.error(`   ❌ Solution: This old message is PERMANENTLY UNREADABLE`);
+
+        return '🔒 [Tin nhắn cũ - đã reset khóa]';
+      }
+
+      console.error(`   Possible causes:`);
+      console.error(`   1. Message encrypted for someone else`);
+      console.error(`   2. Sender used old public key`);
+      console.error(`   3. Corrupted data`);
+
+      return '🔒 [Không thể giải mã]';
     }
   };
 
   /**
-   * Decrypt multiple messages
+   * Decrypt nhiều tin nhắn
    */
   const decryptMessages = async (messages: MessageOut[]): Promise<Array<MessageOut & { decryptedText?: string }>> => {
     if (!enabled || !isReady) {

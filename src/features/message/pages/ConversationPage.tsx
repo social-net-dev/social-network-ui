@@ -146,6 +146,18 @@ const ConversationPage: React.FC = () => {
       if (data?.room_id && data?.user_id === resolvedUserId) {
         resetUnread(data.room_id);
       }
+
+      // If the other participant (recipient) read messages in this room,
+      // clear the local "greeting sent" flag so sender can continue messaging.
+      try {
+        if (data?.room_id === resolvedRoom && data?.user_id && recipientId && data.user_id === recipientId) {
+          const key = `greeting_sent_${resolvedRoom}_${recipientId}`;
+          localStorage.removeItem(key);
+          console.log('[ConversationPage] Recipient opened room — cleared greeting flag for', key);
+        }
+      } catch (e) {
+        // ignore
+      }
     },
 
     onMessage: msg => {
@@ -461,29 +473,69 @@ const ConversationPage: React.FC = () => {
         if (e2eeReady && recipientId) {
           console.log('[ConversationPage] 🔐 E2EE enabled, encrypting...');
 
-          // Encrypt message for the recipient
+          // Encrypt message for the recipient (Double Encryption Model)
           encrypted = await encryptForRecipient(text.trim(), recipientId);
 
           if (encrypted) {
             console.log('[ConversationPage] ✅ Encrypted payload:', {
               ciphertext_length: encrypted.ciphertext.length,
-              encrypted_key_length: (encrypted as any).encrypted_key?.length ?? (encrypted as any).encryptedKey?.length,
+              has_encrypted_key_recipient: !!(encrypted as any).encrypted_key_recipient,
+              has_encrypted_key_sender: !!(encrypted as any).encrypted_key_sender,
+              encrypted_key_recipient_length: (encrypted as any).encrypted_key_recipient?.length,
+              encrypted_key_sender_length: (encrypted as any).encrypted_key_sender?.length,
               iv_length: encrypted.iv.length,
               ciphertext_preview: encrypted.ciphertext.substring(0, 40) + '...',
             });
 
-            // Send encrypted message via WebSocket (pass original plaintext for display)
+            // Send encrypted message via WebSocket (Double Encryption Model)
+            // Pass BOTH encrypted keys so backend stores both
+            // Sender uses encrypted_key_sender to decrypt own messages after reload
+            // Recipient uses encrypted_key_recipient to decrypt received messages
             await send(
               encrypted.ciphertext,
               {
-                encrypted_key: (encrypted as any).encrypted_key ?? (encrypted as any).encryptedKey,
+                encrypted_key_recipient: (encrypted as any).encrypted_key_recipient,
+                encrypted_key_sender: (encrypted as any).encrypted_key_sender,
                 iv: encrypted.iv,
               },
               text.trim()
             );
           } else {
-            console.warn('[ConversationPage] ⚠️ Encryption failed, sending plaintext');
-            await send(text.trim());
+            console.error('[ConversationPage] ❌ Encryption FAILED!');
+            console.error('[ConversationPage] 🚨 Possible reasons:');
+            console.error('[ConversationPage]    - Recipient has not initialized E2EE (not in the room yet)');
+            console.error('[ConversationPage]    - Recipient public key not found on backend');
+            console.error('[ConversationPage]    - Network error fetching public keys');
+
+            // Enforce greeting-only fallback when recipient has no public key.
+            const textTrim = text.trim();
+            const greetingRegex = /^(hi|hello|xin chào|chào|hey)([!.,\s]|$)/i;
+            const isGreeting = greetingRegex.test(textTrim);
+            const greetingKey = `greeting_sent_${resolvedRoom}_${recipientId ?? 'unknown'}`;
+            const greetingSent = localStorage.getItem(greetingKey) === '1';
+
+            // If we don't know recipient, fall back to existing behavior (allow plaintext)
+            if (!recipientId) {
+              console.log('[ConversationPage] No recipientId - sending plaintext fallback');
+              await send(`⚠️ [E2EE Failed - Sent as plaintext]: ${textTrim}`);
+              alert('Không thể mã hóa tin nhắn vì không xác định được người nhận. Tin đã gửi dưới dạng plaintext.');
+            } else if (!greetingSent) {
+              // First allowed plaintext is a greeting only
+              if (isGreeting) {
+                await send(textTrim);
+                try {
+                  localStorage.setItem(greetingKey, '1');
+                } catch (e) {}
+                alert('Lời chào đã gửi. Khi người nhận mở tin nhắn, bạn sẽ có thể nhắn tiếp một cách bảo mật.');
+              } else {
+                alert('Người nhận chưa khởi tạo E2EE. Vui lòng chỉ gửi lời chào đầu tiên (ví dụ: "Xin chào").\n\nHoặc chờ người đó mở tin nhắn để E2EE được khởi tạo.');
+                return;
+              }
+            } else {
+              // Greeting already sent but recipient hasn't opened yet
+              alert('Bạn đã gửi lời chào. Vui lòng chờ người nhận mở tin nhắn để nhắn tiếp một cách bảo mật.');
+              return;
+            }
           }
         } else {
           // E2EE not ready or no recipient, send plaintext
