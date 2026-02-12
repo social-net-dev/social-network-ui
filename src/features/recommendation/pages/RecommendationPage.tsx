@@ -1,17 +1,17 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { GraduationCap, Search, Sparkles, Users } from "lucide-react";
+import { Avatar } from "@/features/shared/components/Avatar";
+import { GraduationCap, Search, Sparkles, Users, UserCheck, Clock, Loader2, UserPlus } from "lucide-react";
+import { Link } from "react-router-dom";
 import api from "@/lib/api";
 import { FriendsAPI } from "@/lib/api/generated";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getApiBaseUrl } from "@/lib/config";
-import { appendAuthToken } from "@/lib/api/transforms/common";
+import { buildMediaUrl } from "@/lib/api/transforms/common";
+import { toast } from "sonner";
 
 const TAB_OPTIONS = [
     { value: "ALL", label: "Tất cả" },
@@ -34,6 +34,10 @@ export type Suggestion = {
     mutuals: number;
     tags: Array<"CLASS" | "SCHOOL" | "FIELD">;
     avatar?: string;
+    avatar_path?: string;
+    background_url?: string;
+    friend_status: "NONE" | "REQUEST_SENT" | "REQUEST_RECEIVED" | "FRIENDS";
+    friend_request_id?: string | null;
 };
 
 interface ApiSuggestion {
@@ -41,10 +45,16 @@ interface ApiSuggestion {
     name: string;
     username?: string | null;
     avatar_path?: string | null;
+    background_path?: string | null;
     role?: string;
     tags?: string[];
     connected_via?: string;
     target_name?: string;
+    friend_status?: string;
+    friend_request_id?: string | null;
+    school?: string;
+    class_name?: string;
+    field?: string;
 }
 
 function mapApiToSuggestion(r: ApiSuggestion): Suggestion {
@@ -52,8 +62,11 @@ function mapApiToSuggestion(r: ApiSuggestion): Suggestion {
     const roleMap: Record<string, "Học sinh" | "Giáo viên" | "Giảng viên"> = {
         TEACH_AT_SCHOOL: "Giáo viên",
         TEACHES: "Giáo viên",
+        TEACHER: "Giáo viên",
+        INSTRUCTOR: "Giảng viên",
         STUDY_AT_SCHOOL: "Học sinh",
         STUDY_IN: "Học sinh",
+        STUDENT: "Học sinh",
     };
     const role = (r.role && roleMap[r.role]) || "Học sinh";
     const username =
@@ -66,62 +79,102 @@ function mapApiToSuggestion(r: ApiSuggestion): Suggestion {
         name: r.name || "Người dùng",
         username,
         role,
-        className: r.target_name || "—",
-        school: r.connected_via === "School" ? r.target_name || "—" : "—",
-        field: tags.includes("FIELD") ? r.target_name || "—" : "—",
+        className: r.class_name || r.target_name || "—",
+        school: r.school || (r.connected_via === "School" ? r.target_name || "—" : "—"),
+        field: r.field || (tags.includes("FIELD") ? r.target_name || "—" : "—"),
         hats: 0,
         mutuals: 0,
-        tags: tags.length ? tags : (r.role ? ["SCHOOL"] : ["CLASS", "SCHOOL", "FIELD"]),
-        avatar: r.avatar_path
-            ? (r.avatar_path.startsWith("http")
-                ? r.avatar_path
-                : `${getApiBaseUrl().replace(/\/+$/, "")}${appendAuthToken(r.avatar_path)}`)
-            : undefined,
+        tags: tags.length ? tags : ["SCHOOL"],
+        avatar: r.avatar_path ? buildMediaUrl(r.avatar_path) : undefined,
+        avatar_path: r.avatar_path || undefined,
+        background_url: r.background_path ? buildMediaUrl(r.background_path) : undefined,
+        friend_status: (r.friend_status as Suggestion["friend_status"]) || "NONE",
+        friend_request_id: r.friend_request_id,
     };
 }
 
-async function fetchSuggestions(filter: TabValue, schoolId?: number, classId?: number, fieldId?: number): Promise<Suggestion[]> {
+async function fetchSuggestions(filter: TabValue): Promise<Suggestion[]> {
     const params = new URLSearchParams({ filter });
-    if (schoolId != null && schoolId > 0) params.set("school_id", String(schoolId));
-    if (classId != null && classId > 0) params.set("class_id", String(classId));
-    if (fieldId != null && fieldId > 0) params.set("field_id", String(fieldId));
     const res = await api.get<{ suggestions: ApiSuggestion[] }>(`recommendations/suggestions/?${params.toString()}`);
     const data = res.data;
     const list = Array.isArray(data?.suggestions) ? data.suggestions : [];
     return list.map(mapApiToSuggestion);
 }
 
-function getInitials(name: string) {
-    return name
-        .split(" ")
-        .map((part) => part.charAt(0))
-        .slice(0, 2)
-        .join("")
-        .toUpperCase();
-}
 
 export function RecommendationPage() {
     const [activeTab, setActiveTab] = useState<TabValue>("ALL");
     const [query, setQuery] = useState("");
     const [minHats, setMinHats] = useState(0);
-    const schoolId = 1;
-    const classId = 1;
-    const fieldId = 1;
+    const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
     const queryClient = useQueryClient();
 
+    const addProcessing = (id: string) =>
+        setProcessingIds((prev) => new Set(prev).add(id));
+    const removeProcessing = (id: string) =>
+        setProcessingIds((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+        });
+
+    // Optimistically update a suggestion's friend_status in the cache
+    const updateSuggestionStatus = (userId: string, newStatus: Suggestion["friend_status"], requestId?: string | null) => {
+        // Update all tab caches
+        for (const tab of TAB_OPTIONS) {
+            queryClient.setQueryData<Suggestion[]>(
+                ["recommendations", "suggestions", tab.value],
+                (old) => {
+                    if (!old) return old;
+                    return old.map((s) =>
+                        s.id === userId
+                            ? { ...s, friend_status: newStatus, friend_request_id: requestId ?? s.friend_request_id }
+                            : s
+                    );
+                }
+            );
+        }
+    };
+
     const connectMutation = useMutation({
-        mutationFn: async (addressee_username: string) => {
-            return FriendsAPI.createFriendRequestFriendsRequestsPost({ addressee_username });
+        mutationFn: async ({ userId, username }: { userId: string; username: string }) => {
+            addProcessing(userId);
+            return FriendsAPI.createFriendRequestFriendsRequestsPost({ addressee_username: username });
         },
-        onSuccess: () => {
-            // refresh suggestions (optional) + notifications list
-            queryClient.invalidateQueries({ queryKey: ["recommendations", "suggestions"] });
+        onSuccess: (data: any, variables) => {
+            removeProcessing(variables.userId);
+            toast.success("Đã gửi lời mời kết bạn");
+            const requestId = data?.id || data?._id || null;
+            updateSuggestionStatus(variables.userId, "REQUEST_SENT", requestId ? String(requestId) : null);
+            queryClient.invalidateQueries({ queryKey: ["friends"] });
+        },
+        onError: (err: any, variables) => {
+            removeProcessing(variables.userId);
+            const msg = err?.response?.data?.error || err?.response?.data?.detail || "Lỗi khi gửi lời mời";
+            toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
+        },
+    });
+
+    const acceptMutation = useMutation({
+        mutationFn: async ({ userId, requestId }: { userId: string; requestId: string }) => {
+            addProcessing(userId);
+            return FriendsAPI.acceptRequestFriendsRequestsRequestIdAcceptPost(requestId);
+        },
+        onSuccess: (_data, variables) => {
+            removeProcessing(variables.userId);
+            toast.success("Đã chấp nhận lời mời kết bạn");
+            updateSuggestionStatus(variables.userId, "FRIENDS");
+            queryClient.invalidateQueries({ queryKey: ["friends"] });
+        },
+        onError: (_err, variables) => {
+            removeProcessing(variables.userId);
+            toast.error("Lỗi khi chấp nhận lời mời");
         },
     });
 
     const { data: apiSuggestions = [], isLoading } = useQuery({
-        queryKey: ["recommendations", "suggestions", activeTab, schoolId, classId, fieldId],
-        queryFn: () => fetchSuggestions(activeTab, schoolId, classId, fieldId),
+        queryKey: ["recommendations", "suggestions", activeTab],
+        queryFn: () => fetchSuggestions(activeTab),
         staleTime: 60 * 1000,
     });
 
@@ -207,14 +260,26 @@ export function RecommendationPage() {
                                 ) : (
                                     suggestions.map((user) => (
                                         <Card key={user.id} className="border-none shadow-lg bg-white dark:bg-card overflow-hidden">
-                                            <div className="relative h-28 bg-gradient-to-br from-etechs-primary/30 via-white to-etechs-secondary/10 dark:from-etechs-secondary/30 dark:to-etechs-primary/10">
-                                                <Avatar className="size-16 absolute left-1/2 -bottom-8 -translate-x-1/2 ring-4 ring-white dark:ring-[#0a1f29]">
-                                                    <AvatarImage src={user.avatar} alt={user.name} />
-                                                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                                                </Avatar>
-                                            </div>
+                                            <Link to={`/profile/${user.username}`}>
+                                                <div
+                                                    className="relative h-28 bg-gradient-to-br from-etechs-primary/30 via-white to-etechs-secondary/10 dark:from-etechs-secondary/30 dark:to-etechs-primary/10"
+                                                    style={
+                                                        user.background_url
+                                                            ? {
+                                                                  backgroundImage: `url(${user.background_url})`,
+                                                                  backgroundSize: "cover",
+                                                                  backgroundPosition: "center",
+                                                              }
+                                                            : undefined
+                                                    }
+                                                >
+                                                    <div className="size-16 absolute left-1/2 -bottom-8 -translate-x-1/2">
+                                                        <Avatar user={user} size="lg" className="ring-4 ring-white dark:ring-[#0a1f29]" />
+                                                    </div>
+                                                </div>
+                                            </Link>
                                             <CardContent className="pt-10 pb-4 px-4 flex flex-col gap-3">
-                                                <div className="text-center space-y-0.5">
+                                                <Link to={`/profile/${user.username}`} className="text-center space-y-0.5 hover:opacity-80 transition-opacity">
                                                     <div className="flex items-center justify-center gap-2">
                                                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{user.name}</h3>
                                                         <Badge variant="secondary" className="text-xs">
@@ -225,7 +290,7 @@ export function RecommendationPage() {
                                                         {user.className} • {user.school}
                                                     </p>
                                                     <p className="text-sm text-gray-500 dark:text-gray-400">Lĩnh vực: {user.field}</p>
-                                                </div>
+                                                </Link>
 
                                                 <div className="flex flex-wrap justify-center gap-2">
                                                     {user.tags.includes("CLASS") && <Badge variant="outline">Chung lớp</Badge>}
@@ -246,16 +311,46 @@ export function RecommendationPage() {
                                                 )}
 
                                                 <div className="grid grid-cols-1 gap-2">
-                                                    <Button
-                                                        className="rounded-full"
-                                                        disabled={connectMutation.isPending || !user.username}
-                                                        onClick={() => {
-                                                            if (!user.username) return;
-                                                            connectMutation.mutate(user.username);
-                                                        }}
-                                                    >
-                                                        {connectMutation.isPending ? "Đang gửi..." : "Kết nối"}
-                                                    </Button>
+                                                    {user.friend_status === "FRIENDS" ? (
+                                                        <Button className="rounded-full" variant="secondary" disabled>
+                                                            <UserCheck className="h-4 w-4 mr-1" /> Bạn bè
+                                                        </Button>
+                                                    ) : user.friend_status === "REQUEST_SENT" ? (
+                                                        <Button className="rounded-full" variant="outline" disabled>
+                                                            <Clock className="h-4 w-4 mr-1" /> Đã gửi lời mời
+                                                        </Button>
+                                                    ) : user.friend_status === "REQUEST_RECEIVED" ? (
+                                                        <Button
+                                                            className="rounded-full"
+                                                            disabled={processingIds.has(user.id)}
+                                                            onClick={() => {
+                                                                if (user.friend_request_id) {
+                                                                    acceptMutation.mutate({ userId: user.id, requestId: user.friend_request_id });
+                                                                }
+                                                            }}
+                                                        >
+                                                            {processingIds.has(user.id) ? (
+                                                                <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Đang chấp nhận...</>
+                                                            ) : (
+                                                                <><UserCheck className="h-4 w-4 mr-1" /> Chấp nhận</>
+                                                            )}
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            className="rounded-full"
+                                                            disabled={processingIds.has(user.id) || !user.username}
+                                                            onClick={() => {
+                                                                if (!user.username) return;
+                                                                connectMutation.mutate({ userId: user.id, username: user.username });
+                                                            }}
+                                                        >
+                                                            {processingIds.has(user.id) ? (
+                                                                <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Đang gửi...</>
+                                                            ) : (
+                                                                <><UserPlus className="h-4 w-4 mr-1" /> Kết nối</>
+                                                            )}
+                                                        </Button>
+                                                    )}
                                                     <Button variant="outline" className="rounded-full">
                                                         Bỏ qua
                                                     </Button>

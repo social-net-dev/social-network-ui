@@ -146,12 +146,23 @@ export const getVerificationRequests = (status?: string) => {
 };
 
 /**
- * List posts by user ID (backend: users/<uuid:user_id>/posts/)
- * GET /users/:userId/posts
+ * List posts by user ID (backend: posts/user/<user_id>/)
+ * GET /posts/user/:userId/
  */
 export const getPostsByUserId = (userId: string) => {
   return customInstance<any[]>({
-    url: `/users/${encodeURIComponent(userId)}/posts/`,
+    url: `/posts/user/${encodeURIComponent(userId)}/`,
+    method: 'GET',
+  });
+};
+
+/**
+ * List my posts (backend: posts/me/list/)
+ * GET /posts/me/list/
+ */
+export const getMyPosts = () => {
+  return customInstance<any[]>({
+    url: '/posts/me/list/',
     method: 'GET',
   });
 };

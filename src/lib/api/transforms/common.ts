@@ -2,30 +2,108 @@
  * Common transformation and API utilities
  */
 
+import { getApiBaseUrl } from '@/lib/config';
+
 /**
- * Build the media stream URL for an R2 file path.
- * If the path is already an absolute URL or a stream URL, return it as-is.
- * Otherwise, construct: /media/stream/?path=<encoded_key>&access_token=<jwt>
+ * Read the JWT auth token from localStorage (remove surrounding quotes if any).
+ */
+const getAuthToken = (): string => {
+  try {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return '';
+    return token.replace(/"/g, '');
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Build an **absolute** media stream URL for an R2 file path.
+ *
+ * Returns a full URL (including API base + auth token) that can be used
+ * directly in `<img src>`, CSS `background-image`, etc.
+ *
+ * Examples (dev):
+ *   "avatars/t/u/file.jpg"
+ *     → "http://localhost:8001/api/media/stream/?path=avatars%2Ft%2Fu%2Ffile.jpg&access_token=…"
+ *   "/media/stream/?path=…"
+ *     → "http://localhost:8001/api/media/stream/?path=…&access_token=…"
  */
 export const buildMediaUrl = (filePath: string | null | undefined): string => {
   if (!filePath) return '';
 
-  // Already an absolute URL (e.g. https://cdn.example.com/...)
+  // Already an absolute external URL — return as-is
   if (filePath.startsWith('http')) return filePath;
 
-  // Already a media stream URL
-  if (filePath.startsWith('/media/stream') || filePath.startsWith('/api/media/stream')) {
-    return appendAuthToken(filePath);
+  const apiBase = getApiBaseUrl().replace(/\/+$/, '');
+
+  let mediaPath: string;
+
+  // Already has /api prefix → strip it (apiBase already includes /api)
+  if (
+    filePath.startsWith('/api/media/stream') ||
+    filePath.startsWith('/api/social/media/') ||
+    filePath.startsWith('/api/media/')
+  ) {
+    mediaPath = filePath.replace(/^\/api/, '');
+  }
+  // Relative /media/ path
+  else if (filePath.startsWith('/media/')) {
+    mediaPath = filePath;
+  }
+  // Raw R2 key → wrap in /media/stream/ endpoint
+  else {
+    mediaPath = `/media/stream/?path=${encodeURIComponent(filePath)}`;
   }
 
-  // Already a /api/social/media/ style URL (legacy)
-  if (filePath.startsWith('/api/social/media/') || filePath.startsWith('/api/media/')) {
-    return appendAuthToken(filePath);
+  const fullUrl = `${apiBase}${mediaPath}`;
+
+  // Append auth token
+  const cleanToken = getAuthToken();
+  if (!cleanToken) return fullUrl;
+  const separator = fullUrl.includes('?') ? '&' : '?';
+  return `${fullUrl}${separator}access_token=${encodeURIComponent(cleanToken)}`;
+};
+
+/**
+ * Build a **relative** media stream path for an R2 file path.
+ *
+ * Returns a path like `/media/stream/?path=…&access_token=…` that is
+ * suitable for fetching via axios (which already has baseURL configured).
+ *
+ * Use this for media fetched through `useMediaBlobs` / `customInstance`
+ * (post images, comment images, etc.).
+ */
+export const buildMediaPath = (filePath: string | null | undefined): string => {
+  if (!filePath) return '';
+
+  // Already an absolute external URL — return as-is
+  if (filePath.startsWith('http')) return filePath;
+
+  let mediaPath: string;
+
+  // Already a full /api/... stream URL → strip /api prefix (axios base already has /api)
+  if (
+    filePath.startsWith('/api/media/stream') ||
+    filePath.startsWith('/api/social/media/') ||
+    filePath.startsWith('/api/media/')
+  ) {
+    mediaPath = filePath.replace(/^\/api/, '');
+  }
+  // Already a relative /media/ path
+  else if (filePath.startsWith('/media/')) {
+    mediaPath = filePath;
+  }
+  // Raw R2 key → wrap in /media/stream/ endpoint
+  else {
+    mediaPath = `/media/stream/?path=${encodeURIComponent(filePath)}`;
   }
 
-  // Raw R2 key → construct stream URL
-  const streamUrl = `/media/stream/?path=${encodeURIComponent(filePath)}`;
-  return appendAuthToken(streamUrl);
+  // Append auth token for URLs that might be used directly by the browser
+  const cleanToken = getAuthToken();
+  if (!cleanToken) return mediaPath;
+  const separator = mediaPath.includes('?') ? '&' : '?';
+  return `${mediaPath}${separator}access_token=${encodeURIComponent(cleanToken)}`;
 };
 
 /**

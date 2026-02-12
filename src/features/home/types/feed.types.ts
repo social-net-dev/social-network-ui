@@ -17,11 +17,14 @@ export interface Project {
 }
 
 export interface PersonalInfo {
+  educationLevel?: string;
   school?: string;
   class?: string;
   degree?: string;
   major?: string;
   graduationYear?: string;
+  academicYear?: string;
+  schoolYear?: string;
   favoriteSubjects?: string[];
   hobbies?: string[];
   projects?: Project[];
@@ -34,6 +37,7 @@ export interface Author {
   id: string;
   displayName: string;
   avatar: string | null;
+  background?: string | null;
   username?: string | null;
   role?: string;
   bio?: string;
@@ -47,6 +51,10 @@ export interface Author {
   accountStatus?: string;
   storageQuotaMb?: number;
   privacy?: ProfileVisibilityResponse;
+  /** true when the viewer is friends with this user (from /profiles/{username}/) */
+  isFriend?: boolean;
+  /** true when the viewer owns this profile (from /profiles/{username}/) */
+  isOwner?: boolean;
   // Legacy support
   firstName?: string;
   lastName?: string;

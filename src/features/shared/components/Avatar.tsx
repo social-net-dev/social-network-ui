@@ -1,9 +1,9 @@
 import type { User } from '@/types'
 import { cn } from '@/lib/utils'
-import { getApiBaseUrl } from '@/lib/config'
+import { buildMediaUrl } from '@/lib/api/transforms/common'
 
 interface AvatarProps {
-  user?: User | null
+  user?: User | (Record<string, any>) | null
   src?: string
   alt?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
@@ -18,15 +18,15 @@ const sizeClasses = {
 }
 
 export function Avatar({ user, src, alt, size = 'md', className }: AvatarProps) {
-  let avatarSrc = src || user?.avatar || (user?.id ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}` : null)
-  // If backend returns media paths (e.g. /media/stream/...), prefix with API base so <img> can fetch it.
-  if (avatarSrc && avatarSrc.startsWith('/media/')) {
-    const base = getApiBaseUrl().replace(/\/+$/, '')
-    avatarSrc = `${base}${avatarSrc}`
-  }
+  // Support both transformed `avatar` (absolute URL) and raw `avatar_path` (R2 key)
+  const rawAvatar = src || (user as any)?.avatar || (user as any)?.avatar_path
+  const avatarSrc = rawAvatar
+    ? (rawAvatar.startsWith('http') ? rawAvatar : buildMediaUrl(rawAvatar))
+    : (user?.id ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}` : null)
+  const displayName = (user as any)?.displayName || (user as any)?.display_name || ''
   const initials = user?.firstName?.[0] && user?.lastName?.[0] 
     ? `${user.firstName[0]}${user.lastName[0]}` 
-    : (user?.displayName?.[0] || '?')
+    : (displayName?.[0] || '?')
 
   return (
     <div

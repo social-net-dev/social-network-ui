@@ -71,46 +71,85 @@ function FriendshipStatusBadge({ status }: { status: SearchUser["friendship_stat
 export function SearchPage() {
   const [searchInput, setSearchInput] = useState("");
   const [query, setQuery] = useState("");
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const qc = useQueryClient();
+
+  const addProcessing = (id: string) =>
+    setProcessingIds((prev) => new Set(prev).add(id));
+  const removeProcessing = (id: string) =>
+    setProcessingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
 
   const { data, isLoading, isError } = useSearchUsers(query);
 
+  // Optimistically update a user's status in the search results cache
+  const updateUserStatus = (userId: string, newStatus: SearchUser["friendship_status"], requestId?: string | null) => {
+    qc.setQueryData(["search", "users", query], (old: { users: SearchUser[]; total: number } | undefined) => {
+      if (!old) return old;
+      return {
+        ...old,
+        users: old.users.map((u) =>
+          u.id === userId
+            ? { ...u, friendship_status: newStatus, friend_request_id: requestId ?? u.friend_request_id }
+            : u
+        ),
+      };
+    });
+  };
+
   const sendRequestMutation = useMutation({
-    mutationFn: (username: string) =>
-      createFriendRequestFriendsRequestsPost({ addressee_username: username }),
-    onSuccess: () => {
-      toast.success("Đã gửi lời mời kết bạn");
-      qc.invalidateQueries({ queryKey: ["friends"] });
-      qc.invalidateQueries({ queryKey: ["search", "users", query] });
+    mutationFn: ({ userId, username }: { userId: string; username: string }) => {
+      addProcessing(userId);
+      return createFriendRequestFriendsRequestsPost({ addressee_username: username });
     },
-    onError: (err: any) => {
+    onSuccess: (data: any, variables) => {
+      removeProcessing(variables.userId);
+      toast.success("Đã gửi lời mời kết bạn");
+      // Optimistically update to REQUEST_SENT
+      const requestId = data?.id || data?._id || null;
+      updateUserStatus(variables.userId, "request_sent", requestId ? String(requestId) : null);
+      qc.invalidateQueries({ queryKey: ["friends"] });
+    },
+    onError: (err: any, variables) => {
+      removeProcessing(variables.userId);
       const msg = err?.response?.data?.error || err?.response?.data?.detail || "Lỗi khi gửi lời mời";
       toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
     },
   });
 
   const acceptMutation = useMutation({
-    mutationFn: (requestId: string) =>
-      customInstance({ url: `/friends/requests/${requestId}/accept/`, method: "POST" }),
-    onSuccess: () => {
-      toast.success("Đã chấp nhận lời mời kết bạn");
-      qc.invalidateQueries({ queryKey: ["friends"] });
-      qc.invalidateQueries({ queryKey: ["search", "users", query] });
+    mutationFn: ({ userId, requestId }: { userId: string; requestId: string }) => {
+      addProcessing(userId);
+      return customInstance({ url: `/friends/requests/${requestId}/accept/`, method: "POST" });
     },
-    onError: () => {
+    onSuccess: (_data, variables) => {
+      removeProcessing(variables.userId);
+      toast.success("Đã chấp nhận lời mời kết bạn");
+      updateUserStatus(variables.userId, "friends");
+      qc.invalidateQueries({ queryKey: ["friends"] });
+    },
+    onError: (_err, variables) => {
+      removeProcessing(variables.userId);
       toast.error("Lỗi khi chấp nhận lời mời");
     },
   });
 
   const cancelMutation = useMutation({
-    mutationFn: (requestId: string) =>
-      customInstance({ url: `/friends/requests/${requestId}/cancel/`, method: "POST" }),
-    onSuccess: () => {
-      toast.success("Đã hủy lời mời kết bạn");
-      qc.invalidateQueries({ queryKey: ["friends"] });
-      qc.invalidateQueries({ queryKey: ["search", "users", query] });
+    mutationFn: ({ userId, requestId }: { userId: string; requestId: string }) => {
+      addProcessing(userId);
+      return customInstance({ url: `/friends/requests/${requestId}/cancel/`, method: "POST" });
     },
-    onError: () => {
+    onSuccess: (_data, variables) => {
+      removeProcessing(variables.userId);
+      toast.success("Đã hủy lời mời kết bạn");
+      updateUserStatus(variables.userId, "none", null);
+      qc.invalidateQueries({ queryKey: ["friends"] });
+    },
+    onError: (_err, variables) => {
+      removeProcessing(variables.userId);
       toast.error("Lỗi khi hủy lời mời");
     },
   });
@@ -125,9 +164,10 @@ export function SearchPage() {
 
   const users = data?.users || [];
   const total = data?.total || 0;
-  const busy = sendRequestMutation.isPending || acceptMutation.isPending || cancelMutation.isPending;
 
   const renderAction = (user: SearchUser) => {
+    const isProcessing = processingIds.has(user.id);
+
     switch (user.friendship_status) {
       case "friends":
         return (
@@ -141,11 +181,18 @@ export function SearchPage() {
           <Button
             variant="outline"
             size="sm"
-            className="flex-shrink-0 rounded-full text-yellow-600 border-yellow-300 hover:bg-yellow-50"
-            onClick={() => user.friend_request_id && cancelMutation.mutate(user.friend_request_id)}
-            disabled={busy}
+            className="flex-shrink-0 rounded-full text-yellow-600 border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+            onClick={() =>
+              user.friend_request_id &&
+              cancelMutation.mutate({ userId: user.id, requestId: user.friend_request_id })
+            }
+            disabled={isProcessing || !user.friend_request_id}
           >
-            <UserX className="h-4 w-4 mr-1" />
+            {isProcessing ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <UserX className="h-4 w-4 mr-1" />
+            )}
             Hủy lời mời
           </Button>
         );
@@ -154,10 +201,17 @@ export function SearchPage() {
           <Button
             size="sm"
             className="flex-shrink-0 rounded-full"
-            onClick={() => user.friend_request_id && acceptMutation.mutate(user.friend_request_id)}
-            disabled={busy}
+            onClick={() =>
+              user.friend_request_id &&
+              acceptMutation.mutate({ userId: user.id, requestId: user.friend_request_id })
+            }
+            disabled={isProcessing || !user.friend_request_id}
           >
-            <UserCheck className="h-4 w-4 mr-1" />
+            {isProcessing ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <UserCheck className="h-4 w-4 mr-1" />
+            )}
             Chấp nhận
           </Button>
         );
@@ -167,14 +221,34 @@ export function SearchPage() {
             variant="outline"
             size="sm"
             className="flex-shrink-0 rounded-full"
-            onClick={() => sendRequestMutation.mutate(user.username || user.email)}
-            disabled={busy}
+            onClick={() =>
+              sendRequestMutation.mutate({ userId: user.id, username: user.username || user.email })
+            }
+            disabled={isProcessing}
           >
-            <UserPlus className="h-4 w-4 mr-1" />
+            {isProcessing ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <UserPlus className="h-4 w-4 mr-1" />
+            )}
             Kết bạn
           </Button>
         );
     }
+  };
+
+  // Parse bio to extract readable text (bio may be JSON)
+  const parseBioDisplay = (bio: string) => {
+    if (!bio) return "";
+    try {
+      if (bio.startsWith("{") && bio.endsWith("}")) {
+        const parsed = JSON.parse(bio);
+        return parsed.bioText || parsed.school || "";
+      }
+    } catch {
+      // ignore
+    }
+    return bio;
   };
 
   return (
@@ -233,7 +307,7 @@ export function SearchPage() {
       {users.length > 0 && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Tìm thấy {total} kết quả cho "{query}"
+            Tìm thấy {total} kết quả cho &ldquo;{query}&rdquo;
           </p>
           {users.map((user: SearchUser) => (
             <Card key={user.id} className="hover:shadow-md transition-shadow">
@@ -247,7 +321,7 @@ export function SearchPage() {
                       id: user.id,
                       displayName: user.display_name,
                       username: user.username,
-                      avatar: buildMediaUrl(user.avatar_path),
+                      avatar: user.avatar_path ? buildMediaUrl(user.avatar_path) : undefined,
                     }}
                     size="lg"
                   />
@@ -263,12 +337,14 @@ export function SearchPage() {
                     </p>
                     {user.bio && (
                       <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        {user.bio}
+                        {parseBioDisplay(user.bio)}
                       </p>
                     )}
                   </div>
                 </Link>
-                {renderAction(user)}
+                <div onClick={(e) => e.stopPropagation()}>
+                  {renderAction(user)}
+                </div>
               </CardContent>
             </Card>
           ))}

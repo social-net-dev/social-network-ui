@@ -13,15 +13,18 @@ const parseBioInfo = (bio: string | null | undefined): { bioText: string; person
     if (bio.startsWith('{') && bio.endsWith('}')) {
       const parsed = JSON.parse(bio);
       // If it has our expected fields, it's our structured bio
-      if (parsed.school || parsed.class || parsed.favoriteSubjects || parsed.hobbies || parsed.projects || parsed.bioText !== undefined) {
+      if (parsed.school || parsed.class || parsed.educationLevel || parsed.academicYear || parsed.schoolYear || parsed.favoriteSubjects || parsed.hobbies || parsed.projects || parsed.bioText !== undefined) {
         return {
           bioText: parsed.bioText || '',
           personalInfo: {
+            educationLevel: parsed.educationLevel,
             school: parsed.school,
             class: parsed.class,
             degree: parsed.degree,
             major: parsed.major,
             graduationYear: parsed.graduationYear,
+            academicYear: parsed.academicYear,
+            schoolYear: parsed.schoolYear,
             favoriteSubjects: parsed.favoriteSubjects,
             hobbies: parsed.hobbies,
             projects: parsed.projects,
@@ -58,12 +61,16 @@ export const transformAuthor = (author: Models.AuthorInfo | Models.PublicProfile
     id: author.id,
     displayName: author.display_name || author.username || 'Người dùng',
     avatar: buildMediaUrl(author.avatar_path),
+    background: buildMediaUrl((author as any).background_path),
     username: author.username || '',
     bio: bioText,
     personalInfo,
     role: (author as any).role || 'USER',
     accountStatus: (author as any).account_status || 'UNVERIFIED',
     createdAt: (author as any).created_at,
+    // Friend/owner flags from PublicProfileResponse
+    isFriend: (author as any).is_friend ?? undefined,
+    isOwner: (author as any).is_owner ?? undefined,
     // Support legacy fields if needed by components
     firstName: (author.display_name || 'Người dùng').split(' ')[0] || '',
     lastName: (author.display_name || 'Người dùng').split(' ').slice(1).join(' ') || '',
@@ -80,6 +87,7 @@ export const transformUserMe = (user: Models.UserMeResponse): Author => {
     id: user.id,
     displayName: user.display_name,
     avatar: buildMediaUrl(user.avatar_path),
+    background: buildMediaUrl((user as any).background_path),
     username: user.username || '',
     email: user.email,
     role: user.role,

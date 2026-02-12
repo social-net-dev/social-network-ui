@@ -12,7 +12,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { customInstance } from "@/lib/axios-instance";
-import { buildMediaUrl } from "@/lib/api/transforms/common";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -177,12 +176,7 @@ export function FriendsListPage() {
                   className="flex items-center gap-3 min-w-0 flex-1"
                 >
                   <Avatar
-                    user={{
-                      id: friend.id,
-                      displayName: friend.display_name,
-                      username: friend.username,
-                      avatar: buildMediaUrl(friend.avatar_path),
-                    }}
+                    user={friend}
                     size="lg"
                   />
                   <div className="min-w-0">

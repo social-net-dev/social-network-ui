@@ -12,6 +12,7 @@ import React from "react";
 
 const routeLabels: Record<string, string> = {
   "": "Trang chủ",
+  "explore": "Lĩnh vực",
   "recommendations": "Gợi ý kết nối",
   "messages": "Tin nhắn",
   "notifications": "Thông báo",
@@ -24,6 +25,8 @@ const routeLabels: Record<string, string> = {
   "groups": "Cộng đồng",
   "marketplace": "Chợ sinh viên",
   "search": "Tìm kiếm",
+  "friends": "Bạn bè",
+  "requests": "Lời mời kết bạn",
 };
 
 export function DynamicBreadcrumbs() {

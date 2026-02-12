@@ -16,6 +16,10 @@ export interface PublicProfileResponse {
   birth_date?: string | null;
   bio?: string | null;
   avatar_path?: string | null;
+  background_path?: string | null;
+  role?: string | null;
+  account_status?: string | null;
+  created_at?: string | null;
   is_friend?: boolean;
   is_owner?: boolean;
 }

@@ -109,12 +109,6 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
                     <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">{pt.icon} {pt.label}</span>
                   ) : null;
                 })()}
-                {post.fieldId && (() => {
-                  const f = ACADEMIC_FIELDS.find(af => af.value === post.fieldId);
-                  return f ? (
-                    <span className={cn('px-1.5 py-0.5 rounded-full text-[10px] font-medium', f.color)}>{f.icon} {f.label}</span>
-                  ) : null;
-                })()}
               </div>
             </div>
           </div>
@@ -153,7 +147,15 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
           </div>
         ) : (
           <>
-            <FormattedContent content={content} className="text-foreground/90 leading-relaxed mb-4 text-sm block" />
+            <FormattedContent content={content} className="text-foreground/90 leading-relaxed mb-3 text-sm block" />
+            {post.fieldId && (() => {
+              const f = ACADEMIC_FIELDS.find(af => af.value === post.fieldId);
+              return f ? (
+                <div className="mb-3">
+                  <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium', f.color)}>{f.icon} {f.label}</span>
+                </div>
+              ) : null;
+            })()}
             {sharedPost && <SharedPostCard post={sharedPost} />}
           </>
         )}

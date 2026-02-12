@@ -1,16 +1,16 @@
 import { Models } from '../generated';
 import { transformAuthor } from './userTransform';
-import { buildMediaUrl } from './common';
+import { buildMediaPath } from './common';
 import type { FeedPost, FeedComment, ReactionType } from '@/features/home/types/feed.types';
 
 /**
  * Transform Generated PostOut/PostDetailOut to Frontend FeedPost
  */
 export const transformPost = (post: Models.PostOut | Models.PostDetailOut | any): FeedPost => {
-  // Extract media URLs — use buildMediaUrl to construct stream URLs from R2 paths
+  // Extract media URLs — use buildMediaPath (relative) so useMediaBlobs can fetch via axios
   const mediaFiles = post.media_files || post.media || [];
   const mediaUrls = mediaFiles
-    .map((m: any) => buildMediaUrl(m.file_url || m.file_path || m.media_url))
+    .map((m: any) => buildMediaPath(m.file_url || m.file_path || m.media_url))
     .filter(Boolean) as string[];
 
   return {
@@ -44,7 +44,7 @@ export const transformComment = (comment: Models.CommentOut | any): FeedComment 
     author: transformAuthor(comment.author),
     parentCommentId: comment.parent_comment_id || null,
     content: comment.content_text || comment.content || '',
-    mediaUrls: mediaFiles.map((m: any) => buildMediaUrl(m.file_url || m.file_path || m.media_url)),
+    mediaUrls: mediaFiles.map((m: any) => buildMediaPath(m.file_url || m.file_path || m.media_url)),
     stats: {
       reactions: comment.reaction_count ?? 0,
       replies: comment.reply_count ?? 0,
