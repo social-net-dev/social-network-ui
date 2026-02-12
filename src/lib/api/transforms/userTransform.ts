@@ -1,5 +1,5 @@
 import { Models } from '../generated';
-import { appendAuthToken } from './common';
+import { buildMediaUrl } from './common';
 import type { Author, PersonalInfo } from '@/features/home/types/feed.types';
 
 /**
@@ -57,7 +57,7 @@ export const transformAuthor = (author: Models.AuthorInfo | Models.PublicProfile
   return {
     id: author.id,
     displayName: author.display_name || author.username || 'Người dùng',
-    avatar: appendAuthToken(author.avatar_path),
+    avatar: buildMediaUrl(author.avatar_path),
     username: author.username || '',
     bio: bioText,
     personalInfo,
@@ -79,7 +79,7 @@ export const transformUserMe = (user: Models.UserMeResponse): Author => {
   return {
     id: user.id,
     displayName: user.display_name,
-    avatar: appendAuthToken(user.avatar_path),
+    avatar: buildMediaUrl(user.avatar_path),
     username: user.username || '',
     email: user.email,
     role: user.role,

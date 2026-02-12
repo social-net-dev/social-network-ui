@@ -61,6 +61,12 @@ function isPublicAuthRequest(url: string | undefined): boolean {
 // ============================================
 apiClient.interceptors.request.use(
   config => {
+    // When sending FormData, remove explicit Content-Type so the browser
+    // auto-sets it with the correct multipart boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
     if (!isPublicAuthRequest(config.url)) {
       const token = localStorage.getItem('auth_token');
       if (token) {
@@ -71,7 +77,6 @@ apiClient.interceptors.request.use(
       if (tenantSlug) {
         const cleanSlug = tenantSlug.replace(/"/g, '');
         config.headers['X-Tenant-Slug'] = cleanSlug;
-        console.log(`[Request Interceptor] 🔑 Auto-added X-Tenant-Slug: ${cleanSlug} to ${config.url}`);
       }
     }
     return config;

@@ -10,12 +10,23 @@ import { getErrorMessage } from '@/lib/api/transforms';
 import type { FeedComment, ReactionType } from '../types/feed.types';
 import { cn } from '@/lib/utils';
 
+const ROLE_MAP: Record<string, { label: string; class: string }> = {
+  STUDENT: { label: 'Người học', class: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
+  INSTRUCTOR: { label: 'Người dạy', class: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' },
+};
+
+const STATUS_MAP: Record<string, { label: string; class: string }> = {
+  VERIFIED: { label: '✓', class: 'text-green-600 dark:text-green-400' },
+  UNVERIFIED: { label: '', class: '' },
+};
+
 interface CommentSectionProps {
   postId: string;
   currentUserId?: string;
+  postAuthorId?: string;
 }
 
-export function CommentSection({ postId, currentUserId }: CommentSectionProps) {
+export function CommentSection({ postId, currentUserId, postAuthorId }: CommentSectionProps) {
   const { comments, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, addComment, deleteComment, reactToComment, updateComment, replyToComment } = useComments(postId);
 
   const [content, setContent] = useState('');
@@ -27,9 +38,34 @@ export function CommentSection({ postId, currentUserId }: CommentSectionProps) {
     const topLevel = comments.filter(c => !c.parentCommentId);
     const replies = comments.filter(c => !!c.parentCommentId);
 
+    // Group replies: map each reply to its top-level parent
+    // (handles replying to a reply — still shows under the original top-level comment)
+    const topLevelIds = new Set(topLevel.map(c => c.id));
+    const replyMap = new Map<string, FeedComment[]>();
+
+    for (const reply of replies) {
+      // Find the top-level ancestor
+      let parentId = reply.parentCommentId!;
+      // If parentId is not a top-level comment, it's a reply-to-reply
+      // Walk up to find the top-level parent
+      const visited = new Set<string>();
+      while (parentId && !topLevelIds.has(parentId) && !visited.has(parentId)) {
+        visited.add(parentId);
+        const parentReply = replies.find(r => r.id === parentId);
+        if (parentReply?.parentCommentId) {
+          parentId = parentReply.parentCommentId;
+        } else {
+          break;
+        }
+      }
+      const arr = replyMap.get(parentId) || [];
+      arr.push(reply);
+      replyMap.set(parentId, arr);
+    }
+
     return topLevel.map(comment => ({
       ...comment,
-      replies: replies.filter(r => r.parentCommentId === comment.id),
+      replies: replyMap.get(comment.id) || [],
     }));
   }, [comments]);
 
@@ -128,6 +164,7 @@ export function CommentSection({ postId, currentUserId }: CommentSectionProps) {
             <CommentItem
               comment={comment}
               currentUserId={currentUserId}
+              postAuthorId={postAuthorId}
               onReply={(id: string, name: string) => {
                 setReplyToId(id);
                 setContent(`@${name} `);
@@ -148,6 +185,7 @@ export function CommentSection({ postId, currentUserId }: CommentSectionProps) {
                     key={reply.id}
                     comment={reply}
                     currentUserId={currentUserId}
+                    postAuthorId={postAuthorId}
                     onReply={(id, name) => {
                       setReplyToId(id);
                       setContent(`@${name} `);
@@ -182,17 +220,20 @@ export function CommentSection({ postId, currentUserId }: CommentSectionProps) {
 interface CommentItemProps {
   comment: FeedComment;
   currentUserId?: string;
+  postAuthorId?: string;
   onReply: (id: string, name: string) => void;
   onDelete: (id: string) => Promise<void>;
   onUpdate: (id: string, content: string) => Promise<void>;
   onLike: (id: string, reaction: ReactionType | null) => Promise<void>;
 }
 
-function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, onLike }: CommentItemProps) {
+function CommentItem({ comment, currentUserId, postAuthorId, onReply, onDelete, onUpdate, onLike }: CommentItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const { data: mediaUrls = [] } = useMediaBlobs(comment.mediaUrls || []);
   const isAuthor = currentUserId === comment.author.id;
+  const isPostOwner = currentUserId === postAuthorId;
+  const canDelete = isAuthor || isPostOwner;
 
   const handleSaveEdit = async () => {
     if (!editContent.trim()) return;
@@ -211,7 +252,19 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, onLi
       </div>
       <div className="flex-1 min-w-0">
         <div className="bg-card rounded-lg px-4 py-3 shadow-sm border border-border/30">
-          <p className="font-semibold text-sm text-foreground mb-1.5">{comment.author.displayName}</p>
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+            <p className="font-semibold text-sm text-foreground">{comment.author.displayName}</p>
+            {comment.author.role && ROLE_MAP[comment.author.role] && (
+              <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-semibold', ROLE_MAP[comment.author.role].class)}>
+                {ROLE_MAP[comment.author.role].label}
+              </span>
+            )}
+            {comment.author.accountStatus === 'VERIFIED' && (
+              <span className={cn('text-[10px] font-bold', STATUS_MAP.VERIFIED.class)} title="Đã xác minh">
+                {STATUS_MAP.VERIFIED.label}
+              </span>
+            )}
+          </div>
           {isEditing ? (
             <div className="mt-2">
               <textarea value={editContent} onChange={e => setEditContent(e.target.value)} className="w-full p-3 text-sm border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-primary/20 transition-all-300 resize-none" rows={2} />
@@ -246,10 +299,11 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, onLi
             <span className="font-medium">Trả lời</span>
           </button>
           {isAuthor && (
-            <>
               <button onClick={() => setIsEditing(true)} className="text-xs text-muted-foreground hover:text-primary dark:hover:text-primary transition-colors-300">
                 <Edit className="w-4 h-4" />
               </button>
+          )}
+          {canDelete && (
               <button
                 onClick={() => {
                   if (confirm('Xóa bình luận?')) onDelete(comment.id);
@@ -258,7 +312,6 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, onLi
               >
                 <Trash2 className="w-4 h-4" />
               </button>
-            </>
           )}
         </div>
       </div>

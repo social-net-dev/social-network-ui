@@ -83,6 +83,8 @@ export interface FeedPost {
   userReaction: ReactionType | null;
   sharedPost: FeedPost | null;
   visibility: string;
+  postType?: string;
+  fieldId?: string;
   createdAt: string;
   updatedAt: string;
 }

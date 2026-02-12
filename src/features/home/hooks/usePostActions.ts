@@ -13,9 +13,6 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuthStore();
 
-  const defaultQueryKey = queryKeys.feed.posts(1) as unknown as readonly unknown[];
-  const targetKey = customQueryKey || defaultQueryKey;
-
   const deleteMutation = PostsV2API.useDeletePostV2PostsPostIdDelete();
   const updateMutation = PostsV2API.useUpdatePostV2PostsPostIdPut();
   const shareMutation = PostsV2API.useSharePostV2PostsPostIdSharePost();
@@ -24,28 +21,31 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
 
   const updateCache = useCallback(
     (updater: (posts: FeedPost[]) => FeedPost[]) => {
-      queryClient.setQueryData<PostContainer | InfiniteData<PostContainer>>(targetKey, old => {
-        if (!old) return old;
+      // Update ALL feed queries in cache (handles different fieldId/postType keys)
+      const allQueries = queryClient.getQueryCache().findAll({ queryKey: queryKeys.feed.all });
 
-        const updateData = (data: PostContainer): PostContainer => {
-          if (Array.isArray(data)) return updater(data);
-          if ('posts' in data) return { ...data, posts: updater(data.posts) };
-          if ('items' in data) return { ...data, items: updater(data.items) };
-          if ('data' in data && 'posts' in data.data) return { ...data, data: { ...data.data, posts: updater(data.data.posts) } };
-          return data;
-        };
+      const updateData = (data: PostContainer): PostContainer => {
+        if (Array.isArray(data)) return updater(data);
+        if ('posts' in data) return { ...data, posts: updater(data.posts) };
+        if ('items' in data) return { ...data, items: updater(data.items) };
+        if ('data' in data && 'posts' in data.data) return { ...data, data: { ...data.data, posts: updater(data.data.posts) } };
+        return data;
+      };
 
-        if ('pages' in old) {
-          return {
-            ...old,
-            pages: old.pages.map(page => updateData(page)),
-          };
-        }
-
-        return updateData(old);
-      });
+      for (const query of allQueries) {
+        queryClient.setQueryData<PostContainer | InfiniteData<PostContainer>>(query.queryKey, old => {
+          if (!old) return old;
+          if ('pages' in old) {
+            return {
+              ...old,
+              pages: old.pages.map(page => updateData(page)),
+            };
+          }
+          return updateData(old);
+        });
+      }
     },
-    [queryClient, targetKey]
+    [queryClient]
   );
 
   const deletePost = useCallback(
@@ -56,12 +56,12 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
         await deleteMutation.mutateAsync({ postId });
         toast.success('Đã xóa bài viết');
       } catch (err) {
-        queryClient.invalidateQueries({ queryKey: targetKey });
+        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
         toast.error('Lỗi khi xóa bài viết');
         throw err;
       }
     },
-    [deleteMutation, queryClient, targetKey, updateCache]
+    [deleteMutation, queryClient, updateCache]
   );
 
   const updatePost = useCallback(
@@ -75,25 +75,28 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
         });
         toast.success('Đã cập nhật bài viết');
       } catch (err) {
-        queryClient.invalidateQueries({ queryKey: targetKey });
+        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
         toast.error('Lỗi khi cập nhật bài viết');
         throw err;
       }
     },
-    [updateMutation, queryClient, targetKey, updateCache]
+    [updateMutation, queryClient, updateCache]
   );
 
   const sharePost = useCallback(
     async (postId: string, message?: string) => {
-      const allData = queryClient.getQueryData<PostContainer | InfiniteData<PostContainer>>(targetKey);
+      // Search ALL feed queries for the original post
       let postsArray: FeedPost[] = [];
-
-      if (allData) {
+      const allQueries = queryClient.getQueryCache().findAll({ queryKey: queryKeys.feed.all });
+      for (const query of allQueries) {
+        const allData = query.state.data as PostContainer | InfiniteData<PostContainer> | undefined;
+        if (!allData) continue;
         if ('pages' in allData) {
           postsArray = allData.pages.flatMap(page => (Array.isArray(page) ? page : 'posts' in page ? page.posts : 'items' in page ? page.items : 'data' in page ? page.data.posts : []));
         } else {
           postsArray = Array.isArray(allData) ? allData : 'posts' in allData ? allData.posts : 'items' in allData ? allData.items : 'data' in allData ? allData.data.posts : [];
         }
+        if (postsArray.length) break;
       }
 
       const originalPost = postsArray.find(p => p.id === postId);
@@ -135,12 +138,12 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
           queryClient.invalidateQueries({ queryKey: customQueryKey });
         }
       } catch (err) {
-        queryClient.invalidateQueries({ queryKey: targetKey });
+        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
         toast.error('Lỗi khi chia sẻ bài viết');
         throw err;
       }
     },
-    [shareMutation, queryClient, targetKey, currentUser, customQueryKey, updateCache]
+    [shareMutation, queryClient, currentUser, customQueryKey, updateCache]
   );
 
   const likePost = useCallback(
@@ -175,12 +178,12 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
           });
         }
       } catch (err) {
-        queryClient.invalidateQueries({ queryKey: targetKey });
+        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
         toast.error('Lỗi khi tương tác bài viết');
         throw err;
       }
     },
-    [queryClient, targetKey, reactMutation, removeReactionMutation, updateCache]
+    [queryClient, reactMutation, removeReactionMutation, updateCache]
   );
 
   return {

@@ -4,9 +4,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Check } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import type { Project } from '@/features/home/types/feed.types'
+import { ACADEMIC_FIELDS } from '@/features/home/constants/fields'
 
 export interface Interest {
   label: string
@@ -120,26 +121,37 @@ export function EditAcademicBackgroundDialog({
   )
 }
 
-// Edit Dialog for Interests (Tags)
+// Edit Dialog for Interests (Tags) — supports both predefined list and free text
 export function EditInterestsDialog({ 
   title,
   interests, 
   onSave, 
-  trigger 
+  trigger,
+  predefinedList,
 }: { 
   title: string,
   interests: { label: string, color?: string }[], 
   onSave: (interests: { label: string, color?: string }[]) => void,
-  trigger: React.ReactNode
+  trigger: React.ReactNode,
+  predefinedList?: boolean,
 }) {
   const [items, setItems] = useState(interests)
   const [newItem, setNewItem] = useState('')
   const [open, setOpen] = useState(false)
 
   const handleAddItem = () => {
-    if (newItem.trim()) {
-      setItems([...items, { label: newItem }])
+    if (newItem.trim() && !items.find(i => i.label === newItem.trim())) {
+      setItems([...items, { label: newItem.trim() }])
       setNewItem('')
+    }
+  }
+
+  const handleTogglePredefined = (field: typeof ACADEMIC_FIELDS[number]) => {
+    const exists = items.find(i => i.label === field.label)
+    if (exists) {
+      setItems(items.filter(i => i.label !== field.label))
+    } else {
+      setItems([...items, { label: field.label, color: field.color }])
     }
   }
 
@@ -155,34 +167,84 @@ export function EditInterestsDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) setItems(interests); }}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] rounded-3xl">
+      <DialogContent className="sm:max-w-[500px] rounded-3xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <div className="flex gap-2">
-            <Input 
-              placeholder="Nhập nội dung mới..." 
-              value={newItem} 
-              onChange={(e) => setNewItem(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
-              className="rounded-xl"
-            />
-            <Button onClick={handleAddItem} size="icon" className="bg-etechs-primary text-etechs-secondary rounded-xl"><Plus className="h-4 w-4" /></Button>
-          </div>
-          <div className="flex flex-wrap gap-2 min-h-[100px] border border-border/50 rounded-2xl p-4 bg-muted/20">
-            {items.map((item, index) => (
-              <Badge key={index} variant="secondary" className="flex items-center gap-1 pr-1 pl-3 py-1.5 rounded-xl border-none bg-background shadow-sm">
-                {item.label}
-                <button onClick={() => handleRemoveItem(index)} className="hover:bg-destructive hover:text-white rounded-full p-0.5 ml-1 transition-colors">
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-            {items.length === 0 && <span className="text-muted-foreground text-xs p-2">Chưa có thông tin.</span>}
-          </div>
+          {predefinedList ? (
+            /* Predefined selectable list for academic interests */
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">Chọn các lĩnh vực quan tâm:</p>
+              <div className="grid grid-cols-1 gap-2">
+                {ACADEMIC_FIELDS.map((field) => {
+                  const isSelected = items.some(i => i.label === field.label)
+                  return (
+                    <button
+                      key={field.value}
+                      type="button"
+                      onClick={() => handleTogglePredefined(field)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                        isSelected 
+                          ? 'border-primary bg-primary/5 shadow-sm' 
+                          : 'border-border/50 bg-muted/20 hover:border-primary/30 hover:bg-muted/40'
+                      }`}
+                    >
+                      <span className="text-lg">{field.icon}</span>
+                      <span className="flex-1 text-sm font-semibold">{field.label}</span>
+                      {isSelected && (
+                        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-4 h-4 text-primary-foreground" />
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : (
+            /* Free text input for personal hobbies */
+            <>
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="Nhập nội dung mới..." 
+                  value={newItem} 
+                  onChange={(e) => setNewItem(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
+                  className="rounded-xl"
+                />
+                <Button onClick={handleAddItem} size="icon" className="bg-etechs-primary text-etechs-secondary rounded-xl"><Plus className="h-4 w-4" /></Button>
+              </div>
+              <div className="flex flex-wrap gap-2 min-h-[100px] border border-border/50 rounded-2xl p-4 bg-muted/20">
+                {items.map((item, index) => (
+                  <Badge key={index} variant="secondary" className="flex items-center gap-1 pr-1 pl-3 py-1.5 rounded-xl border-none bg-background shadow-sm">
+                    {item.label}
+                    <button onClick={() => handleRemoveItem(index)} className="hover:bg-destructive hover:text-white rounded-full p-0.5 ml-1 transition-colors">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+                {items.length === 0 && <span className="text-muted-foreground text-xs p-2">Chưa có thông tin.</span>}
+              </div>
+            </>
+          )}
+
+          {/* Show selected items summary for predefined list */}
+          {predefinedList && items.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
+              <p className="w-full text-xs text-muted-foreground mb-1">Đã chọn ({items.length}):</p>
+              {items.map((item, index) => (
+                <Badge key={index} variant="secondary" className="flex items-center gap-1 pr-1 pl-3 py-1.5 rounded-xl border-none bg-background shadow-sm">
+                  {item.label}
+                  <button onClick={() => handleRemoveItem(index)} className="hover:bg-destructive hover:text-white rounded-full p-0.5 ml-1 transition-colors">
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button onClick={handleSave} className="bg-etechs-primary text-etechs-secondary font-bold rounded-xl h-11 px-8">Hoàn tất</Button>

@@ -13,9 +13,11 @@ export function useRegister() {
         defaultValues: {
             email: "",
             password: "",
+            confirmPassword: "",
             displayName: "",
             phone: "",
             role: "STUDENT",
+            gender: "",
             consent: false,
         },
     });
@@ -47,6 +49,7 @@ export function useRegister() {
                 password: data.password,
                 display_name: data.displayName,
                 role: data.role,
+                gender: data.gender || "",
                 consent: data.consent,
                 phone: data.phone,
                 ...(data.idCardFront ? { cccd_front: data.idCardFront as any } : {}),

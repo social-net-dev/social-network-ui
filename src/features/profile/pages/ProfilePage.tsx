@@ -26,7 +26,7 @@ function ProfilePage() {
   const profile = rawProfile as Author;
   const { user: currentUser, isAuthenticated } = useAuthStore();
 
-  const postsUserId = isMe ? currentUser?.id : profile?.id;
+  const postsUserId = isMe ? (currentUser?.id || currentUser?.user_id) : profile?.id;
   const currentQueryKey = [...USER_POSTS_QUERY_KEY, postsUserId] as unknown as readonly unknown[];
   const { deletePost, updatePost, likePost } = usePostActions(currentQueryKey);
 
@@ -64,7 +64,7 @@ function ProfilePage() {
     );
   }
 
-  const isCurrentUser = isAuthenticated && currentUser?.id === profile.id;
+  const isCurrentUser = isAuthenticated && (currentUser?.id || currentUser?.user_id) === profile.id;
   const stats = {
     posts: profile.postsCount || posts.length || 0,
     followers: profile.followers || 0,
@@ -104,7 +104,7 @@ function ProfilePage() {
               ) : posts.length > 0 ? (
                 <div className="space-y-6">
                   {posts.map(post => (
-                    <PostCard key={post.id} post={post} currentUserId={currentUser?.id} onLike={(id, liked) => likePost?.(id, liked)} onComment={() => {}} onShare={() => {}} onDelete={id => deletePost?.(id)} onEdit={(id, content) => updatePost?.(id, content)} />
+                    <PostCard key={post.id} post={post} currentUserId={currentUser?.id || currentUser?.user_id} onLike={(id, liked) => likePost?.(id, liked)} onComment={() => {}} onShare={() => {}} onDelete={id => deletePost?.(id)} onEdit={(id, content) => updatePost?.(id, content)} />
                   ))}
                   <Button variant="ghost" className="w-full rounded-xl py-5 border-2 border-dashed border-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all-300 hover-lift">
                     Xem tất cả bài viết

@@ -9,6 +9,7 @@ import { useRegister } from "../hooks/useRegister";
 export function RegisterForm() {
     const { form, onSubmit, error, isLoading } = useRegister();
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [idCardFrontPreview, setIdCardFrontPreview] = useState<string | null>(null);
     const [idCardBackPreview, setIdCardBackPreview] = useState<string | null>(null);
 
@@ -98,6 +99,32 @@ export function RegisterForm() {
 
             <p className="text-xs text-slate-500 -mt-2">Mật khẩu tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt</p>
 
+            {/* Confirm Password */}
+            <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Xác nhận mật khẩu *</Label>
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        {...form.register("confirmPassword")}
+                        className="pl-10 pr-10"
+                        disabled={isLoading}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer hover:text-gray-600 dark:hover:text-gray-200 text-gray-400 transition-colors"
+                    >
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                </div>
+                {form.formState.errors.confirmPassword && <p className="text-sm text-red-500">{form.formState.errors.confirmPassword.message}</p>}
+            </div>
+
             {/* Row 2: Display Name and Phone */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Display Name */}
@@ -132,19 +159,36 @@ export function RegisterForm() {
                 </div>
             </div>
 
-            {/* Role */}
-            <div className="space-y-2">
-                <Label htmlFor="role">Loại tài khoản *</Label>
-                <select
-                    id="role"
-                    {...form.register("role")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1b7a78] dark:bg-[#132d3b] dark:border-gray-600"
-                    disabled={isLoading}
-                >
-                    <option value="STUDENT">Người học</option>
-                    <option value="INSTRUCTOR">Người dạy</option>
-                </select>
-                {form.formState.errors.role && <p className="text-sm text-red-500">{form.formState.errors.role.message}</p>}
+            {/* Role and Gender */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="role">Loại tài khoản *</Label>
+                    <select
+                        id="role"
+                        {...form.register("role")}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1b7a78] dark:bg-[#132d3b] dark:border-gray-600"
+                        disabled={isLoading}
+                    >
+                        <option value="STUDENT">Người học</option>
+                        <option value="INSTRUCTOR">Người dạy</option>
+                    </select>
+                    {form.formState.errors.role && <p className="text-sm text-red-500">{form.formState.errors.role.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="gender">Giới tính</Label>
+                    <select
+                        id="gender"
+                        {...form.register("gender")}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1b7a78] dark:bg-[#132d3b] dark:border-gray-600"
+                        disabled={isLoading}
+                    >
+                        <option value="">-- Chọn giới tính --</option>
+                        <option value="MALE">Nam</option>
+                        <option value="FEMALE">Nữ</option>
+                        <option value="OTHER">Khác</option>
+                    </select>
+                </div>
             </div>
 
             {/* Row 3: CCCD (không bắt buộc) */}

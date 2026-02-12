@@ -1,6 +1,5 @@
 import type { Notification, NotificationType } from "@/types/notification";
-import { getApiBaseUrl } from "@/lib/config";
-import { appendAuthToken } from "@/lib/api/transforms/common";
+import { buildMediaUrl } from "@/lib/api/transforms/common";
 
 /** Backend notification item (API list + WS payload) */
 export interface BackendNotificationRaw {
@@ -17,6 +16,8 @@ export interface BackendNotificationRaw {
   post_id: string | null;
   comment_id: string | null;
   message: string | null;
+  preview_text: string | null;
+  reaction_type: string | null;
   is_read: boolean;
   created_at: string;
 }
@@ -59,29 +60,17 @@ function buildTitle(notification_type: string, actorDisplayName: string): string
 
 function avatarPathToUrl(avatarPath: string | null | undefined): string | undefined {
   if (!avatarPath?.trim()) return undefined;
-  if (avatarPath.startsWith("http")) return avatarPath;
-
-  // New backend format: already a media endpoint path (e.g. /media/stream/?path=...)
-  if (avatarPath.startsWith("/media/")) {
-    const apiBase = getApiBaseUrl().replace(/\/+$/, "");
-    return `${apiBase}${appendAuthToken(avatarPath)}`;
-  }
-
-  // Legacy: treat as static media path under /media/<path>
-  const apiBase = getApiBaseUrl().trim().replace(/\/api\/?$/, "");
-  const protocol = typeof window !== "undefined" ? window.location.protocol : "http:";
-  const host = apiBase.startsWith("http") ? apiBase : `${protocol}//${typeof window !== "undefined" ? window.location.host : "localhost"}${apiBase || ""}`;
-  const mediaBase = host.replace(/\/+$/, "") + "/media/";
-  return mediaBase + avatarPath.replace(/^\//, "");
+  return buildMediaUrl(avatarPath) || undefined;
 }
 
 export function mapBackendNotificationToUi(raw: BackendNotificationRaw): Notification {
   const actorName = raw.actor?.display_name ?? "";
+  const backendMessage = raw.message?.trim();
   return {
     id: raw.id,
     type: backendTypeToUiType(raw.notification_type),
     title: buildTitle(raw.notification_type, actorName),
-    message: raw.message ?? "",
+    message: backendMessage || raw.preview_text || "",
     isRead: raw.is_read,
     createdAt: new Date(raw.created_at),
     avatar: avatarPathToUrl(raw.actor?.avatar_path ?? null),

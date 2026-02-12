@@ -9,13 +9,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/features/shared/components/Avatar";
 import { useAuthStore } from "@/stores/authStore";
-import { Image, Video, X, Hash, Smile, MapPin } from "lucide-react";
+import { Image, Video, X, Hash, Smile, MapPin, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { POST_TYPES, ACADEMIC_FIELDS } from "../constants/fields";
 
 interface CreatePostModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (content: string, files: File[], hashtags: string[]) => void;
+  onSubmit: (content: string, files: File[], hashtags: string[], postType?: string, fieldId?: string) => void;
   isLoading?: boolean;
 }
 
@@ -45,6 +47,9 @@ export function CreatePostModal({
   const [hashtagInput, setHashtagInput] = useState("");
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [postType, setPostType] = useState("SOCIAL");
+  const [fieldId, setFieldId] = useState("");
+  const [showFieldOptions, setShowFieldOptions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -66,7 +71,7 @@ export function CreatePostModal({
     if (!content.trim() && files.length === 0) return;
     try {
       setIsSubmitting(true);
-      await onSubmit(content, files, hashtags);
+      await onSubmit(content, files, hashtags, postType, fieldId);
       handleReset();
       onOpenChange(false);
     } catch (err) {
@@ -81,6 +86,9 @@ export function CreatePostModal({
     setFiles([]);
     setHashtags([]);
     setHashtagInput("");
+    setPostType("SOCIAL");
+    setFieldId("");
+    setShowFieldOptions(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -147,6 +155,65 @@ export function CreatePostModal({
               <p className="font-semibold text-sm">{user?.displayName || user?.email}</p>
               <p className="text-xs text-muted-foreground">Công khai</p>
             </div>
+          </div>
+
+          {/* Post Type & Field Selectors */}
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {POST_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setPostType(t.value)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
+                    postType === t.value
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:border-border"
+                  )}
+                >
+                  {t.icon} {t.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setShowFieldOptions(!showFieldOptions)}
+                className="px-2 py-1.5 rounded-full text-xs text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+              >
+                <ChevronDown className={cn("w-4 h-4 transition-transform", showFieldOptions && "rotate-180")} />
+              </button>
+            </div>
+
+            {showFieldOptions && (
+              <div className="animate-in fade-in-0 slide-in-from-top-1">
+                <p className="text-xs text-muted-foreground mb-1.5">Chọn lĩnh vực (tuỳ chọn):</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setFieldId("")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-full text-xs font-medium transition-all border",
+                      !fieldId ? "bg-secondary text-secondary-foreground border-secondary" : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                    )}
+                  >
+                    Tất cả
+                  </button>
+                  {ACADEMIC_FIELDS.map((f) => (
+                    <button
+                      key={f.value}
+                      type="button"
+                      onClick={() => setFieldId(fieldId === f.value ? "" : f.value)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-full text-xs font-medium transition-all border",
+                        fieldId === f.value ? f.color + " border-current" : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted"
+                      )}
+                    >
+                      {f.icon} {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Content Input */}

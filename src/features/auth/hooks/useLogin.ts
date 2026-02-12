@@ -31,10 +31,10 @@ export function useLogin() {
       console.log('[useLogin] Backend response (after unwrap):', response);
       setAuth(response);
 
-      // Fetch /auth/me/ to hydrate user and get role for redirect
+      // Fetch /users/me/ to hydrate user and get role for redirect
       let redirectPath = '/';
       try {
-        const meRes = await apiClient.get('auth/me/');
+        const meRes = await apiClient.get('users/me/');
         const userData = meRes.data;
         useAuthStore.getState().setUser(userData);
 
