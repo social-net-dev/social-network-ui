@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, X, Check } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import type { Project } from '@/features/home/types/feed.types'
@@ -71,16 +72,30 @@ export function EditBasicInfoDialog({
 }
 
 // Edit Dialog for Academic Background
-export function EditAcademicBackgroundDialog({ 
-  data, 
-  onSave, 
-  trigger 
-}: { 
-  data: { school: string, degree: string, major: string, graduationYear: string }, 
+export function EditAcademicBackgroundDialog({
+  data,
+  onSave,
+  trigger
+}: {
+  data: {
+    educationLevel?: string;
+    school?: string;
+    major?: string;
+    class?: string;
+    academicYear?: string;
+    schoolYear?: string;
+  },
   onSave: (data: any) => void,
   trigger: React.ReactNode
 }) {
-  const [formData, setFormData] = useState(data)
+  const [formData, setFormData] = useState({
+    educationLevel: data.educationLevel || '',
+    school: data.school || '',
+    major: data.major || '',
+    class: data.class || '',
+    academicYear: data.academicYear || '',
+    schoolYear: data.schoolYear || '',
+  })
   const [open, setOpen] = useState(false)
 
   const handleSave = () => {
@@ -88,33 +103,115 @@ export function EditAcademicBackgroundDialog({
     setOpen(false)
   }
 
+  const isUniversityLevel = formData.educationLevel === 'university'
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] rounded-3xl">
         <DialogHeader>
           <DialogTitle>Chỉnh sửa học vấn</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-6 py-4">
+          {/* Education Level Selection */}
           <div className="grid gap-2">
-            <Label htmlFor="school">Trường học</Label>
-            <Input id="school" value={formData.school} onChange={(e) => setFormData({...formData, school: e.target.value})} />
+            <Label htmlFor="educationLevel">Cấp học</Label>
+            <Select
+              value={formData.educationLevel}
+              onValueChange={(value) => setFormData({...formData, educationLevel: value})}
+            >
+              <SelectTrigger className="rounded-xl">
+                <SelectValue placeholder="Chọn cấp học" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="elementary">TH (Tiểu học)</SelectItem>
+                <SelectItem value="middle">THCS (Trung học cơ sở)</SelectItem>
+                <SelectItem value="high">THPT (Trung học phổ thông)</SelectItem>
+                <SelectItem value="university">ĐH/CĐ (Đại học/Cao đẳng)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="degree">Bằng cấp/Vị trí</Label>
-            <Input id="degree" value={formData.degree} onChange={(e) => setFormData({...formData, degree: e.target.value})} placeholder="Ví dụ: Cử nhân, Sinh viên, Giảng viên" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="major">Chuyên ngành</Label>
-            <Input id="major" value={formData.major} onChange={(e) => setFormData({...formData, major: e.target.value})} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="year">Năm tốt nghiệp (dự kiến)</Label>
-            <Input id="year" value={formData.graduationYear} onChange={(e) => setFormData({...formData, graduationYear: e.target.value})} />
-          </div>
+
+          {/* School Name - Common for all levels */}
+          {formData.educationLevel && (
+            <div className="grid gap-2">
+              <Label htmlFor="school">Tên trường</Label>
+              <Input
+                id="school"
+                value={formData.school}
+                onChange={(e) => setFormData({...formData, school: e.target.value})}
+                className="rounded-xl"
+                placeholder="Nhập tên trường học"
+              />
+            </div>
+          )}
+
+          {/* University Level Fields */}
+          {isUniversityLevel && (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="major">Ngành</Label>
+                <Input
+                  id="major"
+                  value={formData.major}
+                  onChange={(e) => setFormData({...formData, major: e.target.value})}
+                  className="rounded-xl"
+                  placeholder="Ví dụ: Công nghệ thông tin, Kỹ thuật điện"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="class">Lớp</Label>
+                <Input
+                  id="class"
+                  value={formData.class}
+                  onChange={(e) => setFormData({...formData, class: e.target.value})}
+                  className="rounded-xl"
+                  placeholder="Ví dụ: CNTT01, KTD02"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="academicYear">Niên khóa</Label>
+                <Input
+                  id="academicYear"
+                  value={formData.academicYear}
+                  onChange={(e) => setFormData({...formData, academicYear: e.target.value})}
+                  className="rounded-xl"
+                  placeholder="Ví dụ: 2020-2024, 2021-2025"
+                />
+              </div>
+            </>
+          )}
+
+          {/* School Level Fields (TH, THCS, THPT) */}
+          {!isUniversityLevel && formData.educationLevel && (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="class">Lớp</Label>
+                <Input
+                  id="class"
+                  value={formData.class}
+                  onChange={(e) => setFormData({...formData, class: e.target.value})}
+                  className="rounded-xl"
+                  placeholder="Ví dụ: 5A, 8B, 12C"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="schoolYear">Năm học</Label>
+                <Input
+                  id="schoolYear"
+                  value={formData.schoolYear}
+                  onChange={(e) => setFormData({...formData, schoolYear: e.target.value})}
+                  className="rounded-xl"
+                  placeholder="Ví dụ: 2023-2024, 2024-2025"
+                />
+              </div>
+            </>
+          )}
         </div>
         <DialogFooter>
-          <Button onClick={handleSave} className="bg-etechs-primary text-etechs-secondary">Lưu thông tin</Button>
+          <Button onClick={handleSave} className="bg-etechs-primary text-etechs-secondary font-bold rounded-xl px-8 h-11">
+            Lưu thông tin
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

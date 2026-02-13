@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { ProfilesAPI, UsersAPI } from '@/lib/api/generated'
 import { useUser } from '@/lib/api/hooks/useUser'
+import apiClient from '@/lib/api'
 import type {
   EditProfileFormData,
   ProfileVisibilityUpdateRequest
@@ -52,6 +53,18 @@ export function useProfile(userIdParam?: string) {
     }
   })
 
+  const uploadBackground = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await apiClient.post('/users/me/background/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    // Invalidate all profile-related queries so the new background is shown
+    queryClient.invalidateQueries({ queryKey: UsersAPI.getMeAliasUsersMeGetQueryKey() })
+    queryClient.invalidateQueries({ queryKey: queryKeys.profile.all })
+    return response.data
+  }
+
   return {
     profile: user,
     isLoading,
@@ -71,6 +84,7 @@ export function useProfile(userIdParam?: string) {
     uploadAvatar: (file: File) => uploadAvatarMutation.mutateAsync({
       data: { file }
     }),
+    uploadBackground,
     isUpdating: updateProfileMutation.isPending || updatePrivacyMutation.isPending || uploadAvatarMutation.isPending,
   }
 }

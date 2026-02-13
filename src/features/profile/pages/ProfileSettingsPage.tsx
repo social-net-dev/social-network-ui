@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Save, User, Shield, Trash2, Lock, AlertTriangle, Eye, EyeOff, Loader2, School, Info, GraduationCap } from 'lucide-react';
+import { Save, User, Shield, Trash2, Lock, AlertTriangle, Eye, EyeOff, Loader2, Info, Calendar } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { ChangePasswordForm } from '../components/ChangePasswordForm';
 import { deactivateAccount } from '@/lib/api/manual-apis';
@@ -144,7 +144,7 @@ export function ProfileSettingsPage() {
   const privacyItems = [
     { id: 'display_name_visibility', label: 'Tên hiển thị', icon: User },
     { id: 'avatar_visibility', label: 'Ảnh đại diện', icon: User },
-    { id: 'birth_date_visibility', label: 'Ngày sinh', icon: GraduationCap },
+    { id: 'birth_date_visibility', label: 'Ngày sinh', icon: Calendar },
     { id: 'bio_visibility', label: 'Giới thiệu bản thân', icon: Info },
   ];
 
@@ -152,16 +152,13 @@ export function ProfileSettingsPage() {
     <div className="max-w-4xl mx-auto space-y-8 pb-32">
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">Cài đặt hồ sơ</h1>
-        <p className="text-gray-500 dark:text-gray-400">Quản lý chi tiết cá nhân, trình độ học vấn và quyền riêng tư của bạn.</p>
+        <p className="text-gray-500 dark:text-gray-400">Quản lý chi tiết cá nhân và quyền riêng tư của bạn.</p>
       </div>
 
       <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-white dark:bg-card p-1 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 w-full justify-start mb-8 overflow-x-auto no-scrollbar">
           <TabsTrigger value="basic" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
             <User className="w-4 h-4 mr-2" /> Thông tin cơ bản
-          </TabsTrigger>
-          <TabsTrigger value="academic" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
-            <School className="w-4 h-4 mr-2" /> Học vấn
           </TabsTrigger>
           <TabsTrigger value="privacy" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
             <Shield className="w-4 h-4 mr-2" /> Quyền riêng tư
@@ -195,24 +192,6 @@ export function ProfileSettingsPage() {
               <div className="space-y-2">
                 <Label htmlFor="bio">Giới thiệu bản thân</Label>
                 <textarea id="bio" value={formData.bio} onChange={handleInputChange} rows={4} className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent px-3 py-2 text-sm focus:ring-2 focus:ring-etechs-primary outline-none resize-none" />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="academic" className="outline-none">
-          <Card className="border-none shadow-xl bg-white dark:bg-card rounded-3xl overflow-hidden">
-            <CardHeader>
-              <CardTitle>Trình độ học vấn</CardTitle>
-              <CardDescription>Thông tin về trường lớp và các thành tựu học tập.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="p-6 rounded-2xl bg-gray-50 dark:bg-white/5 border border-dashed border-gray-200 dark:border-gray-800 text-center">
-                <GraduationCap className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-500 text-sm">Vui lòng sử dụng Sidebar ở trang cá nhân để cập nhật chi tiết học vấn.</p>
-                <Button variant="outline" onClick={() => navigate('/profile')} className="mt-4 rounded-xl">
-                  Đến trang cá nhân
-                </Button>
               </div>
             </CardContent>
           </Card>

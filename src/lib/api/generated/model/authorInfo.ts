@@ -10,4 +10,5 @@ export interface AuthorInfo {
   username: string | null;
   display_name: string;
   avatar_path: string | null;
+  background_path?: string | null;
 }

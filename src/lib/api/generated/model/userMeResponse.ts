@@ -14,6 +14,7 @@ export interface UserMeResponse {
   birth_date?: string | null;
   bio?: string | null;
   avatar_path?: string | null;
+  background_path?: string | null;
   account_status: string;
   role: string;
   storage_quota_mb: number;

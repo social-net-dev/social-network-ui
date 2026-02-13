@@ -27,9 +27,8 @@ export const RegisterFormDataSchema = z.object({
     phone: z.string().optional(),
     role: z.enum(["STUDENT", "INSTRUCTOR"]),
     gender: z.enum(["MALE", "FEMALE", "OTHER", ""]),
-    // CCCD không bắt buộc
-    idCardFront: z.instanceof(File).optional(),
-    idCardBack: z.instanceof(File).optional(),
+    // Giấy tờ tùy thân (không bắt buộc)
+    personalDocuments: z.array(z.instanceof(File)).optional(),
     consent: z.boolean().refine((val) => val === true, "Vui lòng đồng ý điều khoản"),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Mật khẩu xác nhận không khớp",

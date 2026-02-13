@@ -12,7 +12,7 @@ import { FileText, Loader2 } from 'lucide-react';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { StorageQuotaCard } from '../components/StorageQuotaCard';
 import { useQuery } from '@tanstack/react-query';
-import { getPostsByUserId } from '@/lib/api/manual-apis';
+import { getPostsByUserId, getMyPosts } from '@/lib/api/manual-apis';
 import { transformPost } from '@/lib/api/transforms';
 import { PostCard } from '@/features/home/components/PostCard';
 import { usePostActions } from '@/features/home/hooks/usePostActions';
@@ -33,7 +33,7 @@ function ProfilePage() {
   const { data: postsList, isLoading: isPostsLoading } = useQuery({
     queryKey: [...USER_POSTS_QUERY_KEY, postsUserId],
     queryFn: async () => {
-      const res = await getPostsByUserId(postsUserId!);
+      const res = isMe ? await getMyPosts() : await getPostsByUserId(postsUserId!);
       const list = (res as { posts?: unknown[] })?.posts ?? (Array.isArray(res) ? res : []);
       return (list as any[]).map(transformPost);
     },
@@ -74,7 +74,7 @@ function ProfilePage() {
   const profileData = {
     ...profile,
     isOwner: isCurrentUser,
-    isFriend: false,
+    isFriend: profile.isFriend ?? false,
     avatar: profile.avatar,
     createdAt: profile.createdAt || new Date().toISOString(),
     updatedAt: profile.updatedAt || new Date().toISOString(),

@@ -10,7 +10,7 @@ import { useProfile } from '../hooks/useProfile';
 import type { Author, PersonalInfo } from '@/features/home/types/feed.types';
 
 export function PersonalInfoSidebar() {
-  const { profile: rawProfile, updateProfile, isUpdating } = useProfile();
+  const { profile: rawProfile, updateProfile, isUpdating, isMe } = useProfile();
   const profile = rawProfile as Author;
   const [isEditing, setIsEditing] = useState(false);
 
@@ -124,11 +124,11 @@ export function PersonalInfoSidebar() {
     <Card className="rounded-xl border-border shadow-sm bg-card">
       <CardHeader className="pb-3 pt-5 px-5 flex items-center justify-between">
         <CardTitle className="text-base font-semibold">Thông tin cá nhân</CardTitle>
-        {!isEditing ? (
+        {isMe && !isEditing ? (
           <Button size="sm" variant="ghost" onClick={handleEdit} className="h-8 w-8 p-0">
             <Edit2 className="w-3.5 h-3.5" />
           </Button>
-        ) : (
+        ) : isMe && isEditing ? (
           <div className="flex gap-2">
             <Button size="sm" variant="ghost" onClick={handleCancel} disabled={isUpdating} className="h-8 w-8 p-0">
               <X className="w-3.5 h-3.5" />
@@ -137,11 +137,11 @@ export function PersonalInfoSidebar() {
               {isUpdating ? '...' : <Save className="w-3.5 h-3.5" />}
             </Button>
           </div>
-        )}
+        ) : null}
       </CardHeader>
       <Separator />
       <CardContent className="px-5 py-5 space-y-6">
-        {isEditing ? (
+        {isMe && isEditing ? (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Trường</Label>
@@ -153,7 +153,7 @@ export function PersonalInfoSidebar() {
             </div>
 
             <div className="space-y-2">
-              <Label>Môn học yêu thích</Label>
+              <Label>Lĩnh vực yêu thích</Label>
               <div className="space-y-2">
                 {formData.favoriteSubjects?.map((subject, index) => (
                   <div key={index} className="flex gap-2">

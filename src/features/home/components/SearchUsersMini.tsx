@@ -1,112 +1,165 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/stores/authStore';
-import { getProfile, extractUserIdFromTenantSlug } from '@/lib/api/profileApi';
-import { callCreateRoom } from '@/features/message/services/messageApi';
-import type { ProfileResponse } from '@/types/profile.types';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar } from '@/features/shared/components/Avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, MessageCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, UserPlus, UserCheck, Loader2, UserX } from 'lucide-react';
+import { customInstance } from '@/lib/axios-instance';
+import { FriendsAPI } from '@/lib/api/generated';
+import { toast } from 'sonner';
+
+interface SearchUser {
+  id: string;
+  display_name: string;
+  username: string;
+  email: string;
+  avatar_path: string;
+  bio: string;
+  friendship_status: 'none' | 'friends' | 'request_sent' | 'request_received';
+  friend_request_id: string | null;
+}
 
 export const SearchUsersMini: React.FC = () => {
   const navigate = useNavigate();
-  const { tenantSlug } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResult, setSearchResult] = useState<ProfileResponse['data'] | null>(null);
+  const [results, setResults] = useState<SearchUser[]>([]);
   const [loading, setLoading] = useState(false);
-  const [creatingRoom, setCreatingRoom] = useState(false);
-
-  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
-
-  // Debug: Log component state
-  console.log('[SearchUsersMini] Component state:', {
-    tenantSlug,
-    currentUserId,
-    searchQuery,
-    hasResult: !!searchResult,
-    loading,
-  });
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const handleSearch = async () => {
-    console.log('[SearchUsersMini] handleSearch called!');
-    console.log('[SearchUsersMini] searchQuery:', searchQuery);
-    console.log('[SearchUsersMini] tenantSlug:', tenantSlug);
+    const q = searchQuery.trim();
+    if (!q || q.length < 2) return;
 
-    if (!searchQuery.trim()) {
-      console.log('[SearchUsersMini] Empty search query');
-      return;
-    }
-
-    if (!tenantSlug) {
-      console.log('[SearchUsersMini] No tenantSlug found!');
-      alert('Không tìm thấy tenant slug. Vui lòng đăng nhập lại.');
-      return;
-    }
-
-    console.log('[SearchUsersMini] Starting search:', { query: searchQuery, tenantSlug });
     setLoading(true);
-    setSearchResult(null);
-
+    setResults([]);
     try {
-      const response = await getProfile(searchQuery.trim(), tenantSlug);
-      console.log('[SearchUsersMini] API response:', response);
-
-      // Axios interceptor đã unwrap { success, data } -> response.data là user object trực tiếp
-      if (response.data) {
-        setSearchResult(response.data);
-        console.log('[SearchUsersMini] Result set:', response.data);
-      }
-    } catch (err: any) {
+      const res = await customInstance<{ users: SearchUser[]; total: number }>({
+        url: '/search/users/',
+        method: 'GET',
+        params: { q, limit: 5 },
+      });
+      setResults(res.users || []);
+    } catch (err) {
       console.error('[SearchUsersMini] Search failed:', err);
-      console.error('[SearchUsersMini] Error details:', err.response?.data);
-      setSearchResult(null);
+      setResults([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStartChat = async (targetUserId: string) => {
-    if (!currentUserId) {
-      console.error('[SearchUsersMini] No current user ID');
-      return;
-    }
-
-    setCreatingRoom(true);
+  const handleSendRequest = async (user: SearchUser) => {
+    setProcessingId(user.id);
     try {
-      // Tạo room direct message giữa 2 users
-      const roomPayload = {
-        name: '', // Direct chat không cần tên
-        type: 'direct',
-        member_ids: [currentUserId, targetUserId],
-        creator_id: currentUserId,
-      };
-
-      console.log('[SearchUsersMini] Creating room with:', roomPayload);
-      const response = await callCreateRoom(roomPayload);
-      const roomId = response.data?.id;
-
-      if (roomId) {
-        // Navigate với user_id tự động điền sẵn để WebSocket connect đúng
-        console.log('[SearchUsersMini] ✅ Room created, navigating to:', {
-          roomId,
-          currentUserId,
-        });
-        navigate(`/messages/${roomId}?user_id=${currentUserId}`);
-
-        // Reset search state
-        setSearchQuery('');
-        setSearchResult(null);
-      } else {
-        console.error('[SearchUsersMini] Room ID not found in response');
-      }
-    } catch (err: any) {
-      console.error('[SearchUsersMini] Create room failed:', err);
-      console.error('[SearchUsersMini] Error details:', err.response?.data);
-      alert('Không thể tạo phòng chat. Vui lòng thử lại.');
+      await FriendsAPI.createFriendRequestFriendsRequestsPost({
+        addressee_username: user.username,
+      });
+      setResults(prev =>
+        prev.map(u => (u.id === user.id ? { ...u, friendship_status: 'request_sent' as const } : u))
+      );
+      toast.success('Đã gửi lời mời kết bạn');
+    } catch (err) {
+      console.error('[SearchUsersMini] Send request failed:', err);
+      toast.error('Lỗi khi gửi lời mời');
     } finally {
-      setCreatingRoom(false);
+      setProcessingId(null);
+    }
+  };
+
+  const handleAccept = async (user: SearchUser) => {
+    if (!user.friend_request_id) return;
+    setProcessingId(user.id);
+    try {
+      await customInstance({ url: `/friends/requests/${user.friend_request_id}/accept/`, method: 'POST' });
+      setResults(prev =>
+        prev.map(u => (u.id === user.id ? { ...u, friendship_status: 'friends' as const } : u))
+      );
+      toast.success('Đã chấp nhận lời mời kết bạn');
+    } catch (err) {
+      console.error('[SearchUsersMini] Accept failed:', err);
+      toast.error('Lỗi khi chấp nhận');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleCancel = async (user: SearchUser) => {
+    if (!user.friend_request_id) return;
+    setProcessingId(user.id);
+    try {
+      await customInstance({ url: `/friends/requests/${user.friend_request_id}/cancel/`, method: 'POST' });
+      setResults(prev =>
+        prev.map(u => (u.id === user.id ? { ...u, friendship_status: 'none' as const, friend_request_id: null } : u))
+      );
+      toast.success('Đã hủy lời mời');
+    } catch (err) {
+      console.error('[SearchUsersMini] Cancel failed:', err);
+      toast.error('Lỗi khi hủy lời mời');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const renderStatusButton = (user: SearchUser) => {
+    const isProcessing = processingId === user.id;
+    switch (user.friendship_status) {
+      case 'friends':
+        return (
+          <Badge variant="secondary" className="text-xs gap-1">
+            <UserCheck className="h-3 w-3" /> Bạn bè
+          </Badge>
+        );
+      case 'request_sent':
+        return (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleCancel(user)}
+            disabled={isProcessing}
+            className="h-7 px-2 text-yellow-600 hover:text-yellow-700"
+            title="Hủy lời mời"
+          >
+            {isProcessing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <UserX className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        );
+      case 'request_received':
+        return (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleAccept(user)}
+            disabled={isProcessing}
+            className="h-7 px-2 text-primary"
+            title="Chấp nhận"
+          >
+            {isProcessing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <UserCheck className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        );
+      default:
+        return (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleSendRequest(user)}
+            disabled={isProcessing}
+            className="h-7 px-2"
+          >
+            {isProcessing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <UserPlus className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        );
     }
   };
 
@@ -120,31 +173,43 @@ export const SearchUsersMini: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex gap-2">
-          <Input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleSearch()} placeholder="Tên hoặc email..." className="flex-1 text-sm" disabled={loading} />
-          <Button size="sm" onClick={handleSearch} disabled={loading || !searchQuery.trim()}>
-            <Search className="h-4 w-4" />
+          <Input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            placeholder="Tên, username hoặc email..."
+            className="flex-1 text-sm"
+            disabled={loading}
+          />
+          <Button size="sm" onClick={handleSearch} disabled={loading || searchQuery.trim().length < 2}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           </Button>
         </div>
 
-        {searchResult && (
-          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <Avatar className="w-10 h-10">
-              {searchResult.avatar_path ? (
-                <img src={searchResult.avatar_path} alt={searchResult.display_name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-primary text-white flex items-center justify-center text-sm font-semibold">{searchResult.display_name.charAt(0).toUpperCase()}</div>
-              )}
-            </Avatar>
-
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{searchResult.display_name}</p>
-              <p className="text-xs text-gray-500 truncate">{searchResult.username}</p>
-            </div>
-
-            <Button size="sm" variant="ghost" onClick={() => handleStartChat(searchResult.id)} disabled={creatingRoom || searchResult.id === currentUserId} className="flex-shrink-0">
-              <MessageCircle className="h-4 w-4" />
-            </Button>
+        {results.length > 0 && (
+          <div className="space-y-2">
+            {results.map(user => (
+              <div
+                key={user.id}
+                className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                onClick={() => navigate(`/profile/${user.username}`)}
+              >
+                <Avatar user={user} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user.display_name}</p>
+                  <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+                </div>
+                <div onClick={e => e.stopPropagation()}>
+                  {renderStatusButton(user)}
+                </div>
+              </div>
+            ))}
           </div>
+        )}
+
+        {!loading && searchQuery.trim().length >= 2 && results.length === 0 && (
+          <p className="text-xs text-muted-foreground text-center py-2">Không tìm thấy kết quả</p>
         )}
       </CardContent>
     </Card>
