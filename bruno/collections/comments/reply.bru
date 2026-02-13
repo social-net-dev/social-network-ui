@@ -1,0 +1,21 @@
+meta {
+  name: Reply to Comment
+  type: http
+  seq: 22
+}
+
+post {
+  url: {{api_base}}/comments/{{comment_id}}/replies/
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "content_text": "Reply to comment"
+  }
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

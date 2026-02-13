@@ -1,0 +1,26 @@
+meta {
+  name: Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{api_base}}/auth/login/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "test@example.com",
+    "password": "Test@123"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.body.data;
+    bru.setEnvVar("auth_token", data.access);
+    bru.setEnvVar("refresh_token", data.refresh);
+  }
+}

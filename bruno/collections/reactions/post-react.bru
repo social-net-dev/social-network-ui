@@ -1,0 +1,21 @@
+meta {
+  name: React to Post
+  type: http
+  seq: 23
+}
+
+post {
+  url: {{api_base}}/posts/{{post_id}}/reactions/
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "reaction": "LIKE"
+  }
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

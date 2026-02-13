@@ -1,0 +1,15 @@
+meta {
+  name: Remove Friend
+  type: http
+  seq: 36
+}
+
+delete {
+  url: {{api_base}}/friends/{{friend_id}}/
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
