@@ -72,6 +72,7 @@ export type MessageOut = {
   created_at?: string | null;
   client_id?: string | null;
   _status?: 'sent' | 'delivered' | 'read';
+  _error?: string | null;
   // Double encryption model
   // Backward compat or alias for encrypted_key_recipient
   encrypted_key_recipient?: string; // Key encrypted with recipient's public key
@@ -139,6 +140,7 @@ export interface IUploadFileRequest {
 export interface IDeleteMessageParams {
   message_id: string;
   user_id?: string | null;
+  hard?: boolean;
 }
 
 export interface IReactionRequest {

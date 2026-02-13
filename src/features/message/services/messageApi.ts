@@ -81,8 +81,10 @@ export const callUploadFile = (roomId: string, params: IUploadFileRequest) => {
 export const callDeleteMessage = (params: IDeleteMessageParams) => {
   const queryParams = new URLSearchParams();
   if (params.user_id) queryParams.set('user_id', params.user_id);
+  if (params.hard !== undefined) queryParams.set('hard', String(params.hard));
 
-  return messageApiClient.delete<string>(`/api/messages/${encodeURIComponent(params.message_id)}`);
+  const url = `/api/messages/${encodeURIComponent(params.message_id)}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  return messageApiClient.delete(url);
 };
 
 // POST /api/messages/{message_id}/reactions

@@ -556,7 +556,7 @@ const ConversationPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex gap-4 overflow-hidden h-full p-0 min-h-0">
+    <div className="w-full h-[calc(100vh-64px)] flex gap-4 overflow-hidden p-0">
       {/* Left: Room sidebar */}
       <RoomSidebar rooms={rooms} selectedRoomId={selectedConversationId} userId={resolvedUserId} onRoomSelect={handleRoomSelect} onCreateRoom={handleCreateRoom} onReloadRooms={loadRooms} />
 

@@ -21,8 +21,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({ text, selectedFiles,
 
     // Auto-resize
     if (textareaRef.current) {
+      // Prevent the textarea from growing the entire page. Cap height to max (128px = Tailwind max-h-32).
+      const MAX_PX = 128;
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      const newHeight = Math.min(textareaRef.current.scrollHeight, MAX_PX);
+      textareaRef.current.style.height = `${newHeight}px`;
     }
   };
 

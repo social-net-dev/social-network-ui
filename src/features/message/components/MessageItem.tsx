@@ -26,6 +26,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isMine, currentUserI
       await callDeleteMessage({
         message_id: message.id,
         user_id: currentUserId,
+        hard: true,
       });
       onRefresh?.();
     } catch (e) {
@@ -83,7 +84,10 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isMine, currentUserI
               attachmentUrl={(message as any).attachment_url}
               attachmentUrls={(message as any).attachment_urls}
               createdAt={message.created_at}
-              status={message._status}
+              status={
+                // Normalize backend message status to MessageBubble expected values
+                (message as any)._status === 'sending' ? 'sending' : (message as any)._status === 'failed' ? 'failed' : 'sent'
+              }
               error={message._error}
             />
             {reactions.length > 0 && <MessageReactions reactions={reactions} isMine={isMine} />}
@@ -100,7 +104,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isMine, currentUserI
               attachmentUrl={(message as any).attachment_url}
               attachmentUrls={(message as any).attachment_urls}
               createdAt={message.created_at}
-              status={message._status}
+              status={(message as any)._status === 'sending' ? 'sending' : (message as any)._status === 'failed' ? 'failed' : 'sent'}
               error={message._error}
             />
             {reactions.length > 0 && <MessageReactions reactions={reactions} isMine={isMine} />}
