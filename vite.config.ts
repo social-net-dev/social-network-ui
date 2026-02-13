@@ -23,35 +23,19 @@ export default defineConfig({
   build: {
     cssCodeSplit: false,
     sourcemap: false,
+    chunkSizeWarningLimit: 1000,
+    assetsInlineLimit: 4096,
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Tách vendor libraries vào chunk riêng
           if (id.includes('node_modules')) {
             // React ecosystem
             if (id.includes('react') || id.includes('react-dom')) {
-              return 'vendor-react';
+              return 'vendor';
             }
-            // Radix UI components
-            if (id.includes('@radix-ui')) {
-              return 'vendor-ui';
-            }
-            // Router
-            if (id.includes('react-router')) {
-              return 'vendor-router';
-            }
-            // Query & State management
-            if (id.includes('@tanstack') || id.includes('zustand')) {
-              return 'vendor-state';
-            }
-            // Icons
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
-            // Các library khác
-            return 'vendor-misc';
+            // Các vendor khác gộp vào vendor
+            return 'vendor';
           }
-          // Code của app sẽ được split tự động theo routes
           return undefined;
         },
         entryFileNames: "assets/[name]-[hash].js",
