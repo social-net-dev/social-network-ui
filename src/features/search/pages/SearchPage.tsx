@@ -1,46 +1,24 @@
 import React, { useState, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/features/shared/components/Avatar";
 import { Search, UserPlus, UserCheck, Clock, UserX, Loader2 } from "lucide-react";
-import { customInstance } from "@/lib/axios-instance";
-import { buildMediaUrl } from "@/lib/api/transforms/common";
-import { createFriendRequestFriendsRequestsPost } from "@/lib/api/generated/friends/friends";
+import { getErrorMessage } from "@/lib/api/transforms";
+import { useSearchUsers } from "@/lib/api/hooks/useSearch";
+import { useFriendActions } from "@/lib/api/hooks/useFriends";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import type { User } from "@/lib/api/types/user.types";
 
-interface SearchUser {
-  id: string;
-  display_name: string;
-  username: string;
-  email: string;
-  avatar_path: string;
-  bio: string;
-  friendship_status: "none" | "friends" | "request_sent" | "request_received";
-  friend_request_id: string | null;
+interface SearchUser extends User {
+  friendshipStatus: "none" | "friends" | "request_sent" | "request_received";
+  friendRequestId: string | null;
 }
 
-function useSearchUsers(query: string) {
-  return useQuery({
-    queryKey: ["search", "users", query],
-    queryFn: async () => {
-      if (!query || query.length < 2) return { users: [], total: 0 };
-      const res = await customInstance<{ users: SearchUser[]; total: number }>({
-        url: `/search/users/`,
-        method: "GET",
-        params: { q: query, limit: 20 },
-      });
-      return res;
-    },
-    enabled: query.length >= 2,
-    staleTime: 1000 * 30,
-  });
-}
-
-function FriendshipStatusBadge({ status }: { status: SearchUser["friendship_status"] }) {
+function FriendshipStatusBadge({ status }: { status: SearchUser["friendshipStatus"] }) {
   switch (status) {
     case "friends":
       return (
@@ -83,76 +61,66 @@ export function SearchPage() {
       return next;
     });
 
-  const { data, isLoading, isError } = useSearchUsers(query);
+  const { data, isLoading, isError } = useSearchUsers({ q: query });
+  const { sendRequest, acceptRequest, cancelRequest } = useFriendActions();
 
   // Optimistically update a user's status in the search results cache
-  const updateUserStatus = (userId: string, newStatus: SearchUser["friendship_status"], requestId?: string | null) => {
-    qc.setQueryData(["search", "users", query], (old: { users: SearchUser[]; total: number } | undefined) => {
+  const updateUserStatus = (userId: string, newStatus: SearchUser["friendshipStatus"], requestId?: string | null) => {
+    qc.setQueryData(["search", "users", { q: query }], (old: { users: SearchUser[]; total: number } | undefined) => {
       if (!old) return old;
       return {
         ...old,
         users: old.users.map((u) =>
           u.id === userId
-            ? { ...u, friendship_status: newStatus, friend_request_id: requestId ?? u.friend_request_id }
+            ? { ...u, friendshipStatus: newStatus, friendRequestId: requestId ?? u.friendRequestId }
             : u
         ),
       };
     });
   };
 
-  const sendRequestMutation = useMutation({
-    mutationFn: ({ userId, username }: { userId: string; username: string }) => {
-      addProcessing(userId);
-      return createFriendRequestFriendsRequestsPost({ addressee_username: username });
-    },
-    onSuccess: (data: any, variables) => {
-      removeProcessing(variables.userId);
+  const handleSendRequest = async (userId: string, username: string) => {
+    addProcessing(userId);
+    try {
+      const res = await sendRequest({ addressee_username: username });
       toast.success("Đã gửi lời mời kết bạn");
-      // Optimistically update to REQUEST_SENT
-      const requestId = data?.id || data?._id || null;
-      updateUserStatus(variables.userId, "request_sent", requestId ? String(requestId) : null);
+      const requestId = res?.id || null;
+      updateUserStatus(userId, "request_sent", requestId ? String(requestId) : null);
       qc.invalidateQueries({ queryKey: ["friends"] });
-    },
-    onError: (err: any, variables) => {
-      removeProcessing(variables.userId);
-      const msg = err?.response?.data?.error || err?.response?.data?.detail || "Lỗi khi gửi lời mời";
-      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
-    },
-  });
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      removeProcessing(userId);
+    }
+  };
 
-  const acceptMutation = useMutation({
-    mutationFn: ({ userId, requestId }: { userId: string; requestId: string }) => {
-      addProcessing(userId);
-      return customInstance({ url: `/friends/requests/${requestId}/accept/`, method: "POST" });
-    },
-    onSuccess: (_data, variables) => {
-      removeProcessing(variables.userId);
+  const handleAcceptRequest = async (userId: string, requestId: string) => {
+    addProcessing(userId);
+    try {
+      await acceptRequest(requestId);
       toast.success("Đã chấp nhận lời mời kết bạn");
-      updateUserStatus(variables.userId, "friends");
+      updateUserStatus(userId, "friends");
       qc.invalidateQueries({ queryKey: ["friends"] });
-    },
-    onError: (_err, variables) => {
-      removeProcessing(variables.userId);
+    } catch (_err) {
       toast.error("Lỗi khi chấp nhận lời mời");
-    },
-  });
+    } finally {
+      removeProcessing(userId);
+    }
+  };
 
-  const cancelMutation = useMutation({
-    mutationFn: ({ userId, requestId }: { userId: string; requestId: string }) => {
-      addProcessing(userId);
-      return customInstance({ url: `/friends/requests/${requestId}/cancel/`, method: "POST" });
-    },
-    onSuccess: (_data, variables) => {
-      removeProcessing(variables.userId);
+  const handleCancelRequest = async (userId: string, requestId: string) => {
+    addProcessing(userId);
+    try {
+      await cancelRequest(requestId);
       toast.success("Đã hủy lời mời kết bạn");
-      updateUserStatus(variables.userId, "none", null);
+      updateUserStatus(userId, "none", null);
       qc.invalidateQueries({ queryKey: ["friends"] });
-    },
-    onError: (_err, variables) => {
-      removeProcessing(variables.userId);
+    } catch (_err) {
       toast.error("Lỗi khi hủy lời mời");
-    },
-  });
+    } finally {
+      removeProcessing(userId);
+    }
+  };
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
@@ -162,13 +130,13 @@ export function SearchPage() {
     [searchInput]
   );
 
-  const users = data?.users || [];
+  const users = (data?.users || []) as SearchUser[];
   const total = data?.total || 0;
 
   const renderAction = (user: SearchUser) => {
     const isProcessing = processingIds.has(user.id);
 
-    switch (user.friendship_status) {
+    switch (user.friendshipStatus) {
       case "friends":
         return (
           <Button variant="secondary" size="sm" className="flex-shrink-0 rounded-full" disabled>
@@ -183,10 +151,10 @@ export function SearchPage() {
             size="sm"
             className="flex-shrink-0 rounded-full text-yellow-600 border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
             onClick={() =>
-              user.friend_request_id &&
-              cancelMutation.mutate({ userId: user.id, requestId: user.friend_request_id })
+              user.friendRequestId &&
+              handleCancelRequest(user.id, user.friendRequestId)
             }
-            disabled={isProcessing || !user.friend_request_id}
+            disabled={isProcessing || !user.friendRequestId}
           >
             {isProcessing ? (
               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
@@ -202,10 +170,10 @@ export function SearchPage() {
             size="sm"
             className="flex-shrink-0 rounded-full"
             onClick={() =>
-              user.friend_request_id &&
-              acceptMutation.mutate({ userId: user.id, requestId: user.friend_request_id })
+              user.friendRequestId &&
+              handleAcceptRequest(user.id, user.friendRequestId)
             }
-            disabled={isProcessing || !user.friend_request_id}
+            disabled={isProcessing || !user.friendRequestId}
           >
             {isProcessing ? (
               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
@@ -222,7 +190,7 @@ export function SearchPage() {
             size="sm"
             className="flex-shrink-0 rounded-full"
             onClick={() =>
-              sendRequestMutation.mutate({ userId: user.id, username: user.username || user.email })
+              handleSendRequest(user.id, user.username || user.email)
             }
             disabled={isProcessing}
           >
@@ -235,20 +203,6 @@ export function SearchPage() {
           </Button>
         );
     }
-  };
-
-  // Parse bio to extract readable text (bio may be JSON)
-  const parseBioDisplay = (bio: string) => {
-    if (!bio) return "";
-    try {
-      if (bio.startsWith("{") && bio.endsWith("}")) {
-        const parsed = JSON.parse(bio);
-        return parsed.bioText || parsed.school || "";
-      }
-    } catch {
-      // ignore
-    }
-    return bio;
   };
 
   return (
@@ -309,45 +263,40 @@ export function SearchPage() {
           <p className="text-sm text-muted-foreground">
             Tìm thấy {total} kết quả cho &ldquo;{query}&rdquo;
           </p>
-          {users.map((user: SearchUser) => (
-            <Card key={user.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4 flex items-center justify-between gap-4">
-                <Link
-                  to={`/profile/${user.username || user.email}`}
-                  className="flex items-center gap-3 min-w-0 flex-1"
-                >
-                  <Avatar
-                    user={{
-                      id: user.id,
-                      displayName: user.display_name,
-                      username: user.username,
-                      avatar: user.avatar_path ? buildMediaUrl(user.avatar_path) : undefined,
-                    }}
-                    size="lg"
-                  />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-foreground truncate">
-                        {user.display_name || user.username}
+          {users.map((user) => (
+              <Card key={user.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4 flex items-center justify-between gap-4">
+                  <Link
+                    to={`/profile/${user.username || user.email}`}
+                    className="flex items-center gap-3 min-w-0 flex-1"
+                  >
+                    <Avatar
+                      user={user as any}
+                      size="lg"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-foreground truncate">
+                          {user.displayName || user.username}
+                        </p>
+                        <FriendshipStatusBadge status={user.friendshipStatus} />
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        @{user.username || user.email}
                       </p>
-                      <FriendshipStatusBadge status={user.friendship_status} />
+                      {user.bio && (
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                          {user.bio}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      @{user.username || user.email}
-                    </p>
-                    {user.bio && (
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        {parseBioDisplay(user.bio)}
-                      </p>
-                    )}
+                  </Link>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    {renderAction(user)}
                   </div>
-                </Link>
-                <div onClick={(e) => e.stopPropagation()}>
-                  {renderAction(user)}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
         </div>
       )}
     </div>

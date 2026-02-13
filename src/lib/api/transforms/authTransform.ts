@@ -1,12 +1,11 @@
-import { Models } from '../generated';
 import { transformAuthor } from './userTransform';
 
 /**
  * Transform RegisterResponse to Frontend format
  */
-export const transformRegisterResponse = (response: Models.RegisterResponse) => {
+export const transformRegisterResponse = (response: any) => {
   return {
-    message: "OTP đã được gửi", // Standard message as it's missing from BE response
+    message: "OTP đã được gửi",
     userId: response.user_id,
     accountStatus: response.account_status,
   };
@@ -14,10 +13,8 @@ export const transformRegisterResponse = (response: Models.RegisterResponse) => 
 
 /**
  * Transform Auth response (login) if needed
- * Note: Our current generated model might differ from manual AuthResponse
  */
 export const transformAuthResponse = (data: any) => {
-  // Manual check of the actual response structure from dev-tools/interceptors
   const innerData = data?.data || data;
   return {
     user: innerData?.user ? transformAuthor(innerData.user) : null,

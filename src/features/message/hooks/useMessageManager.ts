@@ -24,28 +24,6 @@ export const useMessageManager = ({ roomId, wsMessages }: UseMessageManagerProps
       const res = await callFetchMessagesRoom(roomId);
       const rows: IMessage[] = res.data || [];
 
-      console.log('\n🔍 ==================== API LOAD MESSAGES ====================');
-      console.log('[useMessageManager] 📊 RAW API RESPONSE:', {
-        total_messages: rows.length,
-      });
-
-      // Log ALL messages to see which ones have E2EE fields
-      rows.forEach((msg, idx) => {
-        console.log(`\n[useMessageManager] Message ${idx + 1}/${rows.length}:`, {
-          id: msg.id?.substring(0, 8) + '...',
-          sender: msg.sender_id?.substring(0, 8) + '...',
-          has_encrypted_key: !!msg.encrypted_key,
-          has_iv: !!msg.iv,
-          encrypted_key_length: msg.encrypted_key?.length || 0,
-          iv_length: msg.iv?.length || 0,
-          encrypted_key_preview: msg.encrypted_key?.substring(0, 40) + '...',
-          iv_preview: msg.iv?.substring(0, 20) + '...',
-          ciphertext_preview: msg.ciphertext?.substring(0, 30) + '...',
-        });
-      });
-
-      console.log('===========================================================\n');
-
       const mapped: MessageFull[] = rows.map(r => ({
         id: r.id,
         room_id: r.room_id,
@@ -62,12 +40,6 @@ export const useMessageManager = ({ roomId, wsMessages }: UseMessageManagerProps
         encrypted_key: r.encrypted_key,
         iv: r.iv,
       }));
-
-      console.log('📦 [useMessageManager] MAPPED MESSAGES:', {
-        total: mapped.length,
-        with_e2ee: mapped.filter(m => m.encrypted_key && m.iv).length,
-        without_e2ee: mapped.filter(m => !m.encrypted_key || !m.iv).length,
-      });
 
       setFetchedMessages(mapped);
     } catch (e) {

@@ -6,19 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, UserPlus, UserCheck, Loader2, UserX } from 'lucide-react';
-import { customInstance } from '@/lib/axios-instance';
-import { FriendsAPI } from '@/lib/api/generated';
+import { searchApi } from '@/lib/api/services';
+import { useFriendActions } from '@/lib/api/hooks/useFriends';
 import { toast } from 'sonner';
+import type { User } from '@/lib/api/types/user.types';
 
-interface SearchUser {
-  id: string;
-  display_name: string;
-  username: string;
-  email: string;
-  avatar_path: string;
-  bio: string;
-  friendship_status: 'none' | 'friends' | 'request_sent' | 'request_received';
-  friend_request_id: string | null;
+interface SearchUser extends User {
+  friendshipStatus: 'none' | 'friends' | 'request_sent' | 'request_received';
+  friendRequestId: string | null;
 }
 
 export const SearchUsersMini: React.FC = () => {
@@ -28,6 +23,8 @@ export const SearchUsersMini: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  const { sendRequest, acceptRequest, cancelRequest } = useFriendActions();
+
   const handleSearch = async () => {
     const q = searchQuery.trim();
     if (!q || q.length < 2) return;
@@ -35,12 +32,8 @@ export const SearchUsersMini: React.FC = () => {
     setLoading(true);
     setResults([]);
     try {
-      const res = await customInstance<{ users: SearchUser[]; total: number }>({
-        url: '/search/users/',
-        method: 'GET',
-        params: { q, limit: 5 },
-      });
-      setResults(res.users || []);
+      const res = await searchApi.searchUsers({ q, pageSize: 5 });
+      setResults((res.users || []) as SearchUser[]);
     } catch (err) {
       console.error('[SearchUsersMini] Search failed:', err);
       setResults([]);
@@ -52,11 +45,11 @@ export const SearchUsersMini: React.FC = () => {
   const handleSendRequest = async (user: SearchUser) => {
     setProcessingId(user.id);
     try {
-      await FriendsAPI.createFriendRequestFriendsRequestsPost({
+      await sendRequest({
         addressee_username: user.username,
       });
       setResults(prev =>
-        prev.map(u => (u.id === user.id ? { ...u, friendship_status: 'request_sent' as const } : u))
+        prev.map(u => (u.id === user.id ? { ...u, friendshipStatus: 'request_sent' as const } : u))
       );
       toast.success('Đã gửi lời mời kết bạn');
     } catch (err) {
@@ -68,12 +61,12 @@ export const SearchUsersMini: React.FC = () => {
   };
 
   const handleAccept = async (user: SearchUser) => {
-    if (!user.friend_request_id) return;
+    if (!user.friendRequestId) return;
     setProcessingId(user.id);
     try {
-      await customInstance({ url: `/friends/requests/${user.friend_request_id}/accept/`, method: 'POST' });
+      await acceptRequest(user.friendRequestId);
       setResults(prev =>
-        prev.map(u => (u.id === user.id ? { ...u, friendship_status: 'friends' as const } : u))
+        prev.map(u => (u.id === user.id ? { ...u, friendshipStatus: 'friends' as const } : u))
       );
       toast.success('Đã chấp nhận lời mời kết bạn');
     } catch (err) {
@@ -85,12 +78,12 @@ export const SearchUsersMini: React.FC = () => {
   };
 
   const handleCancel = async (user: SearchUser) => {
-    if (!user.friend_request_id) return;
+    if (!user.friendRequestId) return;
     setProcessingId(user.id);
     try {
-      await customInstance({ url: `/friends/requests/${user.friend_request_id}/cancel/`, method: 'POST' });
+      await cancelRequest(user.friendRequestId);
       setResults(prev =>
-        prev.map(u => (u.id === user.id ? { ...u, friendship_status: 'none' as const, friend_request_id: null } : u))
+        prev.map(u => (u.id === user.id ? { ...u, friendshipStatus: 'none' as const, friendRequestId: null } : u))
       );
       toast.success('Đã hủy lời mời');
     } catch (err) {
@@ -103,7 +96,7 @@ export const SearchUsersMini: React.FC = () => {
 
   const renderStatusButton = (user: SearchUser) => {
     const isProcessing = processingId === user.id;
-    switch (user.friendship_status) {
+    switch (user.friendshipStatus) {
       case 'friends':
         return (
           <Badge variant="secondary" className="text-xs gap-1">
@@ -197,7 +190,7 @@ export const SearchUsersMini: React.FC = () => {
               >
                 <Avatar user={user} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{user.display_name}</p>
+                  <p className="text-sm font-medium truncate">{user.displayName}</p>
                   <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
                 </div>
                 <div onClick={e => e.stopPropagation()}>

@@ -101,7 +101,7 @@ export function CreatePostModal({
         <div className="space-y-4">
           {/* User Info */}
           <div className="flex items-center gap-3">
-            <Avatar user={user} size="md" />
+            <Avatar user={user as any} size="md" />
             <div>
               <p className="font-semibold text-sm">{user?.display_name || user?.displayName || user?.email}</p>
               <p className="text-xs text-muted-foreground">Công khai</p>

@@ -43,44 +43,23 @@ const ConversationPage: React.FC = () => {
 
   // Dùng useCallback để tránh stale closure
   const handleReactionEvent = React.useCallback((data: any) => {
-    console.log('[ConversationPage] ====== REACTION EVENT START ======');
-    console.log('[ConversationPage] Reaction event received:', {
-      type: data.type,
-      action: data.action,
-      message_id: data.message_id,
-      user_id: data.user_id?.slice(0, 8),
-      emoji: data.emoji,
-      reaction_id: data.reaction_id,
-    });
 
     // Cập nhật fetchedMessages khi nhận reaction broadcast
     setFetchedMessages(prev => {
       return prev.map(msg => {
         if (msg.id !== data.message_id) return msg;
         const reactions = (msg as any).reactions || [];
-        console.log(`[ConversationPage] Current reactions for message ${msg.id}:`, reactions);
 
         if (data.type === 'reaction') {
           const existingById = reactions.find((r: any) => r.id === data.reaction_id);
 
-          console.log(`[ConversationPage] Checking reaction:`, {
-            message_id: data.message_id,
-            user_id: data.user_id?.slice(0, 8),
-            emoji: data.emoji,
-            reaction_id: data.reaction_id,
-            existingById: !!existingById,
-            totalReactions: reactions.length,
-          });
-
           if (existingById) {
-            console.log(`[ConversationPage] Reaction ID already exists, skipping`);
             return msg;
           }
 
           const tempIndex = reactions.findIndex((r: any) => String(r.id).startsWith('temp-') && r.user_id === data.user_id && r.emoji === data.emoji);
 
           if (tempIndex !== -1) {
-            console.log(`[ConversationPage] Replacing temp reaction with real ID`);
             const newReactions = reactions.map((r: any, idx: number) =>
               idx === tempIndex
                 ? {
@@ -96,7 +75,6 @@ const ConversationPage: React.FC = () => {
             };
           }
 
-          console.log(`[ConversationPage] Adding new reaction (count will increase)`);
           const newReactions = [
             ...reactions,
             {
@@ -111,7 +89,6 @@ const ConversationPage: React.FC = () => {
             reactions: newReactions,
           };
         } else if (data.type === 'reaction_removed') {
-          console.log(`[ConversationPage] Removing reaction from fetchedMessages`);
           return {
             ...msg,
             reactions: reactions.filter((r: any) => !(r.user_id === data.user_id && r.emoji === data.emoji)),
@@ -120,7 +97,6 @@ const ConversationPage: React.FC = () => {
         return msg;
       });
     });
-    console.log('[ConversationPage] ====== REACTION EVENT END ======');
   }, []);
 
   // WebSocket chat hook
@@ -205,34 +181,17 @@ const ConversationPage: React.FC = () => {
 
     const fetchRecipient = async () => {
       try {
-        console.log('[ConversationPage] 🎯 Fetching recipient for encryption');
-        console.log('[ConversationPage] Current state:', {
-          room: resolvedRoom,
-          current_user: resolvedUserId.substring(0, 8) + '...',
-          e2ee_ready: e2eeReady,
-        });
 
         const response = await callGetRoomMemberPublicKeys(resolvedRoom);
         const members = response.data?.members || [];
-
-        console.log('[ConversationPage] 📊 Room members:');
-        members.forEach((m, idx) => {
-          console.log(`  [${idx}] user_id: ${m.user_id.substring(0, 8)}..., is_me: ${m.user_id === resolvedUserId}, has_public_key: ${!!m.public_key}`);
-        });
 
         // Find first member who is not current user (for 1-1 direct chat)
         const recipient = members.find(m => m.user_id !== resolvedUserId);
 
         if (recipient) {
           setRecipientId(recipient.user_id);
-          console.log('[ConversationPage] ✅ RECIPIENT SET:', {
-            recipient_id: recipient.user_id.substring(0, 8) + '...',
-            has_public_key: !!recipient.public_key,
-            public_key_preview: recipient.public_key?.substring(0, 40) + '...',
-          });
         } else {
           setRecipientId(null);
-          console.warn('[ConversationPage] ⚠️ No recipient found (group chat or only you)');
         }
       } catch (error) {
         console.error('[ConversationPage] ❌ Failed to fetch recipient:', error);
@@ -246,14 +205,10 @@ const ConversationPage: React.FC = () => {
   // Decrypt messages when they arrive
   useEffect(() => {
     if (!e2eeReady) {
-      console.log('[ConversationPage] ⏸️ E2EE not ready, skipping decrypt');
       return;
     }
 
     const decrypt = async () => {
-      console.log('\n🔐 ==================== DECRYPTING MESSAGES ====================');
-      console.log('[ConversationPage] Total messages to process:', combinedMessages.length);
-      console.log('[ConversationPage] Already decrypted:', Object.keys(decryptedMessages).length);
 
       const decrypted: Record<string, string> = {};
       let skipped = 0;
@@ -269,32 +224,15 @@ const ConversationPage: React.FC = () => {
         }
 
         attempted++;
-        console.log(`\n[ConversationPage] Processing message ${attempted}/${combinedMessages.length - skipped}:`, {
-          id: msg.id?.substring(0, 8) + '...',
-          sender: msg.sender_id?.substring(0, 8) + '...',
-          has_encrypted_key: !!msg.encrypted_key,
-          has_iv: !!msg.iv,
-        });
 
         // Try to decrypt
         const text = await decryptIncoming(msg);
         if (text) {
           decrypted[msg.id] = text;
           succeeded++;
-          console.log(`[ConversationPage] ✅ Decrypted successfully`);
         } else {
-          console.log(`[ConversationPage] ⚠️ No text returned`);
         }
       }
-
-      console.log('\n[ConversationPage] 📊 Decrypt Summary:', {
-        total: combinedMessages.length,
-        skipped,
-        attempted,
-        succeeded,
-        failed: attempted - succeeded,
-      });
-      console.log('================================================================\n');
 
       setDecryptedMessages(decrypted);
     };
@@ -451,26 +389,12 @@ const ConversationPage: React.FC = () => {
         // Send text only via WebSocket with E2EE if ready
         let encrypted = null;
 
-        console.log('[ConversationPage] 📤 SENDING MESSAGE:', {
-          text_preview: text.substring(0, 20) + '...',
-          e2ee_ready: e2eeReady,
-          recipient_id: recipientId?.substring(0, 8) + '...',
-          current_user: resolvedUserId.substring(0, 8) + '...',
-        });
-
         if (e2eeReady && recipientId) {
-          console.log('[ConversationPage] 🔐 E2EE enabled, encrypting...');
 
           // Encrypt message for the recipient
           encrypted = await encryptForRecipient(text.trim(), recipientId);
 
           if (encrypted) {
-            console.log('[ConversationPage] ✅ Encrypted payload:', {
-              ciphertext_length: encrypted.ciphertext.length,
-              encrypted_key_length: (encrypted as any).encrypted_key?.length ?? (encrypted as any).encryptedKey?.length,
-              iv_length: encrypted.iv.length,
-              ciphertext_preview: encrypted.ciphertext.substring(0, 40) + '...',
-            });
 
             // Send encrypted message via WebSocket (pass original plaintext for display)
             await send(
@@ -482,16 +406,13 @@ const ConversationPage: React.FC = () => {
               text.trim()
             );
           } else {
-            console.warn('[ConversationPage] ⚠️ Encryption failed, sending plaintext');
             await send(text.trim());
           }
         } else {
           // E2EE not ready or no recipient, send plaintext
           if (!e2eeReady) {
-            console.log('[ConversationPage] 📢 E2EE not ready, sending plaintext');
           }
           if (!recipientId) {
-            console.log('[ConversationPage] 📢 No recipient ID, sending plaintext');
           }
           await send(text.trim());
         }

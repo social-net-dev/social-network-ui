@@ -30,7 +30,6 @@ export function saveSentMessagePlaintext(messageId: string, userId: string, plai
       userId,
     };
     localStorage.setItem(key, JSON.stringify(data));
-    console.log('[MessageCache] 💾 Saved plaintext for message:', messageId.substring(0, 8) + '...');
   } catch (error) {
     console.error('[MessageCache] ❌ Failed to save plaintext:', error);
   }
@@ -53,18 +52,15 @@ export function getSentMessagePlaintext(messageId: string, userId: string): stri
     // Check age
     const ageInDays = (Date.now() - data.timestamp) / (1000 * 60 * 60 * 24);
     if (ageInDays > MAX_CACHE_AGE_DAYS) {
-      console.log('[MessageCache] 🗑️ Removing expired cache:', messageId.substring(0, 8) + '...');
       localStorage.removeItem(key);
       return null;
     }
 
     // Verify userId matches
     if (data.userId !== userId) {
-      console.warn('[MessageCache] ⚠️ UserId mismatch, ignoring cache');
       return null;
     }
 
-    console.log('[MessageCache] 📖 Retrieved plaintext for message:', messageId.substring(0, 8) + '...');
     return data.plaintext;
   } catch (error) {
     console.error('[MessageCache] ❌ Failed to get plaintext:', error);
@@ -102,7 +98,6 @@ export function cleanOldMessageCache(): void {
     });
 
     if (cleaned > 0) {
-      console.log(`[MessageCache] 🧹 Cleaned ${cleaned} old messages`);
     }
   } catch (error) {
     console.error('[MessageCache] ❌ Failed to clean cache:', error);
@@ -144,7 +139,6 @@ export function clearMessageCache(userId?: string): void {
     });
 
     if (cleared > 0) {
-      console.log(`[MessageCache] 🗑️ Cleared ${cleared} cached messages${userId ? ` for user ${userId.substring(0, 8)}...` : ''}`);
     }
   } catch (error) {
     console.error('[MessageCache] ❌ Failed to clear cache:', error);

@@ -9,6 +9,7 @@
  * - Quick actions (clear storage, toggle theme, etc.)
  */
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ import { useAuthStore } from "@/stores/authStore";
 
 export function DevToolsPage() {
   const [activeTab, setActiveTab] = useState("environment");
+  const navigate = useNavigate();
   const isMockEnabled = import.meta.env.VITE_USE_MOCK === "true";
   const { user, isAuthenticated, logout } = useAuthStore();
 
@@ -43,7 +45,7 @@ export function DevToolsPage() {
 
   const handleForceLogout = async () => {
     await logout();
-    window.location.href = "/login";
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -227,46 +229,39 @@ export function DevToolsPage() {
           )}
         </TabsContent>
 
-        {/* Orval Tab */}
+        {/* API Integration Tab */}
         <TabsContent value="orval" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Code className="w-5 h-5" />
-                Orval Status
+                API Strategy
               </CardTitle>
-              <CardDescription>Trạng thái API client generation</CardDescription>
+              <CardDescription>Trạng thái tích hợp API hiện tại</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-4 rounded-lg border border-yellow-200 bg-yellow-50 dark:bg-yellow-950 dark:border-yellow-800">
-                <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
-                  <AlertCircle className="w-5 h-5" />
-                  <span className="font-medium">Not Generated Yet</span>
+              <div className="p-4 rounded-lg border border-teal-200 bg-teal-50 dark:bg-teal-950 dark:border-teal-800">
+                <div className="flex items-center gap-2 text-teal-700 dark:text-teal-400">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-medium">Manual API Integration (Active)</span>
                 </div>
-                <p className="text-sm text-yellow-600 dark:text-yellow-500 mt-2">
-                  OpenAPI spec chưa có. Khi backend sẵn sàng, chạy lệnh generate.
+                <p className="text-sm text-teal-600 dark:text-teal-500 mt-2">
+                  Dự án đã chuyển từ Orval Generated sang Manual API để kiểm soát dữ liệu tốt hơn.
                 </p>
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium">Để generate API client:</p>
-                <div className="p-3 rounded-lg bg-muted font-mono text-sm">
-                  pnpm gen:api
+                <p className="text-sm font-medium">Cấu trúc API hiện tại:</p>
+                <div className="p-3 rounded-lg bg-muted text-sm space-y-1">
+                  <p>• Types: <code>src/lib/api/types/</code></p>
+                  <p>• Services: <code>src/lib/api/services/</code></p>
+                  <p>• Hooks: <code>src/lib/api/hooks/</code></p>
+                  <p>• Transforms: <code>src/lib/api/transforms/</code></p>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Config file:</p>
-                <div className="p-3 rounded-lg bg-muted font-mono text-sm">
-                  orval.config.ts
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Output directory:</p>
-                <div className="p-3 rounded-lg bg-muted font-mono text-sm">
-                  src/lib/api/generated/
-                </div>
+              <div className="p-3 rounded-lg bg-yellow-50 border border-yellow-100 text-xs text-yellow-700">
+                <strong>Ghi chú:</strong> Thư mục <code>src/lib/api/generated/</code> đã được loại bỏ hoặc thay thế bằng stubs.
               </div>
             </CardContent>
           </Card>

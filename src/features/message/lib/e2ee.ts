@@ -53,7 +53,6 @@ export function clearAllE2EEKeys(): void {
   keys.forEach(key => {
     if (key.startsWith('e2ee_private_key_') || key.startsWith('e2ee_public_key_')) {
       localStorage.removeItem(key);
-      console.log('[E2EE] Cleared key:', key);
     }
   });
 }
@@ -125,15 +124,6 @@ export async function importPrivateKey(keyString: string): Promise<CryptoKey> {
  * Then encrypt the AES key with recipient's public RSA key
  */
 export async function encryptMessage(plaintext: string, recipientPublicKey: CryptoKey): Promise<{ ciphertext: string; encryptedKey: string; iv: string }> {
-  // Debug: Export recipient public key to verify
-  const recipientPublicKeyExported = await exportPublicKey(recipientPublicKey);
-  const recipientKeyFingerprint = recipientPublicKeyExported.substring(0, 60);
-
-  console.log('🔐 ==================== ENCRYPTION START ====================');
-  console.log('[E2EE encrypt] 🔑 Recipient Public Key Fingerprint:', recipientKeyFingerprint);
-  console.log('[E2EE encrypt] 📝 Plaintext length:', plaintext.length);
-  console.log('============================================================');
-
   // Generate random AES key for this message
   const aesKey = await window.crypto.subtle.generateKey(
     {
@@ -171,13 +161,6 @@ export async function encryptMessage(plaintext: string, recipientPublicKey: Cryp
     exportedAesKey
   );
 
-  console.log('[E2EE encrypt] ✅ Encryption complete:', {
-    ciphertext_length: arrayBufferToBase64(encryptedMessage).length,
-    encryptedKey_length: arrayBufferToBase64(encryptedAesKey).length,
-    iv_length: arrayBufferToBase64(iv.buffer).length,
-  });
-  console.log('🔐 ==================== ENCRYPTION END ======================\n');
-
   return {
     ciphertext: arrayBufferToBase64(encryptedMessage),
     encryptedKey: arrayBufferToBase64(encryptedAesKey),
@@ -189,19 +172,6 @@ export async function encryptMessage(plaintext: string, recipientPublicKey: Cryp
  * Decrypt message using private RSA key to decrypt AES key, then decrypt message
  */
 export async function decryptMessage(ciphertext: string, encryptedKey: string, iv: string, privateKey: CryptoKey): Promise<string> {
-  // Export private key fingerprint for debugging
-  const privateKeyExported = await exportPrivateKey(privateKey);
-  const privateKeyFingerprint = privateKeyExported.substring(0, 60);
-
-  console.log('🔓 ==================== DECRYPTION START ====================');
-  console.log('[E2EE decrypt] 🔑 My Private Key Fingerprint:', privateKeyFingerprint);
-  console.log('[E2EE decrypt] 📦 Input lengths:', {
-    ciphertext: ciphertext.length,
-    encryptedKey: encryptedKey.length,
-    iv: iv.length,
-  });
-  console.log('============================================================');
-
   try {
     // Decrypt AES key using RSA private key
     const encryptedAesKeyBuffer = base64ToArrayBuffer(encryptedKey);
@@ -241,10 +211,6 @@ export async function decryptMessage(ciphertext: string, encryptedKey: string, i
     const decoder = new TextDecoder();
     const plaintext = decoder.decode(decryptedMessage);
 
-    console.log('[E2EE decrypt] ✅ Decryption successful');
-    console.log('[E2EE decrypt] 📝 Plaintext length:', plaintext.length);
-    console.log('🔓 ==================== DECRYPTION END ======================\n');
-
     return plaintext;
   } catch (error) {
     console.error('[E2EE decrypt] ❌ Decryption FAILED!');
@@ -254,7 +220,6 @@ export async function decryptMessage(ciphertext: string, encryptedKey: string, i
     console.error('  2. Your private key does NOT match the public key used for encryption');
     console.error('  3. This could be an OLD message (encrypted before clearing localStorage)');
     console.error('  4. Or sender encrypted for WRONG recipient');
-    console.log('🔓 ==================== DECRYPTION END ======================\n');
     // Silently fail - this is EXPECTED for old messages encrypted with different keys
     throw error;
   }
@@ -270,8 +235,6 @@ export async function saveKeyPair(keyPair: KeyPair, userId: string): Promise<voi
   const storageKeys = getStorageKeys(userId);
   localStorage.setItem(storageKeys.publicKey, publicKeyStr);
   localStorage.setItem(storageKeys.privateKey, privateKeyStr);
-
-  console.log(`[E2EE] Keys saved for user: ${userId}`);
 }
 
 /**
@@ -282,20 +245,13 @@ export async function loadKeyPair(userId: string): Promise<KeyPair | null> {
   const publicKeyStr = localStorage.getItem(storageKeys.publicKey);
   const privateKeyStr = localStorage.getItem(storageKeys.privateKey);
 
-  console.log(`[E2EE loadKeyPair] Checking localStorage for user: ${userId.substring(0, 8)}...`);
-  console.log('[E2EE loadKeyPair] Public key exists:', !!publicKeyStr);
-  console.log('[E2EE loadKeyPair] Private key exists:', !!privateKeyStr);
-
   if (!publicKeyStr || !privateKeyStr) {
-    console.warn('[E2EE loadKeyPair] Keys not found in localStorage for user:', userId.substring(0, 8) + '...');
     return null;
   }
 
   try {
     const publicKey = await importPublicKey(publicKeyStr);
     const privateKey = await importPrivateKey(privateKeyStr);
-    console.log(`[E2EE loadKeyPair] ✅ Keys loaded successfully for user: ${userId.substring(0, 8)}...`);
-    console.log('[E2EE loadKeyPair] 🔑 Public key fingerprint:', publicKeyStr.substring(0, 40) + '...');
     return { publicKey, privateKey };
   } catch (error) {
     console.error('[E2EE loadKeyPair] ❌ Failed to import keys:', error);
@@ -308,17 +264,14 @@ export async function loadKeyPair(userId: string): Promise<KeyPair | null> {
  */
 export async function getOrGenerateKeyPair(userId?: string): Promise<KeyPair> {
   if (!userId) {
-    console.warn('[E2EE] No userId provided, generating temporary keys');
     return await generateKeyPair();
   }
 
   let keyPair = await loadKeyPair(userId);
 
   if (!keyPair) {
-    console.log(`[E2EE] Generating new key pair for user: ${userId}`);
     keyPair = await generateKeyPair();
     await saveKeyPair(keyPair, userId);
-    console.log(`[E2EE] ✅ New key pair saved for user: ${userId}`);
   }
 
   return keyPair;
@@ -331,7 +284,6 @@ export function clearKeys(userId: string): void {
   const storageKeys = getStorageKeys(userId);
   localStorage.removeItem(storageKeys.publicKey);
   localStorage.removeItem(storageKeys.privateKey);
-  console.log(`[E2EE] Keys cleared for user: ${userId}`);
 }
 
 /**

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { customInstance } from '@/lib/axios-instance';
+import { customInstance } from '@/lib/api';
 
 /**
  * Hook to fetch media as blob and create object URL.

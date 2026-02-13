@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '../hooks/useProfile';
-import type { Author, Project } from '@/features/home/types/feed.types';
+import type { User, Project } from '@/lib/api/types/user.types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit2, MapPin, School, PlusCircle, BookOpen, Heart, Terminal, Loader2 } from 'lucide-react';
@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 export function PersonalProfilePage() {
   const navigate = useNavigate();
   const { profile: rawProfile, updateProfile, uploadAvatar, isUpdating, isLoading } = useProfile();
-  const profile = rawProfile as Author;
+  const profile = rawProfile as User;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Derived projects list
@@ -141,7 +141,7 @@ export function PersonalProfilePage() {
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-muted-foreground font-medium">
                 <div className="flex items-center gap-1.5 bg-muted/50 px-3 py-1.5 rounded-xl">
                   <MapPin className="w-4 h-4 text-primary" />
-                  <span>{(profile.personalInfo as any)?.location || 'Vietnam'}</span>
+                  <span>{profile.personalInfo?.location || 'Vietnam'}</span>
                 </div>
               </div>
               {profile.bio && <p className="text-sm text-muted-foreground max-w-md leading-relaxed">{profile.bio}</p>}

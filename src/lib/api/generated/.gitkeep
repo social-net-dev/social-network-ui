@@ -1,6 +1,0 @@
-# This directory will contain auto-generated API client code from Orval
-# Do not edit files in this directory manually - they will be overwritten
-
-# To generate:
-# 1. Ensure backend has /openapi.json endpoint
-# 2. Run: pnpm gen:api

@@ -34,7 +34,7 @@ export function NavUser() {
             >
               <Avatar user={user} size="sm" />
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.display_name || user.username || user.email}</span>
+                <span className="truncate font-semibold">{user.displayName || user.username || user.email}</span>
                 <span className="truncate text-xs text-muted-foreground">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -50,7 +50,7 @@ export function NavUser() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar user={user} size="sm" />
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.display_name || user.username || user.email}</span>
+                  <span className="truncate font-semibold">{user.displayName || user.username || user.email}</span>
                   <span className="truncate text-xs text-muted-foreground">{user.email}</span>
                 </div>
               </div>

@@ -105,6 +105,19 @@ src/
 └── App.tsx             # Routing & Main Layout
 ```
 
+## 📚 Tài liệu
+
+Tài liệu kỹ thuật được tổ chức như sau:
+
+- **[AGENTS.md](AGENTS.md)** - Hướng dẫn toàn diện cho AI agents và developers
+- **[DOCUMENTATION.md](DOCUMENTATION.md)** - Cấu trúc và quy ước documentation
+- **[openapi.yml](openapi.yml)** - Đặc tả API đầy đủ (OpenAPI 3.0)
+- **[src/features/FEATURE_STRUCTURE.md](src/features/FEATURE_STRUCTURE.md)** - Cấu trúc module
+- **TypeScript code** - Types và comments trong source code
+  - [E2EE_README.md](docs/features/E2EE_README.md) - E2EE Feature Guide
+  - [DISPLAY_NAME_README.md](docs/features/DISPLAY_NAME_README.md) - Display Name Feature
+  - [SEARCH_USERS_README.md](docs/features/SEARCH_USERS_README.md) - User Search
+
 ## 🎨 Màu sắc thương hiệu (Brand Colors)
 
 Dự án sử dụng bảng màu đặc trưng của ETECHS:

@@ -55,19 +55,10 @@ export class ChatClient {
       } catch {}
 
       const wsUrl = this.url();
-      console.log('======================== WebSocket Connection Attempt ========================');
-      console.log('[ChatClient] 🔌 Connecting to:', wsUrl);
-      console.log('[ChatClient] 📋 Connection params:', {
-        user_id: this.opts.userId.substring(0, 8) + '...',
-        room_id: this.opts.room,
-        wsUrl: this.opts.wsUrl,
-      });
-      console.log('==============================================================================');
 
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log('[ChatClient] ✅ WebSocket connected successfully:', wsUrl);
         this.connecting = false;
         if (this.retryTimer) {
           clearTimeout(this.retryTimer);
@@ -85,26 +76,10 @@ export class ChatClient {
       this.ws.onmessage = ev => {
         try {
           const data = JSON.parse(ev.data);
-          console.log('\\n\ud83d\udce1 ==================== WebSocket Message Received ====================');
-          console.log('\ud83d\udce8 [ChatClient] RAW WebSocket Message:', {
-            type: data.type,
-            id: data.id,
-            room_id: data.room_id,
-            sender_id: data.sender_id?.substring(0, 8) + '...',
-            current_connection_room: this.opts.room,
-            is_correct_room: data.room_id === this.opts.room || data.type !== 'message',
-            has_encrypted_key: !!data.encrypted_key,
-            has_iv: !!data.iv,
-            encrypted_key_preview: data.encrypted_key?.substring(0, 30) + '...',
-            iv_preview: data.iv?.substring(0, 20) + '...',
-            ciphertext_preview: data.ciphertext?.substring(0, 30) + '...',
-          });
-          console.log('======================================================================\\n');
           console.debug('ChatClient: message received', data);
           if (data.type === 'ack') {
             // ACK cho reaction cũng đi qua onReaction nếu có action
             if (data.action === 'reaction_added' || data.action === 'reaction_removed') {
-              console.log('[ChatClient] Reaction ACK received:', data);
               if (this.onReaction) {
                 this.onReaction(data);
               }
@@ -133,21 +108,12 @@ export class ChatClient {
               pinned: data.pinned ?? false,
               reactions: data.reactions ?? [],
             } as MessageOut;
-            console.log('[ChatClient] 📥 Message mapped from WebSocket:', {
-              id: out.id,
-              has_encrypted_key: !!out.encrypted_key,
-              has_iv: !!out.iv,
-              encrypted_key_length: out.encrypted_key?.length,
-              iv_length: out.iv?.length,
-            });
             this.onMessage(out);
           } else if (data.type === 'reaction' || data.type === 'reaction_removed') {
             // broadcast reaction event to hook
-            console.log('[ChatClient] Reaction broadcast event detected:', data);
             if (this.onReaction) {
               this.onReaction(data);
             } else {
-              console.warn('[ChatClient] onReaction handler not set!');
             }
           } else if (data.type === 'read') {
             if (this.onRead) {
@@ -159,7 +125,6 @@ export class ChatClient {
         }
       };
       this.ws.onclose = ev => {
-        console.log('======================== WebSocket Closed ========================');
         console.error('[ChatClient] ❌ WebSocket closed:', {
           code: ev.code,
           code_meaning:
@@ -190,7 +155,6 @@ export class ChatClient {
           console.error('  - Room ID may not exist');
           console.error('  - Check backend logs for connection errors');
         }
-        console.log('==================================================================');
 
         try {
           this.onStatus('closed');
@@ -254,7 +218,6 @@ export class ChatClient {
       emoji,
       remove,
     };
-    console.log('[ChatClient] Sending reaction:', payload);
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       try {
         this.ws.send(JSON.stringify(payload));
@@ -264,7 +227,6 @@ export class ChatClient {
         throw e;
       }
     } else {
-      console.warn('[ChatClient] WebSocket not open, cannot send reaction');
       throw new Error('WebSocket not connected');
     }
   }
@@ -319,17 +281,6 @@ export class ChatClient {
           payload.iv = message.iv;
         }
         try {
-          console.log('\\n\ud83d\udce4 ==================== Sending Message via WS ====================');
-          console.log('[ChatClient] \ud83d\udce4 Sending via WS:', {
-            action: payload.action,
-            room_id: payload.room_id,
-            has_encrypted_key: !!payload.encrypted_key,
-            has_iv: !!payload.iv,
-            encrypted_key_length: payload.encrypted_key?.length,
-            iv_length: payload.iv?.length,
-            client_id: payload.client_id?.substring(0, 8) + '...',
-          });
-          console.log('==================================================================\\n');
           this.ws.send(JSON.stringify(payload));
           resolve();
         } catch (e) {
@@ -361,14 +312,6 @@ export class ChatClient {
     if (message.iv) {
       body.iv = message.iv;
     }
-
-    console.log('[ChatClient] 📤 Sending via REST:', {
-      url,
-      has_encrypted_key: !!body.encrypted_key,
-      has_iv: !!body.iv,
-      encrypted_key_length: body.encrypted_key?.length,
-      iv_length: body.iv?.length,
-    });
 
     let res: Response;
     try {

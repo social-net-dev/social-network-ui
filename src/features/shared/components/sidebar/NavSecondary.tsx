@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Settings, LogOut } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
 import {
@@ -10,10 +10,11 @@ import {
 
 export function NavSecondary() {
   const logout = useAuthStore((state) => state.logout)
+  const navigate = useNavigate()
 
-  const handleLogout = () => {
-    logout()
-    window.location.href = "/login"
+  const handleLogout = async () => {
+    await logout()
+    navigate("/login", { replace: true })
   }
 
   return (

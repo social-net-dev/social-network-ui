@@ -1,5 +1,3 @@
-import type { PostOut } from '@/lib/api/generated/model';
-
 export interface Field {
   id: string;
   name: string;
@@ -19,7 +17,7 @@ export interface FieldResponse {
 }
 
 export interface FieldPostsResponse {
-  posts: PostOut[];
+  posts: any[];
   nextCursor?: string;
   total?: number;
   total_pages?: number;

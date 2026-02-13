@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { transformAuthor, transformUserMe } from './userTransform';
+import { transformAuthor, transformUser } from './userTransform';
 
 describe('userTransform', () => {
   it('should transform AuthorInfo to FE Author', () => {
@@ -14,8 +14,7 @@ describe('userTransform', () => {
 
     expect(result.id).toBe('u1');
     expect(result.displayName).toBe('Jane Doe');
-    expect(result.firstName).toBe('Jane');
-    expect(result.lastName).toBe('Doe');
+    expect(result.username).toBe('janedoe');
   });
 
   it('should handle null author', () => {
@@ -32,7 +31,7 @@ describe('userTransform', () => {
       created_at: '2021-01-01',
     };
 
-    const result = transformUserMe(mockUser);
+    const result = transformUser(mockUser);
 
     expect(result.displayName).toBe('Admin User');
     expect(result.accountStatus).toBe('VERIFIED');

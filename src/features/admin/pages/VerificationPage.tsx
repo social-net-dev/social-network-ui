@@ -1,38 +1,17 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminAPI } from "@/lib/api/generated";
-import { getVerificationRequests } from "@/lib/api/manual-apis";
+import { useAdminVerificationRequests, useApproveVerification, useRejectVerification } from "@/lib/api/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
 
 export function AdminVerificationPanel({ showTitle = true }: { showTitle?: boolean }) {
-    const queryClient = useQueryClient();
     const [rejectReason, setRejectReason] = useState<{ [key: string]: string }>({});
     const [showRejectInput, setShowRejectInput] = useState<{ [key: string]: boolean }>({});
 
-    const { data: requests = [], isLoading } = useQuery({
-        queryKey: ["admin", "verification-requests"],
-        queryFn: () => getVerificationRequests("PENDING"),
-    });
+    const { data: requests = [], isLoading } = useAdminVerificationRequests("PENDING");
 
-    const approveMutation = AdminAPI.useApproveAdminVerificationRequestsRequestIdApprovePost({
-        mutation: {
-            onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ["admin", "verification-requests"] });
-            }
-        }
-    });
-
-    const rejectMutation = AdminAPI.useRejectAdminVerificationRequestsRequestIdRejectPost({
-        mutation: {
-            onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ["admin", "verification-requests"] });
-                setRejectReason({});
-                setShowRejectInput({});
-            },
-        }
-    });
+    const approveMutation = useApproveVerification();
+    const rejectMutation = useRejectVerification();
 
     const handleApprove = (requestId: string, role: string) => {
         approveMutation.mutate({ requestId, data: { role } });
@@ -66,29 +45,29 @@ export function AdminVerificationPanel({ showTitle = true }: { showTitle?: boole
                             <div className="space-y-4">
                                 {/* User Info */}
                                 <div>
-                                    <h3 className="font-semibold text-lg text-gray-900">{req.user?.display_name}</h3>
-                                    <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
-                                        <p className="text-gray-600">
-                                            <span className="font-medium">Email:</span> {req.user?.email}
-                                        </p>
-                                        <p className="text-gray-600">
-                                            <span className="font-medium">SĐT:</span> {req.user?.phone || "N/A"}
-                                        </p>
-                                        <p className="text-gray-600">
-                                            <span className="font-medium">Loại TK:</span>{" "}
-                                            {req.requested_role === "STUDENT" ? "Học sinh" : "Giáo viên"}
-                                        </p>
-                                        <p className="text-gray-500 text-xs">
-                                            <span className="font-medium">Ngày đăng ký:</span> {new Date(req.created_at).toLocaleString("vi-VN")}
-                                        </p>
-                                        <p className="text-gray-600">
-                                            <span className="font-medium">Trạng thái TK:</span> {req.user?.account_status || "UNVERIFIED"}
-                                        </p>
-                                        <p className="text-gray-600">
-                                            <span className="font-medium">Dung lượng:</span> {req.user?.storage_quota_mb}MB →{" "}
-                                            {req.user?.account_status === "VERIFIED" ? "5GB" : "100MB sau phê duyệt"}
-                                        </p>
-                                    </div>
+                                <h3 className="font-semibold text-lg text-gray-900">{req.user?.displayName}</h3>
+                                <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
+                                    <p className="text-gray-600">
+                                        <span className="font-medium">Email:</span> {req.user?.email}
+                                    </p>
+                                    <p className="text-gray-600">
+                                        <span className="font-medium">SĐT:</span> {req.user?.phone || "N/A"}
+                                    </p>
+                                    <p className="text-gray-600">
+                                        <span className="font-medium">Loại TK:</span>{" "}
+                                        {req.requested_role === "STUDENT" ? "Học sinh" : "Giáo viên"}
+                                    </p>
+                                    <p className="text-gray-500 text-xs">
+                                        <span className="font-medium">Ngày đăng ký:</span> {new Date(req.created_at).toLocaleString("vi-VN")}
+                                    </p>
+                                    <p className="text-gray-600">
+                                        <span className="font-medium">Trạng thái TK:</span> {req.user?.accountStatus || "UNVERIFIED"}
+                                    </p>
+                                    <p className="text-gray-600">
+                                        <span className="font-medium">Dung lượng:</span> {req.user?.storageQuotaMb}MB →{" "}
+                                        {req.user?.accountStatus === "VERIFIED" ? "5GB" : "100MB sau phê duyệt"}
+                                    </p>
+                                </div>
                                 </div>
 
                                 {/* CCCD Images */}
