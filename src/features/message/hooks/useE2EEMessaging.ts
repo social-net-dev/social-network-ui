@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useE2EEStore } from '@/stores/e2eeStore';
-import { encryptMessageForBoth, decryptMessage } from '@/features/message/lib/e2ee';
-import { callGetRoomMemberPublicKeys, callSetPublicKey, callUpdatePublicKey } from '@/features/message/services/messageApi';
+import { encryptMessageForBoth, decryptMessage, exportPrivateKey, importPrivateKey, importPublicKey, encryptPrivateKeyWithPassphrase, decryptPrivateKeyWithPassphrase, saveKeyPair } from '@/features/message/lib/e2ee';
+import { callGetRoomMemberPublicKeys, callSetPublicKey, callUpdatePublicKey, callBackupPrivateKey, callGetPrivateKeyBackup, callGetUserPublicKey } from '@/features/message/services/messageApi';
 import type { MessageOut } from '@/features/message/types/message.types';
 
 export interface UseE2EEMessagingProps {
@@ -29,6 +29,9 @@ export interface UseE2EEMessagingProps {
  */
 export const useE2EEMessaging = ({ roomId, userId, enabled = true }: UseE2EEMessagingProps) => {
   const [isReady, setIsReady] = useState(false);
+  const [showSyncNotice, setShowSyncNotice] = useState(false);
+  const [showPassphraseModal, setShowPassphraseModal] = useState(false);
+  const [passphraseMode, setPassphraseMode] = useState<'create' | 'restore' | null>(null);
   const { keyPair, initialize, getUserPublicKey, setUserPublicKey, isInitialized } = useE2EEStore();
 
   // Initialize E2EE on mount
@@ -46,7 +49,59 @@ export const useE2EEMessaging = ({ roomId, userId, enabled = true }: UseE2EEMess
         console.log(`[E2EE] Architecture: RSA Keypair Exchange`);
         console.log(`=====================================================\n`);
 
-        // Step 1: Initialize local RSA keypair
+        // Helper to determine whether a backup exists in various response shapes
+        const hasBackup = (resp: any) => {
+          if (!resp || !resp.data) return false;
+          const d = resp.data;
+          if (Array.isArray(d.backups)) return d.backups.length > 0;
+          if (typeof d === 'object' && (d.ciphertext || d.backup || d.payload)) return true;
+          return false;
+        };
+
+        // Step 1: Check server-side backup BEFORE generating local keys.
+        // If a private-key backup exists on the backend, do NOT auto-generate
+        // a new keypair on this device — prompt the user to restore instead.
+        try {
+          const backupBeforeInit = await callGetPrivateKeyBackup(userId).catch(err => {
+            console.warn('[E2EE] callGetPrivateKeyBackup error:', err);
+            return null;
+          });
+
+          console.log('[E2EE] Backup check response (before init):', backupBeforeInit?.data);
+          console.log('[E2EE] isInitialized flag before init:', isInitialized);
+          const localPrivateBefore = !!localStorage.getItem(`e2ee_private_key_${userId}`);
+          console.log('[E2EE] local private key exists before init:', localPrivateBefore);
+
+          if (hasBackup(backupBeforeInit)) {
+            console.log('[E2EE] 🔁 Backup exists on server; attempting auto-restore if passphrase persisted');
+            try {
+              const persisted = localStorage.getItem(`e2ee_passphrase_${userId}`) ?? sessionStorage.getItem(`e2ee_passphrase_${userId}`) ?? null;
+              if (persisted) {
+                try {
+                  await handleRestore(persisted, true);
+                  console.log('[E2EE] ✅ Auto-restore succeeded during init');
+                  // proceed as initialized
+                  setIsReady(true);
+                  return;
+                } catch (err) {
+                  console.warn('[E2EE] Auto-restore with persisted passphrase failed during init', err);
+                }
+              }
+            } catch (e) {
+              console.warn('[E2EE] Error checking persisted passphrase during init', e);
+            }
+
+            console.log('[E2EE] 🔁 No persisted passphrase or auto-restore failed; requesting manual restore');
+            setPassphraseMode('restore');
+            setShowPassphraseModal(true);
+            setIsReady(false);
+            return; // bail out of init - wait for user to restore
+          }
+        } catch (e) {
+          console.warn('[E2EE] Could not check server backup before init, proceeding to initialize local keys', e);
+        }
+
+        // Step 2: Initialize local RSA keypair
         if (!isInitialized) {
           await initialize(userId);
           console.log(`[E2EE] ✅ RSA keypair initialized`);
@@ -106,6 +161,40 @@ export const useE2EEMessaging = ({ roomId, userId, enabled = true }: UseE2EEMess
           }
         }
 
+        // Check backup status: if server has a backup and local keys are missing -> require restore
+        try {
+          const storageKeys = `e2ee_private_key_${userId}`;
+          const localPrivate = localStorage.getItem(storageKeys);
+          const backupResp = await callGetPrivateKeyBackup(userId).catch(() => null);
+
+          if (!localPrivate && hasBackup(backupResp)) {
+            console.log('[E2EE] 🔁 Local private key missing but backup exists -> need restore');
+            setPassphraseMode('restore');
+            setShowPassphraseModal(true);
+          } else if (localPrivate && !hasBackup(backupResp)) {
+            // Local key exists but no backup -> prompt user to create passphrase/backup (only when they open messages)
+            console.log('[E2EE] 🔐 Local key exists but no backup on server -> suggest creating backup');
+            // Defer showing modal to UI (ConversationPage) by setting mode create but not auto-open here; ConversationPage can open
+            // For convenience, open modal now so user can back up immediately
+            setPassphraseMode('create');
+            setShowPassphraseModal(true);
+          } else if (localPrivate && hasBackup(backupResp)) {
+            // Backup exists on server and local key exists -> show a one-time sync notice per device
+            try {
+              const seenKey = `e2ee_sync_seen_${userId}`;
+              const seen = localStorage.getItem(seenKey);
+              if (!seen) {
+                setShowSyncNotice(true);
+                localStorage.setItem(seenKey, '1');
+              }
+            } catch (e) {
+              console.warn('Failed to set sync-seen flag', e);
+            }
+          }
+        } catch (e) {
+          console.warn('[E2EE] Could not check backup status', e);
+        }
+
         setIsReady(true);
         console.log(`✅ [E2EE] Ready for encrypted messaging\n`);
       } catch (error) {
@@ -116,6 +205,167 @@ export const useE2EEMessaging = ({ roomId, userId, enabled = true }: UseE2EEMess
 
     init();
   }, [roomId, userId, enabled, isInitialized, initialize, setUserPublicKey]);
+
+  // Ensure ready helper: attempt to initialize now (used when user sends before auto-init completes)
+  const ensureReady = async (): Promise<boolean> => {
+    if (!enabled) return false;
+    if (isReady) return true;
+
+    try {
+      console.log('[E2EE] ensureReady: attempting on-demand initialization');
+
+      // Check backup first
+      const backupResp = await callGetPrivateKeyBackup(userId).catch(() => null);
+      const has = (resp: any) => {
+        if (!resp || !resp.data) return false;
+        if (Array.isArray(resp.data.backups)) return resp.data.backups.length > 0;
+        if (typeof resp.data === 'object' && (resp.data.ciphertext || resp.data.backup || resp.data.payload)) return true;
+        return false;
+      };
+
+      if (has(backupResp) && !localStorage.getItem(`e2ee_private_key_${userId}`)) {
+        console.log('[E2EE] ensureReady: backup exists and local key missing => attempting auto-restore if passphrase persisted');
+        // Try persisted passphrase (localStorage first, then sessionStorage)
+        try {
+          const persisted = localStorage.getItem(`e2ee_passphrase_${userId}`) ?? sessionStorage.getItem(`e2ee_passphrase_${userId}`) ?? null;
+          if (persisted) {
+            console.log('[E2EE] ensureReady: found persisted passphrase; attempting auto-restore');
+            try {
+              await handleRestore(persisted, true);
+              console.log('[E2EE] ensureReady: auto-restore succeeded');
+              return true;
+            } catch (err) {
+              console.warn('[E2EE] ensureReady: auto-restore failed with persisted passphrase', err);
+            }
+          }
+        } catch (e) {
+          console.warn('[E2EE] ensureReady: error reading persisted passphrase', e);
+        }
+
+        // No persisted passphrase or auto-restore failed -> prompt user to restore
+        setPassphraseMode('restore');
+        setShowPassphraseModal(true);
+        return false;
+      }
+
+      // Perform initialization (generate or load keys)
+      if (!isInitialized) {
+        await initialize(userId);
+      }
+
+      // Upload public key
+      const s = useE2EEStore.getState();
+      const myPublicKey = s.publicKeyString;
+      if (myPublicKey) {
+        try {
+          await callSetPublicKey({ user_id: userId, public_key: myPublicKey });
+        } catch (e) {
+          try {
+            await callUpdatePublicKey({ user_id: userId, public_key: myPublicKey });
+          } catch (e2) {
+            console.warn('[E2EE] ensureReady: failed to upload public key', e2);
+          }
+        }
+      }
+
+      // Fetch room member public keys
+      if (roomId) {
+        try {
+          const res = await callGetRoomMemberPublicKeys(roomId).catch(() => null);
+          const members = res?.data?.members || [];
+          members.forEach((m: any) => {
+            if (m.user_id !== userId && m.public_key) {
+              setUserPublicKey(m.user_id, m.public_key);
+            }
+          });
+        } catch (e) {
+          console.warn('[E2EE] ensureReady: failed to fetch member public keys', e);
+        }
+      }
+
+      setIsReady(true);
+      return true;
+    } catch (e) {
+      console.warn('[E2EE] ensureReady failed', e);
+      return false;
+    }
+  };
+
+  // Handlers for passphrase modal
+  const handleCreateBackup = async (passphrase: string, remember: boolean) => {
+    if (!keyPair) throw new Error('No keyPair to backup');
+    const exportedPriv = await exportPrivateKey(keyPair.privateKey);
+    const payload = await encryptPrivateKeyWithPassphrase(exportedPriv, passphrase);
+    await callBackupPrivateKey(userId, payload);
+    try {
+      if (remember) {
+        localStorage.setItem(`e2ee_passphrase_${userId}`, passphrase);
+      } else {
+        sessionStorage.setItem(`e2ee_passphrase_${userId}`, passphrase);
+      }
+    } catch (e) {
+      console.warn('[E2EE] Failed to persist passphrase on device', e);
+    }
+    setShowPassphraseModal(false);
+    setPassphraseMode(null);
+    console.log('[E2EE] ✅ Backup created on server');
+  };
+
+  const handleRestore = async (passphrase: string, remember = false) => {
+    const resp = await callGetPrivateKeyBackup(userId);
+    if (!resp || !resp.data) throw new Error('No backup found');
+    const payload = resp.data;
+    // Support different shapes: { backups: [...] } or { ciphertext, iv, salt }
+    if (Array.isArray(payload.backups) && payload.backups.length === 0) {
+      throw new Error('No backup found');
+    }
+    const exportedPrivateBase64 = await decryptPrivateKeyWithPassphrase(payload, passphrase);
+    // Import private key
+    const privateKey = await importPrivateKey(exportedPrivateBase64);
+
+    // Try to fetch public key from server (should exist)
+    let publicKeyCrypto: CryptoKey | null = null;
+    try {
+      const pubResp = await callGetUserPublicKey(userId);
+      let pubStr: string | undefined;
+      if (pubResp && pubResp.data) {
+        if (typeof pubResp.data === 'string') pubStr = pubResp.data;
+        else if ((pubResp.data as any).public_key) pubStr = (pubResp.data as any).public_key;
+      }
+
+      if (pubStr) {
+        publicKeyCrypto = await importPublicKey(pubStr);
+      } else {
+        throw new Error('No public key found on server');
+      }
+    } catch (err) {
+      console.warn('[E2EE] Could not fetch public key from server during restore', err);
+      throw new Error('Cannot restore: public key missing on server');
+    }
+
+    // Save the restored keypair (publicKeyCrypto + privateKey)
+    await saveKeyPair({ publicKey: publicKeyCrypto, privateKey }, userId);
+
+    // Remember passphrase on device if requested
+    try {
+      if (remember) localStorage.setItem(`e2ee_passphrase_${userId}`, passphrase);
+      else sessionStorage.setItem(`e2ee_passphrase_${userId}`, passphrase);
+    } catch (e) {
+      console.warn('[E2EE] Failed to persist passphrase after restore', e);
+    }
+
+    // Mark this device as having seen sync so overlay won't re-appear
+    try {
+      localStorage.setItem(`e2ee_sync_seen_${userId}`, '1');
+    } catch (e) {
+      console.warn('[E2EE] Failed to set e2ee_sync_seen flag', e);
+    }
+
+    setShowPassphraseModal(false);
+    setPassphraseMode(null);
+    setIsReady(true);
+    console.log('[E2EE] ✅ Restore complete');
+  };
 
   /**
    * Encrypt tin nhắn cho CẢ RECIPIENT VÀ SENDER (Double Encryption)
@@ -358,5 +608,16 @@ export const useE2EEMessaging = ({ roomId, userId, enabled = true }: UseE2EEMess
     encryptForRecipient,
     decryptIncoming,
     decryptMessages,
-  };
+    // Passphrase/backup helpers
+    showPassphraseModal,
+    passphraseMode,
+    setShowPassphraseModal,
+    setPassphraseMode,
+    handleCreateBackup,
+    handleRestore,
+    showSyncNotice,
+    dismissSyncNotice: () => setShowSyncNotice(false),
+    // Ensure ready on-demand (init + upload pubkey + fetch member keys)
+    ensureReady,
+  } as any;
 };

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/stores/authStore';
 import { useE2EEStore } from '@/stores/e2eeStore';
 import apiClient from '@/lib/api';
+import messageApiClient from '@/lib/messageApiClient';
 import { Bug, CheckCircle2, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface DebugResult {
@@ -78,7 +79,8 @@ export function E2EEDebugPanel({ roomId }: { roomId: string }) {
         details: `GET /api/rooms/${roomId}/messages`,
       });
 
-      const response = await apiClient.get(`/api/rooms/${roomId}/messages`);
+      // Use the message microservice client to query messages (may live on different base URL)
+      const response = await messageApiClient.get(`/api/rooms/${roomId}/messages`);
       const messages = response.data;
 
       if (!Array.isArray(messages) || messages.length === 0) {
@@ -156,11 +158,14 @@ export function E2EEDebugPanel({ roomId }: { roomId: string }) {
         });
       }
     } catch (error: any) {
+      const respData = error?.response?.data;
+      const status = error?.response?.status;
+      const reqUrl = error?.config?.url || '';
       checks.push({
         type: 'error',
         title: '❌ Lỗi khi gọi API',
-        details: error.message || 'Unknown error',
-        data: error.response?.data,
+        details: `${error.message || 'Unknown error'}\nStatus: ${status || 'N/A'}\nURL: ${reqUrl}`,
+        data: respData ?? error,
       });
     }
 

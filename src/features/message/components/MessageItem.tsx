@@ -23,11 +23,21 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isMine, currentUserI
   const handleDelete = async () => {
     if (!confirm('Xóa tin nhắn này?')) return;
     try {
-      await callDeleteMessage({
+      const res = await callDeleteMessage({
         message_id: message.id,
         user_id: currentUserId,
         hard: true,
       });
+
+      // If backend reports deleted_all, immediately notify other parts of the FE
+      const status = res?.data?.status;
+      if (status === 'deleted_all') {
+        try {
+          window.dispatchEvent(new CustomEvent('messageDeleted', { detail: { id: message.id } }));
+        } catch (e) {}
+      }
+
+      // Refresh parent list (will re-fetch messages) as fallback
       onRefresh?.();
     } catch (e) {
       console.error('Delete failed:', e);

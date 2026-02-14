@@ -11,6 +11,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Save, User, Shield, Trash2, Lock, AlertTriangle, Eye, EyeOff, Loader2, School, Info, GraduationCap } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
+import { useE2EEStore } from '@/stores/e2eeStore';
+import { exportPrivateKey, importPrivateKey, encryptPrivateKeyWithPassphrase, decryptPrivateKeyWithPassphrase, saveKeyPair } from '@/features/message/lib/e2ee';
+import { callBackupPrivateKey, callGetPrivateKeyBackup, callGetUserPublicKey } from '@/features/message/services/messageApi';
+import { PassphraseModal } from '@/features/message/components/PassphraseModal';
 import { ChangePasswordForm } from '../components/ChangePasswordForm';
 import { deactivateAccount } from '@/lib/api/manual-apis';
 import { useAuthStore } from '@/stores/authStore';
@@ -28,6 +32,10 @@ export function ProfileSettingsPage() {
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
   const { logout } = useAuthStore();
   const navigate = useNavigate();
+  // E2EE store is available via hooks when needed; not used directly here
+  const [showPassModal, setShowPassModal] = useState(false);
+  const [passMode, setPassMode] = useState<'create' | 'restore'>('create');
+  const [backupLoading, setBackupLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -140,6 +148,80 @@ export function ProfileSettingsPage() {
       </div>
     );
   }
+
+  // Backup / Restore handlers
+  const handleOpenBackup = () => {
+    setPassMode('create');
+    setShowPassModal(true);
+  };
+
+  const handleOpenRestore = () => {
+    setPassMode('restore');
+    setShowPassModal(true);
+  };
+
+  const handlePassphraseSubmit = async (passphrase: string, remember: boolean) => {
+    const userId = useAuthStore.getState().getUserId();
+    if (!userId) {
+      alert('Không có user id');
+      return;
+    }
+
+    if (passMode === 'create') {
+      const keyPair = useE2EEStore.getState().keyPair;
+      if (!keyPair) {
+        alert('Không tìm thấy private key trên thiết bị. Vui lòng mở Messages để khởi tạo khóa trước.');
+        return;
+      }
+
+      try {
+        setBackupLoading(true);
+        const exported = await exportPrivateKey(keyPair.privateKey);
+        const payload = await encryptPrivateKeyWithPassphrase(exported, passphrase);
+        await callBackupPrivateKey(userId, payload);
+        if (remember) sessionStorage.setItem(`e2ee_passphrase_${userId}`, passphrase);
+        alert('Backup private key thành công');
+      } catch (err) {
+        console.error('Backup failed', err);
+        alert('Backup thất bại: ' + (err as any).message);
+      } finally {
+        setBackupLoading(false);
+        setShowPassModal(false);
+      }
+    } else {
+      // restore
+      try {
+        setBackupLoading(true);
+        const resp = await callGetPrivateKeyBackup(userId);
+        if (!resp || !resp.data) throw new Error('No backup found');
+        const payload = resp.data;
+        const exportedBase64 = await decryptPrivateKeyWithPassphrase(payload, passphrase);
+        const privateKey = await importPrivateKey(exportedBase64);
+
+        // fetch public key from server to pair
+        const pubResp = await callGetUserPublicKey(userId);
+        const pubStr = pubResp?.data?.public_key || (typeof pubResp?.data === 'string' ? pubResp.data : undefined);
+        let publicCrypto: CryptoKey | null = null;
+        if (pubStr) {
+          publicCrypto = await (await import('@/features/message/lib/e2ee')).importPublicKey(pubStr);
+        }
+
+        if (!publicCrypto) throw new Error('Public key not found on server to pair with restored private key');
+
+        await saveKeyPair({ publicKey: publicCrypto, privateKey }, userId);
+        // reinitialize store
+        await useE2EEStore.getState().initialize(userId);
+        if (remember) sessionStorage.setItem(`e2ee_passphrase_${userId}`, passphrase);
+        alert('Khôi phục private key thành công');
+      } catch (err) {
+        console.error('Restore failed', err);
+        alert('Khôi phục thất bại: ' + (err as any).message);
+      } finally {
+        setBackupLoading(false);
+        setShowPassModal(false);
+      }
+    }
+  };
 
   const privacyItems = [
     { id: 'display_name_visibility', label: 'Tên hiển thị', icon: User },
@@ -289,6 +371,18 @@ export function ProfileSettingsPage() {
               </Button>
             </div>
           </Card>
+          <Card className="p-6 rounded-3xl shadow-xl border-none">
+            <h3 className="text-lg font-semibold mb-4">Sao lưu E2EE (Backup)</h3>
+            <p className="text-sm text-gray-500 mb-4">Sao lưu private key đã mã hoá lên server để phục hồi trên thiết bị khác.</p>
+            <div className="flex gap-3">
+              <Button onClick={handleOpenBackup} disabled={backupLoading} className="rounded-xl">
+                {backupLoading ? 'Đang xử lý...' : 'Backup now'}
+              </Button>
+              <Button variant="outline" onClick={handleOpenRestore} disabled={backupLoading} className="rounded-xl">
+                Restore from backup
+              </Button>
+            </div>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -341,6 +435,7 @@ export function ProfileSettingsPage() {
           </div>
         </div>
       )}
+      <PassphraseModal open={showPassModal} mode={passMode} onClose={() => setShowPassModal(false)} onSubmit={handlePassphraseSubmit} />
     </div>
   );
 }

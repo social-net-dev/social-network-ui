@@ -19,6 +19,7 @@ export class ChatClient {
   private manualClose = false;
   public onMessage: (m: MessageOut) => void = () => {};
   public onAck: (ack: ServerAck) => void = () => {};
+  public onDelete: (id: string) => void = () => {};
   public onError: (err: unknown) => void = () => {};
   public onStatus: (s: 'connecting' | 'open' | 'closed' | 'error') => void = () => {};
   public onReaction: (data: any) => void = () => {};
@@ -103,6 +104,10 @@ export class ChatClient {
           });
           console.log('======================================================================\\n');
           console.debug('ChatClient: message received', data);
+          try {
+            // Expose last incoming payload for debugging in console (temporary)
+            (window as any).__lastWSIncomingMessage = data;
+          } catch (_) {}
           const resolveAttachmentUrl = (url: string | null | undefined): string | null => {
             if (!url) return null;
             try {
@@ -196,6 +201,13 @@ export class ChatClient {
               this.onReaction(data);
             } else {
               console.warn('[ChatClient] onReaction handler not set!');
+            }
+          } else if (data.type === 'message_deleted') {
+            console.log('[ChatClient] Message deleted event received via WS:', data);
+            try {
+              this.onDelete(data.id);
+            } catch (e) {
+              console.error('[ChatClient] onDelete handler error', e);
             }
           } else if (data.type === 'read') {
             if (this.onRead) {
@@ -389,6 +401,10 @@ export class ChatClient {
             iv_length: payload.iv?.length,
             client_id: payload.client_id?.substring(0, 8) + '...',
           });
+          try {
+            // Expose last outgoing payload for debugging in console (temporary)
+            (window as any).__lastWSOutgoingPayload = payload;
+          } catch (_) {}
           console.log('==================================================================\\n');
           this.ws.send(JSON.stringify(payload));
           resolve();

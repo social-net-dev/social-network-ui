@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchRoomsForUser, callCreateRoom } from '../services/messageApi';
+import { UsersAPI, ProfilesAPI } from '@/lib/api/generated';
 import type { IRoomUser } from '../types/message.types';
 
 import { useMessageStore } from '@/stores/messageStore';
@@ -80,12 +81,43 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
   const createRoom = useCallback(
     async (name: string, memberIds: string[]) => {
       try {
-        const payload = {
+        // Try to build members array with display names.
+        const members: Array<{ user_id: string; display_name?: string }> = [];
+
+        // Fetch current user display name
+        let myDisplayName: string | undefined;
+        try {
+          const meResp = await UsersAPI.meMeGet();
+          myDisplayName = meResp?.display_name || undefined;
+        } catch (e) {
+          // ignore - fallback to undefined
+        }
+
+        for (const m of memberIds) {
+          // If member matches current userId, use myDisplayName
+          if (m === userId) {
+            members.push({ user_id: m, display_name: myDisplayName });
+            continue;
+          }
+
+          // Try to fetch profile by username (best-effort)
+          try {
+            const prof = await ProfilesAPI.getProfileProfilesUsernameGet(m);
+            const id = (prof as any)?.id || m;
+            const display = (prof as any)?.display_name || (prof as any)?.username || undefined;
+            members.push({ user_id: id, display_name: display });
+          } catch (e) {
+            // Fallback: push id only
+            members.push({ user_id: m });
+          }
+        }
+
+        const payload: any = {
           name: name.trim() || null,
-          type: memberIds.length > 2 ? 'group' : 'direct',
-          member_ids: memberIds,
+          type: memberIds.length > 2 ? 'group' : 'dm',
+          members,
           creator_id: userId,
-        } as any;
+        };
 
         const res = await callCreateRoom(payload);
 

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { getProfile, extractUserIdFromTenantSlug } from '@/lib/api/profileApi';
-import { callCreateRoom } from '@/features/message/services/messageApi';
+import { callCreateRoom, callGetDMRoom } from '@/features/message/services/messageApi';
+import { useRoomManager } from '@/features/message/hooks/useRoomManager';
 import type { ProfileResponse } from '@/types/profile.types';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -73,7 +74,9 @@ export const SearchUsers: React.FC = () => {
     }
   };
 
-  const handleStartChat = async (userId: string) => {
+  const { createRoom } = useRoomManager({ userId: currentUserId || '' });
+
+  const handleStartChat = async (userId: string, displayName?: string) => {
     if (!currentUserId) {
       alert('Không xác định được user hiện tại');
       return;
@@ -81,19 +84,21 @@ export const SearchUsers: React.FC = () => {
 
     setCreatingRoom(true);
     try {
-      // Create 1-1 room with the selected user
-      const roomPayload = {
-        name: '',
-        type: 'direct',
-        member_ids: [currentUserId, userId],
-        creator_id: currentUserId,
-      };
+      // Check existing DM first
+      try {
+        const dmResp = await callGetDMRoom(currentUserId, userId);
+        const existingRoomId = dmResp?.data?.id || dmResp?.data?.room?.id || dmResp?.data?.room_id || dmResp?.data?.roomId;
+        if (existingRoomId) {
+          navigate(`/messages/${existingRoomId}?user_id=${currentUserId}`);
+          setCreatingRoom(false);
+          return;
+        }
+      } catch (err) {
+        // ignore and proceed to create
+      }
 
-      const response = await callCreateRoom(roomPayload);
-      const roomId = response.data?.id;
-
+      const roomId = await createRoom(displayName || '', [currentUserId, userId]);
       if (roomId) {
-        // Navigate to the chat page
         navigate(`/messages/${roomId}?user_id=${currentUserId}`);
       } else {
         alert('Tạo phòng chat thất bại');
@@ -149,7 +154,7 @@ export const SearchUsers: React.FC = () => {
             </div>
 
             {/* Action Button */}
-            <Button onClick={() => handleStartChat(searchResult.id)} disabled={creatingRoom || searchResult.id === currentUserId} className="flex-shrink-0">
+            <Button onClick={() => handleStartChat(searchResult.username || searchResult.id, searchResult.display_name)} disabled={creatingRoom || searchResult.id === currentUserId} className="flex-shrink-0">
               {creatingRoom ? 'Đang tạo...' : searchResult.id === currentUserId ? 'Bạn' : 'Nhắn tin'}
             </Button>
           </div>

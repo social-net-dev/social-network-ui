@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AuthAPI } from '@/lib/api/generated';
 import { extractUserIdFromTenantSlug } from '@/lib/api/profileApi';
+import { useE2EEStore } from './e2eeStore';
+import { callSetPublicKey } from '@/features/message/services/messageApi';
 // import { clearAllE2EEKeys } from '@/features/message/lib/e2ee'; // NOT USED - keys must persist
 
 interface AuthState {
@@ -59,6 +61,22 @@ export const useAuthStore = create<AuthState>()(
           tenantSlug: tenantSlug || null,
           isAuthenticated: true,
         });
+
+        // Initialize E2EE keys and upload public key to messaging backend in background
+        (async () => {
+          try {
+            const uid = get().getUserId();
+            if (!uid) return;
+            await useE2EEStore.getState().initialize(uid);
+            const publicKey = useE2EEStore.getState().publicKeyString;
+            if (publicKey) {
+              await callSetPublicKey({ user_id: uid, public_key: publicKey });
+              console.log('[authStore] Uploaded public key to messaging backend for user', uid);
+            }
+          } catch (err) {
+            console.warn('[authStore] Failed to upload public key after login:', err);
+          }
+        })();
       },
       setUser: user => set({ user }),
       logout: async () => {
@@ -78,11 +96,11 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('tenant_slug');
 
-          // ⚠️ IMPORTANT: DO NOT clear E2EE keys on logout!
+          // Clear E2EE in-memory state (but keep keys in localStorage)
+          // ⚠️ IMPORTANT: DO NOT clear E2EE keys from localStorage!
           // E2EE keys MUST persist across login/logout to decrypt old messages.
           // Keys are tied to DEVICE, not session.
-          // Only clear keys when user explicitly "logs out from this device forever".
-          // clearAllE2EEKeys(); // ❌ REMOVED
+          useE2EEStore.getState().clearKeys();
 
           set({
             user: null,

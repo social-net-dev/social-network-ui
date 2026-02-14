@@ -7,6 +7,8 @@ import { LoginFormDataSchema, type LoginFormData } from '../types/auth.types';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '@/lib/api';
 import { loginMiddleware } from '@/lib/api/manual-apis';
+import { useE2EEStore } from '@/stores/e2eeStore';
+import { extractUserIdFromTenantSlug } from '@/lib/api/profileApi';
 
 export function useLogin() {
   const navigate = useNavigate();
@@ -37,6 +39,22 @@ export function useLogin() {
         const meRes = await apiClient.get('users/me/');
         const userData = meRes.data;
         useAuthStore.getState().setUser(userData);
+
+        // Initialize E2EE immediately after login
+        const tenantSlug = response.tenant_slug || response.tenantSlug;
+        if (tenantSlug) {
+          const userId = extractUserIdFromTenantSlug(tenantSlug);
+          if (userId) {
+            console.log('[useLogin] 🔐 Initializing E2EE for user:', userId);
+            try {
+              await useE2EEStore.getState().initialize(userId);
+              console.log('[useLogin] ✅ E2EE initialized successfully');
+            } catch (error) {
+              console.error('[useLogin] ❌ E2EE initialization failed:', error);
+              // Don't block login flow if E2EE fails
+            }
+          }
+        }
 
         // Redirect based on user role
         redirectPath = userData?.role === 'ADMIN' ? '/admin/accounts' : '/';

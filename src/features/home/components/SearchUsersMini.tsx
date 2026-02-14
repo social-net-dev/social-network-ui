@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { getProfile, extractUserIdFromTenantSlug } from '@/lib/api/profileApi';
-import { callCreateRoom } from '@/features/message/services/messageApi';
+import { callCreateRoom, callGetDMRoom } from '@/features/message/services/messageApi';
+import { useRoomManager } from '@/features/message/hooks/useRoomManager';
 import type { ProfileResponse } from '@/types/profile.types';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,9 @@ export const SearchUsersMini: React.FC = () => {
     }
   };
 
-  const handleStartChat = async (targetUserId: string) => {
+  const { createRoom } = useRoomManager({ userId: currentUserId || '' });
+
+  const handleStartChat = async (targetUserId: string, targetDisplayName?: string) => {
     if (!currentUserId) {
       console.error('[SearchUsersMini] No current user ID');
       return;
@@ -75,17 +78,24 @@ export const SearchUsersMini: React.FC = () => {
 
     setCreatingRoom(true);
     try {
-      // Tạo room direct message giữa 2 users
-      const roomPayload = {
-        name: '', // Direct chat không cần tên
-        type: 'direct',
-        member_ids: [currentUserId, targetUserId],
-        creator_id: currentUserId,
-      };
+      // Check if DM room already exists
+      try {
+        const dmResp = await callGetDMRoom(currentUserId, targetUserId);
+        const existingRoomId = dmResp?.data?.id || dmResp?.data?.room?.id || dmResp?.data?.room_id || dmResp?.data?.roomId;
+        if (existingRoomId) {
+          navigate(`/messages/${existingRoomId}?user_id=${currentUserId}`);
+          setSearchQuery('');
+          setSearchResult(null);
+          setCreatingRoom(false);
+          return;
+        }
+      } catch (err) {
+        // ignore and fallback to creating a room
+      }
 
-      console.log('[SearchUsersMini] Creating room with:', roomPayload);
-      const response = await callCreateRoom(roomPayload);
-      const roomId = response.data?.id;
+      // Use createRoom from room manager so members/display names are populated
+      // and set the room name to the recipient's display name when available
+      const roomId = await createRoom(targetDisplayName || '', [currentUserId, targetUserId]);
 
       if (roomId) {
         // Navigate với user_id tự động điền sẵn để WebSocket connect đúng
@@ -141,7 +151,7 @@ export const SearchUsersMini: React.FC = () => {
               <p className="text-xs text-gray-500 truncate">{searchResult.username}</p>
             </div>
 
-            <Button size="sm" variant="ghost" onClick={() => handleStartChat(searchResult.id)} disabled={creatingRoom || searchResult.id === currentUserId} className="flex-shrink-0">
+            <Button size="sm" variant="ghost" onClick={() => handleStartChat(searchResult.username || searchResult.id, searchResult.display_name)} disabled={creatingRoom || searchResult.id === currentUserId} className="flex-shrink-0">
               <MessageCircle className="h-4 w-4" />
             </Button>
           </div>

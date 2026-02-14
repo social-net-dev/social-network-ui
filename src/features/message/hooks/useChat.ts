@@ -11,6 +11,7 @@ export function useChat({
   onMessage: onMessageCallback,
   onExternalMessage,
   onRead,
+  onDelete,
 }: {
   room: string;
   userId: string;
@@ -20,6 +21,7 @@ export function useChat({
   onMessage?: (msg: MessageOut) => void;
   onExternalMessage?: (msg: MessageOut) => void;
   onRead?: (data: any) => void;
+  onDelete?: (messageId: string) => void;
 }) {
   const [messages, setMessages] = useState<MessageOut[]>([]);
   const [status, setStatus] = useState<'connecting' | 'open' | 'closed' | 'error'>('connecting');
@@ -162,6 +164,11 @@ export function useChat({
           existing.onRead = data => {
             onRead?.(data);
           };
+          existing.onDelete = id => {
+            console.log('[useChat] onDelete (reused client) received:', id);
+            setMessages(prev => prev.filter(m => m.id !== id));
+            onDelete?.(id);
+          };
           return () => {
             // detach handlers only
             existing.onMessage = () => {};
@@ -171,6 +178,7 @@ export function useChat({
             existing.onReaction = () => {};
 
             existing.onRead = () => {};
+            existing.onDelete = () => {};
           };
         }
       } catch {}
@@ -251,6 +259,11 @@ export function useChat({
         console.log('[useChat] Reaction ACK - keeping optimistic update');
         return;
       }
+      client.onDelete = id => {
+        console.log('[useChat] onDelete received:', id);
+        setMessages(prev => prev.filter(m => m.id !== id));
+        onDelete?.(id);
+      };
 
       // Gọi callback để ConversationPage cập nhật fetchedMessages
       if (onReactionEvent) {
@@ -371,6 +384,15 @@ export function useChat({
 
     setMessages(prev => [...prev, optimistic]);
     try {
+      console.log('[useChat] 🔁 Sending message to server with encrypted metadata:', {
+        room_id: room,
+        sender_id: userId?.substring(0, 8) + '...',
+        has_encrypted_key: !!encryptedData?.encrypted_key,
+        has_encrypted_key_recipient: !!encryptedData?.encrypted_key_recipient,
+        has_encrypted_key_sender: !!encryptedData?.encrypted_key_sender,
+        iv_length: encryptedData?.iv?.length,
+      });
+
       await clientRef.current!.send({
         room_id: room,
         sender_id: userId,

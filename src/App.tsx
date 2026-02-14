@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { LoginPage, RegisterPage, OTPVerifyPage, ForgotPasswordPage } from '@/features/auth/routes';
 import { FeedPage } from '@/features/home/pages/FeedPage';
 import { ExplorePage } from '@/features/home/pages/ExplorePage';
@@ -16,13 +17,28 @@ import { ConversationPage } from '@/features/message/routes';
 import { FriendRequestsPage } from '@/features/friends/pages/FriendRequestsPage';
 import { FriendsListPage } from '@/features/friends/pages/FriendsListPage';
 import { useAuthStore } from '@/stores/authStore';
+import { useE2EEStore } from '@/stores/e2eeStore';
 import { AppLayout } from '@/features/shared/layouts/AppLayout';
 import { GlobalLoading } from '@/components/ui/global-loading';
 import { Toaster } from '@/components/ui/sonner';
 import { ProtectedRoute, PublicRoute, AdminRoute } from '@/components/auth';
 
 function App() {
-  const { isLoading } = useAuthStore();
+  const { isLoading, isAuthenticated, getUserId } = useAuthStore();
+  const { initialize, isInitialized } = useE2EEStore();
+
+  // Initialize E2EE when app mounts and user is authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && !isInitialized) {
+      const userId = getUserId();
+      if (userId) {
+        console.log('[App] 🔐 Auto-initializing E2EE for logged-in user:', userId);
+        initialize(userId).catch(error => {
+          console.error('[App] ❌ E2EE auto-initialization failed:', error);
+        });
+      }
+    }
+  }, [isLoading, isAuthenticated, isInitialized, getUserId, initialize]);
 
   if (isLoading) {
     return <GlobalLoading />;

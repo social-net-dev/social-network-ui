@@ -71,7 +71,7 @@ export type MessageOut = {
   ciphertext?: string | null;
   created_at?: string | null;
   client_id?: string | null;
-  _status?: 'sent' | 'delivered' | 'read';
+  _status?: 'sending' | 'sent' | 'failed' | 'delivered' | 'read';
   _error?: string | null;
   // Double encryption model
   // Backward compat or alias for encrypted_key_recipient

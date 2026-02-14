@@ -189,6 +189,57 @@ export const callUpdatePublicKey = (payload: IPublicKeyRequest) => {
 };
 
 // GET /api/rooms/{room_id}/members/public_keys (get all member public keys in a room)
-export const callGetRoomMemberPublicKeys = (roomId: string) => {
-  return messageApiClient.get<{ members: Array<{ user_id: string; public_key: string }> }>(`/api/rooms/${encodeURIComponent(roomId)}/members/public_keys`);
+export const callGetRoomMemberPublicKeys = async (roomId: string) => {
+  const pathApi = `/api/rooms/${encodeURIComponent(roomId)}/members/public_keys`;
+  const pathNoApi = `/rooms/${encodeURIComponent(roomId)}/members/public_keys`;
+
+  try {
+    return await messageApiClient.get<{
+      members: Array<{
+        user_id: string;
+        public_key?: string;
+        display_name?: string;
+      }>;
+    }>(pathApi);
+  } catch (err: any) {
+    // If the service doesn't use /api prefix, try fallback path
+    if (err?.response?.status === 404) {
+      try {
+        return await messageApiClient.get<{
+          members: Array<{
+            user_id: string;
+            public_key?: string;
+            display_name?: string;
+          }>;
+        }>(pathNoApi);
+      } catch (err2) {
+        throw err2;
+      }
+    }
+    throw err;
+  }
+};
+
+// GET /api/rooms/dm?user_a={user_a}&user_b={user_b} -> check or create DM
+export const callGetDMRoom = (userA: string | null, userB: string | null) => {
+  const params = new URLSearchParams();
+  if (userA) params.set('user_a', userA);
+  if (userB) params.set('user_b', userB);
+  return messageApiClient.get(`/api/rooms/dm?${params.toString()}`);
+};
+
+// --- Encrypted private key backup endpoints ---
+// POST /api/users/{user_id}/e2ee_backup  -> save/update backup
+export const callBackupPrivateKey = (userId: string, payload: { ciphertext: string; salt: string; iv: string; iterations: number; algo: string; version?: string }) => {
+  return messageApiClient.post(`/api/users/${encodeURIComponent(userId)}/e2ee_backup`, payload);
+};
+
+// GET /api/users/{user_id}/e2ee_backup -> get backup metadata + ciphertext
+export const callGetPrivateKeyBackup = (userId: string) => {
+  return messageApiClient.get(`/api/users/${encodeURIComponent(userId)}/e2ee_backup`);
+};
+
+// DELETE /api/users/{user_id}/e2ee_backup -> remove backup
+export const callDeletePrivateKeyBackup = (userId: string) => {
+  return messageApiClient.delete(`/api/users/${encodeURIComponent(userId)}/e2ee_backup`);
 };

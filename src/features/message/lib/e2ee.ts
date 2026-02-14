@@ -90,6 +90,99 @@ export async function exportPrivateKey(key: CryptoKey): Promise<string> {
 }
 
 /**
+ * Derive an AES-GCM CryptoKey from a passphrase using PBKDF2
+ */
+async function deriveKeyFromPassphrase(passphrase: string, salt: BufferSource, iterations = 150000): Promise<CryptoKey> {
+  const enc = new TextEncoder();
+  const passKey = await window.crypto.subtle.importKey('raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
+  const key = await window.crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: iterations,
+      hash: 'SHA-256',
+    },
+    passKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+  return key;
+}
+
+/**
+ * Encrypt exported private key string with passphrase (PBKDF2 + AES-GCM)
+ * Returns ciphertext and metadata for server storage
+ */
+export async function encryptPrivateKeyWithPassphrase(exportedPrivateKeyBase64: string, passphrase: string) {
+  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const iterations = 150000;
+
+  const aesKey = await deriveKeyFromPassphrase(passphrase, salt, iterations);
+
+  const dataBuffer = base64ToArrayBuffer(exportedPrivateKeyBase64);
+
+  const encrypted = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aesKey, dataBuffer);
+
+  return {
+    ciphertext: arrayBufferToBase64(encrypted),
+    salt: arrayBufferToBase64(salt.buffer),
+    iv: arrayBufferToBase64(iv.buffer),
+    iterations,
+    algo: 'PBKDF2+AES-GCM',
+    version: 'v1',
+  };
+}
+
+/**
+ * Decrypt ciphertext (from server) using passphrase
+ */
+export async function decryptPrivateKeyWithPassphrase(payload: { ciphertext: string; salt: string; iv: string; iterations: number; algo: string }, passphrase: string) {
+  if (!payload || typeof payload !== 'object') {
+    console.error('[E2EE] decryptPrivateKeyWithPassphrase: payload is invalid', payload);
+    throw new Error('Invalid backup payload');
+  }
+
+  // Support server responses that wrap backup inside `backups: [{...}]`
+  let record: any = payload as any;
+  if (Array.isArray((payload as any).backups) && (payload as any).backups.length > 0) {
+    record = (payload as any).backups[0];
+    console.log('[E2EE] decryptPrivateKeyWithPassphrase: using backups[0] record');
+  }
+
+  const missing: string[] = [];
+  if (!record.salt) missing.push('salt');
+  if (!record.iv) missing.push('iv');
+  if (!record.ciphertext) missing.push('ciphertext');
+  if (missing.length) {
+    console.error('[E2EE] decryptPrivateKeyWithPassphrase: missing fields in payload', record);
+    throw new Error(`Backup payload missing fields: ${missing.join(', ')}`);
+  }
+
+  let saltBuf: ArrayBuffer;
+  let ivBuf: ArrayBuffer;
+  let ciphertextBuf: ArrayBuffer;
+  try {
+    saltBuf = base64ToArrayBuffer(record.salt);
+    ivBuf = base64ToArrayBuffer(record.iv);
+    ciphertextBuf = base64ToArrayBuffer(record.ciphertext);
+  } catch (err) {
+    console.error('[E2EE] Failed to base64-decode backup payload fields', err, record);
+    throw new Error('Failed to decode backup payload (invalid base64)');
+  }
+
+  const salt = new Uint8Array(saltBuf);
+  const iv = new Uint8Array(ivBuf);
+
+  const iterations = (record.iterations as number) || payload.iterations || 150000;
+  const aesKey = await deriveKeyFromPassphrase(passphrase, salt, iterations);
+
+  const decrypted = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesKey, ciphertextBuf);
+  return arrayBufferToBase64(decrypted);
+}
+
+/**
  * Import key from base64 string
  */
 export async function importPublicKey(keyString: string): Promise<CryptoKey> {
@@ -474,12 +567,24 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
  * Helper: Convert Base64 to ArrayBuffer
  */
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
+  // Normalize base64: remove whitespace, convert URL-safe chars, and add padding if needed
+  let src = base64.replace(/\s+/g, '');
+  src = src.replace(/-/g, '+').replace(/_/g, '/');
+  const pad = src.length % 4;
+  if (pad === 2) src += '==';
+  else if (pad === 3) src += '=';
+
+  try {
+    const binary = atob(src);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+  } catch (err) {
+    console.error('[E2EE] base64ToArrayBuffer failed to decode input:', base64);
+    throw err;
   }
-  return bytes.buffer;
 }
 
 // ============================================

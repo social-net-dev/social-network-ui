@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useConversations } from '../hooks/useConversations';
@@ -7,6 +7,7 @@ import { useRoomManager } from '../hooks/useRoomManager';
 import { useMessageManager } from '../hooks/useMessageManager';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { useE2EEMessaging } from '../hooks/useE2EEMessaging';
+import { PassphraseModal } from '../components/PassphraseModal';
 import { useAuthStore } from '@/stores/authStore';
 import { RoomSidebar } from '../components/RoomSidebar';
 import { MessageArea } from '../components/MessageArea';
@@ -33,6 +34,7 @@ const ConversationPage: React.FC = () => {
   const [text, setText] = useState('');
   const [decryptedMessages, setDecryptedMessages] = useState<Record<string, string>>({});
   const [recipientId, setRecipientId] = useState<string | null>(null);
+  const [currentMemberDisplayName, setCurrentMemberDisplayName] = useState<string | undefined>(undefined);
 
   const resetUnread = useMessageStore(state => state.resetUnread);
   const incrementUnread = useMessageStore(state => state.incrementUnread);
@@ -177,13 +179,28 @@ const ConversationPage: React.FC = () => {
   });
 
   // Room manager hook
-  const { rooms, createRoom, loadRooms } = useRoomManager({ userId: resolvedUserId });
+  const { rooms } = useRoomManager({ userId: resolvedUserId });
 
   // Message manager hook
   const { setFetchedMessages, combinedMessages, pinnedMessages, regularMessages, loadMessages } = useMessageManager({
     roomId: resolvedRoom,
     wsMessages: messages,
   });
+
+  // Listen for messageDeleted events dispatched by other components (optimistic removal)
+  useEffect(() => {
+    const handler = (ev: Event) => {
+      try {
+        const detail = (ev as CustomEvent).detail as { id?: string } | undefined;
+        const id = detail?.id;
+        if (id) {
+          setFetchedMessages(prev => prev.filter(m => m.id !== id));
+        }
+      } catch (e) {}
+    };
+    window.addEventListener('messageDeleted', handler as EventListener);
+    return () => window.removeEventListener('messageDeleted', handler as EventListener);
+  }, [setFetchedMessages]);
 
   // File upload hook
   const { selectedFiles, fileInputRef, previews, handleFileSelect, removeFile, clearFiles, uploadFiles } = useFileUpload({
@@ -202,11 +219,68 @@ const ConversationPage: React.FC = () => {
     isReady: e2eeReady,
     encryptForRecipient,
     decryptIncoming,
+    showPassphraseModal,
+    passphraseMode,
+    setShowPassphraseModal,
+    setPassphraseMode,
+    handleCreateBackup,
+    handleRestore,
+    showSyncNotice,
+    dismissSyncNotice,
+    ensureReady,
   } = useE2EEMessaging({
     roomId: resolvedRoom,
     userId: resolvedUserId,
     enabled: true, // Enable E2EE by default
   });
+
+  // Show one-time sync notice when server backup exists and local device hasn't seen it
+  const [localSyncNoticeVisible, setLocalSyncNoticeVisible] = useState(false);
+  useEffect(() => {
+    if ((showSyncNotice as boolean) === true) setLocalSyncNoticeVisible(true);
+  }, [showSyncNotice]);
+
+  // Overlay to force restore/create keys when required
+  const [e2eeOverlayRequired, setE2eeOverlayRequired] = useState(false);
+  const [e2eeOverlayMessage, setE2eeOverlayMessage] = useState<string | null>(null);
+
+  // Dynamic left offset to avoid overlapping global sidebar which can open/collapse
+  const [leftOffset, setLeftOffset] = useState<string>('0px');
+  const sidebarGapRef = useRef<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    const findGap = () => document.querySelector<HTMLElement>('[data-slot="sidebar-gap"]');
+    let gap = findGap();
+    if (gap) sidebarGapRef.current = gap;
+
+    const update = () => {
+      try {
+        const w = sidebarGapRef.current ? Math.ceil(sidebarGapRef.current.getBoundingClientRect().width) : 0;
+        // Add a small safety margin
+        setLeftOffset(`${w + 8}px`);
+      } catch (e) {
+        setLeftOffset('0px');
+      }
+    };
+
+    update();
+
+    // Observe size changes of the gap element
+    let ro: ResizeObserver | null = null;
+    if (sidebarGapRef.current && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => update());
+      ro.observe(sidebarGapRef.current);
+    }
+
+    // Fallback: listen to window resize
+    window.addEventListener('resize', update);
+
+    return () => {
+      window.removeEventListener('resize', update);
+      if (ro && sidebarGapRef.current) ro.unobserve(sidebarGapRef.current);
+      ro = null;
+    };
+  }, []);
 
   // Fetch recipient ID when room changes (for E2EE encryption)
   useEffect(() => {
@@ -246,6 +320,35 @@ const ConversationPage: React.FC = () => {
           setRecipientId(null);
           console.warn('[ConversationPage] ⚠️ No recipient found (group chat or only you)');
         }
+
+        // Set current user's display name for SetDisplayName component
+        try {
+          const me = members.find(m => m.user_id === resolvedUserId);
+          setCurrentMemberDisplayName(me?.display_name ?? undefined);
+        } catch (e) {
+          setCurrentMemberDisplayName(undefined);
+        }
+
+        // After loading members, decide if we must block the UI to force restore/create
+        try {
+          const localKey = !!localStorage.getItem(`e2ee_private_key_${resolvedUserId}`);
+          const seenKey = localStorage.getItem(`e2ee_sync_seen_${resolvedUserId}`) === '1';
+          const otherHasPublicKey = members.some(m => m.user_id !== resolvedUserId && !!m.public_key);
+          // Only require overlay when other members have public keys and local key missing
+          // but avoid blocking if passphrase modal is already open or E2EE is ready
+          if (otherHasPublicKey && !localKey && !showPassphraseModal && !e2eeReady) {
+            setE2eeOverlayMessage('Phòng này yêu cầu E2EE. Vui lòng khôi phục khoá từ backup hoặc tạo khoá mới để nhắn tin.');
+            setE2eeOverlayRequired(true);
+          } else if ((showSyncNotice as boolean) === true && !seenKey && !localKey && !showPassphraseModal && !e2eeReady) {
+            setE2eeOverlayMessage('Phát hiện khoá E2EE trên server. Vui lòng khôi phục khoá để đồng bộ trước khi nhắn tin.');
+            setE2eeOverlayRequired(true);
+          } else {
+            setE2eeOverlayRequired(false);
+            setE2eeOverlayMessage(null);
+          }
+        } catch (e) {
+          console.warn('[ConversationPage] Failed to evaluate E2EE overlay requirement', e);
+        }
       } catch (error) {
         console.error('[ConversationPage] ❌ Failed to fetch recipient:', error);
         setRecipientId(null);
@@ -254,6 +357,46 @@ const ConversationPage: React.FC = () => {
 
     fetchRecipient();
   }, [resolvedRoom, resolvedUserId, e2eeReady]);
+
+  // Render passphrase modal for backup/restore when required
+  const onSubmitPassphrase = async (passphrase: string, remember: boolean) => {
+    if (passphraseMode === 'create') {
+      await handleCreateBackup(passphrase, remember);
+    } else if (passphraseMode === 'restore') {
+      await handleRestore(passphrase, remember);
+    }
+  };
+
+  // Passphrase modal UI
+  const [modalOpen, setModalOpen] = React.useState(false);
+
+  // Keep modal open state in sync with hook
+  useEffect(() => {
+    setModalOpen(Boolean(showPassphraseModal));
+  }, [showPassphraseModal]);
+
+  // Sync notice banner JSX
+  const SyncNotice = () => {
+    if (!localSyncNoticeVisible) return null;
+    return (
+      <div className="max-w-4xl mx-auto p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm flex items-center justify-between mb-4">
+        <div>Khôi phục khoá E2EE đã có trên server — khoá đã được đồng bộ ở thiết bị khác.</div>
+        <div className="flex items-center gap-2">
+          <button
+            className="px-3 py-1 bg-etechs-primary text-white rounded-xl"
+            onClick={() => {
+              setLocalSyncNoticeVisible(false);
+              try {
+                dismissSyncNotice?.();
+              } catch (e) {}
+            }}
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   // Decrypt messages when they arrive
   useEffect(() => {
@@ -434,20 +577,7 @@ const ConversationPage: React.FC = () => {
     setSelectedConversationId(roomId);
   };
 
-  // Handle room creation
-  const handleCreateRoom = async (name: string, memberId: string) => {
-    const members = [resolvedUserId, memberId];
-    const roomId = await createRoom(name, members);
-
-    if (roomId) {
-      setSelectedConversationId(roomId);
-      navigate(`/messages/${roomId}`);
-      const next = new URLSearchParams(searchParams);
-      next.set('room_id', roomId);
-      next.set('user_id', resolvedUserId);
-      setSearchParams(next);
-    }
-  };
+  // Room creation is handled via UI elsewhere; keep `createRoom` from hook available when needed.
 
   // Handle send message
   const handleSend = async () => {
@@ -470,12 +600,44 @@ const ConversationPage: React.FC = () => {
           current_user: resolvedUserId.substring(0, 8) + '...',
         });
 
-        if (e2eeReady && recipientId) {
+        // If E2EE not ready but we have a recipient, attempt on-demand initialization
+        let readyNow = e2eeReady;
+        if (!readyNow && recipientId) {
+          try {
+            const ensured = await ensureReady?.();
+            readyNow = !!ensured;
+            console.log('[ConversationPage] ensureReady returned:', ensured);
+          } catch (e) {
+            console.warn('[ConversationPage] ensureReady failed:', e);
+          }
+        }
+
+        // If we have a recipient but initialization did NOT succeed, block plaintext send
+        if (!readyNow && recipientId) {
+          console.warn('[ConversationPage] ✋ E2EE not ready and ensureReady failed — blocking plaintext send to avoid storing unhashed ciphertext');
+          alert('Không thể gửi: mã hóa E2EE chưa sẵn sàng. Vui lòng khôi phục hoặc tạo khoá trước khi gửi tin nhắn.');
+          return;
+        }
+
+        if (readyNow && recipientId) {
           console.log('[ConversationPage] 🔐 E2EE enabled, encrypting...');
 
           // Encrypt message for the recipient (Double Encryption Model)
           encrypted = await encryptForRecipient(text.trim(), recipientId);
 
+          console.log('[ConversationPage] 🔐 Encryption result:', {
+            has_ciphertext: !!encrypted?.ciphertext,
+            has_key_recipient: !!(encrypted as any)?.encrypted_key_recipient,
+            has_key_sender: !!(encrypted as any)?.encrypted_key_sender,
+            iv_length: (encrypted as any)?.iv?.length,
+          });
+
+          // Defensive: do not send ciphertext without both encrypted keys
+          if (!encrypted || !(encrypted as any).encrypted_key_recipient || !(encrypted as any).encrypted_key_sender) {
+            console.error('[ConversationPage] ❌ Encryption produced no recipient/sender keys — aborting send to avoid storing unusable ciphertext');
+            alert('Mã hoá thất bại: khoá mã hoá không có. Vui lòng thử lại hoặc khởi tạo E2EE.');
+            return;
+          }
           if (encrypted) {
             console.log('[ConversationPage] ✅ Encrypted payload:', {
               ciphertext_length: encrypted.ciphertext.length,
@@ -556,29 +718,80 @@ const ConversationPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-[calc(100vh-64px)] flex gap-4 overflow-hidden p-0">
+    // Fixed container below the top header so inner columns handle scrolling
+    // Use dynamic left offset (style) so we respect the main sidebar open/collapse state
+    <div style={{ left: leftOffset }} className="fixed top-16 right-0 bottom-0 flex gap-4 overflow-hidden p-0">
       {/* Left: Room sidebar */}
-      <RoomSidebar rooms={rooms} selectedRoomId={selectedConversationId} userId={resolvedUserId} onRoomSelect={handleRoomSelect} onCreateRoom={handleCreateRoom} onReloadRooms={loadRooms} />
+      <RoomSidebar rooms={rooms} selectedRoomId={selectedConversationId} userId={resolvedUserId} onRoomSelect={handleRoomSelect} />
 
-      {/* Center: Message area with input */}
-      <MessageArea
-        pinnedMessages={pinnedMessages}
-        regularMessages={regularMessages}
-        currentUserId={resolvedUserId}
-        chatStatus={chatStatus}
-        lastError={lastError}
-        conversationTitle={conversations.find(c => c.id === selectedConversationId)?.title}
-        sendReaction={sendReaction}
-        onRefresh={loadMessages}
-        endRef={endRef}
-        messagesContainerRef={messagesContainerRef}
-        decryptedMessages={decryptedMessages}
-        roomId={resolvedRoom}
-        messageInput={<MessageInput text={text} selectedFiles={selectedFiles} previews={previews} fileInputRef={fileInputRef} onTextChange={setText} onFileSelect={handleFileSelect} onRemoveFile={removeFile} onSend={handleSend} onAttachClick={() => fileInputRef.current?.click()} />}
-      />
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <SyncNotice />
+        <PassphraseModal open={modalOpen} mode={passphraseMode} onClose={() => setShowPassphraseModal(false)} onSubmit={onSubmitPassphrase} />
 
-      {/* E2EE Debug Panel - Chỉ hiện trong dev mode */}
-      {selectedConversationId && <E2EEDebugPanel roomId={selectedConversationId} />}
+        {/* Center: Message area with input */}
+        <div className="relative flex-1 min-h-0">
+          <MessageArea
+            pinnedMessages={pinnedMessages}
+            regularMessages={regularMessages}
+            currentUserId={resolvedUserId}
+            chatStatus={chatStatus}
+            lastError={lastError}
+            conversationTitle={
+              // Prefer real room name from `rooms` (backend uses `name`), fallback to conversations placeholder
+              rooms.find(r => r.room_id === selectedConversationId)?.name || conversations.find(c => c.id === selectedConversationId)?.title
+            }
+            sendReaction={sendReaction}
+            onRefresh={loadMessages}
+            endRef={endRef}
+            messagesContainerRef={messagesContainerRef}
+            decryptedMessages={decryptedMessages}
+            roomId={resolvedRoom}
+            currentMemberDisplayName={currentMemberDisplayName}
+            messageInput={<MessageInput text={text} selectedFiles={selectedFiles} previews={previews} fileInputRef={fileInputRef} onTextChange={setText} onFileSelect={handleFileSelect} onRemoveFile={removeFile} onSend={handleSend} onAttachClick={() => fileInputRef.current?.click()} />}
+          />
+
+          {e2eeOverlayRequired && (
+            // Limit overlay bottom so message input stays visible and usable
+            <div className="absolute left-0 right-0 top-0 bottom-16 bg-white/80 z-50 flex items-center justify-center p-6">
+              <div className="max-w-xl text-center">
+                <h3 className="text-lg font-semibold mb-2">Bảo mật đầu cuối yêu cầu khoá</h3>
+                <p className="mb-4">{e2eeOverlayMessage || 'Phòng này yêu cầu E2EE. Vui lòng khôi phục khoá hoặc tạo khoá mới để tiếp tục.'}</p>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    className="px-4 py-2 bg-etechs-primary text-white rounded"
+                    onClick={() => {
+                      try {
+                        setPassphraseMode && setPassphraseMode('restore');
+                      } catch (e) {}
+                      try {
+                        setShowPassphraseModal(true);
+                      } catch (e) {}
+                    }}
+                  >
+                    Khôi phục từ backup
+                  </button>
+                  <button
+                    className="px-4 py-2 border rounded"
+                    onClick={() => {
+                      try {
+                        setPassphraseMode && setPassphraseMode('create');
+                      } catch (e) {}
+                      try {
+                        setShowPassphraseModal(true);
+                      } catch (e) {}
+                    }}
+                  >
+                    Tạo & Backup khoá
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* E2EE Debug Panel - Chỉ hiện trong dev mode
+      {selectedConversationId && <E2EEDebugPanel roomId={selectedConversationId} />} */}
     </div>
   );
 };
