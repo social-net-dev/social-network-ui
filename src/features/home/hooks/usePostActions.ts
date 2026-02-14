@@ -1,46 +1,73 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { InfiniteData } from '@tanstack/react-query';
-import { PostsV2API } from '@/lib/api/generated';
-import { queryKeys } from '@/lib/query-keys';
+import { usePostActions as useManualPostActions } from '@/lib/api/hooks/usePosts';
+import { useReactions } from '@/lib/api/hooks/useReactions';
+import { useShares } from '@/lib/api/hooks/useShares';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import type { FeedPost } from '../types/feed.types';
-
-type PostContainer = FeedPost[] | { posts: FeedPost[] } | { items: FeedPost[] } | { data: { posts: FeedPost[] } };
 
 export function usePostActions(customQueryKey?: readonly unknown[]) {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuthStore();
 
-  const deleteMutation = PostsV2API.useDeletePostV2PostsPostIdDelete();
-  const updateMutation = PostsV2API.useUpdatePostV2PostsPostIdPut();
-  const shareMutation = PostsV2API.useSharePostV2PostsPostIdSharePost();
-  const reactMutation = PostsV2API.useReactToPostV2PostsPostIdReactionsPost();
-  const removeReactionMutation = PostsV2API.useRemoveReactionV2PostsPostIdReactionsDelete();
+  const { deletePost: manualDelete, updatePost: manualUpdate, isLoading: isPostActionLoading } = useManualPostActions();
+  const { reactToPost, unreactPost, isLoading: isReactionLoading } = useReactions();
+  const { share, isSharing } = useShares();
 
   const updateCache = useCallback(
     (updater: (posts: FeedPost[]) => FeedPost[]) => {
-      // Update ALL feed queries in cache (handles different fieldId/postType keys)
-      const allQueries = queryClient.getQueryCache().findAll({ queryKey: queryKeys.feed.all });
+      // Tìm tất cả các query có thể chứa bài viết
+      const allQueries = queryClient.getQueryCache().findAll({ 
+        predicate: (query) => 
+          query.queryKey.includes('feed') || 
+          query.queryKey.includes('posts') || 
+          query.queryKey.includes('recommendation') ||
+          query.queryKey.includes('search')
+      });
 
-      const updateData = (data: PostContainer): PostContainer => {
+      const updateData = (data: any): any => {
+        if (!data) return data;
+        
+        // Nếu data là mảng bài viết (hiếm gặp trong React Query data root nhưng có thể ở pages)
         if (Array.isArray(data)) return updater(data);
-        if ('posts' in data) return { ...data, posts: updater(data.posts) };
-        if ('items' in data) return { ...data, items: updater(data.items) };
-        if ('data' in data && 'posts' in data.data) return { ...data, data: { ...data.data, posts: updater(data.data.posts) } };
+        
+        // Nếu data có cấu trúc { posts: [...] } (getFeed response)
+        if ('posts' in data && Array.isArray(data.posts)) {
+          return { ...data, posts: updater(data.posts) };
+        }
+        
+        // Nếu data có cấu trúc { items: [...] } (PaginatedResponse)
+        if ('items' in data && Array.isArray(data.items)) {
+          return { ...data, items: updater(data.items) };
+        }
+
+        // Nếu data có cấu trúc { data: { posts: [...] } }
+        if (data.data && 'posts' in data.data && Array.isArray(data.data.posts)) {
+          return { ...data, data: { ...data.data, posts: updater(data.data.posts) } };
+        }
+
+        // Trường hợp data chính là 1 bài viết (getPostDetail)
+        if ('id' in data && 'content' in data && 'author' in data) {
+          const updated = updater([data as FeedPost]);
+          return updated.length > 0 ? updated[0] : data;
+        }
+
         return data;
       };
 
       for (const query of allQueries) {
-        queryClient.setQueryData<PostContainer | InfiniteData<PostContainer>>(query.queryKey, old => {
+        queryClient.setQueryData<any>(query.queryKey, (old: any) => {
           if (!old) return old;
-          if ('pages' in old) {
+          
+          // Xử lý Infinite Query
+          if ('pages' in old && Array.isArray(old.pages)) {
             return {
               ...old,
-              pages: old.pages.map(page => updateData(page)),
+              pages: old.pages.map((page: any) => updateData(page)),
             };
           }
+          
           return updateData(old);
         });
       }
@@ -53,15 +80,15 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
       updateCache(posts => posts.filter(p => p.id !== postId));
 
       try {
-        await deleteMutation.mutateAsync({ postId });
+        await manualDelete(postId);
         toast.success('Đã xóa bài viết');
       } catch (err) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
         toast.error('Lỗi khi xóa bài viết');
         throw err;
       }
     },
-    [deleteMutation, queryClient, updateCache]
+    [manualDelete, queryClient, updateCache]
   );
 
   const updatePost = useCallback(
@@ -69,30 +96,35 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
       updateCache(posts => posts.map(p => (p.id === postId ? { ...p, content } : p)));
 
       try {
-        await updateMutation.mutateAsync({
+        await manualUpdate({
           postId,
           data: { content_text: content },
         });
         toast.success('Đã cập nhật bài viết');
       } catch (err) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
         toast.error('Lỗi khi cập nhật bài viết');
         throw err;
       }
     },
-    [updateMutation, queryClient, updateCache]
+    [manualUpdate, queryClient, updateCache]
   );
 
   const sharePost = useCallback(
     async (postId: string, message?: string) => {
       // Search ALL feed queries for the original post
       let postsArray: FeedPost[] = [];
-      const allQueries = queryClient.getQueryCache().findAll({ queryKey: queryKeys.feed.all });
+      const allQueries = queryClient.getQueryCache().findAll({ 
+        predicate: (query) => query.queryKey.includes('feed')
+      });
+      
       for (const query of allQueries) {
-        const allData = query.state.data as PostContainer | InfiniteData<PostContainer> | undefined;
+        const allData = query.state.data as any;
         if (!allData) continue;
         if ('pages' in allData) {
-          postsArray = allData.pages.flatMap(page => (Array.isArray(page) ? page : 'posts' in page ? page.posts : 'items' in page ? page.items : 'data' in page ? page.data.posts : []));
+          postsArray = allData.pages.flatMap((page: any) => 
+            Array.isArray(page) ? page : 'posts' in page ? page.posts : 'items' in page ? page.items : 'data' in page ? page.data.posts : []
+          );
         } else {
           postsArray = Array.isArray(allData) ? allData : 'posts' in allData ? allData.posts : 'items' in allData ? allData.items : 'data' in allData ? allData.data.posts : [];
         }
@@ -106,8 +138,8 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
           id: `temp-${Date.now()}`,
           author: {
             id: currentUser.id,
-            displayName: currentUser.display_name || currentUser.username || 'Me',
-            avatar: currentUser.avatar,
+            displayName: currentUser.displayName || currentUser.username || 'Anonymous',
+            avatar: currentUser.avatar || null,
             username: currentUser.username,
           },
           content: message || '',
@@ -128,22 +160,22 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
       }
 
       try {
-        await shareMutation.mutateAsync({
+        await share({
           postId,
-          data: { message: message || '' },
+          message: message || '',
         });
         toast.success('Đã chia sẻ bài viết');
-        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
         if (customQueryKey) {
           queryClient.invalidateQueries({ queryKey: customQueryKey });
         }
       } catch (err) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
         toast.error('Lỗi khi chia sẻ bài viết');
         throw err;
       }
     },
-    [shareMutation, queryClient, currentUser, customQueryKey, updateCache]
+    [share, queryClient, currentUser, customQueryKey, updateCache]
   );
 
   const likePost = useCallback(
@@ -168,22 +200,20 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
 
       try {
         if (liked) {
-          await reactMutation.mutateAsync({
+          await reactToPost({
             postId,
-            data: { reaction: 'LIKE' },
+            reaction: 'LIKE',
           });
         } else {
-          await removeReactionMutation.mutateAsync({
-            postId,
-          });
+          await unreactPost(postId);
         }
       } catch (err) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
         toast.error('Lỗi khi tương tác bài viết');
         throw err;
       }
     },
-    [queryClient, reactMutation, removeReactionMutation, updateCache]
+    [queryClient, reactToPost, unreactPost, updateCache]
   );
 
   return {
@@ -191,9 +221,9 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
     updatePost,
     sharePost,
     likePost,
-    isDeleting: deleteMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isSharing: shareMutation.isPending,
-    isLiking: reactMutation.isPending || removeReactionMutation.isPending,
+    isDeleting: isPostActionLoading,
+    isUpdating: isPostActionLoading,
+    isSharing: isSharing,
+    isLiking: isReactionLoading,
   };
 }

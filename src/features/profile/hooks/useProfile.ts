@@ -1,8 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
-import { ProfilesAPI, UsersAPI } from '@/lib/api/generated'
-import { useUser } from '@/lib/api/hooks/useUser'
-import apiClient from '@/lib/api'
+import { useUser, useUserActions } from '@/lib/api/hooks/useUser'
 import type {
   EditProfileFormData,
   ProfileVisibilityUpdateRequest
@@ -27,42 +25,37 @@ export function useProfile(userIdParam?: string) {
 
   // Use the Smart Hook for fetching profile
   const { user, isLoading, error, isMe } = useUser(identifier as any)
+  const { updateProfile: manualUpdate, updatePrivacy: manualUpdatePrivacy, uploadAvatar: manualUploadAvatar, uploadBackground: manualUploadBackground, isLoading: isActionLoading } = useUserActions();
 
-  const updateProfileMutation = UsersAPI.useUpdateMyProfileUsersMeProfilePatch({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: UsersAPI.getMeAliasUsersMeGetQueryKey() })
-        queryClient.invalidateQueries({ queryKey: queryKeys.profile.all })
-      },
-    }
-  })
+  const handleUpdateProfile = async (data: EditProfileFormData) => {
+    const res = await manualUpdate({
+      display_name: data.displayName,
+      username: data.username || undefined,
+      birth_date: data.birthDate && data.birthDate.trim() !== "" ? data.birthDate : undefined,
+      bio: data.bio
+    });
+    queryClient.invalidateQueries({ queryKey: ['users', 'me'] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.profile.all });
+    return res;
+  };
 
-  const updatePrivacyMutation = ProfilesAPI.useUpdateMyPrivacyUsersMePrivacyPatch({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: UsersAPI.getMeAliasUsersMeGetQueryKey() })
-      },
-    }
-  })
+  const handleUpdatePrivacy = async (data: ProfileVisibilityUpdateRequest) => {
+    const res = await manualUpdatePrivacy(data as any);
+    queryClient.invalidateQueries({ queryKey: ['users', 'me'] });
+    return res;
+  };
 
-  const uploadAvatarMutation = UsersAPI.useUploadMyAvatarUsersMeAvatarPost({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: UsersAPI.getMeAliasUsersMeGetQueryKey() })
-      },
-    }
-  })
+  const handleUploadAvatar = async (file: File) => {
+    const res = await manualUploadAvatar(file);
+    queryClient.invalidateQueries({ queryKey: ['users', 'me'] });
+    return res;
+  };
 
-  const uploadBackground = async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    const response = await apiClient.post('/users/me/background/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-    // Invalidate all profile-related queries so the new background is shown
-    queryClient.invalidateQueries({ queryKey: UsersAPI.getMeAliasUsersMeGetQueryKey() })
-    queryClient.invalidateQueries({ queryKey: queryKeys.profile.all })
-    return response.data
+  const handleUploadBackground = async (file: File) => {
+    const res = await manualUploadBackground(file);
+    queryClient.invalidateQueries({ queryKey: ['users', 'me'] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.profile.all });
+    return res;
   }
 
   return {
@@ -70,21 +63,10 @@ export function useProfile(userIdParam?: string) {
     isLoading,
     error,
     isMe,
-    updateProfile: (data: EditProfileFormData) => updateProfileMutation.mutateAsync({
-      data: {
-        display_name: data.displayName,
-        username: data.username || null,
-        birth_date: data.birthDate && data.birthDate.trim() !== "" ? data.birthDate : null,
-        bio: data.bio
-      }
-    }),
-    updatePrivacy: (data: ProfileVisibilityUpdateRequest) => updatePrivacyMutation.mutateAsync({
-      data: data as any
-    }),
-    uploadAvatar: (file: File) => uploadAvatarMutation.mutateAsync({
-      data: { file }
-    }),
-    uploadBackground,
-    isUpdating: updateProfileMutation.isPending || updatePrivacyMutation.isPending || uploadAvatarMutation.isPending,
+    updateProfile: handleUpdateProfile,
+    updatePrivacy: handleUpdatePrivacy,
+    uploadAvatar: handleUploadAvatar,
+    uploadBackground: handleUploadBackground,
+    isUpdating: isActionLoading,
   }
 }

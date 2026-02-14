@@ -25,3 +25,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+package-lock.json
+
+.wrangler
+.dev.vars*

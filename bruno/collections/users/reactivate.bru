@@ -1,0 +1,19 @@
+meta {
+  name: Reactivate
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{api_base}}/users/me/reactivate/
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {}
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

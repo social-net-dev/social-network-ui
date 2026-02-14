@@ -18,6 +18,20 @@ const getAuthToken = (): string => {
 };
 
 /**
+ * Get a default avatar URL (Facebook style silhouette)
+ */
+export const getDefaultAvatar = (): string => {
+  // Trả về một SVG silhouette đơn giản giống Facebook
+  return `data:image/svg+xml;utf8,${encodeURIComponent(`
+    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" fill="#E4E6EB"/>
+      <path d="M50 50C61.0457 50 70 41.0457 70 30C70 18.9543 61.0457 10 50 10C38.9543 10 30 18.9543 30 30C30 41.0457 38.9543 50 50 50Z" fill="#8A8D91"/>
+      <path d="M50 60C30 60 10 75 10 100H90C90 75 70 60 50 60Z" fill="#8A8D91"/>
+    </svg>
+  `)}`;
+};
+
+/**
  * Build an **absolute** media stream URL for an R2 file path.
  *
  * Returns a full URL (including API base + auth token) that can be used

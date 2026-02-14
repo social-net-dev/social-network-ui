@@ -9,17 +9,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Save, User, Shield, Trash2, Lock, AlertTriangle, Eye, EyeOff, Loader2, Info, Calendar } from 'lucide-react';
+import { Save, User as UserIcon, Shield, Trash2, Lock, AlertTriangle, Eye, EyeOff, Loader2, Info, Calendar } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { ChangePasswordForm } from '../components/ChangePasswordForm';
-import { deactivateAccount } from '@/lib/api/manual-apis';
+import { usersApi } from '@/lib/api/services/users';
 import { useAuthStore } from '@/stores/authStore';
 import { getErrorMessage } from '@/lib/api/transforms';
-import type { Author } from '@/features/home/types/feed.types';
+import type { User } from '@/lib/api/types/user.types';
 
 export function ProfileSettingsPage() {
   const { profile: rawProfile, isLoading, updateProfile, updatePrivacy, isUpdating } = useProfile();
-  const profile = rawProfile as Author;
+  const profile = rawProfile as User;
   const [activeTab, setActiveTab] = useState('basic');
   const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
   const [deactivatePassword, setDeactivatePassword] = useState('');
@@ -34,6 +34,9 @@ export function ProfileSettingsPage() {
     displayName: '',
     birthDate: '',
     bio: '',
+    school: '',
+    class: '',
+    location: '',
   });
 
   const [privacySettings, setPrivacySettings] = useState({
@@ -51,6 +54,9 @@ export function ProfileSettingsPage() {
       displayName: profile.displayName || '',
       birthDate: profile.birthDate || '',
       bio: profile.bio || '',
+      school: profile.personalInfo?.school || '',
+      class: profile.personalInfo?.class || '',
+      location: profile.personalInfo?.location || '',
     });
 
     if (profile.privacy) {
@@ -77,6 +83,9 @@ export function ProfileSettingsPage() {
       const bioPayload = JSON.stringify({
         ...(profile?.personalInfo || {}),
         bioText: formData.bio,
+        school: formData.school,
+        class: formData.class,
+        location: formData.location,
       });
 
       await updateProfile({
@@ -109,6 +118,9 @@ export function ProfileSettingsPage() {
         displayName: profile.displayName || '',
         birthDate: profile.birthDate || '',
         bio: profile.bio || '',
+        school: profile.personalInfo?.school || '',
+        class: profile.personalInfo?.class || '',
+        location: profile.personalInfo?.location || '',
       });
 
       if (profile.privacy) {
@@ -123,7 +135,7 @@ export function ProfileSettingsPage() {
   };
 
   const deactivateMutation = useMutation({
-    mutationFn: () => deactivateAccount(deactivatePassword),
+    mutationFn: () => usersApi.deactivate({ password: deactivatePassword }),
     onSuccess: async () => {
       await logout();
       navigate('/login', { replace: true });
@@ -142,8 +154,8 @@ export function ProfileSettingsPage() {
   }
 
   const privacyItems = [
-    { id: 'display_name_visibility', label: 'Tên hiển thị', icon: User },
-    { id: 'avatar_visibility', label: 'Ảnh đại diện', icon: User },
+    { id: 'display_name_visibility', label: 'Tên hiển thị', icon: UserIcon },
+    { id: 'avatar_visibility', label: 'Ảnh đại diện', icon: UserIcon },
     { id: 'birth_date_visibility', label: 'Ngày sinh', icon: Calendar },
     { id: 'bio_visibility', label: 'Giới thiệu bản thân', icon: Info },
   ];
@@ -158,7 +170,7 @@ export function ProfileSettingsPage() {
       <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-white dark:bg-card p-1 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 w-full justify-start mb-8 overflow-x-auto no-scrollbar">
           <TabsTrigger value="basic" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
-            <User className="w-4 h-4 mr-2" /> Thông tin cơ bản
+            <UserIcon className="w-4 h-4 mr-2" /> Thông tin cơ bản
           </TabsTrigger>
           <TabsTrigger value="privacy" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
             <Shield className="w-4 h-4 mr-2" /> Quyền riêng tư
@@ -192,6 +204,20 @@ export function ProfileSettingsPage() {
               <div className="space-y-2">
                 <Label htmlFor="bio">Giới thiệu bản thân</Label>
                 <textarea id="bio" value={formData.bio} onChange={handleInputChange} rows={4} className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent px-3 py-2 text-sm focus:ring-2 focus:ring-etechs-primary outline-none resize-none" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="school">Trường học</Label>
+                  <Input id="school" value={formData.school} onChange={handleInputChange} className="rounded-xl" placeholder="VD: Đại học Bách Khoa" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="class">Lớp / Khóa</Label>
+                  <Input id="class" value={formData.class} onChange={handleInputChange} className="rounded-xl" placeholder="VD: K65-HEDSPI" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="location">Vị trí</Label>
+                <Input id="location" value={formData.location} onChange={handleInputChange} className="rounded-xl" placeholder="VD: Hà Nội, Việt Nam" />
               </div>
             </CardContent>
           </Card>

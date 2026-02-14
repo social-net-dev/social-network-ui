@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import type { ProfileVisibilityResponse } from '@/lib/api/generated/model';
+
+export type ProfileVisibilityResponse = {
+  visibility: string;
+  display_name_visibility?: string;
+  birth_date_visibility?: string;
+  bio_visibility?: string;
+  avatar_visibility?: string;
+};
 
 // ===========================
 // 🎯 FRONTEND MODELS (Chuẩn FE)
@@ -159,5 +166,9 @@ export type Comment = FeedComment & {
 
 /**
  * Re-exporting Backend Models for use in transforms
+ * @deprecated Use manual types from @/lib/api/types
  */
-export type { PostOut as IBackendPost, AuthorInfo as IBackendAuthor, CommentOut as IBackendComment, FeedResponse as IBackendFeedResponse } from '@/lib/api/generated/model';
+export type IBackendPost = any;
+export type IBackendAuthor = any;
+export type IBackendComment = any;
+export type IBackendFeedResponse = any;

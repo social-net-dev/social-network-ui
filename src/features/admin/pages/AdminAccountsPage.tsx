@@ -1,13 +1,11 @@
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader, RefreshCcw } from "lucide-react";
-import { UsersAPI } from "@/lib/api/generated";
-import { getAdminUsers } from "@/lib/api/manual-apis";
+import { useAdminUsers, useReactivateUser } from "@/lib/api/hooks/useAdmin";
 import { AdminVerificationPanel } from "./VerificationPage";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -60,7 +58,6 @@ function getDaysSinceDeactivation(deactivatedAt?: string | null): string {
 }
 
 export function AdminAccountsPage() {
-    const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState("ALL");
 
     const {
@@ -70,18 +67,9 @@ export function AdminAccountsPage() {
         isFetching,
         isError,
         error,
-    } = useQuery({
-        queryKey: ["admin", "users"],
-        queryFn: getAdminUsers,
-    });
+    } = useAdminUsers();
 
-    const reactivateMutation = UsersAPI.useAdminReactivateUserAdminUsersUserIdReactivatePost({
-        mutation: {
-            onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-            },
-        }
-    });
+    const reactivateMutation = useReactivateUser();
 
     const filteredUsers = useMemo<any[]>(() => {
         const usersList = (Array.isArray(users) ? users : (users as any)?.data || []) as any[];
@@ -202,7 +190,7 @@ export function AdminAccountsPage() {
                                                                 <Button
                                                                     size="sm"
                                                                     variant="outline"
-                                                                    onClick={() => reactivateMutation.mutate({ userId: user.id })}
+                                                                    onClick={() => reactivateMutation.mutate(user.id)}
                                                                     disabled={reactivateMutation.isPending}
                                                                 >
                                                                     Kích hoạt lại

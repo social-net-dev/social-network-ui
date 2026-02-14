@@ -2,16 +2,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Edit2, MoreHorizontal, Camera, Loader2, UserPlus, UserCheck } from "lucide-react"
-import { useRef, useState } from "react"
+import { useRef } from "react"
 import { useProfile } from "../hooks/useProfile"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { createFriendRequestFriendsRequestsPost } from "@/lib/api/generated/friends/friends"
-import { ProfilesAPI } from "@/lib/api/generated"
+import { useQueryClient } from "@tanstack/react-query"
+import { useFriendActions } from "@/lib/api/hooks/useFriends"
 import { toast } from "sonner"
-import type { Author } from "@/features/home/types/feed.types"
+import { getDefaultAvatar } from "@/lib/api/transforms/common"
+import type { User } from "@/lib/api/types/user.types"
 
 interface ProfileHeaderProps {
-  profile: Author & { isOwner?: boolean, isFriend?: boolean }
+  profile: User
   isCurrentUser?: boolean
   onEdit?: () => void
 }
@@ -37,26 +37,19 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
   const fileInputRef = useRef<HTMLInputElement>(null)
   const backgroundInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
-  const [friendActionPending, setFriendActionPending] = useState(false)
+  const { sendRequest, isLoading: isFriendActionPending } = useFriendActions()
 
-  // Friend request mutation
-  const sendFriendRequest = useMutation({
-    mutationFn: () => {
-      setFriendActionPending(true)
-      return createFriendRequestFriendsRequestsPost({ addressee_username: profile.username || '' })
-    },
-    onSuccess: () => {
-      setFriendActionPending(false)
+  const handleSendFriendRequest = async () => {
+    try {
+      await sendRequest({ addressee_username: profile.username || '' })
       toast.success("Đã gửi lời mời kết bạn")
-      queryClient.invalidateQueries({ queryKey: ProfilesAPI.getGetProfileProfilesUsernameGetQueryKey(profile.username || '') })
+      queryClient.invalidateQueries({ queryKey: ['profiles', profile.username] })
       queryClient.invalidateQueries({ queryKey: ["friends"] })
-    },
-    onError: (err: any) => {
-      setFriendActionPending(false)
+    } catch (err: any) {
       const msg = err?.response?.data?.error || err?.response?.data?.detail || "Lỗi khi gửi lời mời"
       toast.error(typeof msg === "string" ? msg : JSON.stringify(msg))
-    },
-  })
+    }
+  }
 
   const handleAvatarClick = () => {
     if (isCurrentUser) {
@@ -109,7 +102,7 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
     : 'Tháng 1 năm 2024'
 
   // Dynamic avatar and cover based on profile id from free sources (DiceBear & Picsum)
-  const fallbackAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`;
+  const fallbackAvatarUrl = getDefaultAvatar();
   const fallbackCoverUrl = `https://picsum.photos/seed/${profile.id}/1200/400`;
   const coverUrl = profile.background || fallbackCoverUrl;
 
@@ -215,10 +208,10 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
                 ) : (
                   <Button
                     className="bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 h-9 px-4 rounded-lg font-medium text-sm"
-                    disabled={friendActionPending || !profile.username}
-                    onClick={() => sendFriendRequest.mutate()}
+                    disabled={isFriendActionPending || !profile.username}
+                    onClick={handleSendFriendRequest}
                   >
-                    {friendActionPending ? (
+                    {isFriendActionPending ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
                       <UserPlus className="w-4 h-4 mr-2" />

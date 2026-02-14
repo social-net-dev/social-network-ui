@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { changePassword } from "@/lib/api/manual-apis";
+import { authApi } from "@/lib/api/services/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { Eye, EyeOff, Loader } from "lucide-react";
 import { getErrorMessage } from "@/lib/api/transforms";
 
 const ChangePasswordSchema = z
+
     .object({
         currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
         newPassword: z
@@ -46,7 +47,7 @@ export function ChangePasswordForm() {
 
     const mutation = useMutation({
         mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
-            changePassword(currentPassword, newPassword),
+            authApi.changePassword({ current_password: currentPassword, new_password: newPassword }),
         onSuccess: () => {
             setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
             form.reset();

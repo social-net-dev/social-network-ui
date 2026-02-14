@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { getProfile, extractUserIdFromTenantSlug } from '@/lib/api/profileApi';
+import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
+import { profilesApi } from '@/lib/api/services';
 import { callCreateRoom } from '@/features/message/services/messageApi';
-import type { ProfileResponse } from '@/types/profile.types';
+import type { User } from '@/lib/api/types/user.types';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ export const SearchUsers: React.FC = () => {
   const navigate = useNavigate();
   const { tenantSlug } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResult, setSearchResult] = useState<ProfileResponse['data'] | null>(null);
+  const [searchResult, setSearchResult] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creatingRoom, setCreatingRoom] = useState(false);
@@ -21,51 +22,33 @@ export const SearchUsers: React.FC = () => {
   const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
 
   // Debug: Log component state
-  console.log('[SearchUsers] Component state:', {
-    tenantSlug,
-    currentUserId,
-    searchQuery,
-    hasResult: !!searchResult,
-    loading,
-    error,
-  });
 
   const handleSearch = async () => {
-    console.log('[SearchUsers] handleSearch called!');
-    console.log('[SearchUsers] searchQuery:', searchQuery);
-    console.log('[SearchUsers] tenantSlug:', tenantSlug);
 
     if (!searchQuery.trim()) {
       setError('Vui lòng nhập tên người dùng');
-      console.log('[SearchUsers] Empty search query');
       return;
     }
 
     if (!tenantSlug) {
       setError('Không tìm thấy tenant slug. Vui lòng đăng nhập lại.');
-      console.log('[SearchUsers] No tenantSlug found!');
       return;
     }
 
-    console.log('[SearchUsers] Starting search:', { query: searchQuery, tenantSlug });
     setLoading(true);
     setError(null);
     setSearchResult(null);
 
     try {
-      const response = await getProfile(searchQuery.trim(), tenantSlug);
-      console.log('[SearchUsers] API response:', response);
+      const user = await profilesApi.getProfile(searchQuery.trim());
 
-      // Axios interceptor đã unwrap { success, data } -> response.data là user object trực tiếp
-      if (response.data) {
-        setSearchResult(response.data);
-        console.log('[SearchUsers] Result set:', response.data);
+      if (user && user.id) {
+        setSearchResult(user);
       } else {
         setError('Không tìm thấy người dùng');
       }
     } catch (err: any) {
       console.error('[SearchUsers] Search failed:', err);
-      console.error('[SearchUsers] Error response:', err.response?.data);
       setError(err.response?.data?.message || 'Không tìm thấy người dùng');
       setSearchResult(null);
     } finally {
@@ -134,16 +117,16 @@ export const SearchUsers: React.FC = () => {
           <div className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
             {/* Avatar */}
             <Avatar className="w-16 h-16">
-              {searchResult.avatar_path ? (
-                <img src={searchResult.avatar_path} alt={searchResult.display_name} className="w-full h-full object-cover" />
+              {searchResult.avatar ? (
+                <img src={searchResult.avatar} alt={searchResult.displayName} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-primary text-white flex items-center justify-center text-xl font-semibold">{searchResult.display_name.charAt(0).toUpperCase()}</div>
+                <div className="w-full h-full bg-primary text-white flex items-center justify-center text-xl font-semibold">{searchResult.displayName.charAt(0).toUpperCase()}</div>
               )}
             </Avatar>
 
             {/* User Info */}
-            <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-lg">{searchResult.display_name}</h4>
+            <div className="flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/profile/${searchResult.username}`)}>
+              <h4 className="font-semibold text-lg">{searchResult.displayName}</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400">{searchResult.username}</p>
               {searchResult.bio && <p className="text-sm mt-2 text-gray-700 dark:text-gray-300">{searchResult.bio}</p>}
             </div>

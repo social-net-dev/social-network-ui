@@ -180,7 +180,7 @@ export function ExplorePage() {
           onDelete={handleDeletePost}
           onEdit={handleEditPost}
           selectedPostId={selectedPostId}
-          currentUserId={currentUser?.id || currentUser?.user_id}
+          currentUserId={currentUser?.id}
         />
 
         {/* Sentinel for Infinite Scroll */}

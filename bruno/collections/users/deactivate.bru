@@ -1,0 +1,21 @@
+meta {
+  name: Deactivate Account
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{api_base}}/users/me/deactivate/
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "reason": "Personal reasons"
+  }
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

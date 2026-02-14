@@ -1,5 +1,5 @@
 import { z } from "zod";
-import * as Models from "@/lib/api/generated/model";
+import type { RegisterResponse as BackendRegisterResponse } from "@/lib/api/types/auth.types";
 
 /**
  * UI-specific Form Schemas
@@ -49,12 +49,17 @@ export type OTPVerifyData = z.infer<typeof OTPVerifySchema>;
  */
 
 export type AuthResponse = {
-    user: Models.AuthorInfo;
+    user: {
+        id: string;
+        display_name: string;
+        username?: string;
+        avatar_path?: string;
+    };
     token: string;
     refreshToken: string;
 }
 
-export type RegisterResponse = Models.RegisterResponse;
+export type RegisterResponse = BackendRegisterResponse;
 
 export interface AuthError {
     message: string;

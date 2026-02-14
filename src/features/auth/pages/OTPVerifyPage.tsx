@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Mail, RefreshCw } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { resendRegisterOtp, verifyRegisterOtp } from '@/lib/api/manual-apis';
+import { authApi } from '@/lib/api/services/auth';
 
 const OTP_STORAGE_EMAIL = 'otp_verify_email';
 const OTP_STORAGE_USER_ID = 'otp_verify_user_id';
@@ -35,8 +35,8 @@ export function OTPVerifyPage() {
   const [resendSuccess, setResendSuccess] = useState(false);
 
   const verifyMutation = useMutation({
-    mutationFn: async () => {
-      return verifyRegisterOtp(user_id, otpCode);
+    mutationFn: () => {
+      return authApi.verifyOtp({ user_id, otp: otpCode });
     },
     onSuccess: async () => {
       if (typeof sessionStorage !== 'undefined') {
@@ -56,8 +56,8 @@ export function OTPVerifyPage() {
   });
 
   const resendMutation = useMutation({
-    mutationFn: async () => {
-      return resendRegisterOtp(user_id);
+    mutationFn: () => {
+      return authApi.resendOtp({ user_id });
     },
     onSuccess: () => {
       setResendSuccess(true);

@@ -7,11 +7,11 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { School, Heart, Edit2, Save, X, Plus } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
-import type { Author, PersonalInfo } from '@/features/home/types/feed.types';
+import type { User, PersonalInfo } from '@/lib/api/types/user.types';
 
 export function PersonalInfoSidebar() {
   const { profile: rawProfile, updateProfile, isUpdating, isMe } = useProfile();
-  const profile = rawProfile as Author;
+  const profile = rawProfile as User;
   const [isEditing, setIsEditing] = useState(false);
 
   const [formData, setFormData] = useState<PersonalInfo>({

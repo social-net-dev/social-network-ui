@@ -1,12 +1,12 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { getErrorMessage } from '@/lib/api/transforms';
 import { LoginFormDataSchema, type LoginFormData } from '../types/auth.types';
-import { useMutation } from '@tanstack/react-query';
 import apiClient from '@/lib/api';
-import { loginMiddleware } from '@/lib/api/manual-apis';
+import { authApi } from '@/lib/api/services/auth';
 
 export function useLogin() {
   const navigate = useNavigate();
@@ -22,13 +22,12 @@ export function useLogin() {
   });
 
   const mutation = useMutation({
-    mutationFn: async (payload: { email: string; password: string }) => {
-      return loginMiddleware(payload.email, payload.password);
+    mutationFn: (payload: { email: string; password: string }) => {
+      return authApi.login(payload);
     },
     onSuccess: async (response: any) => {
       // Response đã được axios interceptor unwrap: { access, refresh, tenant_slug }
       // Truyền TRỰC TIẾP cho authStore - KHÔNG transform, KHÔNG modify!
-      console.log('[useLogin] Backend response (after unwrap):', response);
       setAuth(response);
 
       // Fetch /users/me/ to hydrate user and get role for redirect

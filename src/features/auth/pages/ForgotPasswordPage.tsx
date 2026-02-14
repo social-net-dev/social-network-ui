@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, Loader, ArrowLeft } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { forgotPassword, resetPassword } from "@/lib/api/manual-apis";
+import { authApi } from "@/lib/api/services/auth";
 
 type Step = "email" | "otp" | "password";
 
@@ -24,8 +24,8 @@ export function ForgotPasswordPage() {
     const [successMessage, setSuccessMessage] = useState("");
 
     const sendOtpMutation = useMutation({
-        mutationFn: async () => {
-            return forgotPassword(email.trim());
+        mutationFn: () => {
+            return authApi.forgotPassword({ email: email.trim() });
         },
         onSuccess: (res) => {
             const uid = (res as any)?.user_id || "";
@@ -40,8 +40,8 @@ export function ForgotPasswordPage() {
     });
 
     const resetPasswordMutation = useMutation({
-        mutationFn: async () => {
-            return resetPassword(userId, otp, password);
+        mutationFn: () => {
+            return authApi.resetPassword({ user_id: userId, otp, new_password: password });
         },
         onSuccess: () => {
             setSuccessMessage("Mật khẩu đã được thay đổi thành công!");

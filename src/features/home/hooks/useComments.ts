@@ -1,9 +1,8 @@
 import { useCallback } from 'react';
-import { useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
-import { PostsV2API } from '@/lib/api/generated';
-import { transformComment } from '@/lib/api/transforms';
-import { queryKeys } from '@/lib/query-keys';
+import { useInfiniteComments, useCommentActions } from '@/lib/api/hooks/useComments';
+import { useReactions } from '@/lib/api/hooks/useReactions';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import type { FeedComment, ReactionType } from '../types/feed.types';
@@ -11,39 +10,24 @@ import type { FeedComment, ReactionType } from '../types/feed.types';
 export function useComments(postId: string) {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const queryKey = queryKeys.feed.comments(postId) as unknown as readonly unknown[];
-  const pageSize = 10;
+  const queryKey = ['comments', 'infinite', postId];
 
-  const query = useInfiniteQuery<FeedComment[], Error, InfiniteData<FeedComment[]>, readonly unknown[], number>({
-    queryKey,
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await PostsV2API.getPostCommentsV2PostsPostIdCommentsGet(postId, {
-        page: pageParam,
-        page_size: pageSize,
-      });
-      return Array.isArray(response) ? response.map(transformComment) : [];
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
-      return lastPage.length === pageSize ? allPages.length + 1 : undefined;
-    },
-    enabled: !!postId,
-  });
+  const query = useInfiniteComments(postId);
 
-  const addCommentMutation = PostsV2API.useCommentOnPostV2PostsPostIdCommentsPost();
-  const deleteCommentMutation = PostsV2API.useDeleteCommentV2PostsPostIdCommentsCommentIdDelete();
-  const reactCommentMutation = PostsV2API.useReactToCommentV2CommentsCommentIdReactionsPost();
-  const removeReactionMutation = PostsV2API.useRemoveCommentReactionV2CommentsCommentIdReactionsDelete();
-  const updateCommentMutation = PostsV2API.useUpdateCommentV2PostsPostIdCommentsCommentIdPut();
-  const replyMutation = PostsV2API.useReplyToCommentV2CommentsCommentIdRepliesPost();
+  const { createComment: manualAddComment, updateComment: manualUpdateComment, deleteComment: manualDeleteComment, replyToComment: manualReplyToComment, isLoading: isActionLoading } = useCommentActions();
+  const { reactToComment: manualReactToComment, unreactComment: manualUnreactComment } = useReactions();
 
   const updateCache = useCallback(
     (updater: (comments: FeedComment[]) => FeedComment[]) => {
-      queryClient.setQueryData<InfiniteData<FeedComment[]>>(queryKey, old => {
+      queryClient.setQueryData<InfiniteData<any>>(queryKey, (old: any) => {
         if (!old) return old;
         return {
           ...old,
-          pages: old.pages.map(page => updater(page)),
+          pages: old.pages.map((page: any) => {
+            const comments = Array.isArray(page) ? page : page.comments || [];
+            const updatedComments = updater(comments);
+            return Array.isArray(page) ? updatedComments : { ...page, comments: updatedComments };
+          }),
         };
       });
     },
@@ -61,8 +45,8 @@ export function useComments(postId: string) {
         parentCommentId: null,
         author: {
           id: user.id,
-          displayName: user.display_name || user.username || 'Me',
-          avatar: user.avatar,
+          displayName: user.displayName || user.username || 'Anonymous',
+          avatar: user.avatar || null,
           username: user.username,
         },
         content,
@@ -72,21 +56,24 @@ export function useComments(postId: string) {
         stats: { reactions: 0, replies: 0 },
       };
 
-      queryClient.setQueryData<InfiniteData<FeedComment[]>>(queryKey, old => {
-        if (!old) return { pages: [[newComment]], pageParams: [1] };
+      queryClient.setQueryData<InfiniteData<any>>(queryKey, (old: any) => {
+        if (!old) return { pages: [{ comments: [newComment], page: 1, total: 1, total_pages: 1 }], pageParams: [1] };
         return {
           ...old,
-          pages: old.pages.map((page, i) => (i === 0 ? [newComment, ...page] : page)),
+          pages: old.pages.map((page: any, i: number) => {
+            if (i !== 0) return page;
+            const comments = Array.isArray(page) ? page : page.comments || [];
+            const updatedComments = [newComment, ...comments];
+            return Array.isArray(page) ? updatedComments : { ...page, comments: updatedComments };
+          }),
         };
       });
 
       try {
-        await addCommentMutation.mutateAsync({
-          postId,
-          data: {
-            content_text: content,
-            files: files as Blob[],
-          },
+        await manualAddComment({
+          post_id: postId,
+          content_text: content,
+          files,
         });
         toast.success('Đã gửi bình luận');
         queryClient.invalidateQueries({ queryKey });
@@ -96,7 +83,7 @@ export function useComments(postId: string) {
         throw err;
       }
     },
-    [postId, addCommentMutation, queryClient, queryKey, user]
+    [postId, manualAddComment, queryClient, queryKey, user]
   );
 
   const deleteComment = useCallback(
@@ -104,7 +91,7 @@ export function useComments(postId: string) {
       updateCache(comments => comments.filter(c => c.id !== commentId));
 
       try {
-        await deleteCommentMutation.mutateAsync({ postId, commentId });
+        await manualDeleteComment(commentId);
         toast.success('Đã xóa bình luận');
       } catch (err) {
         queryClient.invalidateQueries({ queryKey });
@@ -112,7 +99,7 @@ export function useComments(postId: string) {
         throw err;
       }
     },
-    [postId, deleteCommentMutation, queryKey, updateCache, queryClient]
+    [manualDeleteComment, queryKey, updateCache, queryClient]
   );
 
   const reactToComment = useCallback(
@@ -139,15 +126,12 @@ export function useComments(postId: string) {
 
       try {
         if (isLiked) {
-          await reactCommentMutation.mutateAsync({
+          await manualReactToComment({
             commentId,
-            data: { reaction: reaction || 'LIKE' },
-            params: { post_id: postId },
+            reaction: reaction || 'LIKE',
           });
         } else {
-          await removeReactionMutation.mutateAsync({
-            commentId,
-          });
+          await manualUnreactComment(commentId);
         }
       } catch (err) {
         queryClient.invalidateQueries({ queryKey });
@@ -155,7 +139,7 @@ export function useComments(postId: string) {
         throw err;
       }
     },
-    [postId, reactCommentMutation, removeReactionMutation, queryKey, updateCache, queryClient]
+    [manualReactToComment, manualUnreactComment, queryKey, updateCache, queryClient]
   );
 
   const updateComment = useCallback(
@@ -163,8 +147,7 @@ export function useComments(postId: string) {
       updateCache(comments => comments.map(c => (c.id === commentId ? { ...c, content } : c)));
 
       try {
-        await updateCommentMutation.mutateAsync({
-          postId,
+        await manualUpdateComment({
           commentId,
           data: { content_text: content },
         });
@@ -175,7 +158,7 @@ export function useComments(postId: string) {
         throw err;
       }
     },
-    [postId, updateCommentMutation, queryKey, updateCache, queryClient]
+    [manualUpdateComment, queryKey, updateCache, queryClient]
   );
 
   const replyToComment = useCallback(
@@ -189,8 +172,8 @@ export function useComments(postId: string) {
         parentCommentId: commentId,
         author: {
           id: user.id,
-          displayName: user.display_name || user.username || 'Me',
-          avatar: user.avatar,
+          displayName: user.displayName || user.username || 'Anonymous',
+          avatar: user.avatar || null,
           username: user.username,
         },
         content,
@@ -201,22 +184,26 @@ export function useComments(postId: string) {
       };
 
       // Optimistic: append reply to the flat list
-      queryClient.setQueryData<InfiniteData<FeedComment[]>>(queryKey, old => {
-        if (!old) return { pages: [[newReply]], pageParams: [1] };
+      queryClient.setQueryData<InfiniteData<any>>(queryKey, (old: any) => {
+        if (!old) return { pages: [{ comments: [newReply], page: 1 }], pageParams: [1] };
         return {
           ...old,
-          pages: old.pages.map((page, i) => (i === 0 ? [...page, newReply] : page)),
+          pages: old.pages.map((page: any) => {
+            const comments = Array.isArray(page) ? page : page.comments || [];
+            const updatedComments = [...comments, newReply];
+            return Array.isArray(page) ? updatedComments : { ...page, comments: updatedComments };
+          }),
         };
       });
 
       try {
-        await replyMutation.mutateAsync({
+        await manualReplyToComment({
           commentId,
           data: {
+            post_id: postId,
             content_text: content,
-            files: files as Blob[],
+            files,
           },
-          params: { post_id: postId },
         });
         toast.success('Đã gửi phản hồi');
         queryClient.invalidateQueries({ queryKey });
@@ -226,10 +213,10 @@ export function useComments(postId: string) {
         throw err;
       }
     },
-    [postId, replyMutation, queryClient, queryKey, user]
+    [postId, manualReplyToComment, queryClient, queryKey, user]
   );
 
-  const comments = query.data?.pages.flat() || [];
+  const comments = query.data?.pages.flatMap(page => Array.isArray(page) ? page : page.comments || []) || [];
 
   return {
     comments,
@@ -242,6 +229,6 @@ export function useComments(postId: string) {
     reactToComment,
     updateComment,
     replyToComment,
-    isAdding: addCommentMutation.isPending,
+    isAdding: isActionLoading,
   };
 }

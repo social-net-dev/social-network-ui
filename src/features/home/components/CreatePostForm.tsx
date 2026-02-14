@@ -63,7 +63,7 @@ export function CreatePostForm({
     <div className="bg-card rounded-xl shadow-sm hover:shadow-md transition-all-300 p-5 mb-6 border border-border/50 animate-fadeIn">
       <div className="flex items-start gap-4">
         <div className="relative">
-          <Avatar user={user} size="md" className="ring-2 ring-transparent hover:ring-primary/20 transition-all-300" />
+          <Avatar user={user as any} size="md" className="ring-2 ring-transparent hover:ring-primary/20 transition-all-300" />
         </div>
         <div className="flex-1 min-w-0">
           {/* Post Type Selector */}

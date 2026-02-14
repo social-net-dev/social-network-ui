@@ -1,21 +1,22 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FriendsAPI } from "@/lib/api/generated";
+import { useQueryClient } from "@tanstack/react-query";
+import { useFriends, useFriendActions } from "@/lib/api/hooks/useFriends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar } from "@/features/shared/components/Avatar";
-import { getErrorMessage } from "@/lib/api/transforms";
+import { getErrorMessage, transformUser } from "@/lib/api/transforms";
 import { Loader2, UserCheck, UserX, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import type { User } from "@/lib/api/types/user.types";
+import type { FriendRequest } from "@/lib/api/types/friend.types";
 
-function userLabel(u: any) {
-  return u?.display_name || u?.username || u?.email || "Người dùng";
+function userLabel(u: User) {
+  return u.displayName || u.username || u.email || "Người dùng";
 }
 
 export function FriendRequestsPage() {
   const qc = useQueryClient();
-  // Track which individual request IDs are being processed
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   const addProcessing = (id: string) =>
@@ -27,77 +28,51 @@ export function FriendRequestsPage() {
       return next;
     });
 
-  const incomingQuery = useQuery({
-    queryKey: ["friends", "requests", "incoming"],
-    queryFn: () => FriendsAPI.listIncomingRequestsFriendsRequestsIncomingGet(),
-  });
-  const outgoingQuery = useQuery({
-    queryKey: ["friends", "requests", "outgoing"],
-    queryFn: () => FriendsAPI.listOutgoingRequestsFriendsRequestsOutgoingGet(),
-  });
+  const { incomingRequests, outgoingRequests, isLoading: isQueryLoading, isError } = useFriends();
+  const { acceptRequest, rejectRequest, cancelRequest } = useFriendActions();
 
-  const acceptMutation = useMutation({
-    mutationFn: (requestId: string) => {
-      addProcessing(requestId);
-      return FriendsAPI.acceptRequestFriendsRequestsRequestIdAcceptPost(requestId);
-    },
-    onSuccess: (_data, requestId) => {
-      removeProcessing(requestId);
+  const handleAccept = async (requestId: string) => {
+    addProcessing(requestId);
+    try {
+      await acceptRequest(requestId);
       toast.success("Đã chấp nhận lời mời kết bạn");
-      // Optimistically remove from incoming list
-      qc.setQueryData(["friends", "requests", "incoming"], (old: any[] | undefined) =>
-        old ? old.filter((fr: any) => fr.id !== requestId) : []
-      );
-      // Background refresh
       qc.invalidateQueries({ queryKey: ["friends"] });
       qc.invalidateQueries({ queryKey: ["recommendations"] });
-    },
-    onError: (err: any, requestId) => {
-      removeProcessing(requestId);
+    } catch (err: any) {
       toast.error(getErrorMessage(err) || "Lỗi khi chấp nhận lời mời");
-    },
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: (requestId: string) => {
-      addProcessing(requestId);
-      return FriendsAPI.rejectRequestFriendsRequestsRequestIdRejectPost(requestId);
-    },
-    onSuccess: (_data, requestId) => {
+    } finally {
       removeProcessing(requestId);
+    }
+  };
+
+  const handleReject = async (requestId: string) => {
+    addProcessing(requestId);
+    try {
+      await rejectRequest(requestId);
       toast.success("Đã từ chối lời mời kết bạn");
-      qc.setQueryData(["friends", "requests", "incoming"], (old: any[] | undefined) =>
-        old ? old.filter((fr: any) => fr.id !== requestId) : []
-      );
       qc.invalidateQueries({ queryKey: ["friends", "requests"] });
-    },
-    onError: (err: any, requestId) => {
-      removeProcessing(requestId);
+    } catch (err: any) {
       toast.error(getErrorMessage(err) || "Lỗi khi từ chối lời mời");
-    },
-  });
-
-  const cancelMutation = useMutation({
-    mutationFn: (requestId: string) => {
-      addProcessing(requestId);
-      return FriendsAPI.cancelRequestFriendsRequestsRequestIdCancelPost(requestId);
-    },
-    onSuccess: (_data, requestId) => {
+    } finally {
       removeProcessing(requestId);
+    }
+  };
+
+  const handleCancel = async (requestId: string) => {
+    addProcessing(requestId);
+    try {
+      await cancelRequest(requestId);
       toast.success("Đã hủy lời mời kết bạn");
-      qc.setQueryData(["friends", "requests", "outgoing"], (old: any[] | undefined) =>
-        old ? old.filter((fr: any) => fr.id !== requestId) : []
-      );
       qc.invalidateQueries({ queryKey: ["friends", "requests"] });
-    },
-    onError: (err: any, requestId) => {
-      removeProcessing(requestId);
+    } catch (err: any) {
       toast.error(getErrorMessage(err) || "Lỗi khi hủy lời mời");
-    },
-  });
+    } finally {
+      removeProcessing(requestId);
+    }
+  };
 
-  const incoming = useMemo(() => (incomingQuery.data || []) as any[], [incomingQuery.data]);
-  const outgoing = useMemo(() => (outgoingQuery.data || []) as any[], [outgoingQuery.data]);
+  const incoming = useMemo(() => (incomingRequests || []) as FriendRequest[], [incomingRequests]);
+  const outgoing = useMemo(() => (outgoingRequests || []) as FriendRequest[], [outgoingRequests]);
 
   return (
     <div className="space-y-6">
@@ -117,29 +92,30 @@ export function FriendRequestsPage() {
         </TabsList>
 
         <TabsContent value="incoming" className="space-y-3 mt-6">
-          {incomingQuery.isPending ? (
+          {isQueryLoading ? (
             <div className="text-gray-500">Đang tải...</div>
-          ) : incomingQuery.isError ? (
-            <div className="text-red-600">{getErrorMessage(incomingQuery.error)}</div>
+          ) : isError ? (
+            <div className="text-red-600">Đã xảy ra lỗi khi tải dữ liệu.</div>
           ) : incoming.length === 0 ? (
             <Card className="p-6 text-center text-gray-500">Chưa có lời mời nào.</Card>
           ) : (
-            incoming.map((fr: any) => {
+            incoming.map((fr) => {
+              const requester = transformUser(fr.requester);
               const isProcessing = processingIds.has(fr.id);
               return (
                 <Card key={fr.id} className={`p-4 flex items-center justify-between gap-4 transition-opacity ${isProcessing ? "opacity-60" : ""}`}>
                   <div className="flex items-center gap-3 min-w-0">
-                    <Avatar user={fr.requester} size="md" />
+                    <Avatar user={requester} size="md" />
                     <div className="min-w-0">
-                      <div className="font-semibold truncate">{userLabel(fr.requester)}</div>
-                      <div className="text-xs text-gray-500 truncate">@{fr.requester?.username || fr.requester?.email || "-"}</div>
+                      <div className="font-semibold truncate">{userLabel(requester)}</div>
+                      <div className="text-xs text-gray-500 truncate">@{requester.username || requester.email || "-"}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
                       className="rounded-full"
                       disabled={isProcessing}
-                      onClick={() => acceptMutation.mutate(fr.id)}
+                      onClick={() => handleAccept(fr.id)}
                     >
                       {isProcessing ? (
                         <Loader2 className="h-4 w-4 animate-spin mr-1" />
@@ -152,7 +128,7 @@ export function FriendRequestsPage() {
                       variant="outline"
                       className="rounded-full"
                       disabled={isProcessing}
-                      onClick={() => rejectMutation.mutate(fr.id)}
+                      onClick={() => handleReject(fr.id)}
                     >
                       <UserX className="h-4 w-4 mr-1" />
                       Từ chối
@@ -165,22 +141,23 @@ export function FriendRequestsPage() {
         </TabsContent>
 
         <TabsContent value="outgoing" className="space-y-3 mt-6">
-          {outgoingQuery.isPending ? (
+          {isQueryLoading ? (
             <div className="text-gray-500">Đang tải...</div>
-          ) : outgoingQuery.isError ? (
-            <div className="text-red-600">{getErrorMessage(outgoingQuery.error)}</div>
+          ) : isError ? (
+            <div className="text-red-600">Đã xảy ra lỗi khi tải dữ liệu.</div>
           ) : outgoing.length === 0 ? (
             <Card className="p-6 text-center text-gray-500">Bạn chưa gửi lời mời nào.</Card>
           ) : (
-            outgoing.map((fr: any) => {
+            outgoing.map((fr) => {
+              const addressee = transformUser(fr.addressee);
               const isProcessing = processingIds.has(fr.id);
               return (
                 <Card key={fr.id} className={`p-4 flex items-center justify-between gap-4 transition-opacity ${isProcessing ? "opacity-60" : ""}`}>
                   <div className="flex items-center gap-3 min-w-0">
-                    <Avatar user={fr.addressee} size="md" />
+                    <Avatar user={addressee} size="md" />
                     <div className="min-w-0">
-                      <div className="font-semibold truncate">{userLabel(fr.addressee)}</div>
-                      <div className="text-xs text-gray-500 truncate">@{fr.addressee?.username || fr.addressee?.email || "-"}</div>
+                      <div className="font-semibold truncate">{userLabel(addressee)}</div>
+                      <div className="text-xs text-gray-500 truncate">@{addressee.username || addressee.email || "-"}</div>
                     </div>
                   </div>
                   <div>
@@ -188,7 +165,7 @@ export function FriendRequestsPage() {
                       variant="outline"
                       className="rounded-full"
                       disabled={isProcessing}
-                      onClick={() => cancelMutation.mutate(fr.id)}
+                      onClick={() => handleCancel(fr.id)}
                     >
                       {isProcessing ? (
                         <Loader2 className="h-4 w-4 animate-spin mr-1" />
@@ -207,4 +184,3 @@ export function FriendRequestsPage() {
     </div>
   );
 }
-

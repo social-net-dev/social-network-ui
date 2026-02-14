@@ -1,10 +1,10 @@
 import { z } from 'zod'
-import type { Author } from '@/features/home/types/feed.types'
+import type { User } from '@/lib/api/types/user.types'
 
 /**
  * Unified Profile View (Frontend-specific)
  */
-export type ProfileData = Author & {
+export type ProfileData = User & {
   isOwner: boolean;
   isFriend: boolean;
   privacy?: {
@@ -40,12 +40,10 @@ export const ProfileVisibilitySchema = z.object({
 export type ProfileVisibility = z.infer<typeof ProfileVisibilitySchema>
 
 /**
- * Backend Model Aliases (Single Source of Truth)
+ * Backend Model Aliases (Deprecated)
  */
-export type { 
-  PublicProfileResponse, 
-  UserMeResponse,
-  UpdateProfileRequest,
-  ProfileVisibilityResponse,
-  ProfileVisibilityUpdateRequest
-} from '@/lib/api/generated/model'
+export type PublicProfileResponse = any;
+export type UserMeResponse = any;
+export type UpdateProfileRequest = any;
+export type ProfileVisibilityResponse = any;
+export type ProfileVisibilityUpdateRequest = any;

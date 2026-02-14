@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Avatar } from '@/features/shared/components/Avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,6 @@ import { Send, MessageCircle, Image as ImageIcon, X, Heart, Reply, Trash2, Edit 
 import { useComments } from '../hooks/useComments';
 import { useMediaBlobs } from '../hooks/useMedia';
 import { FormattedContent } from '@/features/shared/components/FormattedContent';
-import { getErrorMessage } from '@/lib/api/transforms';
 import type { FeedComment, ReactionType } from '../types/feed.types';
 import { cn } from '@/lib/utils';
 
@@ -140,7 +140,7 @@ export function CommentSection({ postId, currentUserId, postAuthorId }: CommentS
             <div className="mt-3 flex flex-wrap gap-2 animate-fadeInUp">
               {files.map((file, index) => (
                 <div key={index} className="relative w-16 h-16 group">
-                  <img src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover rounded-lg shadow-sm group-hover:shadow-md transition-all-300" />
+                  <img src={URL.createObjectURL(file)} alt="Xem trước" className="w-full h-full object-cover rounded-lg shadow-sm group-hover:shadow-md transition-all-300" />
                   <button onClick={() => handleRemoveFile(index)} className="absolute -top-1.5 -right-1.5 p-1 bg-destructive rounded-full text-white hover:bg-destructive/90 shadow-lg transition-all-300 hover:scale-110">
                     <X className="w-3 h-3" />
                   </button>
@@ -180,7 +180,7 @@ export function CommentSection({ postId, currentUserId, postAuthorId }: CommentS
             />
             {comment.replies.length > 0 && (
               <div className="ml-10 space-y-4 border-l-2 border-muted/50 pl-4">
-                {comment.replies.map(reply => (
+                {comment.replies.map((reply: FeedComment) => (
                   <CommentItem
                     key={reply.id}
                     comment={reply}
@@ -228,6 +228,7 @@ interface CommentItemProps {
 }
 
 function CommentItem({ comment, currentUserId, postAuthorId, onReply, onDelete, onUpdate, onLike }: CommentItemProps) {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const { data: mediaUrls = [] } = useMediaBlobs(comment.mediaUrls || []);
@@ -241,19 +242,21 @@ function CommentItem({ comment, currentUserId, postAuthorId, onReply, onDelete, 
       await onUpdate(comment.id, editContent);
       setIsEditing(false);
     } catch (error) {
-      alert(getErrorMessage(error));
+      // Handle error silently
     }
   };
 
   return (
     <div className="flex items-start gap-3 animate-fadeIn">
-      <div className="relative">
-        <Avatar user={comment.author} size="sm" className="ring-2 ring-transparent hover:ring-primary/20 transition-all-300" />
+      <div className="relative cursor-pointer" onClick={() => navigate(`/profile/${comment.author.username}`)}>
+        <Avatar user={comment.author as any} size="sm" className="ring-2 ring-transparent hover:ring-primary/20 transition-all-300" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="bg-card rounded-lg px-4 py-3 shadow-sm border border-border/30">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <p className="font-semibold text-sm text-foreground">{comment.author.displayName}</p>
+            <p className="font-semibold text-sm text-foreground hover:text-primary transition-colors-300 cursor-pointer" onClick={() => navigate(`/profile/${comment.author.username}`)}>
+              {comment.author.displayName}
+            </p>
             {comment.author.role && ROLE_MAP[comment.author.role] && (
               <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-semibold', ROLE_MAP[comment.author.role].class)}>
                 {ROLE_MAP[comment.author.role].label}
@@ -283,7 +286,7 @@ function CommentItem({ comment, currentUserId, postAuthorId, onReply, onDelete, 
           {mediaUrls.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {mediaUrls.map((url, i) => (
-                <img key={i} src={url} className="w-24 h-24 object-cover rounded-lg hover:scale-[1.02] transition-transform duration-300 cursor-pointer" alt="media" />
+                <img key={i} src={url} className="w-24 h-24 object-cover rounded-lg hover:scale-[1.02] transition-transform duration-300 cursor-pointer" alt="Ảnh bình luận" />
               ))}
             </div>
           )}

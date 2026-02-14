@@ -1,4 +1,4 @@
 export * from './common';
-export * from './userTransform';
-export * from './postTransform';
-export * from './authTransform'; // Will create this during Auth migration
+export { transformAuthor, transformUser, transformUser as transformUserMe } from './userTransform';
+export { transformPost, transformComment } from './postTransform';
+export { transformRegisterResponse } from './authTransform';

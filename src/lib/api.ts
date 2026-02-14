@@ -6,13 +6,13 @@
  * - Tenant header support
  *
  * Used by:
- * - Manual API services (authApi, feedApi, etc.)
- * - Orval generated hooks (via axios-instance.ts mutator)
+ * - Manual API services (authApi, postsApi, usersApi, etc.)
  */
 import axios, { AxiosError } from 'axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { useAuthStore } from '@/stores/authStore';
 import { getApiBaseUrl } from '@/lib/config';
+import { AUTH_STORAGE_KEYS, PUBLIC_AUTH_PATHS } from '@/lib/auth.constants';
 
 // baseURL: dev -> etechs-middleware (http://localhost:8000/api); production -> /api (Caddy -> etechs-middleware)
 const baseURL = getApiBaseUrl();
@@ -46,14 +46,22 @@ const processQueue = (error: AxiosError | null) => {
 };
 
 // ============================================
-// PUBLIC AUTH PATHS (No token sent)
+// HELPER FUNCTIONS
 // ============================================
-const PUBLIC_AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/verify-otp', '/auth/resend-otp', '/auth/forgot-password', '/auth/reset-password'];
-
 function isPublicAuthRequest(url: string | undefined): boolean {
   if (!url) return false;
   const path = url.replace(apiClient.defaults.baseURL || '', '').split('?')[0];
   return PUBLIC_AUTH_PATHS.some(p => path === p || path === `${p}/`);
+}
+
+function getTokenFromStorage(): string | null {
+  const token = localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN);
+  return token ? token.replace(/"/g, '') : null;
+}
+
+function getTenantSlugFromStorage(): string | null {
+  const slug = localStorage.getItem(AUTH_STORAGE_KEYS.TENANT_SLUG);
+  return slug ? slug.replace(/"/g, '') : null;
 }
 
 // ============================================
@@ -68,15 +76,13 @@ apiClient.interceptors.request.use(
     }
 
     if (!isPublicAuthRequest(config.url)) {
-      const token = localStorage.getItem('auth_token');
+      const token = getTokenFromStorage();
       if (token) {
-        const cleanToken = token.replace(/"/g, '');
-        config.headers.Authorization = `Bearer ${cleanToken}`;
+        config.headers.Authorization = `Bearer ${token}`;
       }
-      const tenantSlug = localStorage.getItem('tenant_slug');
+      const tenantSlug = getTenantSlugFromStorage();
       if (tenantSlug) {
-        const cleanSlug = tenantSlug.replace(/"/g, '');
-        config.headers['X-Tenant-Slug'] = cleanSlug;
+        config.headers['X-Tenant-Slug'] = tenantSlug;
       }
     }
     return config;
@@ -126,12 +132,12 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = localStorage.getItem('refresh_token')?.replace(/"/g, '');
+      const refreshToken = localStorage.getItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN)?.replace(/"/g, '');
 
       if (!refreshToken) {
         // No refresh token, logout
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
+        localStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
+        localStorage.removeItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN);
         try {
           useAuthStore.getState().logout();
         } catch {
@@ -144,15 +150,30 @@ apiClient.interceptors.response.use(
       try {
         // Call refresh token endpoint (etechs-middleware expects "refresh")
         const refreshURL = baseURL.endsWith('/') ? `${baseURL}auth/refresh/` : `${baseURL}/auth/refresh/`;
-        const response = await axios.post(refreshURL, { refresh: refreshToken, refresh_token: refreshToken });
+        const response = await axios.post(refreshURL, { refresh: refreshToken });
+        
+        // Handle wrapped response: { data: { access: "..." } } or { access: "..." }
         const payload = response.data?.data ?? response.data;
-        const access_token = payload?.access_token ?? payload?.access;
+        const newAccessToken = payload?.access ?? payload?.access_token;
 
-        // Save new token
-        localStorage.setItem('auth_token', access_token);
+        if (!newAccessToken) {
+          throw new Error('No access token in refresh response');
+        }
+
+        // Save new token to localStorage
+        localStorage.setItem(AUTH_STORAGE_KEYS.TOKEN, newAccessToken);
+
+        // Update auth store state
+        const authStore = useAuthStore.getState();
+        authStore.setAuth({
+          token: newAccessToken,
+          refreshToken: refreshToken,
+          tenantSlug: authStore.tenantSlug ?? undefined,
+          user: authStore.user ?? undefined,
+        });
 
         // Update axios default header
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
 
         processQueue(null);
 
@@ -161,8 +182,8 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError as AxiosError);
         // Refresh token failed, logout
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
+        localStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
+        localStorage.removeItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN);
         try {
           useAuthStore.getState().logout();
         } catch {
@@ -178,5 +199,17 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
+/**
+ * Custom instance wrapper for React Query compatibility.
+ * Unwraps response data automatically.
+ */
+export const customInstance = <T,>(
+  config: AxiosRequestConfig,
+  options?: AxiosRequestConfig,
+): Promise<T> => {
+  return apiClient({
+    ...config,
+    ...options,
+  }).then(({ data }) => data as T);
+};
 export default apiClient;

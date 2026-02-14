@@ -1,0 +1,15 @@
+meta {
+  name: Unreact from Post
+  type: http
+  seq: 24
+}
+
+delete {
+  url: {{api_base}}/posts/{{post_id}}/reactions/
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

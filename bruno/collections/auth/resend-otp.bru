@@ -1,0 +1,17 @@
+meta {
+  name: Resend OTP
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{api_base}}/auth/resend-otp/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id": "{{user_id}}"
+  }
+}
