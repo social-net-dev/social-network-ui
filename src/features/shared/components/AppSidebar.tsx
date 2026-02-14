@@ -6,11 +6,12 @@ import { NavSecondary } from './sidebar/NavSecondary';
 import { NavUser } from './sidebar/NavUser';
 import { Link } from 'react-router-dom';
 import { useNotifications } from '@/features/notifications/hooks/useNotifications';
+import { useMessageStore } from '@/stores/messageStore';
 import logoEtechs from '@/assets/logo-etechs-ETS.svg';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { unreadCount } = useNotifications();
-  const unreadMessagesCount = 0; // TODO: implement unread count for messages
+  const unreadMessagesCount = useMessageStore(state => state.totalUnread);
 
   const menuItems = [
     { icon: Home, label: 'Trang chủ', path: '/' },

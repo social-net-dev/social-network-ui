@@ -187,6 +187,24 @@ const ConversationPage: React.FC = () => {
     wsMessages: messages,
   });
 
+  // Refresh room members and messages — used after updating display name so UI updates immediately
+  const refreshRoomMembers = React.useCallback(async () => {
+    try {
+      const resp = await callGetRoomMemberPublicKeys(resolvedRoom);
+      const members = resp.data?.members || [];
+      const me = members.find((m: any) => m.user_id === resolvedUserId);
+      setCurrentMemberDisplayName(me?.display_name ?? undefined);
+    } catch (e) {
+      console.warn('[ConversationPage] Failed to refresh room members', e);
+    }
+
+    try {
+      await loadMessages();
+    } catch (e) {
+      // ignore
+    }
+  }, [resolvedRoom, resolvedUserId, loadMessages]);
+
   // Listen for messageDeleted events dispatched by other components (optimistic removal)
   useEffect(() => {
     const handler = (ev: Event) => {
@@ -737,11 +755,19 @@ const ConversationPage: React.FC = () => {
             chatStatus={chatStatus}
             lastError={lastError}
             conversationTitle={
-              // Prefer real room name from `rooms` (backend uses `name`), fallback to conversations placeholder
-              rooms.find(r => r.room_id === selectedConversationId)?.name || conversations.find(c => c.id === selectedConversationId)?.title
+              // Prefer local per-user override, then real room name from `rooms`, then conversations placeholder
+              (() => {
+                try {
+                  const uid = resolvedUserId;
+                  const key = selectedConversationId ? `local_display_name_${selectedConversationId}_${uid}` : null;
+                  const local = key ? localStorage.getItem(key) : null;
+                  if (local && local.trim()) return local;
+                } catch (e) {}
+                return rooms.find(r => r.room_id === selectedConversationId)?.name || conversations.find(c => c.id === selectedConversationId)?.title;
+              })()
             }
             sendReaction={sendReaction}
-            onRefresh={loadMessages}
+            onRefresh={refreshRoomMembers}
             endRef={endRef}
             messagesContainerRef={messagesContainerRef}
             decryptedMessages={decryptedMessages}

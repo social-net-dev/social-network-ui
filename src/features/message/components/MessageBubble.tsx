@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Download } from 'lucide-react';
+
+interface Attachment {
+  url: string | null;
+  filename?: string | null;
+  mime?: string | null;
+  is_image?: boolean | null;
+}
 
 interface MessageBubbleProps {
   displayText: string;
   isMine: boolean;
   isPinned?: boolean;
-  // support multiple attachments
+  // legacy
   attachmentUrl?: string;
   attachmentUrls?: string[] | null;
-  // new normalized attachments metadata from backend
-  attachments?: Array<{
-    url: string;
-    filename?: string | null;
-    mime?: string | null;
-    is_image?: boolean;
-  }> | null;
-  // message.created_at can be string | null | undefined from API
+  // normalized attachments from backend
+  attachments?: Attachment[] | null;
   createdAt?: string | null;
   status?: 'sending' | 'sent' | 'failed';
-  // allow null as well since message._error may be null
   error?: string | null;
 }
 
@@ -34,7 +36,23 @@ function ImageWithFallback({ src, alt, className, onNaturalSize }: { src: string
     if (failed) return;
     setFailed(true);
     try {
-      const res = await fetch(encodeURI(src), { mode: 'cors' });
+      // Try original URL first
+      let res = await fetch(encodeURI(src), { mode: 'cors' });
+      // If failed and we have a token, try appending it (helps when message service requires auth)
+      if (!res.ok) {
+        try {
+          const token = localStorage.getItem('auth_token')?.replace(/"/g, '');
+          if (token) {
+            const urlObj = new URL(src, window.location.origin);
+            if (!urlObj.searchParams.has('access_token')) {
+              urlObj.searchParams.set('access_token', token);
+              res = await fetch(urlObj.toString(), { mode: 'cors' });
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
       if (!res.ok) throw new Error(`status ${res.status}`);
       const blob = await res.blob();
       const obj = URL.createObjectURL(blob);
@@ -51,6 +69,7 @@ function ImageWithFallback({ src, alt, className, onNaturalSize }: { src: string
       <img
         src={encodeURI(current)}
         alt={alt}
+        role="img"
         onError={handleError}
         onLoad={e => {
           try {
@@ -65,33 +84,35 @@ function ImageWithFallback({ src, alt, className, onNaturalSize }: { src: string
   );
 }
 
-// PairRow: render two images in one row with equal height and widths proportional
-// to their natural aspect ratios so sum of widths fills the container.
-const PairRow: React.FC<{ a: { url: string; filename?: string | null }; b: { url: string; filename?: string | null } }> = ({ a, b }) => {
+const PairRow: React.FC<{ a: Attachment; b: Attachment; onOpen?: (url: string) => void }> = ({ a, b, onOpen }) => {
   const [aspectA, setAspectA] = useState<number>(1);
   const [aspectB, setAspectB] = useState<number>(1);
 
   return (
     <div className="flex gap-1 overflow-hidden rounded-md h-48">
       <div style={{ flex: aspectA }} className="overflow-hidden">
-        <ImageWithFallback
-          src={a.url}
-          alt={a.filename || 'img-a'}
-          className="w-full h-full object-cover"
-          onNaturalSize={(w, h) => {
-            if (w && h) setAspectA(w / h);
-          }}
-        />
+        <div role="button" tabIndex={0} onClick={() => onOpen?.(String(a.url))} onKeyDown={e => e.key === 'Enter' && onOpen?.(String(a.url))}>
+          <ImageWithFallback
+            src={String(a.url)}
+            alt={a.filename || 'img-a'}
+            className="w-full h-full object-cover"
+            onNaturalSize={(w, h) => {
+              if (w && h) setAspectA(w / h);
+            }}
+          />
+        </div>
       </div>
       <div style={{ flex: aspectB }} className="overflow-hidden">
-        <ImageWithFallback
-          src={b.url}
-          alt={b.filename || 'img-b'}
-          className="w-full h-full object-cover"
-          onNaturalSize={(w, h) => {
-            if (w && h) setAspectB(w / h);
-          }}
-        />
+        <div role="button" tabIndex={0} onClick={() => onOpen?.(String(b.url))} onKeyDown={e => e.key === 'Enter' && onOpen?.(String(b.url))}>
+          <ImageWithFallback
+            src={String(b.url)}
+            alt={b.filename || 'img-b'}
+            className="w-full h-full object-cover"
+            onNaturalSize={(w, h) => {
+              if (w && h) setAspectB(w / h);
+            }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -99,28 +120,13 @@ const PairRow: React.FC<{ a: { url: string; filename?: string | null }; b: { url
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ displayText, isMine, isPinned, attachmentUrl, attachmentUrls, attachments, createdAt, status, error }) => {
   // Normalize attachments: prefer `attachments`, else fallback to `attachmentUrls`/`attachmentUrl`
-  const normalized: Array<{
-    url: string;
-    filename?: string | null;
-    mime?: string | null;
-    is_image?: boolean;
-  }> =
+  const normalized: Attachment[] =
     attachments && attachments.length > 0
-      ? attachments
+      ? attachments.map(a => ({ url: a.url ?? null, filename: a.filename ?? null, mime: a.mime ?? null, is_image: a.is_image ?? null }))
       : attachmentUrls && attachmentUrls.length > 0
-        ? attachmentUrls.map(u => ({
-            url: u,
-            filename: u.split('/').pop() || u,
-            is_image: /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(u),
-          }))
+        ? attachmentUrls.map(u => ({ url: u, filename: u.split('/').pop() || u, is_image: /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(u) }))
         : attachmentUrl
-          ? [
-              {
-                url: attachmentUrl,
-                filename: attachmentUrl.split('/').pop() || attachmentUrl,
-                is_image: /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(attachmentUrl),
-              },
-            ]
+          ? [{ url: attachmentUrl, filename: attachmentUrl.split('/').pop() || attachmentUrl, is_image: /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(String(attachmentUrl)) }]
           : [];
 
   const getAssetIconPath = (filename?: string | null, mime?: string | null) => {
@@ -140,7 +146,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ displayText, isMin
       wav: 'free-audio.svg',
       zip: 'zip-file.svg',
     };
-    // prefer mime when extension is missing
     let key = ext;
     if (!key && mime) {
       if (mime.includes('pdf')) key = 'pdf';
@@ -151,28 +156,40 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ displayText, isMin
       else if (mime.includes('audio')) key = 'mp3';
     }
     const file = map[key] || 'default-file-icon.svg';
-    // resolve from src/assets/icon-file so Vite will bundle it
     try {
       return new URL(`../../../assets/icon-file/${file}`, import.meta.url).href;
     } catch (e) {
-      // fallback to public path
       return `/assets/icon-file/${file}`;
     }
   };
 
-  const imageAttachments = normalized.filter(a => a.is_image);
-  const fileAttachments = normalized.filter(a => !a.is_image);
+  const imageAttachments = normalized.filter(a => !!a.url && !!a.is_image);
+  const fileAttachments = normalized.filter(a => !!a.url && !a.is_image);
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const openPreview = (url: string) => {
+    setPreviewUrl(url);
+    setPreviewOpen(true);
+  };
+  const closePreview = () => {
+    setPreviewOpen(false);
+    setPreviewUrl(null);
+  };
 
   return (
     <div className={`inline-block p-3 rounded-2xl shadow-sm ${isMine ? 'bg-primary text-primary-foreground' : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'} ${status === 'failed' ? 'border-2 border-red-500' : ''}`}>
       {isPinned && <div className="absolute top-1 left-1 text-xs opacity-80">📌</div>}
 
-      {/* Images: Zalo-like grid when multiple, large single when one */}
+      {/* Images */}
       {imageAttachments.length > 0 && (
         <div className="mb-2 max-w-[420px] w-full">
           {imageAttachments.length === 1 ? (
             <div className="overflow-hidden rounded-md">
-              <ImageWithFallback src={imageAttachments[0].url} alt={imageAttachments[0].filename || 'image-0'} className="w-full h-auto object-cover rounded-md" />
+              <div role="button" tabIndex={0} onClick={() => openPreview(String(imageAttachments[0].url))} onKeyDown={e => e.key === 'Enter' && openPreview(String(imageAttachments[0].url))}>
+                <ImageWithFallback src={String(imageAttachments[0].url)} alt={imageAttachments[0].filename || 'image'} className="w-full h-auto object-contain rounded-md" />
+              </div>
             </div>
           ) : (
             <>
@@ -182,11 +199,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ displayText, isMin
                   const a = imageAttachments[i];
                   const b = imageAttachments[i + 1];
                   if (b) {
-                    rows.push(<PairRow key={`row-${i}`} a={a} b={b} />);
+                    rows.push(<PairRow key={`row-${i}`} a={a} b={b} onOpen={openPreview} />);
                   } else {
                     rows.push(
                       <div key={`row-${i}`} className="overflow-hidden rounded-md h-64">
-                        <ImageWithFallback src={a.url} alt={a.filename || `image-${i}`} className="w-full h-full object-cover" />
+                        <div role="button" tabIndex={0} onClick={() => openPreview(String(a.url))} onKeyDown={e => e.key === 'Enter' && openPreview(String(a.url))}>
+                          <ImageWithFallback src={String(a.url)} alt={a.filename || `image-${i}`} className="w-full h-full object-cover" />
+                        </div>
                       </div>
                     );
                   }
@@ -198,7 +217,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ displayText, isMin
         </div>
       )}
 
-      {/* Files: render as stacked file blocks */}
+      {/* Files */}
       {fileAttachments.length > 0 && (
         <div className="flex flex-col gap-2 mb-2 max-w-[420px]">
           {fileAttachments.map((a, i) => (
@@ -208,13 +227,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ displayText, isMin
                   <img src={getAssetIconPath(a.filename, a.mime)} alt={a.filename || 'file'} className="w-8 h-8" />
                 </div>
                 <div className="flex flex-col">
-                  <div className="font-semibold truncate w-[260px] text-gray-900 dark:text-gray-100">{a.filename || a.url.split('/').pop()}</div>
+                  <div className="font-semibold truncate w-[260px] text-gray-900 dark:text-gray-100">{a.filename || String(a.url)?.split('/').pop()}</div>
                   <div className="text-[12px] opacity-70">{a.mime || 'Tệp đính kèm'}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <a href={encodeURI(a.url) + `${a.url.includes('?') ? '&' : '?'}dl=1`} className="p-2 text-sm rounded-md bg-white/5 hover:bg-white/10" aria-label={`Tải xuống ${a.filename || 'file'}`}>
-                  ⬇️
+                <a href={encodeURI(String(a.url)) + `${String(a.url).includes('?') ? '&' : '?'}dl=1`} className="p-2 text-sm rounded-md bg-white/5 hover:bg-white/10" aria-label={`Tải xuống ${a.filename || 'file'}`}>
+                  <Download className="w-4 h-4" />
                 </a>
               </div>
             </div>
@@ -239,6 +258,24 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ displayText, isMin
           })}
         </div>
       )}
+
+      {/* Preview dialog */}
+      <Dialog open={previewOpen} onOpenChange={v => (v ? setPreviewOpen(true) : closePreview())}>
+        {previewUrl && (
+          <DialogContent className="p-0 bg-transparent shadow-none">
+            <div className="max-w-[90vw] max-h-[90vh] rounded overflow-hidden relative">
+              <img src={encodeURI(previewUrl)} alt="preview" className="w-full h-auto object-contain max-h-[80vh] block" />
+
+              {/* download icon-only button placed inside image bottom-right */}
+              <a href={encodeURI(previewUrl) + `${previewUrl.includes('?') ? '&' : '?'}dl=1`} target="_blank" rel="noreferrer noopener" aria-label="Tải ảnh" className="absolute bottom-2 right-2 inline-flex items-center justify-center w-9 h-9 rounded-full bg-black/50 text-white hover:bg-black/60">
+                <Download className="w-4 h-4" />
+              </a>
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 };
+
+export default MessageBubble;

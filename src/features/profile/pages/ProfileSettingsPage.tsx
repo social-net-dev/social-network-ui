@@ -371,7 +371,7 @@ export function ProfileSettingsPage() {
               </Button>
             </div>
           </Card>
-          <Card className="p-6 rounded-3xl shadow-xl border-none">
+          {/* <Card className="p-6 rounded-3xl shadow-xl border-none">
             <h3 className="text-lg font-semibold mb-4">Sao lưu E2EE (Backup)</h3>
             <p className="text-sm text-gray-500 mb-4">Sao lưu private key đã mã hoá lên server để phục hồi trên thiết bị khác.</p>
             <div className="flex gap-3">
@@ -382,7 +382,7 @@ export function ProfileSettingsPage() {
                 Restore from backup
               </Button>
             </div>
-          </Card>
+          </Card> */}
         </TabsContent>
       </Tabs>
 

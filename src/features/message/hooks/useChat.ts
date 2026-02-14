@@ -118,8 +118,13 @@ export function useChat({
 
             // Nếu là ACK, không cần xử lý gì (optimistic update đã hiện)
             if (data.type === 'ack' && (data.action === 'reaction_added' || data.action === 'reaction_removed')) {
-              console.log('[useChat] Reaction ACK - keeping optimistic update');
-              return;
+              // If ACK originated from this user, keep optimistic update; but
+              // if it's an ACK for another user (broadcasted by server), apply it so remote clients see the change.
+              if (data.user_id === userId) {
+                console.log('[useChat] Reaction ACK from self - keeping optimistic update');
+                return;
+              }
+              console.log('[useChat] Reaction ACK from other user - applying update');
             }
 
             // Gọi callback để ConversationPage cập nhật fetchedMessages
@@ -254,10 +259,13 @@ export function useChat({
     client.onReaction = data => {
       console.log('[useChat] Reaction event received:', data);
 
-      // Nếu là ACK, không cần xử lý gì (optimistic update đã hiện)
+      // If it's an ACK reaction event, only skip handling when it's from this client
       if (data.type === 'ack' && (data.action === 'reaction_added' || data.action === 'reaction_removed')) {
-        console.log('[useChat] Reaction ACK - keeping optimistic update');
-        return;
+        if (data.user_id === userId) {
+          console.log('[useChat] Reaction ACK from self - keeping optimistic update');
+          return;
+        }
+        console.log('[useChat] Reaction ACK from other user - applying update');
       }
       client.onDelete = id => {
         console.log('[useChat] onDelete received:', id);

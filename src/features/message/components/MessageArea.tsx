@@ -47,7 +47,7 @@ export const MessageArea: React.FC<MessageAreaProps> = ({ pinnedMessages, regula
           {/* Display Name Setting */}
           {roomId && (
             <div className="ml-4">
-              <SetDisplayName roomId={roomId} userId={currentUserId} currentDisplayName={currentMemberDisplayName} onSuccess={onRefresh} />
+              <SetDisplayName roomId={roomId} currentDisplayName={currentMemberDisplayName} onSuccess={onRefresh} />
             </div>
           )}
         </div>

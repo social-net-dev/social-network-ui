@@ -135,24 +135,9 @@ export const useFileUpload = ({ roomId, userId, onUploadStart, onUploadSuccess, 
           console.debug('[useFileUpload] server response mapping failed', e);
         }
 
-        // Revoke local preview URLs after delay
-        setTimeout(() => {
-          setFetchedMessages(prev => {
-            prev.forEach((m: any) => {
-              if (m._local_preview_urls && Array.isArray(m._local_preview_urls)) {
-                m._local_preview_urls.forEach((u: string) => {
-                  try {
-                    URL.revokeObjectURL(u);
-                  } catch (e) {
-                    // ignore
-                  }
-                });
-                delete m._local_preview_urls;
-              }
-            });
-            return [...prev];
-          });
-        }, 3000);
+        // Keep optimistic preview URLs until server responds and we map the optimistic message.
+        // The cleanup/revoke will be handled when the optimistic entry is replaced by the server message
+        // or when the component unmounts (see effect cleanup above).
 
         onUploadSuccess?.();
         return client_id;

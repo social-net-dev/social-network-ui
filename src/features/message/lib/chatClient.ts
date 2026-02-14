@@ -177,7 +177,15 @@ export class ChatClient {
               iv: data.iv ?? undefined,
               // backend now returns attachments array with metadata
               // Normalize attachment URLs so realtime messages use message service host
-              attachments: (data.attachments ?? null) ? (data.attachments as any[]).map(a => ({ ...a, url: resolveAttachmentUrl(a.url) })) : null,
+              attachments:
+                (data.attachments ?? null)
+                  ? (data.attachments as any[]).map(a => {
+                      const url = resolveAttachmentUrl(a.url);
+                      const filename = a.filename ?? (a.url ? String(a.url).split('/').pop() : undefined);
+                      const is_image = a.is_image === undefined ? /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(String(filename ?? a.url ?? '')) || (a.mime && String(a.mime).startsWith('image/')) : !!a.is_image;
+                      return { ...a, url, filename, is_image };
+                    })
+                  : null,
               // legacy fallback
               attachment_url: resolveAttachmentUrl(data.attachment_url ?? null),
               attachment_urls: data.attachment_urls ? (data.attachment_urls as string[]).map((u: string) => resolveAttachmentUrl(u)) : null,

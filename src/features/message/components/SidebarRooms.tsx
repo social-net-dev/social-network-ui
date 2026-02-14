@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { IRoomUser } from '../types/message.types';
 import { useMessageStore } from '@/stores/messageStore';
+import { useAuthStore } from '@/stores/authStore';
 import { callFetchMessagesRoom } from '../services/messageApi';
 
 interface Props {
@@ -59,10 +60,24 @@ const SidebarRooms: React.FC<Props> = ({ rooms, selectedId, onSelect }) => {
     };
   }, [rooms]);
 
+  const currentUser = useAuthStore(state => state.user);
+
+  const getLocalTitle = (roomId: string) => {
+    try {
+      const uid = currentUser?.id;
+      if (!uid) return null;
+      const key = `local_display_name_${roomId}_${uid}`;
+      return localStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  };
+
   return (
     <div className="space-y-1">
       {rooms.map(r => {
-        const title = r.name && r.name.trim() ? r.name : `Phòng ${r.room_id.slice(0, 6)}`;
+        const localTitle = getLocalTitle(r.room_id);
+        const title = (localTitle && localTitle.trim()) || (r.name && r.name.trim()) || `Phòng ${r.room_id.slice(0, 6)}`;
         // tolerate different backend shapes: snake_case or camelCase or legacy `last`
         const last = (r as any).last_message ?? (r as any).lastMessage ?? (r as any).last ?? null;
         let snippet = '';

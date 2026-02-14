@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { callSetMemberDisplayName } from '../services/messageApi';
+import { useAuthStore } from '@/stores/authStore';
 
 interface SetDisplayNameProps {
   roomId: string;
-  userId: string;
   currentDisplayName?: string;
   onSuccess?: () => void;
 }
 
-export const SetDisplayName: React.FC<SetDisplayNameProps> = ({ roomId, userId, currentDisplayName, onSuccess }) => {
+export const SetDisplayName: React.FC<SetDisplayNameProps> = ({ roomId, currentDisplayName, onSuccess }) => {
+  const user = useAuthStore(state => state.user);
+  const currentUserId = user?.id ?? '';
+
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState(currentDisplayName || '');
   const [loading, setLoading] = useState(false);
@@ -21,9 +24,23 @@ export const SetDisplayName: React.FC<SetDisplayNameProps> = ({ roomId, userId, 
 
     setLoading(true);
     try {
-      await callSetMemberDisplayName(roomId, userId, {
+      if (!currentUserId) {
+        alert('Không xác định được người dùng. Vui lòng đăng nhập lại.');
+        setLoading(false);
+        return;
+      }
+
+      await callSetMemberDisplayName(roomId, currentUserId, {
         display_name: displayName.trim(),
       });
+
+      // Also save a local override so this display name is shown on this device only
+      try {
+        const key = `local_display_name_${roomId}_${currentUserId}`;
+        localStorage.setItem(key, displayName.trim());
+      } catch (e) {
+        // ignore storage failures
+      }
 
       setIsEditing(false);
       onSuccess?.();
