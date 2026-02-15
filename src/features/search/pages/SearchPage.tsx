@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar } from '@/features/shared/components/Avatar';
 import { Search, UserPlus, UserCheck, Clock, UserX, Loader2 } from 'lucide-react';
 import { getErrorMessage } from '@/lib/api/transforms';
-import { useSearchUsers } from '@/lib/api/hooks/useSearch';
 import { profilesApi } from '@/lib/api/services';
 import { useAuthStore } from '@/stores/authStore';
 import { usersApi } from '@/lib/api/services';
@@ -189,9 +188,9 @@ export function SearchPage() {
           setCreatingRoomFor(user.id);
           try {
             // fetch my username and other username
-            const me = await usersApi.getMe();
-            const myUsername = (me as any)?.username || (me as any)?.email || null;
-            const otherUsername = (user as any).username || (user as any).email || null;
+            // const me = await usersApi.getMe();
+            // const myUsername = (me as any)?.username || (me as any)?.email || null;
+            // const otherUsername = (user as any).username || (user as any).email || null;
             if (currentUserId && user.id) {
               try {
                 const dmResp = await callGetDMRoom(currentUserId, user.id);

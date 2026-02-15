@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { IRoomUser } from '../types/message.types';
 import { useMessageStore } from '@/stores/messageStore';
-import { useAuthStore } from '@/stores/authStore';
 import { callFetchMessagesRoom } from '../services/messageApi';
 
 interface Props {
@@ -60,10 +59,8 @@ const SidebarRooms: React.FC<Props> = ({ rooms, selectedId, onSelect }) => {
     };
   }, [rooms]);
 
-  const currentUser = useAuthStore(state => state.user);
-
   // No localStorage overrides: rely on server-provided room `name`.
-  const getLocalTitle = (_roomId: string) => null;
+  const getLocalTitle = (_roomId: string): string | null => null;
 
   return (
     <div className="space-y-1">

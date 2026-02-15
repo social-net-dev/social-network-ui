@@ -168,13 +168,13 @@ export const useE2EEMessaging = ({ roomId, userId, enabled = true }: UseE2EEMess
 
       if (roomId) {
         try {
-          const res = await callGetRoomMemberPublicKeys(roomId).catch(() => null);
-          const members = res?.data?.members || [];
+          // const res = await callGetRoomMemberPublicKeys(roomId).catch(() => null);
+          // const members = res?.data?.members || [];
           // If we already have a local private key saved, no need to force the modal again.
           const storageKey = `e2ee_private_key_${userId}`;
           const localPrivate = localStorage.getItem(storageKey);
-          const seenKey = `e2ee_sync_seen_${userId}`;
-          const seen = localStorage.getItem(seenKey);
+          // const seenKey = `e2ee_sync_seen_${userId}`;
+          // const seen = localStorage.getItem(seenKey);
 
           if (localPrivate) {
             console.log('[E2EE] Backup exists but local private key is present -> initializing from local keys');
@@ -207,7 +207,7 @@ export const useE2EEMessaging = ({ roomId, userId, enabled = true }: UseE2EEMess
     }
   };
 
-  const handleCreateBackup = async (passphrase: string, remember: boolean) => {
+  const handleCreateBackup = async (passphrase: string) => {
     if (!keyPair) throw new Error('No keyPair to backup');
     const exportedPriv = await exportPrivateKey(keyPair.privateKey);
     const payload = await encryptPrivateKeyWithPassphrase(exportedPriv, passphrase);
@@ -218,7 +218,7 @@ export const useE2EEMessaging = ({ roomId, userId, enabled = true }: UseE2EEMess
     console.log('[E2EE] ✅ Backup created on server');
   };
 
-  const handleRestore = async (passphrase: string, remember = false) => {
+  const handleRestore = async (passphrase: string) => {
     const resp = await callGetPrivateKeyBackup(userId);
     if (!resp || !resp.data) throw new Error('No backup found');
     const payload = resp.data;

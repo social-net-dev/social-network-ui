@@ -195,7 +195,7 @@ export function ProfileSettingsPage() {
     }
   };
 
-  const handlePassphraseSubmit = async (passphrase: string, remember: boolean) => {
+  const handlePassphraseSubmit = async (passphrase: string) => {
     const userId = useAuthStore.getState().getUserId();
     if (!userId) {
       alert('Không có user id');

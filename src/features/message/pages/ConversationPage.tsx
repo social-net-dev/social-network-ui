@@ -190,7 +190,7 @@ const ConversationPage: React.FC = () => {
   });
 
   // Room manager hook
-  const { rooms } = useRoomManager({ userId: resolvedUserId });
+  const { rooms, loadRooms } = useRoomManager({ userId: resolvedUserId });
 
   // Message manager hook
   const { setFetchedMessages, combinedMessages, pinnedMessages, regularMessages, loadMessages } = useMessageManager({
@@ -249,6 +249,9 @@ const ConversationPage: React.FC = () => {
     },
   });
 
+  // Show one-time sync notice when server backup exists and local device hasn't seen it
+  const [, setLocalSyncNoticeVisible] = useState(false);
+
   // E2EE hook
   const {
     isReady: e2eeReady,
@@ -261,7 +264,7 @@ const ConversationPage: React.FC = () => {
     handleCreateBackup,
     handleRestore,
     showSyncNotice,
-    dismissSyncNotice,
+    // dismissSyncNotice,
     ensureReady,
   } = useE2EEMessaging({
     roomId: resolvedRoom,
@@ -269,8 +272,6 @@ const ConversationPage: React.FC = () => {
     enabled: true, // Enable E2EE by default
   });
 
-  // Show one-time sync notice when server backup exists and local device hasn't seen it
-  const [localSyncNoticeVisible, setLocalSyncNoticeVisible] = useState(false);
   useEffect(() => {
     if ((showSyncNotice as boolean) === true) setLocalSyncNoticeVisible(true);
   }, [showSyncNotice]);
@@ -413,27 +414,27 @@ const ConversationPage: React.FC = () => {
   }, [showPassphraseModal]);
 
   // Sync notice banner JSX
-  const SyncNotice = () => {
-    if (!localSyncNoticeVisible) return null;
-    return (
-      <div className="max-w-4xl mx-auto p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm flex items-center justify-between mb-4">
-        <div>Khôi phục khoá E2EE đã có trên server — khoá đã được đồng bộ ở thiết bị khác.</div>
-        <div className="flex items-center gap-2">
-          <button
-            className="px-3 py-1 bg-etechs-primary text-white rounded-xl"
-            onClick={() => {
-              setLocalSyncNoticeVisible(false);
-              try {
-                dismissSyncNotice?.();
-              } catch (e) {}
-            }}
-          >
-            Đóng
-          </button>
-        </div>
-      </div>
-    );
-  };
+  // const SyncNotice = () => {
+  //   if (!localSyncNoticeVisible) return null;
+  //   return (
+  //     <div className="max-w-4xl mx-auto p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm flex items-center justify-between mb-4">
+  //       <div>Khôi phục khoá E2EE đã có trên server — khoá đã được đồng bộ ở thiết bị khác.</div>
+  //       <div className="flex items-center gap-2">
+  //         <button
+  //           className="px-3 py-1 bg-etechs-primary text-white rounded-xl"
+  //           onClick={() => {
+  //             setLocalSyncNoticeVisible(false);
+  //             try {
+  //               dismissSyncNotice?.();
+  //             } catch (e) {}
+  //           }}
+  //         >
+  //           Đóng
+  //         </button>
+  //       </div>
+  //     </div>
+  //   );
+  // };
 
   // Decrypt messages when they arrive
   useEffect(() => {
@@ -794,7 +795,15 @@ const ConversationPage: React.FC = () => {
                 roomId={resolvedRoom}
                 userId={recipientId}
                 currentDisplayName={recipientDisplayName}
-                onSuccess={refreshRoomMembers}
+                onSuccess={() => {
+                  // Refresh members/messages and room list so sidebar/header update immediately
+                  try {
+                    refreshRoomMembers();
+                  } catch (e) {}
+                  try {
+                    loadRooms();
+                  } catch (e) {}
+                }}
                 onOptimistic={(name, targetId) => {
                   // Update recipient display name immediately for optimistic UI
                   if (targetId === recipientId) setRecipientDisplayName(name || undefined);

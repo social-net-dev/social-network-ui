@@ -37,8 +37,6 @@ export const SetDisplayName: React.FC<SetDisplayNameProps> = ({ roomId, currentD
 
       const targetId = (userId && userId.trim()) || (memberId && memberId.trim()) || currentUserId;
 
-      // Optimistic UI: inform parent immediately so it can update local display name
-      const prevName = currentDisplayName || '';
       try {
         onOptimistic?.(displayName.trim(), targetId);
       } catch (e) {

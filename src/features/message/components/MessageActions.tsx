@@ -11,7 +11,7 @@ interface MessageActionsProps {
 
 const commonEmojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
-export const MessageActions: React.FC<MessageActionsProps> = ({ isMine, isPinned, onPin, onUnpin, onDelete, onReact }) => {
+export const MessageActions: React.FC<MessageActionsProps> = ({ isMine, onDelete, onReact }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
