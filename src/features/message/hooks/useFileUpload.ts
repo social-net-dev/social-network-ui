@@ -100,8 +100,6 @@ export const useFileUpload = ({ roomId, userId, onUploadStart, onUploadSuccess, 
           content: text.trim() || null,
         });
 
-        console.log('[useFileUpload] Upload response:', res.data ?? res);
-
         // If server returned the persisted message, replace optimistic entry
         try {
           const serverMsg = (res as any).data;

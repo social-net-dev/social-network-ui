@@ -43,7 +43,12 @@ export const PassphraseModal: React.FC<Props> = ({ open, mode, onClose, onSubmit
   };
 
   return (
-    <Dialog open={open} onOpenChange={open ? () => {} : onClose}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen: boolean) => {
+        if (!nextOpen) onClose();
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isCreate ? 'Tạo passphrase để backup khoá' : 'Nhập passphrase để khôi phục khoá'}</DialogTitle>

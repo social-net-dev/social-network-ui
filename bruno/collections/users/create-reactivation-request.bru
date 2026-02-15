@@ -1,0 +1,21 @@
+meta {
+  name: Create Reactivation Request
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{api_base}}/users/me/reactivation-requests/
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "reason": "Account was deactivated by mistake"
+  }
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

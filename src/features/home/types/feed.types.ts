@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import type { ProfileVisibilityResponse } from '@/lib/api/generated/model';
+
+export type ProfileVisibilityResponse = {
+  visibility: string;
+  display_name_visibility?: string;
+  birth_date_visibility?: string;
+  bio_visibility?: string;
+  avatar_visibility?: string;
+};
 
 // ===========================
 // 🎯 FRONTEND MODELS (Chuẩn FE)
@@ -17,11 +24,14 @@ export interface Project {
 }
 
 export interface PersonalInfo {
+  educationLevel?: string;
   school?: string;
   class?: string;
   degree?: string;
   major?: string;
   graduationYear?: string;
+  academicYear?: string;
+  schoolYear?: string;
   favoriteSubjects?: string[];
   hobbies?: string[];
   projects?: Project[];
@@ -34,6 +44,7 @@ export interface Author {
   id: string;
   displayName: string;
   avatar: string | null;
+  background?: string | null;
   username?: string | null;
   role?: string;
   bio?: string;
@@ -47,6 +58,10 @@ export interface Author {
   accountStatus?: string;
   storageQuotaMb?: number;
   privacy?: ProfileVisibilityResponse;
+  /** true when the viewer is friends with this user (from /profiles/{username}/) */
+  isFriend?: boolean;
+  /** true when the viewer owns this profile (from /profiles/{username}/) */
+  isOwner?: boolean;
   // Legacy support
   firstName?: string;
   lastName?: string;
@@ -151,5 +166,9 @@ export type Comment = FeedComment & {
 
 /**
  * Re-exporting Backend Models for use in transforms
+ * @deprecated Use manual types from @/lib/api/types
  */
-export type { PostOut as IBackendPost, AuthorInfo as IBackendAuthor, CommentOut as IBackendComment, FeedResponse as IBackendFeedResponse } from '@/lib/api/generated/model';
+export type IBackendPost = any;
+export type IBackendAuthor = any;
+export type IBackendComment = any;
+export type IBackendFeedResponse = any;

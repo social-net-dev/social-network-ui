@@ -1,5 +1,5 @@
 import { z } from "zod";
-import * as Models from "@/lib/api/generated/model";
+import type { RegisterResponse as BackendRegisterResponse } from "@/lib/api/types/auth.types";
 
 /**
  * UI-specific Form Schemas
@@ -27,9 +27,8 @@ export const RegisterFormDataSchema = z.object({
     phone: z.string().optional(),
     role: z.enum(["STUDENT", "INSTRUCTOR"]),
     gender: z.enum(["MALE", "FEMALE", "OTHER", ""]),
-    // CCCD không bắt buộc
-    idCardFront: z.instanceof(File).optional(),
-    idCardBack: z.instanceof(File).optional(),
+    // Giấy tờ tùy thân (không bắt buộc)
+    personalDocuments: z.array(z.instanceof(File)).optional(),
     consent: z.boolean().refine((val) => val === true, "Vui lòng đồng ý điều khoản"),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Mật khẩu xác nhận không khớp",
@@ -50,12 +49,17 @@ export type OTPVerifyData = z.infer<typeof OTPVerifySchema>;
  */
 
 export type AuthResponse = {
-    user: Models.AuthorInfo;
+    user: {
+        id: string;
+        display_name: string;
+        username?: string;
+        avatar_path?: string;
+    };
     token: string;
     refreshToken: string;
 }
 
-export type RegisterResponse = Models.RegisterResponse;
+export type RegisterResponse = BackendRegisterResponse;
 
 export interface AuthError {
     message: string;

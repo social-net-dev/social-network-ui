@@ -6,10 +6,11 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, token } = useAuthStore();
   const location = useLocation();
 
-  if (!isAuthenticated) {
+  // Check both isAuthenticated flag and token existence for security
+  if (!isAuthenticated || !token) {
     // Redirect to login but save the current location they were trying to go to
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

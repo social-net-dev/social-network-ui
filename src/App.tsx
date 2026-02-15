@@ -73,9 +73,8 @@ function App() {
             <Route path="/messages/:conversationId" element={<ConversationPage />} />
             <Route path="/friends" element={<FriendsListPage />} />
             <Route path="/friends/requests" element={<FriendRequestsPage />} />
-
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/profile/me" element={<PersonalProfilePage />} />
+            <Route path="/me" element={<PersonalProfilePage />} />
             <Route path="/profile/:userId" element={<ProfilePage />} />
             <Route path="/recommendations" element={<RecommendationPage />} />
             <Route path="/groups/:groupId" element={<GroupDetailPage />} />

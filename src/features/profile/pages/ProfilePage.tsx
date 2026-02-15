@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useProfile } from '../hooks/useProfile';
-import type { Author, FeedPost } from '@/features/home/types/feed.types';
+import type { FeedPost } from '@/features/home/types/feed.types';
+import type { User } from '@/lib/api/types/user.types';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { ProfileStats } from '../components/ProfileStats';
 import { PersonalInfoSidebar } from '../components/PersonalInfoSidebar';
@@ -12,10 +13,9 @@ import { FileText, Loader2 } from 'lucide-react';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { StorageQuotaCard } from '../components/StorageQuotaCard';
 import { useQuery } from '@tanstack/react-query';
-import { getPostsByUserId } from '@/lib/api/manual-apis';
-import { transformPost } from '@/lib/api/transforms';
-import { PostCard } from '@/features/home/components/PostCard';
+import { postsApi } from '@/lib/api/services/posts';
 import { usePostActions } from '@/features/home/hooks/usePostActions';
+import { PostCard } from '@/features/home/components/PostCard';
 
 const USER_POSTS_QUERY_KEY = ['user-posts'] as const;
 
@@ -23,19 +23,18 @@ function ProfilePage() {
   const navigate = useNavigate();
   const { userId: _userId } = useParams();
   const { profile: rawProfile, isLoading: isProfileLoading, error, isMe } = useProfile();
-  const profile = rawProfile as Author;
-  const { user: currentUser, isAuthenticated } = useAuthStore();
+  const profile = rawProfile as User;
+  const { user: currentUser } = useAuthStore();
 
-  const postsUserId = isMe ? (currentUser?.id || currentUser?.user_id) : profile?.id;
+  const postsUserId = isMe ? currentUser?.id : profile?.id;
   const currentQueryKey = [...USER_POSTS_QUERY_KEY, postsUserId] as unknown as readonly unknown[];
   const { deletePost, updatePost, likePost } = usePostActions(currentQueryKey);
 
   const { data: postsList, isLoading: isPostsLoading } = useQuery({
     queryKey: [...USER_POSTS_QUERY_KEY, postsUserId],
     queryFn: async () => {
-      const res = await getPostsByUserId(postsUserId!);
-      const list = (res as { posts?: unknown[] })?.posts ?? (Array.isArray(res) ? res : []);
-      return (list as any[]).map(transformPost);
+      const res = isMe ? await postsApi.getMyPosts() : await postsApi.getPostsByUser(postsUserId!);
+      return res.posts;
     },
     enabled: !!postsUserId,
   });
@@ -64,25 +63,20 @@ function ProfilePage() {
     );
   }
 
-  const isCurrentUser = isAuthenticated && (currentUser?.id || currentUser?.user_id) === profile.id;
+  const isCurrentUser = isMe; // isMe is already calculated by useProfile
   const stats = {
     posts: profile.postsCount || posts.length || 0,
     followers: profile.followers || 0,
     following: profile.following || 0,
   };
 
-  const profileData = {
-    ...profile,
-    isOwner: isCurrentUser,
-    isFriend: false,
-    avatar: profile.avatar,
-    createdAt: profile.createdAt || new Date().toISOString(),
-    updatedAt: profile.updatedAt || new Date().toISOString(),
-  };
-
   return (
     <div className="space-y-6">
-      <ProfileHeader profile={profileData} isCurrentUser={isCurrentUser} onEdit={() => isCurrentUser && navigate('/settings')} />
+      <ProfileHeader 
+        profile={profile} 
+        isCurrentUser={isCurrentUser} 
+        onEdit={() => isCurrentUser && navigate('/settings')} 
+      />
 
       <ProfileStats stats={stats} />
 
@@ -104,7 +98,7 @@ function ProfilePage() {
               ) : posts.length > 0 ? (
                 <div className="space-y-6">
                   {posts.map(post => (
-                    <PostCard key={post.id} post={post} currentUserId={currentUser?.id || currentUser?.user_id} onLike={(id, liked) => likePost?.(id, liked)} onComment={() => {}} onShare={() => {}} onDelete={id => deletePost?.(id)} onEdit={(id, content) => updatePost?.(id, content)} />
+                    <PostCard key={post.id} post={post} currentUserId={currentUser?.id} onLike={(id, liked) => likePost?.(id, liked)} onComment={() => {}} onShare={() => {}} onDelete={id => deletePost?.(id)} onEdit={(id, content) => updatePost?.(id, content)} />
                   ))}
                   <Button variant="ghost" className="w-full rounded-xl py-5 border-2 border-dashed border-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all-300 hover-lift">
                     Xem tất cả bài viết

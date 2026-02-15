@@ -59,7 +59,6 @@ function ImageWithFallback({ src, alt, className, onNaturalSize }: { src: string
       setCurrent(obj);
       setFailed(false);
     } catch (e) {
-      console.warn('Image fetch fallback failed', src, e);
       setFailed(true);
     }
   };

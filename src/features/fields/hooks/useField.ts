@@ -1,8 +1,5 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/api';
-import type { FieldResponse, FieldPostsResponse } from '../types/field.types';
-import { transformPost } from '@/lib/api/transforms';
-import { Models } from '@/lib/api/generated';
+import { fieldsApi } from '@/lib/api/services/fields';
 import { toast } from 'sonner';
 
 export function useField(fieldId: string) {
@@ -10,33 +7,23 @@ export function useField(fieldId: string) {
 
   const fieldQuery = useQuery({
     queryKey: ['fields', fieldId],
-    queryFn: async () => {
-      const response = await apiClient.get<FieldResponse>(`/fields/${fieldId}/`);
-      return response.data.field;
-    },
+    queryFn: () => fieldsApi.getField(fieldId),
     enabled: !!fieldId,
   });
 
   const postsQuery = useInfiniteQuery({
     queryKey: ['fields', fieldId, 'posts'],
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await apiClient.get<FieldPostsResponse>(`/fields/${fieldId}/posts/`, {
-        params: { page: pageParam, limit: 10 },
-      });
-      return response.data;
-    },
+    queryFn: ({ pageParam = 1 }) => fieldsApi.getFieldPosts(fieldId, { page: pageParam, limit: 10 }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage: FieldPostsResponse, allPages: FieldPostsResponse[]) => {
-      if (!lastPage.posts || lastPage.posts.length < 10) return undefined;
-      return allPages.length + 1;
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page >= lastPage.total_pages) return undefined;
+      return lastPage.page + 1;
     },
     enabled: !!fieldId,
   });
 
   const followMutation = useMutation({
-    mutationFn: async () => {
-      return apiClient.post(`/fields/${fieldId}/follow/`);
-    },
+    mutationFn: () => fieldsApi.followField(fieldId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fields', fieldId] });
       toast.success('Đã theo dõi lĩnh vực');
@@ -47,9 +34,7 @@ export function useField(fieldId: string) {
   });
 
   const unfollowMutation = useMutation({
-    mutationFn: async () => {
-      return apiClient.delete(`/fields/${fieldId}/follow/`);
-    },
+    mutationFn: () => fieldsApi.unfollowField(fieldId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fields', fieldId] });
       toast.success('Đã bỏ theo dõi lĩnh vực');
@@ -59,7 +44,7 @@ export function useField(fieldId: string) {
     },
   });
 
-  const posts = postsQuery.data?.pages.flatMap(page => (page.posts || []).map((post: Models.PostOut) => transformPost(post))) ?? [];
+  const posts = postsQuery.data?.pages.flatMap(page => page.posts) ?? [];
 
   return {
     field: fieldQuery.data,

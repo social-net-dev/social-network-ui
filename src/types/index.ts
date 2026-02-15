@@ -1,21 +1,21 @@
 import { z } from "zod";
-import * as Models from "@/lib/api/generated/model";
-import * as ZodModels from "@/lib/api/generated/zod";
-import type { Author as FEAuthor, FeedPost as FEPost, FeedComment as FEComment, ReactionType as FEReactionType } from "@/features/home/types/feed.types";
+import * as Models from "@/lib/api/types";
+import type { Post as FEPost, ReactionType as FEReactionType } from "@/lib/api/types";
+import type { Comment as FEComment } from "@/lib/api/types";
 
 /**
  * Single Source of Truth for Types
  * This file re-exports types from Orval and defines Frontend-specific views.
  */
 
-// Re-export all backend models
+// Re-export all manual api types
 export { Models };
 
-// Re-export all validation schemas
-export { ZodModels };
+// Stub for ZodModels
+export const ZodModels = {};
 
 // Define Aliases for clarity
-export type User = FEAuthor;
+export type User = Models.User;
 export type Post = FEPost;
 export type Comment = FEComment;
 export type ReactionType = FEReactionType;

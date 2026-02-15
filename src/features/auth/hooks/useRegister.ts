@@ -1,12 +1,14 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import { AuthAPI } from "@/lib/api/generated";
+import { useAuth } from "@/lib/api/hooks/useAuth";
 import { getErrorMessage, transformRegisterResponse } from "@/lib/api/transforms";
 import { RegisterFormDataSchema, type RegisterFormData } from "../types/auth.types";
+import type { RegisterRequest } from "@/lib/api/types";
 
 export function useRegister() {
     const navigate = useNavigate();
+    const { register, isLoading, errors } = useAuth();
 
     const form = useForm<RegisterFormData>({
         resolver: zodResolver(RegisterFormDataSchema),
@@ -19,50 +21,47 @@ export function useRegister() {
             role: "STUDENT",
             gender: "",
             consent: false,
+            personalDocuments: [],
         },
     });
 
-    const mutation = AuthAPI.useRegisterAuthRegisterPost({
-        mutation: {
-            onSuccess: (response, variables) => {
-                const data = transformRegisterResponse(response);
-                const user_id = data.userId || "";
-                
-                sessionStorage.setItem("otp_verify_email", variables.data.email);
-                sessionStorage.setItem("otp_verify_user_id", user_id);
-
-                navigate("/verify-otp", {
-                    state: { email: variables.data.email, user_id },
-                    replace: true,
-                });
-            },
-        },
-    });
-
-    const onSubmit = (data: RegisterFormData) => {
-        // Prepare multipart form data as required by Orval/Axios
-        // NOTE: Orval model types still require cccd_front/cccd_back, so we cast here
-        // and rely on the generated client to append only when provided.
-        mutation.mutate({
-            data: {
+    const onSubmit = async (data: RegisterFormData) => {
+        const personalDocs = data.personalDocuments || [];
+        
+        try {
+            const registerData: RegisterRequest = {
                 email: data.email,
                 password: data.password,
                 display_name: data.displayName,
-                role: data.role,
+                role: data.role as any,
                 gender: data.gender || "",
                 consent: data.consent,
                 phone: data.phone,
-                ...(data.idCardFront ? { cccd_front: data.idCardFront as any } : {}),
-                ...(data.idCardBack ? { cccd_back: data.idCardBack as any } : {}),
-            } as any
-        });
+                ...(personalDocs[0] ? { cccd_front: personalDocs[0] } : {}),
+                ...(personalDocs[1] ? { cccd_back: personalDocs[1] } : {}),
+            };
+
+            const response = await register(registerData);
+            const transformed = transformRegisterResponse(response);
+            const user_id = transformed.userId || "";
+            
+            sessionStorage.setItem("otp_verify_email", data.email);
+            sessionStorage.setItem("otp_verify_user_id", user_id);
+
+            navigate("/verify-otp", {
+                state: { email: data.email, user_id },
+                replace: true,
+            });
+        } catch (error) {
+            console.error("Registration error:", error);
+        }
     };
 
     return {
         form,
         onSubmit,
-        error: getErrorMessage(mutation.error),
-        isSuccess: mutation.isSuccess,
-        isLoading: mutation.isPending,
+        error: getErrorMessage(errors.register),
+        isSuccess: !errors.register && !isLoading && form.formState.isSubmitSuccessful,
+        isLoading,
     };
 }

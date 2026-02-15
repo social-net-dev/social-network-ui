@@ -1,15 +1,13 @@
-import { UsersAPI } from '@/lib/api/generated'
-import { transformUserMe } from '@/lib/api/transforms'
-import { useAuthStore } from '@/stores/authStore'
+import { useUser } from '@/lib/api/hooks/useUser'
 
 export function useCurrentUser() {
-  const { isAuthenticated } = useAuthStore()
-
-  return UsersAPI.useMeAliasUsersMeGet({
-    query: {
-      enabled: isAuthenticated,
-      staleTime: 1000 * 60 * 10,
-      select: (data: any) => transformUserMe(data.data || data)
-    }
-  })
+  const { user, isLoading, isError, error, refetch } = useUser('me')
+  
+  return {
+    data: user,
+    isLoading,
+    isError,
+    error,
+    refetch
+  }
 }

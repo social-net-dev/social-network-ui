@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AuthAPI } from '@/lib/api/generated';
-import { extractUserIdFromTenantSlug } from '@/lib/api/profileApi';
+import { authApi } from '@/lib/api/services';
+import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { useE2EEStore } from './e2eeStore';
 import { callSetPublicKey } from '@/features/message/services/messageApi';
 // import { clearAllE2EEKeys } from '@/features/message/lib/e2ee'; // NOT USED - keys must persist
@@ -80,14 +80,9 @@ export const useAuthStore = create<AuthState>()(
       },
       setUser: user => set({ user }),
       logout: async () => {
-        const { refreshToken } = get();
         try {
-          // Call backend logout API with current refresh token
-          if (refreshToken) {
-            await AuthAPI.useLogoutAuthLogoutPost().mutateAsync({
-              data: { refresh_token: refreshToken },
-            });
-          }
+          // Call backend logout API
+          await authApi.logout();
         } catch (error) {
           console.error('Logout error:', error);
         } finally {

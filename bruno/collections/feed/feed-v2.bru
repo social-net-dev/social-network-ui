@@ -1,0 +1,20 @@
+meta {
+  name: Get Feed V2
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{api_base}}/feed/
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  page: 1
+  page_size: 20
+}

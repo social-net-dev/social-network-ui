@@ -1,62 +1,48 @@
-import React, { useState, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Avatar } from "@/features/shared/components/Avatar";
-import { Search, UserPlus, UserCheck, Clock, UserX, Loader2 } from "lucide-react";
-import { customInstance } from "@/lib/axios-instance";
-import { buildMediaUrl } from "@/lib/api/transforms/common";
-import { createFriendRequestFriendsRequestsPost } from "@/lib/api/generated/friends/friends";
-import { toast } from "sonner";
-import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
+import React, { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Avatar } from '@/features/shared/components/Avatar';
+import { Search, UserPlus, UserCheck, Clock, UserX, Loader2 } from 'lucide-react';
+import { getErrorMessage } from '@/lib/api/transforms';
+import { useSearchUsers } from '@/lib/api/hooks/useSearch';
+import { profilesApi } from '@/lib/api/services';
+import { useAuthStore } from '@/stores/authStore';
+import { usersApi } from '@/lib/api/services';
+import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
+import { callGetDMRoom } from '@/features/message/services/messageApi';
+import { useRoomManager } from '@/features/message/hooks/useRoomManager';
+import { useFriendActions } from '@/lib/api/hooks/useFriends';
+import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import { MessageCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import type { User } from '@/lib/api/types/user.types';
 
-interface SearchUser {
-  id: string;
-  display_name: string;
-  username: string;
-  email: string;
-  avatar_path: string;
-  bio: string;
-  friendship_status: "none" | "friends" | "request_sent" | "request_received";
-  friend_request_id: string | null;
+interface SearchUser extends User {
+  friendshipStatus: 'none' | 'friends' | 'request_sent' | 'request_received';
+  friendRequestId: string | null;
 }
 
-function useSearchUsers(query: string) {
-  return useQuery({
-    queryKey: ["search", "users", query],
-    queryFn: async () => {
-      if (!query || query.length < 2) return { users: [], total: 0 };
-      const res = await customInstance<{ users: SearchUser[]; total: number }>({
-        url: `/search/users/`,
-        method: "GET",
-        params: { q: query, limit: 20 },
-      });
-      return res;
-    },
-    enabled: query.length >= 2,
-    staleTime: 1000 * 30,
-  });
-}
-
-function FriendshipStatusBadge({ status }: { status: SearchUser["friendship_status"] }) {
+function FriendshipStatusBadge({ status }: { status: SearchUser['friendshipStatus'] }) {
   switch (status) {
-    case "friends":
+    case 'friends':
       return (
         <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
           <UserCheck className="h-3 w-3 mr-1" />
           Bạn bè
         </Badge>
       );
-    case "request_sent":
+    case 'request_sent':
       return (
         <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
           <Clock className="h-3 w-3 mr-1" />
           Đã gửi lời mời
         </Badge>
       );
-    case "request_received":
+    case 'request_received':
       return (
         <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
           <UserPlus className="h-3 w-3 mr-1" />
@@ -69,51 +55,117 @@ function FriendshipStatusBadge({ status }: { status: SearchUser["friendship_stat
 }
 
 export function SearchPage() {
-  const [searchInput, setSearchInput] = useState("");
-  const [query, setQuery] = useState("");
+  const [searchInput, setSearchInput] = useState('');
+  const [query, setQuery] = useState('');
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [creatingRoomFor, setCreatingRoomFor] = useState<string | null>(null);
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
-  const { data, isLoading, isError } = useSearchUsers(query);
+  const addProcessing = (id: string) => setProcessingIds(prev => new Set(prev).add(id));
+  const removeProcessing = (id: string) =>
+    setProcessingIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
 
-  const sendRequestMutation = useMutation({
-    mutationFn: (username: string) =>
-      createFriendRequestFriendsRequestsPost({ addressee_username: username }),
-    onSuccess: () => {
-      toast.success("Đã gửi lời mời kết bạn");
-      qc.invalidateQueries({ queryKey: ["friends"] });
-      qc.invalidateQueries({ queryKey: ["search", "users", query] });
-    },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.error || err?.response?.data?.detail || "Lỗi khi gửi lời mời";
-      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
-    },
-  });
+  // Replace generic search endpoint with exact-profile lookup
+  const [data, setData] = useState<{ users: User[]; total: number } | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
 
-  const acceptMutation = useMutation({
-    mutationFn: (requestId: string) =>
-      customInstance({ url: `/friends/requests/${requestId}/accept/`, method: "POST" }),
-    onSuccess: () => {
-      toast.success("Đã chấp nhận lời mời kết bạn");
-      qc.invalidateQueries({ queryKey: ["friends"] });
-      qc.invalidateQueries({ queryKey: ["search", "users", query] });
-    },
-    onError: () => {
-      toast.error("Lỗi khi chấp nhận lời mời");
-    },
-  });
+  React.useEffect(() => {
+    let mounted = true;
+    if (!query || query.trim().length === 0) {
+      setData(undefined);
+      setIsError(false);
+      setIsLoading(false);
+      return;
+    }
 
-  const cancelMutation = useMutation({
-    mutationFn: (requestId: string) =>
-      customInstance({ url: `/friends/requests/${requestId}/cancel/`, method: "POST" }),
-    onSuccess: () => {
-      toast.success("Đã hủy lời mời kết bạn");
-      qc.invalidateQueries({ queryKey: ["friends"] });
-      qc.invalidateQueries({ queryKey: ["search", "users", query] });
-    },
-    onError: () => {
-      toast.error("Lỗi khi hủy lời mời");
-    },
-  });
+    (async () => {
+      setIsLoading(true);
+      setIsError(false);
+      try {
+        // Call exact-match profile endpoint instead of search list
+        const p = await profilesApi.getProfile(query.trim());
+        if (!mounted) return;
+        setData({ users: p ? [p as User] : [], total: p ? 1 : 0 });
+      } catch (err: any) {
+        console.error('[SearchPage] profilesApi.getProfile error', err);
+        if (!mounted) return;
+        setData({ users: [], total: 0 });
+        setIsError(true);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [query]);
+  const { sendRequest, acceptRequest, cancelRequest } = useFriendActions();
+
+  // Messaging helpers
+  const { tenantSlug } = useAuthStore();
+  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
+  const { createRoom } = useRoomManager({ userId: currentUserId || '' });
+
+  // Optimistically update a user's status in the search results cache
+  const updateUserStatus = (userId: string, newStatus: SearchUser['friendshipStatus'], requestId?: string | null) => {
+    qc.setQueryData(['search', 'users', { q: query }], (old: { users: SearchUser[]; total: number } | undefined) => {
+      if (!old) return old;
+      return {
+        ...old,
+        users: old.users.map(u => (u.id === userId ? { ...u, friendshipStatus: newStatus, friendRequestId: requestId ?? u.friendRequestId } : u)),
+      };
+    });
+  };
+
+  const handleSendRequest = async (userId: string, username: string) => {
+    addProcessing(userId);
+    try {
+      const res = await sendRequest({ addressee_username: username });
+      toast.success('Đã gửi lời mời kết bạn');
+      const requestId = res?.id || null;
+      updateUserStatus(userId, 'request_sent', requestId ? String(requestId) : null);
+      qc.invalidateQueries({ queryKey: ['friends'] });
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      removeProcessing(userId);
+    }
+  };
+
+  const handleAcceptRequest = async (userId: string, requestId: string) => {
+    addProcessing(userId);
+    try {
+      await acceptRequest(requestId);
+      toast.success('Đã chấp nhận lời mời kết bạn');
+      updateUserStatus(userId, 'friends');
+      qc.invalidateQueries({ queryKey: ['friends'] });
+    } catch (_err) {
+      toast.error('Lỗi khi chấp nhận lời mời');
+    } finally {
+      removeProcessing(userId);
+    }
+  };
+
+  const handleCancelRequest = async (userId: string, requestId: string) => {
+    addProcessing(userId);
+    try {
+      await cancelRequest(requestId);
+      toast.success('Đã hủy lời mời kết bạn');
+      updateUserStatus(userId, 'none', null);
+      qc.invalidateQueries({ queryKey: ['friends'] });
+    } catch (_err) {
+      toast.error('Lỗi khi hủy lời mời');
+    } finally {
+      removeProcessing(userId);
+    }
+  };
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
@@ -123,56 +175,123 @@ export function SearchPage() {
     [searchInput]
   );
 
-  const users = data?.users || [];
+  const users = (data?.users || []) as SearchUser[];
   const total = data?.total || 0;
-  const busy = sendRequestMutation.isPending || acceptMutation.isPending || cancelMutation.isPending;
 
   const renderAction = (user: SearchUser) => {
-    switch (user.friendship_status) {
-      case "friends":
+    const isProcessing = processingIds.has(user.id);
+    const messageButton = (
+      <Button
+        size="sm"
+        className="flex-shrink-0 rounded-full"
+        onClick={async () => {
+          if (!currentUserId) return;
+          setCreatingRoomFor(user.id);
+          try {
+            // fetch my username and other username
+            const me = await usersApi.getMe();
+            const myUsername = (me as any)?.username || (me as any)?.email || null;
+            const otherUsername = (user as any).username || (user as any).email || null;
+            if (currentUserId && user.id) {
+              try {
+                const dmResp = await callGetDMRoom(currentUserId, user.id);
+                const existingRoomId = dmResp?.data?.id || dmResp?.data?.room?.id || dmResp?.data?.room_id || dmResp?.data?.roomId;
+                if (existingRoomId) {
+                  navigate(`/messages/${existingRoomId}?user_id=${currentUserId}`);
+                  setCreatingRoomFor(null);
+                  return;
+                }
+                console.log('[SearchPage] callGetDMRoom returned no room (200 but empty)', dmResp);
+              } catch (err: any) {
+                const status = err?.response?.status;
+                if (status === 404) {
+                  console.log('[SearchPage] callGetDMRoom returned 404 — will create room');
+                } else {
+                  console.warn('[SearchPage] callGetDMRoom failed', err);
+                }
+              }
+            }
+
+            // Ensure both users have display names before creating a room
+            try {
+              const me = await usersApi.getMe();
+              const myDisplay = (me as any)?.displayName || (me as any)?.display_name || null;
+              const otherDisplay = (user as any).displayName || (user as any).display_name || null;
+              if (!myDisplay || !otherDisplay) {
+                alert('Cần display name hợp lệ của cả hai người để tạo phòng. Vui lòng cập nhật tên hiển thị.');
+              } else {
+                const roomDisplay = `${myDisplay} & ${otherDisplay}`;
+                const myUsername = (me as any)?.username || (me as any)?.email || null;
+                const otherUsername = (user as any).username || (user as any).email || null;
+                if (!myUsername || !otherUsername) {
+                  alert('Không thể xác định username của một trong hai người.');
+                } else {
+                  const roomId = await createRoom(roomDisplay, [myUsername, otherUsername]);
+                  if (roomId) navigate(`/messages/${roomId}?user_id=${currentUserId}`);
+                }
+              }
+            } catch (e) {
+              console.error('Failed to verify display names before createRoom', e);
+            }
+          } catch (e) {
+            console.error('create DM failed', e);
+          } finally {
+            setCreatingRoomFor(null);
+          }
+        }}
+        disabled={creatingRoomFor === user.id || user.id === currentUserId}
+      >
+        {creatingRoomFor === user.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <MessageCircle className="h-4 w-4 mr-1" />}
+        Nhắn tin
+      </Button>
+    );
+
+    switch (user.friendshipStatus) {
+      case 'friends':
         return (
-          <Button variant="secondary" size="sm" className="flex-shrink-0 rounded-full" disabled>
-            <UserCheck className="h-4 w-4 mr-1" />
-            Bạn bè
-          </Button>
+          <div className="flex items-center gap-2">
+            {messageButton}
+            <Button variant="secondary" size="sm" className="flex-shrink-0 rounded-full" disabled>
+              <UserCheck className="h-4 w-4 mr-1" />
+              Bạn bè
+            </Button>
+          </div>
         );
-      case "request_sent":
+      case 'request_sent':
         return (
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-shrink-0 rounded-full text-yellow-600 border-yellow-300 hover:bg-yellow-50"
-            onClick={() => user.friend_request_id && cancelMutation.mutate(user.friend_request_id)}
-            disabled={busy}
-          >
-            <UserX className="h-4 w-4 mr-1" />
-            Hủy lời mời
-          </Button>
+          <div className="flex items-center gap-2">
+            {messageButton}
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-shrink-0 rounded-full text-yellow-600 border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+              onClick={() => user.friendRequestId && handleCancelRequest(user.id, user.friendRequestId)}
+              disabled={isProcessing || !user.friendRequestId}
+            >
+              {isProcessing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserX className="h-4 w-4 mr-1" />}
+              Hủy lời mời
+            </Button>
+          </div>
         );
-      case "request_received":
+      case 'request_received':
         return (
-          <Button
-            size="sm"
-            className="flex-shrink-0 rounded-full"
-            onClick={() => user.friend_request_id && acceptMutation.mutate(user.friend_request_id)}
-            disabled={busy}
-          >
-            <UserCheck className="h-4 w-4 mr-1" />
-            Chấp nhận
-          </Button>
+          <div className="flex items-center gap-2">
+            {messageButton}
+            <Button size="sm" className="flex-shrink-0 rounded-full" onClick={() => user.friendRequestId && handleAcceptRequest(user.id, user.friendRequestId)} disabled={isProcessing || !user.friendRequestId}>
+              {isProcessing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserCheck className="h-4 w-4 mr-1" />}
+              Chấp nhận
+            </Button>
+          </div>
         );
       default:
         return (
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-shrink-0 rounded-full"
-            onClick={() => sendRequestMutation.mutate(user.username || user.email)}
-            disabled={busy}
-          >
-            <UserPlus className="h-4 w-4 mr-1" />
-            Kết bạn
-          </Button>
+          <div className="flex items-center gap-2">
+            {messageButton}
+            <Button variant="outline" size="sm" className="flex-shrink-0 rounded-full" onClick={() => handleSendRequest(user.id, user.username || user.email)} disabled={isProcessing}>
+              {isProcessing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserPlus className="h-4 w-4 mr-1" />}
+              Kết bạn
+            </Button>
+          </div>
         );
     }
   };
@@ -185,19 +304,12 @@ export function SearchPage() {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-foreground">Tìm kiếm</h1>
-          <p className="text-sm text-muted-foreground">
-            Tìm kiếm người dùng, bạn bè theo tên, username hoặc email.
-          </p>
+          <p className="text-sm text-muted-foreground">Tìm kiếm người dùng, bạn bè theo tên, username hoặc email.</p>
         </div>
       </div>
 
       <form onSubmit={handleSearch} className="flex gap-3">
-        <Input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Nhập tên, username hoặc email..."
-          className="flex-1"
-        />
+        <Input value={searchInput} onChange={e => setSearchInput(e.target.value)} placeholder="Nhập tên, username hoặc email..." className="flex-1" />
         <Button type="submit" disabled={searchInput.trim().length < 2}>
           <Search className="h-4 w-4 mr-2" />
           Tìm kiếm
@@ -212,9 +324,7 @@ export function SearchPage() {
 
       {isError && (
         <Card className="border-destructive/20">
-          <CardContent className="p-6 text-center text-destructive">
-            Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.
-          </CardContent>
+          <CardContent className="p-6 text-center text-destructive">Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.</CardContent>
         </Card>
       )}
 
@@ -223,9 +333,7 @@ export function SearchPage() {
           <CardContent className="p-8 text-center text-muted-foreground">
             <Search className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="text-lg font-medium">Không tìm thấy kết quả</p>
-            <p className="text-sm mt-1">
-              Thử tìm kiếm với từ khóa khác.
-            </p>
+            <p className="text-sm mt-1">Thử tìm kiếm với từ khóa khác.</p>
           </CardContent>
         </Card>
       )}
@@ -233,42 +341,23 @@ export function SearchPage() {
       {users.length > 0 && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Tìm thấy {total} kết quả cho "{query}"
+            Tìm thấy {total} kết quả cho &ldquo;{query}&rdquo;
           </p>
-          {users.map((user: SearchUser) => (
+          {users.map(user => (
             <Card key={user.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex items-center justify-between gap-4">
-                <Link
-                  to={`/profile/${user.username || user.email}`}
-                  className="flex items-center gap-3 min-w-0 flex-1"
-                >
-                  <Avatar
-                    user={{
-                      id: user.id,
-                      displayName: user.display_name,
-                      username: user.username,
-                      avatar: buildMediaUrl(user.avatar_path),
-                    }}
-                    size="lg"
-                  />
+                <Link to={`/profile/${user.username || user.email}`} className="flex items-center gap-3 min-w-0 flex-1">
+                  <Avatar user={user as any} size="lg" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-foreground truncate">
-                        {user.display_name || user.username}
-                      </p>
-                      <FriendshipStatusBadge status={user.friendship_status} />
+                      <p className="font-semibold text-foreground truncate">{user.displayName || user.username}</p>
+                      <FriendshipStatusBadge status={user.friendshipStatus} />
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      @{user.username || user.email}
-                    </p>
-                    {user.bio && (
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        {user.bio}
-                      </p>
-                    )}
+                    <p className="text-sm text-muted-foreground truncate">@{user.username || user.email}</p>
+                    {user.bio && <p className="text-xs text-muted-foreground truncate mt-0.5">{user.bio}</p>}
                   </div>
                 </Link>
-                {renderAction(user)}
+                <div onClick={e => e.stopPropagation()}>{renderAction(user)}</div>
               </CardContent>
             </Card>
           ))}

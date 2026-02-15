@@ -1,13 +1,14 @@
-import path from "path";
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
+import path from 'path';
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vitest/config';
+// import { cloudflare } from "@cloudflare/vite-plugin";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   test: {
@@ -22,40 +23,24 @@ export default defineConfig({
   build: {
     cssCodeSplit: false,
     sourcemap: false,
+    chunkSizeWarningLimit: 1000,
+    assetsInlineLimit: 4096,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // Tách vendor libraries vào chunk riêng
+        manualChunks: id => {
           if (id.includes('node_modules')) {
             // React ecosystem
             if (id.includes('react') || id.includes('react-dom')) {
-              return 'vendor-react';
+              return 'vendor';
             }
-            // Radix UI components
-            if (id.includes('@radix-ui')) {
-              return 'vendor-ui';
-            }
-            // Router
-            if (id.includes('react-router')) {
-              return 'vendor-router';
-            }
-            // Query & State management
-            if (id.includes('@tanstack') || id.includes('zustand')) {
-              return 'vendor-state';
-            }
-            // Icons
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
-            // Các library khác
-            return 'vendor-misc';
+            // Các vendor khác gộp vào vendor
+            return 'vendor';
           }
-          // Code của app sẽ được split tự động theo routes
           return undefined;
         },
-        entryFileNames: "assets/[name]-[hash].js",
-        chunkFileNames: "assets/[name]-[hash].js",
-        assetFileNames: "assets/[name]-[hash].[ext]",
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
   },

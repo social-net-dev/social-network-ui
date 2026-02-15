@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { Home, User, MessageSquare, Bell, LogOut, Settings, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,10 +14,16 @@ const menuItems = [
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const logout = useAuthStore(state => state.logout);
   const user = useAuthStore(state => state.user);
   const isAdmin = user?.role === 'ADMIN';
   const totalUnread = useMessageStore(state => state.totalUnread);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen pt-16 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a1f29] transition-all w-64 hidden lg:block">
@@ -67,10 +73,7 @@ export function Sidebar() {
           <li>
             <button
               className="w-full flex items-center p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 group"
-              onClick={() => {
-                logout();
-                window.location.href = '/login';
-              }}
+              onClick={handleLogout}
             >
               <LogOut className="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
               <span className="ml-3">Đăng xuất</span>

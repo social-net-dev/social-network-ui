@@ -1,13 +1,17 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Edit2, Share2, MoreHorizontal, Camera, Loader2 } from "lucide-react"
+import { Calendar, Edit2, MoreHorizontal, Camera, Loader2, UserPlus, UserCheck } from "lucide-react"
 import { useRef } from "react"
 import { useProfile } from "../hooks/useProfile"
-import type { Author } from "@/features/home/types/feed.types"
+import { useQueryClient } from "@tanstack/react-query"
+import { useFriendActions } from "@/lib/api/hooks/useFriends"
+import { toast } from "sonner"
+import { getDefaultAvatar } from "@/lib/api/transforms/common"
+import type { User } from "@/lib/api/types/user.types"
 
 interface ProfileHeaderProps {
-  profile: Author & { isOwner?: boolean, isFriend?: boolean }
+  profile: User
   isCurrentUser?: boolean
   onEdit?: () => void
 }
@@ -29,12 +33,33 @@ const ROLE_MAP: Record<string, { label: string; className: string }> = {
 }
 
 export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: ProfileHeaderProps) {
-  const { uploadAvatar, isUpdating } = useProfile()
+  const { uploadAvatar, uploadBackground, isUpdating } = useProfile()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const backgroundInputRef = useRef<HTMLInputElement>(null)
+  const queryClient = useQueryClient()
+  const { sendRequest, isLoading: isFriendActionPending } = useFriendActions()
+
+  const handleSendFriendRequest = async () => {
+    try {
+      await sendRequest({ addressee_username: profile.username || '' })
+      toast.success("Đã gửi lời mời kết bạn")
+      queryClient.invalidateQueries({ queryKey: ['profiles', profile.username] })
+      queryClient.invalidateQueries({ queryKey: ["friends"] })
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.response?.data?.detail || "Lỗi khi gửi lời mời"
+      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg))
+    }
+  }
 
   const handleAvatarClick = () => {
     if (isCurrentUser) {
       fileInputRef.current?.click()
+    }
+  }
+
+  const handleBackgroundClick = () => {
+    if (isCurrentUser) {
+      backgroundInputRef.current?.click()
     }
   }
 
@@ -45,7 +70,19 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
         await uploadAvatar(file)
       } catch (error) {
         console.error("Failed to upload avatar:", error)
-        alert("Không thể tải lên ảnh đại diện")
+        alert("Đã có lỗi khi tải lên ảnh đại diện")
+      }
+    }
+  }
+
+  const handleBackgroundChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      try {
+        await uploadBackground(file)
+      } catch (error) {
+        console.error("Failed to upload background:", error)
+        alert("Đã có lỗi khi tải lên ảnh bìa")
       }
     }
   }
@@ -65,23 +102,32 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
     : 'Tháng 1 năm 2024'
 
   // Dynamic avatar and cover based on profile id from free sources (DiceBear & Picsum)
-  const fallbackAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`;
-  const coverUrl = `https://picsum.photos/seed/${profile.id}/1200/400`;
+  const fallbackAvatarUrl = getDefaultAvatar();
+  const fallbackCoverUrl = `https://picsum.photos/seed/${profile.id}/1200/400`;
+  const coverUrl = profile.background || fallbackCoverUrl;
 
   return (
     <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden group">
       {/* Compact Cover Image */}
       <div className="relative h-32 sm:h-40 bg-etechs-secondary">
+        <input 
+          type="file" 
+          ref={backgroundInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={handleBackgroundChange}
+        />
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" 
+          className="absolute inset-0 bg-cover bg-center" 
           style={{ backgroundImage: `url(${coverUrl})` }} 
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         
         {isCurrentUser && (
           <Button 
             size="sm" 
             variant="secondary"
+            onClick={handleBackgroundClick}
             className="absolute top-4 right-4 h-8 bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
           >
             <Camera className="w-4 h-4 mr-2" />
@@ -145,9 +191,6 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
                     )}
                   </div>
                 </div>
-                {profile.email && (
-                  <p className="text-muted-foreground text-sm font-medium">{profile.email}</p>
-                )}
               </div>
 
               {/* Actions */}
@@ -157,14 +200,25 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
                     <Edit2 className="w-4 h-4 mr-2" />
                     Chỉnh sửa
                   </Button>
+                ) : profile.isFriend ? (
+                  <Button variant="secondary" className="h-9 px-4 rounded-lg font-medium text-sm bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 cursor-default" disabled>
+                    <UserCheck className="w-4 h-4 mr-2" />
+                    Bạn bè
+                  </Button>
                 ) : (
-                  <Button className="bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 h-9 px-6 rounded-lg font-medium text-sm">
-                    Theo dõi
+                  <Button
+                    className="bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 h-9 px-4 rounded-lg font-medium text-sm"
+                    disabled={isFriendActionPending || !profile.username}
+                    onClick={handleSendFriendRequest}
+                  >
+                    {isFriendActionPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <UserPlus className="w-4 h-4 mr-2" />
+                    )}
+                    Kết bạn
                   </Button>
                 )}
-                <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg border-border bg-background hover:bg-muted">
-                  <Share2 className="w-4 h-4 text-muted-foreground" />
-                </Button>
                 <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-muted">
                   <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
                 </Button>

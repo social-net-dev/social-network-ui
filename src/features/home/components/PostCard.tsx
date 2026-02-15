@@ -4,7 +4,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Edit } from 'lucide-react';
 import type { Post as PostType } from '../types/feed.types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CommentSection } from './CommentSection';
 import { SharedPostCard } from './SharedPostCard';
 import { FormattedContent } from '@/features/shared/components/FormattedContent';
@@ -34,9 +35,24 @@ interface PostProps {
 }
 
 export function PostCard({ post, onLike, onComment, onShare, showComments, onDelete, onEdit, currentUserId }: PostProps) {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [showMenu, setShowMenu] = useState(false);
+
+  // Optimistic Like State
+  const [optimisticLike, setOptimisticLike] = useState({
+    liked: !!post.userReaction,
+    count: post.stats?.reactions ?? 0
+  });
+
+  // Sync with props when post changes (e.g. after API settles)
+  useEffect(() => {
+    setOptimisticLike({
+      liked: !!post.userReaction,
+      count: post.stats?.reactions ?? 0
+    });
+  }, [post.userReaction, post.stats?.reactions]);
 
   const createdAt = post.createdAt || new Date().toISOString();
   const timeAgo = formatDistanceToNow(new Date(createdAt), {
@@ -48,13 +64,22 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
   const images = post.mediaUrls || [];
   const { data: blobUrls = [], isLoading: loadingImages } = useMediaBlobs(images);
 
-  const likes = post.stats?.reactions ?? 0;
-  const commentsCount = post.stats?.comments ?? 0;
-  const shares = post.stats?.shares ?? 0;
-  const likedByCurrentUser = !!post.userReaction;
-
   const isAuthor = currentUserId === post.author.id;
   const sharedPost = post.sharedPost;
+
+  const handleLikeClick = () => {
+    const newLiked = !optimisticLike.liked;
+    const newCount = optimisticLike.count + (newLiked ? 1 : -1);
+    
+    // 1. Update UI instantly
+    setOptimisticLike({
+      liked: newLiked,
+      count: Math.max(0, newCount)
+    });
+
+    // 2. Call parent onLike (which handles API and global cache)
+    onLike(post.id, newLiked);
+  };
 
   const handleDelete = () => {
     if (!onDelete) return;
@@ -80,12 +105,14 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
       <div className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <Avatar user={post.author} size="md" className="ring-2 ring-transparent hover:ring-primary/20 transition-all-300" />
+            <div className="relative cursor-pointer" onClick={() => navigate(`/profile/${post.author.username}`)}>
+              <Avatar user={post.author as any} size="md" className="ring-2 ring-transparent hover:ring-primary/20 transition-all-300" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-semibold text-foreground truncate hover:text-primary transition-colors-300 cursor-pointer">{post.author.displayName}</h3>
+                <h3 className="font-semibold text-foreground truncate hover:text-primary transition-colors-300 cursor-pointer" onClick={() => navigate(`/profile/${post.author.username}`)}>
+                  {post.author.displayName}
+                </h3>
                 {post.author.role && ROLE_MAP[post.author.role] && (
                   <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-semibold', ROLE_MAP[post.author.role].class)}>
                     {ROLE_MAP[post.author.role].label}
@@ -107,12 +134,6 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
                   const pt = POST_TYPES.find(t => t.value === post.postType);
                   return pt ? (
                     <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">{pt.icon} {pt.label}</span>
-                  ) : null;
-                })()}
-                {post.fieldId && (() => {
-                  const f = ACADEMIC_FIELDS.find(af => af.value === post.fieldId);
-                  return f ? (
-                    <span className={cn('px-1.5 py-0.5 rounded-full text-[10px] font-medium', f.color)}>{f.icon} {f.label}</span>
                   ) : null;
                 })()}
               </div>
@@ -153,7 +174,15 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
           </div>
         ) : (
           <>
-            <FormattedContent content={content} className="text-foreground/90 leading-relaxed mb-4 text-sm block" />
+            <FormattedContent content={content} className="text-foreground/90 leading-relaxed mb-3 text-sm block" />
+            {post.fieldId && (() => {
+              const f = ACADEMIC_FIELDS.find(af => af.value === post.fieldId);
+              return f ? (
+                <div className="mb-3">
+                  <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium', f.color)}>{f.icon} {f.label}</span>
+                </div>
+              ) : null;
+            })()}
             {sharedPost && <SharedPostCard post={sharedPost} />}
           </>
         )}
@@ -165,11 +194,11 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
                 <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary/30 border-t-primary"></div>
               </div>
             ) : blobUrls.length === 1 ? (
-              <img src={blobUrls[0]} alt="Post image" className="w-full rounded-xl max-h-[500px] object-cover hover:scale-[1.01] transition-transform duration-300" />
+              <img src={blobUrls[0]} alt="Ảnh bài viết" className="w-full rounded-xl max-h-[500px] object-cover hover:scale-[1.01] transition-transform duration-300" />
             ) : blobUrls.length > 1 ? (
               <div className="grid grid-cols-2 gap-2">
                 {blobUrls.map((blobUrl, index) => (
-                  <img key={index} src={blobUrl} alt={`Post image ${index + 1}`} className={`rounded-xl hover:scale-[1.01] transition-transform duration-300 ${index === 0 && blobUrls.length > 1 ? 'row-span-2 h-[452px]' : 'h-56'} object-cover w-full`} />
+                  <img key={index} src={blobUrl} alt={`Ảnh bài viết ${index + 1}`} className={`rounded-xl hover:scale-[1.01] transition-transform duration-300 ${index === 0 && blobUrls.length > 1 ? 'row-span-2 h-[452px]' : 'h-56'} object-cover w-full`} />
                 ))}
               </div>
             ) : null}
@@ -181,19 +210,19 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onLike(post.id, !likedByCurrentUser)}
-              className={cn('rounded-full px-3 transition-all-300 hover:bg-red-50 dark:hover:bg-red-950/30', likedByCurrentUser ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground hover:text-red-500 dark:hover:text-red-400')}
+              onClick={handleLikeClick}
+              className={cn('rounded-full px-3 transition-all-300 hover:bg-red-50 dark:hover:bg-red-950/30', optimisticLike.liked ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground hover:text-red-500 dark:hover:text-red-400')}
             >
-              <Heart className={cn('w-4.5 h-4.5 transition-transform', likedByCurrentUser ? 'fill-current scale-110' : '')} />
-              {likes > 0 && <span className="ml-1.5 text-xs font-medium">{likes}</span>}
+              <Heart className={cn('w-4.5 h-4.5 transition-transform', optimisticLike.liked ? 'fill-current scale-110' : '')} />
+              {optimisticLike.count > 0 && <span className="ml-1.5 text-xs font-medium">{optimisticLike.count}</span>}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => onComment(post.id)} className={cn('rounded-full px-3 transition-all-300 hover:bg-blue-50 dark:hover:bg-blue-950/30', 'text-muted-foreground hover:text-blue-500 dark:hover:text-blue-400')}>
               <MessageCircle className="w-4.5 h-4.5" />
-              {commentsCount > 0 && <span className="ml-1.5 text-xs font-medium">{commentsCount}</span>}
+              {post.stats?.comments > 0 && <span className="ml-1.5 text-xs font-medium">{post.stats.comments}</span>}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => onShare(post.id)} className={cn('rounded-full px-3 transition-all-300 hover:bg-green-50 dark:hover:bg-green-950/30', 'text-muted-foreground hover:text-green-500 dark:hover:text-green-400')}>
               <Share2 className="w-4.5 h-4.5" />
-              {shares > 0 && <span className="ml-1.5 text-xs font-medium">{shares}</span>}
+              {post.stats?.shares > 0 && <span className="ml-1.5 text-xs font-medium">{post.stats.shares}</span>}
             </Button>
           </div>
         </div>

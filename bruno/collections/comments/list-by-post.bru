@@ -1,0 +1,20 @@
+meta {
+  name: Get Post Comments
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{api_base}}/posts/{{post_id}}/comments/
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  page: 1
+  page_size: 20
+}

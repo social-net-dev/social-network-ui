@@ -1,0 +1,21 @@
+meta {
+  name: Update Comment
+  type: http
+  seq: 20
+}
+
+patch {
+  url: {{api_base}}/comments/{{comment_id}}/update/
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "content_text": "Updated comment"
+  }
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

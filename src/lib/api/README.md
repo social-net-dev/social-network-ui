@@ -1,60 +1,49 @@
-# API Layer (Single Source of Truth)
+# API Layer (Manual Integration)
 
-## Structure
+Dự án đã chuyển đổi từ Orval Auto-generated sang **Manual API Integration** để đảm bảo tính ổn định, kiểm soát kiểu dữ liệu chặt chẽ và khớp hoàn toàn với cấu trúc phản hồi thực tế từ backend.
 
-Toàn bộ hệ thống API được thống nhất về một nguồn duy nhất sử dụng **Orval** để generate code từ OpenAPI spec của backend.
+## Cấu trúc (Manual API Architecture)
+
+Hệ thống API tuân thủ quy trình 4 lớp:
+
+1.  **Types** (`src/lib/api/types/`): Định nghĩa interfaces cho Request và Response (Backend Model).
+2.  **Services** (`src/lib/api/services/`): Các hàm gọi Axios sử dụng `apiClient`. Đảm bảo map đúng endpoint.
+3.  **Hooks** (`src/lib/api/hooks/`): Các React Query hooks (useQuery, useMutation) đóng gói logic gọi Service.
+4.  **Transforms** (`src/lib/api/transforms/`): Chuyển đổi dữ liệu từ Backend (`snake_case`) sang Frontend model (`camelCase`).
 
 ```
 src/lib/api/
-├── generated/           # Auto-generated từ OpenAPI spec (via Orval)
-│   ├── index.ts        # Barrel exports với namespaces (AuthAPI, PostsV2API, v.v.)
-│   ├── auth/           # Auth hooks
-│   ├── posts-v2/       # Feed/Posts hooks
-│   └── model/          # TypeScript models (Backend schema)
-├── transforms/          # Layer chuyển đổi dữ liệu BE -> FE (camelCase, format)
-├── manual-apis.ts       # Các endpoints hiếm hoi thiếu trong OpenAPI spec
-└── axios-instance.ts    # Orval mutator wrapper
+├── types/           # Backend API Models & Requests
+├── services/        # Axios calls organized by feature
+├── hooks/           # React Query hooks wrapper
+├── transforms/      # Logic BE (snake_case) -> FE (camelCase)
+├── apiClient.ts     # Axios instance với Interceptors
+└── index.ts         # Central exports
 ```
 
-## Nguồn sự thật duy nhất (Single Source of Truth)
+## Quy tắc (Standards)
 
-🚫 **KHÔNG** tự viết manual API services trong `src/features/*/services/`.
-🚫 **KHÔNG** tự viết manual TypeScript interfaces cho dữ liệu từ API.
+✅ **LUÔN LUÔN** định nghĩa kiểu dữ liệu rõ ràng trong `types/`.
+✅ **ƯU TIÊN** sử dụng "Smart Hooks" thay vì gọi trực tiếp Service trong component.
+✅ **SỬ DỤNG** layer `transforms/` để giữ code UI sạch sẽ và dùng chuẩn `camelCase`.
+✅ **API Client**: `apiClient` đã có interceptor tự động unwrap định dạng `{ success: true, data: T }`.
 
-✅ **LUÔN LUÔN** sử dụng generated hooks từ `@/lib/api/generated`.
-✅ **SỬ DỤNG** transform layer tại `@/lib/api/transforms` để format dữ liệu cho UI.
-
-## Quy trình làm việc
-
-### 1. Khi Backend thay đổi API
-Đảm bảo backend đang chạy, sau đó chạy command:
-```bash
-pnpm gen:api
-```
-
-### 2. Cách sử dụng mới (Example)
-
-Nên sử dụng các **Smart Hooks** tại `src/lib/api/hooks/` thay vì gọi trực tiếp generated hooks nếu có logic biến đổi dữ liệu phức tạp.
+## Ví dụ sử dụng (Example)
 
 ```typescript
 import { useUser } from '@/lib/api/hooks/useUser';
 
-// Tự động transform BE -> FE và xử lý cache
+// Tự động transform BE -> FE và xử lý cache qua select option
 const { user, isLoading } = useUser('me'); 
 
 // user lúc này đã có type Author chuẩn FE (camelCase)
-console.log(user.displayName); 
+if (user) {
+  console.log(user.displayName); 
+}
 ```
 
-### 3. Transform Layer & Smart Hooks
-- **Transforms**: Nơi định nghĩa logic convert `snake_case` (BE) -> `camelCase` (FE).
-- **Smart Hooks**: Wrapper quanh generated hooks, sử dụng option `select` để tự động transform dữ liệu ngay khi nhận được từ server.
-
-## Axios & Authentication
-Hệ thống sử dụng chung một `apiClient` tại `src/lib/api.ts` hỗ trợ:
-- Tự động đính kèm Token & Tenant ID.
-- Refresh Token logic với hàng đợi (Queue).
-- Unwrap middleware response `{ success: true, data: T }`.
-
-## Quy định (ESLint)
-Đã cấu hình rule `no-restricted-imports` để ngăn chặn việc tạo lại các manual API services. Nếu bạn cố gắng import từ `**/services/*Api`, linter sẽ báo lỗi.
+## Auth & Interceptors
+Hệ thống sử dụng `apiClient` hỗ trợ:
+- Tự động đính kèm JWT Token & Tenant ID từ Auth Store.
+- Refresh Token logic tự động khi gặp lỗi 401.
+- Xử lý lỗi tập trung qua `toast`.

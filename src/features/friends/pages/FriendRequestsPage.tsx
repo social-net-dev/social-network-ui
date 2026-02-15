@@ -1,51 +1,78 @@
-import { useMemo } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FriendsAPI } from "@/lib/api/generated";
+import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useFriends, useFriendActions } from "@/lib/api/hooks/useFriends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar } from "@/features/shared/components/Avatar";
-import { getErrorMessage } from "@/lib/api/transforms";
+import { getErrorMessage, transformUser } from "@/lib/api/transforms";
+import { Loader2, UserCheck, UserX, XCircle } from "lucide-react";
+import { toast } from "sonner";
+import type { User } from "@/lib/api/types/user.types";
+import type { FriendRequest } from "@/lib/api/types/friend.types";
 
-function userLabel(u: any) {
-  return u?.display_name || u?.username || u?.email || "Người dùng";
+function userLabel(u: User) {
+  return u.displayName || u.username || u.email || "Người dùng";
 }
 
 export function FriendRequestsPage() {
   const qc = useQueryClient();
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
-  const incomingQuery = useQuery({
-    queryKey: ["friends", "requests", "incoming"],
-    queryFn: () => FriendsAPI.listIncomingRequestsFriendsRequestsIncomingGet(),
-  });
-  const outgoingQuery = useQuery({
-    queryKey: ["friends", "requests", "outgoing"],
-    queryFn: () => FriendsAPI.listOutgoingRequestsFriendsRequestsOutgoingGet(),
-  });
+  const addProcessing = (id: string) =>
+    setProcessingIds((prev) => new Set(prev).add(id));
+  const removeProcessing = (id: string) =>
+    setProcessingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
 
-  const acceptMutation = useMutation({
-    mutationFn: (requestId: string) => FriendsAPI.acceptRequestFriendsRequestsRequestIdAcceptPost(requestId),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["friends", "requests"] });
-    },
-  });
-  const rejectMutation = useMutation({
-    mutationFn: (requestId: string) => FriendsAPI.rejectRequestFriendsRequestsRequestIdRejectPost(requestId),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["friends", "requests"] });
-    },
-  });
-  const cancelMutation = useMutation({
-    mutationFn: (requestId: string) => FriendsAPI.cancelRequestFriendsRequestsRequestIdCancelPost(requestId),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["friends", "requests"] });
-    },
-  });
+  const { incomingRequests, outgoingRequests, isLoading: isQueryLoading, isError } = useFriends();
+  const { acceptRequest, rejectRequest, cancelRequest } = useFriendActions();
 
-  const incoming = useMemo(() => (incomingQuery.data || []) as any[], [incomingQuery.data]);
-  const outgoing = useMemo(() => (outgoingQuery.data || []) as any[], [outgoingQuery.data]);
+  const handleAccept = async (requestId: string) => {
+    addProcessing(requestId);
+    try {
+      await acceptRequest(requestId);
+      toast.success("Đã chấp nhận lời mời kết bạn");
+      qc.invalidateQueries({ queryKey: ["friends"] });
+      qc.invalidateQueries({ queryKey: ["recommendations"] });
+    } catch (err: any) {
+      toast.error(getErrorMessage(err) || "Lỗi khi chấp nhận lời mời");
+    } finally {
+      removeProcessing(requestId);
+    }
+  };
 
-  const busy = acceptMutation.isPending || rejectMutation.isPending || cancelMutation.isPending;
+  const handleReject = async (requestId: string) => {
+    addProcessing(requestId);
+    try {
+      await rejectRequest(requestId);
+      toast.success("Đã từ chối lời mời kết bạn");
+      qc.invalidateQueries({ queryKey: ["friends", "requests"] });
+    } catch (err: any) {
+      toast.error(getErrorMessage(err) || "Lỗi khi từ chối lời mời");
+    } finally {
+      removeProcessing(requestId);
+    }
+  };
+
+  const handleCancel = async (requestId: string) => {
+    addProcessing(requestId);
+    try {
+      await cancelRequest(requestId);
+      toast.success("Đã hủy lời mời kết bạn");
+      qc.invalidateQueries({ queryKey: ["friends", "requests"] });
+    } catch (err: any) {
+      toast.error(getErrorMessage(err) || "Lỗi khi hủy lời mời");
+    } finally {
+      removeProcessing(requestId);
+    }
+  };
+
+  const incoming = useMemo(() => (incomingRequests || []) as FriendRequest[], [incomingRequests]);
+  const outgoing = useMemo(() => (outgoingRequests || []) as FriendRequest[], [outgoingRequests]);
 
   return (
     <div className="space-y-6">
@@ -65,77 +92,95 @@ export function FriendRequestsPage() {
         </TabsList>
 
         <TabsContent value="incoming" className="space-y-3 mt-6">
-          {incomingQuery.isPending ? (
+          {isQueryLoading ? (
             <div className="text-gray-500">Đang tải...</div>
-          ) : incomingQuery.isError ? (
-            <div className="text-red-600">{getErrorMessage(incomingQuery.error)}</div>
+          ) : isError ? (
+            <div className="text-red-600">Đã xảy ra lỗi khi tải dữ liệu.</div>
           ) : incoming.length === 0 ? (
             <Card className="p-6 text-center text-gray-500">Chưa có lời mời nào.</Card>
           ) : (
-            incoming.map((fr: any) => (
-              <Card key={fr.id} className="p-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <Avatar user={{ ...fr.requester, displayName: fr.requester?.display_name, username: fr.requester?.username, avatar: fr.requester?.avatar_path }} size="md" />
-                  <div className="min-w-0">
-                    <div className="font-semibold truncate">{userLabel(fr.requester)}</div>
-                    <div className="text-xs text-gray-500 truncate">@{fr.requester?.username || fr.requester?.email || "-"}</div>
+            incoming.map((fr) => {
+              const requester = transformUser(fr.requester);
+              const isProcessing = processingIds.has(fr.id);
+              return (
+                <Card key={fr.id} className={`p-4 flex items-center justify-between gap-4 transition-opacity ${isProcessing ? "opacity-60" : ""}`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar user={requester} size="md" />
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{userLabel(requester)}</div>
+                      <div className="text-xs text-gray-500 truncate">@{requester.username || requester.email || "-"}</div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    className="rounded-full"
-                    disabled={busy}
-                    onClick={() => acceptMutation.mutate(fr.id)}
-                  >
-                    Chấp nhận
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="rounded-full"
-                    disabled={busy}
-                    onClick={() => rejectMutation.mutate(fr.id)}
-                  >
-                    Từ chối
-                  </Button>
-                </div>
-              </Card>
-            ))
+                  <div className="flex items-center gap-2">
+                    <Button
+                      className="rounded-full"
+                      disabled={isProcessing}
+                      onClick={() => handleAccept(fr.id)}
+                    >
+                      {isProcessing ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <UserCheck className="h-4 w-4 mr-1" />
+                      )}
+                      Chấp nhận
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-full"
+                      disabled={isProcessing}
+                      onClick={() => handleReject(fr.id)}
+                    >
+                      <UserX className="h-4 w-4 mr-1" />
+                      Từ chối
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })
           )}
         </TabsContent>
 
         <TabsContent value="outgoing" className="space-y-3 mt-6">
-          {outgoingQuery.isPending ? (
+          {isQueryLoading ? (
             <div className="text-gray-500">Đang tải...</div>
-          ) : outgoingQuery.isError ? (
-            <div className="text-red-600">{getErrorMessage(outgoingQuery.error)}</div>
+          ) : isError ? (
+            <div className="text-red-600">Đã xảy ra lỗi khi tải dữ liệu.</div>
           ) : outgoing.length === 0 ? (
             <Card className="p-6 text-center text-gray-500">Bạn chưa gửi lời mời nào.</Card>
           ) : (
-            outgoing.map((fr: any) => (
-              <Card key={fr.id} className="p-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <Avatar user={{ ...fr.addressee, displayName: fr.addressee?.display_name, username: fr.addressee?.username, avatar: fr.addressee?.avatar_path }} size="md" />
-                  <div className="min-w-0">
-                    <div className="font-semibold truncate">{userLabel(fr.addressee)}</div>
-                    <div className="text-xs text-gray-500 truncate">@{fr.addressee?.username || fr.addressee?.email || "-"}</div>
+            outgoing.map((fr) => {
+              const addressee = transformUser(fr.addressee);
+              const isProcessing = processingIds.has(fr.id);
+              return (
+                <Card key={fr.id} className={`p-4 flex items-center justify-between gap-4 transition-opacity ${isProcessing ? "opacity-60" : ""}`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar user={addressee} size="md" />
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{userLabel(addressee)}</div>
+                      <div className="text-xs text-gray-500 truncate">@{addressee.username || addressee.email || "-"}</div>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <Button
-                    variant="outline"
-                    className="rounded-full"
-                    disabled={busy}
-                    onClick={() => cancelMutation.mutate(fr.id)}
-                  >
-                    Huỷ lời mời
-                  </Button>
-                </div>
-              </Card>
-            ))
+                  <div>
+                    <Button
+                      variant="outline"
+                      className="rounded-full"
+                      disabled={isProcessing}
+                      onClick={() => handleCancel(fr.id)}
+                    >
+                      {isProcessing ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <XCircle className="h-4 w-4 mr-1" />
+                      )}
+                      Huỷ lời mời
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })
           )}
         </TabsContent>
       </Tabs>
     </div>
   );
 }
-

@@ -6,9 +6,9 @@ import { getErrorMessage } from '@/lib/api/transforms';
 import { LoginFormDataSchema, type LoginFormData } from '../types/auth.types';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '@/lib/api';
-import { loginMiddleware } from '@/lib/api/manual-apis';
+import { authApi } from '@/lib/api/services';
 import { useE2EEStore } from '@/stores/e2eeStore';
-import { extractUserIdFromTenantSlug } from '@/lib/api/profileApi';
+import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 
 export function useLogin() {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ export function useLogin() {
 
   const mutation = useMutation({
     mutationFn: async (payload: { email: string; password: string }) => {
-      return loginMiddleware(payload.email, payload.password);
+      return authApi.login(payload);
     },
     onSuccess: async (response: any) => {
       // Response đã được axios interceptor unwrap: { access, refresh, tenant_slug }

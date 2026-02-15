@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchRoomsForUser, callCreateRoom } from '../services/messageApi';
-import { UsersAPI, ProfilesAPI } from '@/lib/api/generated';
+import { usersApi, profilesApi } from '@/lib/api/services';
 import type { IRoomUser } from '../types/message.types';
 
 import { useMessageStore } from '@/stores/messageStore';
@@ -80,35 +80,55 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
   // Create new room
   const createRoom = useCallback(
     async (name: string, memberIds: string[]) => {
+      console.log('[useRoomManager] createRoom called', { name, memberIds });
       try {
-        // Try to build members array with display names.
-        const members: Array<{ user_id: string; display_name?: string }> = [];
+        const members: Array<{ user_id: string; display_name: string }> = [];
 
-        // Fetch current user display name
+        // Fetch current user info (username + display)
         let myDisplayName: string | undefined;
+        let myUsername: string | undefined;
+        let meResp: any = undefined;
         try {
-          const meResp = await UsersAPI.meMeGet();
-          myDisplayName = meResp?.display_name || undefined;
-        } catch (e) {
-          // ignore - fallback to undefined
+          meResp = await usersApi.getMe();
+          console.log('[useRoomManager] usersApi.getMe returned', meResp);
+          myDisplayName = (meResp as any)?.displayName || (meResp as any)?.display_name || undefined;
+          myUsername = (meResp as any)?.username || (meResp as any)?.email || undefined;
+        } catch (err) {
+          console.error('[useRoomManager] usersApi.getMe error', err);
+          myDisplayName = undefined;
+          myUsername = undefined;
+        }
+
+        if (!myDisplayName) {
+          const msg = 'Missing display name for current user; cannot create room without display names for all members';
+          console.error('[useRoomManager]', msg);
+          throw new Error(msg);
         }
 
         for (const m of memberIds) {
-          // If member matches current userId, use myDisplayName
-          if (m === userId) {
-            members.push({ user_id: m, display_name: myDisplayName });
+          console.log('[useRoomManager] resolving member', m);
+          if (myUsername && m === myUsername) {
+            const myId = (meResp as any)?.id || myUsername;
+            members.push({ user_id: String(myId), display_name: myDisplayName });
+            console.log('[useRoomManager] added current user as member', { user_id: myId, display_name: myDisplayName });
             continue;
           }
 
-          // Try to fetch profile by username (best-effort)
           try {
-            const prof = await ProfilesAPI.getProfileProfilesUsernameGet(m);
-            const id = (prof as any)?.id || m;
-            const display = (prof as any)?.display_name || (prof as any)?.username || undefined;
-            members.push({ user_id: id, display_name: display });
-          } catch (e) {
-            // Fallback: push id only
-            members.push({ user_id: m });
+            const prof = await profilesApi.getProfile(m);
+            console.log('[useRoomManager] profilesApi.getProfile returned', prof);
+            const profId = (prof as any)?.id || null;
+            const display = (prof as any)?.display_name || (prof as any)?.displayName || (prof as any)?.username || undefined;
+            if (!display || !profId) {
+              const msg = `Missing profile id or display name for user ${m}; cannot create room without display names for all members`;
+              console.error('[useRoomManager]', msg, { prof });
+              throw new Error(msg);
+            }
+            members.push({ user_id: String(profId), display_name: display });
+            console.log('[useRoomManager] added member', { user_id: profId, display_name: display });
+          } catch (err) {
+            console.error('[useRoomManager] profilesApi.getProfile failed for', m, err);
+            throw err;
           }
         }
 
@@ -119,14 +139,18 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
           creator_id: userId,
         };
 
+        console.log('[useRoomManager] about to callCreateRoom with payload:', payload);
         const res = await callCreateRoom(payload);
+        console.log('[useRoomManager] callCreateRoom response:', res?.data ?? res);
 
         // Refresh rooms list
         await loadRooms();
 
-        return res.data?.id;
+        // Axios response shape: AxiosResponse<IRoom>. Prefer res.data.id; fall back to common alternatives.
+        const roomId = res?.data?.id ?? (res?.data as any)?.room_id ?? (res as any)?.id ?? null;
+        return roomId;
       } catch (e) {
-        console.error('create room failed', e);
+        console.error('[useRoomManager] create room failed', e);
         throw e;
       }
     },

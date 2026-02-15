@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { getProfile, extractUserIdFromTenantSlug } from '@/lib/api/profileApi';
-import { callCreateRoom, callGetDMRoom } from '@/features/message/services/messageApi';
+import { profilesApi } from '@/lib/api/services';
+import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
+import { callGetDMRoom } from '@/features/message/services/messageApi';
 import { useRoomManager } from '@/features/message/hooks/useRoomManager';
-import type { ProfileResponse } from '@/types/profile.types';
+import { usersApi } from '@/lib/api/services';
+import type { User } from '@/lib/api/types/user.types';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, MessageCircle } from 'lucide-react';
+import { Search, MessageCircle, Loader2 } from 'lucide-react';
 
 export const SearchUsersMini: React.FC = () => {
   const navigate = useNavigate();
   const { tenantSlug } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResult, setSearchResult] = useState<ProfileResponse['data'] | null>(null);
+  const [searchResults, setSearchResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [creatingRoom, setCreatingRoom] = useState(false);
+  const [creatingRoomFor, setCreatingRoomFor] = useState<string | null>(null);
 
   const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
 
@@ -26,7 +28,7 @@ export const SearchUsersMini: React.FC = () => {
     tenantSlug,
     currentUserId,
     searchQuery,
-    hasResult: !!searchResult,
+    resultsCount: searchResults.length,
     loading,
   });
 
@@ -48,21 +50,19 @@ export const SearchUsersMini: React.FC = () => {
 
     console.log('[SearchUsersMini] Starting search:', { query: searchQuery, tenantSlug });
     setLoading(true);
-    setSearchResult(null);
+    setSearchResults([]);
 
     try {
-      const response = await getProfile(searchQuery.trim(), tenantSlug);
-      console.log('[SearchUsersMini] API response:', response);
-
-      // Axios interceptor đã unwrap { success, data } -> response.data là user object trực tiếp
-      if (response.data) {
-        setSearchResult(response.data);
-        console.log('[SearchUsersMini] Result set:', response.data);
+      // Gọi trực tiếp profilesApi để tìm theo username/email (exact match)
+      const p = await profilesApi.getProfile(searchQuery.trim());
+      if (p) {
+        setSearchResults([p as User]);
+      } else {
+        setSearchResults([]);
       }
     } catch (err: any) {
-      console.error('[SearchUsersMini] Search failed:', err);
-      console.error('[SearchUsersMini] Error details:', err.response?.data);
-      setSearchResult(null);
+      console.error('[SearchUsersMini] profilesApi error:', err);
+      setSearchResults([]);
     } finally {
       setLoading(false);
     }
@@ -70,53 +70,84 @@ export const SearchUsersMini: React.FC = () => {
 
   const { createRoom } = useRoomManager({ userId: currentUserId || '' });
 
-  const handleStartChat = async (targetUserId: string, targetDisplayName?: string) => {
+  const handleStartChat = async (targetUser: User) => {
     if (!currentUserId) {
       console.error('[SearchUsersMini] No current user ID');
       return;
     }
 
-    setCreatingRoom(true);
+    setCreatingRoomFor(targetUser.id);
     try {
-      // Check if DM room already exists
-      try {
-        const dmResp = await callGetDMRoom(currentUserId, targetUserId);
-        const existingRoomId = dmResp?.data?.id || dmResp?.data?.room?.id || dmResp?.data?.room_id || dmResp?.data?.roomId;
-        if (existingRoomId) {
-          navigate(`/messages/${existingRoomId}?user_id=${currentUserId}`);
-          setSearchQuery('');
-          setSearchResult(null);
-          setCreatingRoom(false);
-          return;
-        }
-      } catch (err) {
-        // ignore and fallback to creating a room
+      // Fetch current user info (username + display)
+      const me = await usersApi.getMe();
+      const myDisplay = (me as any)?.displayName || (me as any)?.display_name || null;
+      const myUsername = (me as any)?.username || (me as any)?.email || null;
+      const otherDisplay = (targetUser as any).displayName || (targetUser as any).display_name || null;
+      const otherUsername = targetUser.username || targetUser.email || null;
+
+      if (!myDisplay || !otherDisplay) {
+        alert('Cần display name hợp lệ của cả hai người để tạo phòng. Vui lòng cập nhật tên hiển thị.');
+        setCreatingRoomFor(null);
+        return;
       }
 
-      // Use createRoom from room manager so members/display names are populated
-      // and set the room name to the recipient's display name when available
-      const roomId = await createRoom(targetDisplayName || '', [currentUserId, targetUserId]);
+      if (!myUsername || !otherUsername) {
+        alert('Không thể xác định username của một trong hai người.');
+        setCreatingRoomFor(null);
+        return;
+      }
 
-      if (roomId) {
-        // Navigate với user_id tự động điền sẵn để WebSocket connect đúng
-        console.log('[SearchUsersMini] ✅ Room created, navigating to:', {
-          roomId,
-          currentUserId,
-        });
-        navigate(`/messages/${roomId}?user_id=${currentUserId}`);
+      // Check if DM room already exists using UUIDs (backend expects UUIDs)
+      try {
+        if (currentUserId && targetUser.id) {
+          const dmResp = await callGetDMRoom(currentUserId, targetUser.id);
+          const existingRoomId = dmResp?.data?.id || dmResp?.data?.room?.id || dmResp?.data?.room_id || dmResp?.data?.roomId;
+          if (existingRoomId) {
+            navigate(`/messages/${existingRoomId}?user_id=${currentUserId}`);
+            setSearchQuery('');
+            setSearchResults([]);
+            setCreatingRoomFor(null);
+            return;
+          }
+          console.log('[SearchUsersMini] callGetDMRoom returned no room (200 but empty)', dmResp);
+        }
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status === 404) {
+          console.log('[SearchUsersMini] callGetDMRoom returned 404 — will create room');
+        } else {
+          console.warn('[SearchUsersMini] callGetDMRoom failed (lookup by UUID)', err);
+        }
+      }
 
-        // Reset search state
-        setSearchQuery('');
-        setSearchResult(null);
-      } else {
-        console.error('[SearchUsersMini] Room ID not found in response');
+      // Create room using usernames so profilesApi lookup succeeds
+      try {
+        const roomDisplay = `${myDisplay} & ${otherDisplay}`;
+        const roomId = await createRoom(roomDisplay, [myUsername, otherUsername]);
+
+        if (roomId) {
+          console.log('[SearchUsersMini] ✅ Room created, navigating to:', {
+            roomId,
+            currentUserId,
+          });
+          navigate(`/messages/${roomId}?user_id=${currentUserId}`);
+
+          // Reset search state
+          setSearchQuery('');
+          setSearchResults([]);
+        } else {
+          console.error('[SearchUsersMini] Room ID not found in response');
+        }
+      } catch (err: any) {
+        console.error('[SearchUsersMini] Create room failed:', err);
+        alert('Không thể tạo phòng chat. Vui lòng thử lại.');
       }
     } catch (err: any) {
       console.error('[SearchUsersMini] Create room failed:', err);
       console.error('[SearchUsersMini] Error details:', err.response?.data);
       alert('Không thể tạo phòng chat. Vui lòng thử lại.');
     } finally {
-      setCreatingRoom(false);
+      setCreatingRoomFor(null);
     }
   };
 
@@ -130,30 +161,30 @@ export const SearchUsersMini: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex gap-2">
-          <Input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleSearch()} placeholder="Tên hoặc email..." className="flex-1 text-sm" disabled={loading} />
+          <Input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleSearch()} placeholder="Tên, username hoặc email..." className="flex-1 text-sm" disabled={loading} />
           <Button size="sm" onClick={handleSearch} disabled={loading || !searchQuery.trim()}>
             <Search className="h-4 w-4" />
           </Button>
         </div>
 
-        {searchResult && (
-          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <Avatar className="w-10 h-10">
-              {searchResult.avatar_path ? (
-                <img src={searchResult.avatar_path} alt={searchResult.display_name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-primary text-white flex items-center justify-center text-sm font-semibold">{searchResult.display_name.charAt(0).toUpperCase()}</div>
-              )}
-            </Avatar>
+        {searchResults.length > 0 && (
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {searchResults.map(user => (
+              <div key={user.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <Avatar className="w-10 h-10 flex-shrink-0">
+                  {user.avatarPath ? <img src={user.avatarPath} alt={user.displayName} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-primary text-white flex items-center justify-center text-sm font-semibold">{user.displayName.charAt(0).toUpperCase()}</div>}
+                </Avatar>
 
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{searchResult.display_name}</p>
-              <p className="text-xs text-gray-500 truncate">{searchResult.username}</p>
-            </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user.displayName}</p>
+                  <p className="text-xs text-gray-500 truncate">@{user.username}</p>
+                </div>
 
-            <Button size="sm" variant="ghost" onClick={() => handleStartChat(searchResult.username || searchResult.id, searchResult.display_name)} disabled={creatingRoom || searchResult.id === currentUserId} className="flex-shrink-0">
-              <MessageCircle className="h-4 w-4" />
-            </Button>
+                <Button size="sm" variant="ghost" onClick={() => handleStartChat(user)} disabled={creatingRoomFor === user.id || user.id === currentUserId} className="flex-shrink-0">
+                  {creatingRoomFor === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : user.id === currentUserId ? <span className="text-xs">Bạn</span> : <MessageCircle className="h-4 w-4" />}
+                </Button>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>

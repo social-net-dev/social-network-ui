@@ -13,7 +13,7 @@ export function CreatePostTrigger({ onClick }: CreatePostTriggerProps) {
   return (
     <div className="bg-card rounded-xl shadow-sm border border-border p-4 mb-6">
       <div className="flex items-center gap-3">
-        <Avatar user={user} size="md" />
+        <Avatar user={user as any} size="md" />
         <button
           onClick={onClick}
           className="flex-1 text-left px-4 py-3 bg-muted hover:bg-muted/80 rounded-full text-muted-foreground transition-colors"

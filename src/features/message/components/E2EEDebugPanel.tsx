@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/stores/authStore';
 import { useE2EEStore } from '@/stores/e2eeStore';
-import apiClient from '@/lib/api';
 import messageApiClient from '@/lib/messageApiClient';
 import { Bug, CheckCircle2, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 

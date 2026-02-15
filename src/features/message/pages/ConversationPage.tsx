@@ -12,7 +12,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { RoomSidebar } from '../components/RoomSidebar';
 import { MessageArea } from '../components/MessageArea';
 import { MessageInput } from '../components/MessageInput';
-import { E2EEDebugPanel } from '../components/E2EEDebugPanel';
 import { filterOptimisticMessage } from '../utils/messageDedupe';
 import { callMarkRoomRead, callGetRoomMemberPublicKeys } from '../services/messageApi';
 import { useMessageStore } from '@/stores/messageStore';

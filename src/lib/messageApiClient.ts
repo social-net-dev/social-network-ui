@@ -4,6 +4,7 @@
  */
 import axios from 'axios';
 import { getMessageApiUrl } from '@/lib/config';
+import { AUTH_STORAGE_KEYS } from '@/lib/auth.constants';
 
 const messageApiClient = axios.create({
   baseURL: getMessageApiUrl(),
@@ -18,16 +19,15 @@ const messageApiClient = axios.create({
 // ============================================
 messageApiClient.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN);
     if (token) {
       const cleanToken = token.replace(/"/g, '');
       config.headers.Authorization = `Bearer ${cleanToken}`;
     }
-    const tenantSlug = localStorage.getItem('tenant_slug');
+    const tenantSlug = localStorage.getItem(AUTH_STORAGE_KEYS.TENANT_SLUG);
     if (tenantSlug) {
       const cleanSlug = tenantSlug.replace(/"/g, '');
       config.headers['X-Tenant-Slug'] = cleanSlug;
-      console.log(`[Message API] 🔑 Auto-added X-Tenant-Slug: ${cleanSlug} to ${config.url}`);
     }
     return config;
   },
