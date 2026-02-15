@@ -161,18 +161,39 @@ export function ProfileSettingsPage() {
     );
   }
 
-  // Backup / Restore handlers (currently commented out in UI - kept for future use)
-  /* Temporarily disabled - uncomment when backup feature is re-enabled
-  const handleOpenBackup = () => {
-    setPassMode('create');
-    setShowPassModal(true);
-  };
+  // Backup / Restore handlers (UI now shows sync-only action)
+  const handleSync = async () => {
+    const userId = useAuthStore.getState().getUserId();
+    if (!userId) {
+      alert('Không có user id');
+      return;
+    }
 
-  const handleOpenRestore = () => {
-    setPassMode('restore');
-    setShowPassModal(true);
+    try {
+      _setBackupLoading(true);
+      const resp = await callGetPrivateKeyBackup(userId).catch(() => null);
+      const payload = resp?.data;
+      const hasBackup = (p: any) => {
+        if (!p) return false;
+        if (Array.isArray(p.backups)) return p.backups.length > 0;
+        if (typeof p === 'object' && (p.ciphertext || p.backup || p.payload)) return true;
+        return false;
+      };
+
+      if (!hasBackup(payload)) {
+        alert('Không tìm thấy bản backup trên server.');
+      } else {
+        // Prompt user to enter passphrase to restore now (do NOT persist passphrase)
+        setPassMode('restore');
+        setShowPassModal(true);
+      }
+    } catch (err) {
+      console.error('Sync failed', err);
+      alert('Đồng bộ thất bại');
+    } finally {
+      _setBackupLoading(false);
+    }
   };
-  */
 
   const handlePassphraseSubmit = async (passphrase: string, remember: boolean) => {
     const userId = useAuthStore.getState().getUserId();
@@ -193,7 +214,7 @@ export function ProfileSettingsPage() {
         const exported = await exportPrivateKey(keyPair.privateKey);
         const payload = await encryptPrivateKeyWithPassphrase(exported, passphrase);
         await callBackupPrivateKey(userId, payload);
-        if (remember) sessionStorage.setItem(`e2ee_passphrase_${userId}`, passphrase);
+        // Do NOT persist passphrase on this device automatically
         alert('Backup private key thành công');
       } catch (err) {
         console.error('Backup failed', err);
@@ -225,7 +246,13 @@ export function ProfileSettingsPage() {
         await saveKeyPair({ publicKey: publicCrypto, privateKey }, userId);
         // reinitialize store
         await useE2EEStore.getState().initialize(userId);
-        if (remember) sessionStorage.setItem(`e2ee_passphrase_${userId}`, passphrase);
+        // mark this device as having seen sync so ConversationPage won't re-prompt
+        try {
+          localStorage.setItem(`e2ee_sync_seen_${userId}`, '1');
+        } catch (e) {
+          console.warn('Failed to set e2ee_sync_seen after restore', e);
+        }
+        // Do NOT persist passphrase on this device automatically
         alert('Khôi phục private key thành công');
       } catch (err) {
         console.error('Restore failed', err);
@@ -378,18 +405,15 @@ export function ProfileSettingsPage() {
               </Button>
             </div>
           </Card>
-          {/* <Card className="p-6 rounded-3xl shadow-xl border-none">
-            <h3 className="text-lg font-semibold mb-4">Sao lưu E2EE (Backup)</h3>
-            <p className="text-sm text-gray-500 mb-4">Sao lưu private key đã mã hoá lên server để phục hồi trên thiết bị khác.</p>
+          <Card className="p-6 rounded-3xl shadow-xl border-none">
+            <h3 className="text-lg font-semibold mb-4">Sao lưu E2EE (Đồng bộ)</h3>
+            <p className="text-sm text-gray-500 mb-4">Kiểm tra và đồng bộ trạng thái backup private key trên server.</p>
             <div className="flex gap-3">
-              <Button onClick={handleOpenBackup} disabled={backupLoading} className="rounded-xl">
-                {backupLoading ? 'Đang xử lý...' : 'Backup now'}
-              </Button>
-              <Button variant="outline" onClick={handleOpenRestore} disabled={backupLoading} className="rounded-xl">
-                Restore from backup
+              <Button onClick={handleSync} disabled={_backupLoading} className="rounded-xl">
+                {_backupLoading ? 'Đang xử lý...' : 'Đồng bộ'}
               </Button>
             </div>
-          </Card> */}
+          </Card>
         </TabsContent>
       </Tabs>
 

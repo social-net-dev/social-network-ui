@@ -213,7 +213,13 @@ export class ChatClient {
           } else if (data.type === 'message_deleted') {
             console.log('[ChatClient] Message deleted event received via WS:', data);
             try {
-              this.onDelete(data.id);
+              // Support both shapes: { id } and { message_id }
+              const deletedId = data.id ?? data.message_id ?? null;
+              if (deletedId) {
+                this.onDelete(deletedId);
+              } else {
+                console.warn('[ChatClient] message_deleted event missing id/message_id field', data);
+              }
             } catch (e) {
               console.error('[ChatClient] onDelete handler error', e);
             }

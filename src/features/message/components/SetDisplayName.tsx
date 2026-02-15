@@ -6,9 +6,14 @@ interface SetDisplayNameProps {
   roomId: string;
   currentDisplayName?: string;
   onSuccess?: () => void;
+  memberId?: string; // optional: allow setting display name for any member (defaults to current user)
+  // Backwards-compatible prop name used in some places
+  userId?: string;
+  // Called immediately with optimistic value before API request. Receives (newDisplayName, targetId).
+  onOptimistic?: (displayName: string, targetId: string) => void;
 }
 
-export const SetDisplayName: React.FC<SetDisplayNameProps> = ({ roomId, currentDisplayName, onSuccess }) => {
+export const SetDisplayName: React.FC<SetDisplayNameProps> = ({ roomId, currentDisplayName, onSuccess, memberId, userId, onOptimistic }) => {
   const user = useAuthStore(state => state.user);
   const currentUserId = user?.id ?? '';
 
@@ -30,23 +35,36 @@ export const SetDisplayName: React.FC<SetDisplayNameProps> = ({ roomId, currentD
         return;
       }
 
-      await callSetMemberDisplayName(roomId, currentUserId, {
+      const targetId = (userId && userId.trim()) || (memberId && memberId.trim()) || currentUserId;
+
+      // Optimistic UI: inform parent immediately so it can update local display name
+      const prevName = currentDisplayName || '';
+      try {
+        onOptimistic?.(displayName.trim(), targetId);
+      } catch (e) {
+        // ignore optimistic handler errors
+      }
+
+      await callSetMemberDisplayName(roomId, targetId, {
         display_name: displayName.trim(),
       });
 
-      // Also save a local override so this display name is shown on this device only
-      try {
-        const key = `local_display_name_${roomId}_${currentUserId}`;
-        localStorage.setItem(key, displayName.trim());
-      } catch (e) {
-        // ignore storage failures
-      }
+      // Do not persist local overrides in localStorage. The server stores per-room display names
+      // and the UI will refresh room members via `onSuccess` to pick up the authoritative mapping.
 
       setIsEditing(false);
       onSuccess?.();
     } catch (error) {
       console.error('Failed to set display name:', error);
       alert('Đặt tên hiển thị thất bại');
+
+      // If optimistic update was applied, revert to previous value
+      try {
+        const targetId = (userId && userId.trim()) || (memberId && memberId.trim()) || currentUserId;
+        onOptimistic?.(currentDisplayName || '', targetId);
+      } catch (e) {
+        // ignore
+      }
     } finally {
       setLoading(false);
     }
@@ -59,8 +77,12 @@ export const SetDisplayName: React.FC<SetDisplayNameProps> = ({ roomId, currentD
 
   if (!isEditing) {
     return (
-      <button onClick={() => setIsEditing(true)} className="text-xs text-primary hover:underline" title="Đặt tên hiển thị trong phòng này">
-        {currentDisplayName ? `Tên: ${currentDisplayName}` : 'Đặt tên hiển thị'}
+      <button onClick={() => setIsEditing(true)} className="text-primary hover:text-primary/90 p-1 rounded" title={currentDisplayName ? `Tên: ${currentDisplayName}` : 'Đặt tên hiển thị'} aria-label={currentDisplayName ? `Tên: ${currentDisplayName}` : 'Đặt tên hiển thị'}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+        </svg>
+        <span className="sr-only">{currentDisplayName ? `Tên: ${currentDisplayName}` : 'Đặt tên hiển thị'}</span>
       </button>
     );
   }

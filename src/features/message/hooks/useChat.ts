@@ -59,7 +59,22 @@ export function useChat({
           const existing = clientRef.current;
           existing.onStatus = s => {
             setStatus(s);
-            if (s === 'open') setLastError(null);
+            if (s === 'open') {
+              setLastError(null);
+              // Fetch debug WebSocket state from message service (dev helper)
+              try {
+                fetch(`${resolvedRest.replace(/\/$/, '')}/debug/ws_state`)
+                  .then(r => r.json())
+                  .then(data => {
+                    console.log('[useChat] /debug/ws_state:', data);
+                  })
+                  .catch(e => {
+                    console.warn('[useChat] Failed to fetch /debug/ws_state', e);
+                  });
+              } catch (e) {
+                console.warn('[useChat] Error calling /debug/ws_state', e);
+              }
+            }
           };
           existing.onError = e => setLastError(String(e));
           existing.onMessage = m => {
@@ -198,7 +213,21 @@ export function useChat({
     });
     client.onStatus = s => {
       setStatus(s);
-      if (s === 'open') setLastError(null);
+      if (s === 'open') {
+        setLastError(null);
+        try {
+          fetch(`${resolvedRest.replace(/\/$/, '')}/debug/ws_state`)
+            .then(r => r.json())
+            .then(data => {
+              console.log('[useChat] /debug/ws_state:', data);
+            })
+            .catch(e => {
+              console.warn('[useChat] Failed to fetch /debug/ws_state', e);
+            });
+        } catch (e) {
+          console.warn('[useChat] Error calling /debug/ws_state', e);
+        }
+      }
     };
     client.onError = e => setLastError(String(e));
     client.onMessage = m => {
@@ -330,6 +359,13 @@ export function useChat({
 
     client.onRead = data => {
       onRead?.(data);
+    };
+
+    // Ensure delete broadcasts are handled for new connections
+    client.onDelete = id => {
+      console.log('[useChat] onDelete received (new client):', id);
+      setMessages(prev => prev.filter(m => m.id !== id));
+      onDelete?.(id);
     };
 
     client.onAck = ack => {

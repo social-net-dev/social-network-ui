@@ -62,7 +62,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ isMine, isPinned
           <button className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
             😀 Thả cảm xúc
           </button>
-          {isPinned ? (
+          {/* {isPinned ? (
             <button
               className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
               onClick={() => {
@@ -82,7 +82,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ isMine, isPinned
             >
               📌 Ghim
             </button>
-          )}
+          )} */}
           {isMine && (
             <button
               className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-red-600"

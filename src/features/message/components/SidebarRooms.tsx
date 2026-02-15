@@ -62,16 +62,8 @@ const SidebarRooms: React.FC<Props> = ({ rooms, selectedId, onSelect }) => {
 
   const currentUser = useAuthStore(state => state.user);
 
-  const getLocalTitle = (roomId: string) => {
-    try {
-      const uid = currentUser?.id;
-      if (!uid) return null;
-      const key = `local_display_name_${roomId}_${uid}`;
-      return localStorage.getItem(key);
-    } catch (e) {
-      return null;
-    }
-  };
+  // No localStorage overrides: rely on server-provided room `name`.
+  const getLocalTitle = (_roomId: string) => null;
 
   return (
     <div className="space-y-1">

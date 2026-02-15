@@ -3,11 +3,13 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useConversations } from '../hooks/useConversations';
 import { useChat } from '../hooks/useChat';
+import type { MessageOut } from '../types/message.types';
 import { useRoomManager } from '../hooks/useRoomManager';
 import { useMessageManager } from '../hooks/useMessageManager';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { useE2EEMessaging } from '../hooks/useE2EEMessaging';
 import { PassphraseModal } from '../components/PassphraseModal';
+import { SetDisplayName } from '../components/SetDisplayName';
 import { useAuthStore } from '@/stores/authStore';
 import { RoomSidebar } from '../components/RoomSidebar';
 import { MessageArea } from '../components/MessageArea';
@@ -33,6 +35,7 @@ const ConversationPage: React.FC = () => {
   const [text, setText] = useState('');
   const [decryptedMessages, setDecryptedMessages] = useState<Record<string, string>>({});
   const [recipientId, setRecipientId] = useState<string | null>(null);
+  const [recipientDisplayName, setRecipientDisplayName] = useState<string | undefined>(undefined);
   const [currentMemberDisplayName, setCurrentMemberDisplayName] = useState<string | undefined>(undefined);
 
   const resetUnread = useMessageStore(state => state.resetUnread);
@@ -138,12 +141,12 @@ const ConversationPage: React.FC = () => {
     wsUrl: import.meta.env.DEV ? 'ws://localhost:8001/ws' : '',
     restBase: import.meta.env.DEV ? 'http://localhost:8001' : '',
     onReactionEvent: handleReactionEvent,
-    onExternalMessage: msg => {
+    onExternalMessage: (msg: MessageOut) => {
       if (msg.room_id && msg.room_id !== resolvedRoom) {
         incrementUnread(msg.room_id, 1);
       }
     },
-    onRead: data => {
+    onRead: (data: any) => {
       if (data?.room_id && data?.user_id === resolvedUserId) {
         resetUnread(data.room_id);
       }
@@ -161,7 +164,7 @@ const ConversationPage: React.FC = () => {
       }
     },
 
-    onMessage: msg => {
+    onMessage: (msg: MessageOut) => {
       // If server echoes client_id, remove matching optimistic entry immediately
       if (msg.client_id) {
         setFetchedMessages(prev => prev.filter(m => m.client_id !== msg.client_id));
@@ -173,6 +176,15 @@ const ConversationPage: React.FC = () => {
         setFetchedMessages(prev => filterOptimisticMessage(prev, msg));
       } catch (e) {
         console.error('onMessage dedupe heuristic failed', e);
+      }
+    },
+    onDelete: (id: string) => {
+      try {
+        console.log('[ConversationPage] WS message_deleted received:', id);
+        // Dispatch a CustomEvent so the existing messageDeleted listener removes it from fetchedMessages
+        window.dispatchEvent(new CustomEvent('messageDeleted', { detail: { id } } as any));
+      } catch (e) {
+        console.error('[ConversationPage] Failed to process onDelete event', e);
       }
     },
   });
@@ -193,6 +205,12 @@ const ConversationPage: React.FC = () => {
       const members = resp.data?.members || [];
       const me = members.find((m: any) => m.user_id === resolvedUserId);
       setCurrentMemberDisplayName(me?.display_name ?? undefined);
+      try {
+        const recipient = members.find((m: any) => m.user_id !== resolvedUserId);
+        setRecipientDisplayName(recipient?.display_name ?? undefined);
+      } catch (e) {
+        setRecipientDisplayName(undefined);
+      }
     } catch (e) {
       console.warn('[ConversationPage] Failed to refresh room members', e);
     }
@@ -328,6 +346,7 @@ const ConversationPage: React.FC = () => {
 
         if (recipient) {
           setRecipientId(recipient.user_id);
+          setRecipientDisplayName(recipient.display_name ?? undefined);
           console.log('[ConversationPage] ✅ RECIPIENT SET:', {
             recipient_id: recipient.user_id.substring(0, 8) + '...',
             has_public_key: !!recipient.public_key,
@@ -335,6 +354,7 @@ const ConversationPage: React.FC = () => {
           });
         } else {
           setRecipientId(null);
+          setRecipientDisplayName(undefined);
           console.warn('[ConversationPage] ⚠️ No recipient found (group chat or only you)');
         }
 
@@ -742,8 +762,9 @@ const ConversationPage: React.FC = () => {
       <RoomSidebar rooms={rooms} selectedRoomId={selectedConversationId} userId={resolvedUserId} onRoomSelect={handleRoomSelect} />
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <SyncNotice />
-        <PassphraseModal open={modalOpen} mode={passphraseMode} onClose={() => setShowPassphraseModal(false)} onSubmit={onSubmitPassphrase} />
+        {/* Sync notice disabled per user request */}
+        {/* <SyncNotice /> */}
+        {passphraseMode && <PassphraseModal open={modalOpen} mode={passphraseMode} onClose={() => setShowPassphraseModal(false)} onSubmit={onSubmitPassphrase} />}
 
         {/* Center: Message area with input */}
         <div className="relative flex-1 min-h-0">
@@ -754,16 +775,8 @@ const ConversationPage: React.FC = () => {
             chatStatus={chatStatus}
             lastError={lastError}
             conversationTitle={
-              // Prefer local per-user override, then real room name from `rooms`, then conversations placeholder
-              (() => {
-                try {
-                  const uid = resolvedUserId;
-                  const key = selectedConversationId ? `local_display_name_${selectedConversationId}_${uid}` : null;
-                  const local = key ? localStorage.getItem(key) : null;
-                  if (local && local.trim()) return local;
-                } catch (e) {}
-                return rooms.find(r => r.room_id === selectedConversationId)?.name || conversations.find(c => c.id === selectedConversationId)?.title;
-              })()
+              // Prefer server-provided room name, then conversations placeholder
+              rooms.find(r => r.room_id === selectedConversationId)?.name || conversations.find(c => c.id === selectedConversationId)?.title
             }
             sendReaction={sendReaction}
             onRefresh={refreshRoomMembers}
@@ -774,6 +787,21 @@ const ConversationPage: React.FC = () => {
             currentMemberDisplayName={currentMemberDisplayName}
             messageInput={<MessageInput text={text} selectedFiles={selectedFiles} previews={previews} fileInputRef={fileInputRef} onTextChange={setText} onFileSelect={handleFileSelect} onRemoveFile={removeFile} onSend={handleSend} onAttachClick={() => fileInputRef.current?.click()} />}
           />
+
+          {recipientId && (
+            <div className="absolute top-4 right-4 z-40">
+              <SetDisplayName
+                roomId={resolvedRoom}
+                userId={recipientId}
+                currentDisplayName={recipientDisplayName}
+                onSuccess={refreshRoomMembers}
+                onOptimistic={(name, targetId) => {
+                  // Update recipient display name immediately for optimistic UI
+                  if (targetId === recipientId) setRecipientDisplayName(name || undefined);
+                }}
+              />
+            </div>
+          )}
 
           {e2eeOverlayRequired && (
             // Limit overlay bottom so message input stays visible and usable
