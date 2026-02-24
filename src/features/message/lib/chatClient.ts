@@ -118,7 +118,7 @@ export class ChatClient {
               if (url.startsWith('http')) {
                 try {
                   const u = new URL(url);
-                  if (u.origin === apiBase.origin && (u.pathname.startsWith('/files') || u.pathname.startsWith('/media') || u.pathname.startsWith('/api/media') || u.pathname.startsWith('/media/stream'))) {
+                  if (u.origin === apiBase.origin && (u.pathname.startsWith('/files') || u.pathname.startsWith('/media') || u.pathname.startsWith('/api/media'))) {
                     const swapped = url.replace(apiBase.origin, msgBase.origin);
                     try {
                       const swappedUrl = new URL(swapped);

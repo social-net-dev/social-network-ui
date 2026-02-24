@@ -9,7 +9,7 @@ interface FeedListProps {
   onLike: (postId: string, liked: boolean) => void;
   onComment: (postId: string) => void;
   onShare: (postId: string) => void;
-  selectedPostId?: string | null;
+  openCommentPostIds?: string[];
   onDelete?: (postId: string) => void;
   onEdit?: (postId: string, content: string) => void;
   currentUserId?: string;
@@ -21,7 +21,7 @@ export function FeedList({
   onLike,
   onComment,
   onShare,
-  selectedPostId,
+  openCommentPostIds = [],
   onDelete,
   onEdit,
   currentUserId,
@@ -94,7 +94,7 @@ export function FeedList({
           onDelete={onDelete}
           onEdit={onEdit}
           currentUserId={currentUserId}
-          showComments={selectedPostId === post.id}
+          showComments={openCommentPostIds.includes(post.id)}
         />
       ))}
       {isLoading && (

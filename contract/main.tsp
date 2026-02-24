@@ -1689,17 +1689,6 @@ namespace Media {
 
   @useAuth(BearerAuth)
   @get
-  @route("/stream")
-  @summary("Stream media")
-  @doc("Tải media theo R2 key (query path). UI có thể thêm access_token trên query khi dùng trực tiếp trong browser.")
-  op stream(
-    ...AuthHeaders,
-    @query path: string,
-    @query access_token?: string
-  ): {@statusCode statusCode: 200; @body body: bytes;} | UnauthorizedEnvelopeResponse;
-
-  @useAuth(BearerAuth)
-  @get
   @route("/assets/{assetId}")
   @summary("Lấy metadata media asset")
   op getAsset(...AuthHeaders, @path assetId: string): OkEnvelopeResponse<MediaAsset> | UnauthorizedEnvelopeResponse | NotFoundEnvelopeResponse;

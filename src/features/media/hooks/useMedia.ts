@@ -3,12 +3,9 @@ import {
   mediaGetAsset,
   getMediaGetAssetQueryKey,
   getMediaGetSignedDownloadUrlMutationOptions,
-  mediaStream,
-  getMediaStreamQueryKey,
 } from '@/lib/api/generated/media/media';
 import type {
   MediaAssetSummary,
-  MediaStreamParams,
   MediaGetSignedDownloadUrlBody,
 } from '@/lib/api/generated/model';
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -16,23 +13,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 // ===========================
 // 🎯 UTILITY FUNCTIONS
 // ===========================
-
-/**
- * Extract path from URL for mediaStream API.
- * - Full URLs (http...): extract path after origin
- * - Relative paths: use as-is
- */
-function extractPath(url: string): string {
-  if (url.startsWith('http')) {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.pathname + urlObj.search;
-    } catch {
-      return url;
-    }
-  }
-  return url.startsWith('/') ? url : `/${url}`;
-}
 
 /**
  * Get appropriate URL for media display from MediaAssetSummary
@@ -126,60 +106,36 @@ export function useMediaSignedUrl() {
 }
 
 /**
- * Hook to fetch media as blob and create object URL.
- * Uses Orval-generated mediaStream for type-safe API calls.
+ * Hook to resolve a media URL for display.
+ * Returns the URL as-is for absolute URLs; returns null for relative paths
+ * (use signed URL flow via useMediaSignedUrl for private assets instead).
  */
 export function useMediaBlob(url: string | null | undefined) {
-  const path = url ? extractPath(url) : '';
-  const params: MediaStreamParams = { path };
-
   return useQuery({
-    queryKey: [...getMediaStreamQueryKey(params), 'blob'] as const,
+    queryKey: ['media-blob', url ?? ''],
     queryFn: async () => {
-      if (!path) return '';
-      // Absolute URLs (external CDN): return as-is
-      if (url?.startsWith('http')) return url;
-
-      try {
-        const blob = await mediaStream(params);
-        return URL.createObjectURL(blob);
-      } catch (e) {
-        console.error('Failed to fetch media blob:', url, e);
-        return '';
-      }
+      if (!url) return '';
+      if (url.startsWith('http')) return url;
+      return '';
     },
-    enabled: !!path,
-    staleTime: 1000 * 60 * 30, // Cache blobs for 30 minutes
-    gcTime: 1000 * 60 * 60, // Keep in GC for 1 hour
+    enabled: !!url,
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
   });
 }
 
 /**
- * Hook to fetch multiple media as blobs
+ * Hook to resolve multiple media URLs for display.
+ * Returns absolute URLs as-is; filters out relative paths.
  */
 export function useMediaBlobs(urls: string[]) {
   const validUrls = urls.filter(Boolean);
 
   return useQuery({
-    queryKey: ['media-blobs', ...validUrls.map(extractPath)],
+    queryKey: ['media-blobs', ...validUrls],
     queryFn: async () => {
       if (!validUrls.length) return [];
-
-      const promises = validUrls.map(async (url) => {
-        // Absolute URLs: return as-is
-        if (url.startsWith('http')) return url;
-        if (!url) return '';
-
-        const path = extractPath(url);
-        try {
-          const blob = await mediaStream({ path });
-          return URL.createObjectURL(blob);
-        } catch (e) {
-          console.error('Failed to fetch media blob for:', url, e);
-          return '';
-        }
-      });
-      return Promise.all(promises);
+      return validUrls.map((url) => (url.startsWith('http') ? url : ''));
     },
     enabled: validUrls.length > 0,
     staleTime: 1000 * 60 * 30,

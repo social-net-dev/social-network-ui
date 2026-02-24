@@ -80,7 +80,6 @@ export * from './mediaGetSignedDownloadUrl200Data';
 export * from './mediaGetSignedDownloadUrlBody';
 export * from './mediaInitPublicUpload201';
 export * from './mediaInitUpload201';
-export * from './mediaStreamParams';
 export * from './nameValueHeader';
 export * from './noContentEnvelopeResponse';
 export * from './notification';

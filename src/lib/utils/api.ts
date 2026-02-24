@@ -19,67 +19,38 @@ export const getDefaultAvatar = (): string =>
     </svg>
   `)}`;
 
+const withToken = (url: string): string => {
+  const token = getAuthToken();
+  if (!token) return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}access_token=${encodeURIComponent(token)}`;
+};
+
+const resolveMediaPath = (filePath: string): string | null => {
+  if (filePath.startsWith('/api/social/media/') || filePath.startsWith('/api/media/'))
+    return filePath.replace(/^\/api/, '');
+  if (filePath.startsWith('/media/')) return filePath;
+  return null;
+};
+
 export const buildMediaUrl = (filePath: string | null | undefined): string => {
   if (!filePath) return getDefaultAvatar();
-  if (filePath.startsWith('http')) return filePath;
-  if (filePath.startsWith('data:')) return filePath;
-
-  const apiBase = getApiBaseUrl();
-  let mediaPath: string;
-
-  if (
-    filePath.startsWith('/api/media/stream') ||
-    filePath.startsWith('/api/social/media/') ||
-    filePath.startsWith('/api/media/')
-  ) {
-    mediaPath = filePath.replace(/^\/api/, '');
-  } else if (filePath.startsWith('/media/')) {
-    mediaPath = filePath;
-  } else {
-    mediaPath = `/media/stream/?path=${encodeURIComponent(filePath)}`;
-  }
-
-  const fullUrl = `${apiBase}${mediaPath}`;
-  const cleanToken = getAuthToken();
-  if (!cleanToken) return fullUrl;
-  const separator = fullUrl.includes('?') ? '&' : '?';
-  return `${fullUrl}${separator}access_token=${encodeURIComponent(cleanToken)}`;
+  if (filePath.startsWith('http') || filePath.startsWith('data:')) return filePath;
+  const path = resolveMediaPath(filePath);
+  if (!path) return getDefaultAvatar();
+  return withToken(`${getApiBaseUrl()}${path}`);
 };
 
 export const buildMediaPath = (filePath: string | null | undefined): string => {
   if (!filePath) return '';
   if (filePath.startsWith('http')) return filePath;
-
-  let mediaPath: string;
-
-  if (
-    filePath.startsWith('/api/media/stream') ||
-    filePath.startsWith('/api/social/media/') ||
-    filePath.startsWith('/api/media/')
-  ) {
-    mediaPath = filePath.replace(/^\/api/, '');
-  } else if (filePath.startsWith('/media/')) {
-    mediaPath = filePath;
-  } else {
-    mediaPath = `/media/stream/?path=${encodeURIComponent(filePath)}`;
-  }
-
-  const cleanToken = getAuthToken();
-  if (!cleanToken) return mediaPath;
-  const separator = mediaPath.includes('?') ? '&' : '?';
-  return `${mediaPath}${separator}access_token=${encodeURIComponent(cleanToken)}`;
+  const path = resolveMediaPath(filePath);
+  return path ? withToken(path) : '';
 };
 
 export const appendAuthToken = (url: string): string => {
   if (url.startsWith('http')) return url;
-  try {
-    const cleanToken = getAuthToken();
-    if (!cleanToken) return url;
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}access_token=${encodeURIComponent(cleanToken)}`;
-  } catch {
-    return url;
-  }
+  try { return withToken(url); } catch { return url; }
 };
 
 export const getErrorMessage = (error: unknown): string => {

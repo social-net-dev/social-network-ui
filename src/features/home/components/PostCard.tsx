@@ -41,6 +41,7 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [showMenu, setShowMenu] = useState(false);
+  const [isCommentsMounted, setIsCommentsMounted] = useState(Boolean(showComments));
 
   // Optimistic Like State
   const [optimisticLike, setOptimisticLike] = useState({
@@ -55,6 +56,19 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
       count: post.stats?.reactions ?? 0
     });
   }, [post.userReaction, post.stats?.reactions]);
+
+  useEffect(() => {
+    if (showComments) {
+      setIsCommentsMounted(true);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setIsCommentsMounted(false);
+    }, 260);
+
+    return () => window.clearTimeout(timer);
+  }, [showComments]);
 
   const createdAt = post.createdAt || new Date().toISOString();
   const timeAgo = formatDistanceToNow(new Date(createdAt), {
@@ -230,8 +244,13 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
         </div>
       </div>
 
-      {showComments && (
-        <div className="border-t border-border/50">
+      {isCommentsMounted && (
+        <div
+          className={cn(
+            'border-t border-border/50 overflow-hidden transition-all duration-300 ease-out',
+            showComments ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0',
+          )}
+        >
           <CommentSection postId={post.id} currentUserId={currentUserId} postAuthorId={post.author.id} />
         </div>
       )}

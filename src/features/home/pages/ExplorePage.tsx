@@ -33,7 +33,7 @@ export function ExplorePage() {
     }
   }, [isVisible, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [openCommentPostIds, setOpenCommentPostIds] = useState<string[]>([]);
   const [sharePostId, setSharePostId] = useState<string | null>(null);
 
   const handleLike = async (postId: string, liked: boolean) => {
@@ -41,7 +41,11 @@ export function ExplorePage() {
   };
 
   const handleComment = (postId: string) => {
-    setSelectedPostId(selectedPostId === postId ? null : postId);
+    setOpenCommentPostIds((prev) =>
+      prev.includes(postId)
+        ? prev.filter((id) => id !== postId)
+        : [...prev, postId],
+    );
   };
 
   const handleShare = (postId: string) => {
@@ -181,7 +185,7 @@ export function ExplorePage() {
           onShare={handleShare}
           onDelete={handleDeletePost}
           onEdit={handleEditPost}
-          selectedPostId={selectedPostId}
+          openCommentPostIds={openCommentPostIds}
           currentUserId={currentUser?.id}
         />
 

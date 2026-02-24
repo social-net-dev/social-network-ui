@@ -33,7 +33,6 @@ import type {
   MediaGetSignedDownloadUrlBody,
   MediaInitPublicUpload201,
   MediaInitUpload201,
-  MediaStreamParams,
   PresignedUploadCompleteRequest,
   PresignedUploadInitRequest
 } from '.././model';
@@ -201,99 +200,6 @@ export const useMediaGetSignedDownloadUrl = <TError = ApiErrorResponse,
       return useMutation(getMediaGetSignedDownloadUrlMutationOptions(options), queryClient);
     }
     /**
- * Tải media theo R2 key (query path). UI có thể thêm access_token trên query khi dùng trực tiếp trong browser.
- * @summary Stream media
- */
-export const mediaStream = (
-    params: MediaStreamParams,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<Blob>(
-      {url: `/media/stream`, method: 'GET',
-        params,
-        responseType: 'blob', signal
-    },
-      options);
-    }
-  
-
-
-
-export const getMediaStreamQueryKey = (params?: MediaStreamParams,) => {
-    return [
-    `/media/stream`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-    
-export const getMediaStreamQueryOptions = <TData = Awaited<ReturnType<typeof mediaStream>>, TError = ApiErrorResponse>(params: MediaStreamParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mediaStream>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getMediaStreamQueryKey(params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof mediaStream>>> = ({ signal }) => mediaStream(params, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof mediaStream>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type MediaStreamQueryResult = NonNullable<Awaited<ReturnType<typeof mediaStream>>>
-export type MediaStreamQueryError = ApiErrorResponse
-
-
-export function useMediaStream<TData = Awaited<ReturnType<typeof mediaStream>>, TError = ApiErrorResponse>(
- params: MediaStreamParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof mediaStream>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof mediaStream>>,
-          TError,
-          Awaited<ReturnType<typeof mediaStream>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useMediaStream<TData = Awaited<ReturnType<typeof mediaStream>>, TError = ApiErrorResponse>(
- params: MediaStreamParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mediaStream>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof mediaStream>>,
-          TError,
-          Awaited<ReturnType<typeof mediaStream>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useMediaStream<TData = Awaited<ReturnType<typeof mediaStream>>, TError = ApiErrorResponse>(
- params: MediaStreamParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mediaStream>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Stream media
- */
-
-export function useMediaStream<TData = Awaited<ReturnType<typeof mediaStream>>, TError = ApiErrorResponse>(
- params: MediaStreamParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mediaStream>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getMediaStreamQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-/**
  * Trả về upload_url + headers để client upload trực tiếp lên object storage. Sau đó gọi complete để xác nhận.
  * @summary Khởi tạo presigned upload
  */

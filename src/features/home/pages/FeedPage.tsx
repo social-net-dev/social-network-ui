@@ -39,7 +39,7 @@ export function FeedPage() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [openCommentPostIds, setOpenCommentPostIds] = useState<string[]>([]);
   const [sharePostId, setSharePostId] = useState<string | null>(null);
 
   const handleCreatePost = async (content: string, files: File[], _hashtags: string[], postType?: string, fieldId?: string) => {
@@ -58,7 +58,11 @@ export function FeedPage() {
   };
 
   const handleComment = (postId: string) => {
-    setSelectedPostId(selectedPostId === postId ? null : postId);
+    setOpenCommentPostIds((prev) =>
+      prev.includes(postId)
+        ? prev.filter((id) => id !== postId)
+        : [...prev, postId],
+    );
   };
 
   const handleShare = (postId: string) => {
@@ -177,7 +181,7 @@ export function FeedPage() {
           </div>
         )}
 
-        <FeedList posts={posts} isLoading={isLoading} onLike={handleLike} onComment={handleComment} onShare={handleShare} onDelete={handleDeletePost} onEdit={handleEditPost} selectedPostId={selectedPostId} currentUserId={currentUser?.id} />
+        <FeedList posts={posts} isLoading={isLoading} onLike={handleLike} onComment={handleComment} onShare={handleShare} onDelete={handleDeletePost} onEdit={handleEditPost} openCommentPostIds={openCommentPostIds} currentUserId={currentUser?.id} />
 
         {/* Sentinel for Infinite Scroll */}
         <div ref={loadMoreRef} className="flex justify-center pt-4 pb-8 min-h-16">

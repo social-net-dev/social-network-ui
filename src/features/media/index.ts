@@ -23,7 +23,6 @@ export {
 export type {
   MediaAssetSummary,
   MediaAsset,
-  MediaStreamParams,
   PresignedUploadInitRequest,
   PresignedUploadCompleteRequest,
 } from '@/lib/api/generated/model';
@@ -38,11 +37,6 @@ export {
   getMediaGetAssetQueryKey,
   getMediaGetAssetQueryOptions,
   useMediaGetAsset,
-
-  mediaStream,
-  getMediaStreamQueryKey,
-  getMediaStreamQueryOptions,
-  useMediaStream,
 
   // Mutations
   mediaInitUpload,

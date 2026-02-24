@@ -11,14 +11,18 @@ export function FieldDetailPage() {
   const { user } = useAuthStore();
   const { field, isLoadingField, posts, isLoadingPosts, fetchNextPage, hasNextPage, isFetchingNextPage, followField, unfollowField, isFollowingLoading } = useField(fieldId || '');
 
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [openCommentPostIds, setOpenCommentPostIds] = useState<string[]>([]);
 
   const { likePost, sharePost, deletePost, updatePost } = usePostActions({
     affectedQueryKeys: [['fields', fieldId, 'posts']],
   });
 
   const onComment = (postId: string) => {
-    setSelectedPostId(selectedPostId === postId ? null : postId);
+    setOpenCommentPostIds((prev) =>
+      prev.includes(postId)
+        ? prev.filter((id) => id !== postId)
+        : [...prev, postId],
+    );
   };
 
   return (
@@ -43,7 +47,7 @@ export function FieldDetailPage() {
               <h2 className="text-xl font-bold text-foreground">Bài viết mới nhất</h2>
             </div>
 
-            <FeedList posts={posts} isLoading={isLoadingPosts} onLike={likePost} onComment={onComment} onShare={sharePost} onDelete={deletePost} onEdit={updatePost} currentUserId={user?.id} selectedPostId={selectedPostId} />
+            <FeedList posts={posts} isLoading={isLoadingPosts} onLike={likePost} onComment={onComment} onShare={sharePost} onDelete={deletePost} onEdit={updatePost} currentUserId={user?.id} openCommentPostIds={openCommentPostIds} />
 
             {hasNextPage && (
               <div className="flex justify-center pt-4">

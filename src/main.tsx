@@ -14,7 +14,16 @@ import { cleanupLocalStorage } from './features/message/lib/localStorageCleanup'
 // 🧹 Clean up old E2EE cache và message plaintext
 cleanupLocalStorage();
 
-createRoot(document.getElementById('root')!).render(
+const shouldEnableMockApi =
+  import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCK_API === 'true';
+
+const bootstrap = async () => {
+  if (shouldEnableMockApi) {
+    const { worker } = await import('./mocks/browser');
+    await worker.start({ onUnhandledRequest: 'bypass' });
+  }
+
+  createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
@@ -28,4 +37,7 @@ createRoot(document.getElementById('root')!).render(
         </QueryClientProvider>
       </ErrorBoundary>
     </StrictMode>
-);
+  );
+};
+
+void bootstrap();

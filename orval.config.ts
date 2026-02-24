@@ -7,6 +7,7 @@ export default defineConfig({
       client: 'react-query',
       httpClient: 'axios',
       mode: 'tags-split',
+      mock: true,
       target: './src/lib/api/generated/index.ts',
       schemas: './src/lib/api/generated/model',
       override: {

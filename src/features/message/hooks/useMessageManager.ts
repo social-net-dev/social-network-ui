@@ -72,7 +72,7 @@ export const useMessageManager = ({ roomId, wsMessages }: UseMessageManagerProps
             try {
               const u = new URL(url);
               // If it's pointing to the main API host but files are served by message service, swap origin
-              if (u.origin === apiBase.origin && (u.pathname.startsWith('/files') || u.pathname.startsWith('/media') || u.pathname.startsWith('/api/media') || u.pathname.startsWith('/media/stream'))) {
+              if (u.origin === apiBase.origin && (u.pathname.startsWith('/files') || u.pathname.startsWith('/media') || u.pathname.startsWith('/api/media'))) {
                 const swapped = url.replace(apiBase.origin, msgBase.origin);
                 // If message service origin, append auth token if available
                 try {

@@ -93,6 +93,7 @@ pnpm dev
 | `pnpm gen:spec` | Compile TypeSpec contract → `tsp-output/schema/openapi.json` |
 | `pnpm gen:api` | Tái sinh API client từ openapi.json |
 | `pnpm gen` | Chạy `gen:spec` + `gen:api` liên tiếp |
+| `pnpm mock:init` | Tạo/cập nhật `public/mockServiceWorker.js` |
 
 ### Tái sinh API client (sau khi sửa TypeSpec)
 
@@ -103,6 +104,33 @@ pnpm gen
 # Hoặc từng bước:
 pnpm gen:spec   # contract/main.tsp → tsp-output/schema/openapi.json
 pnpm gen:api    # openapi.json → src/lib/api/generated/
+```
+
+### Mock API với Orval + MSW
+
+Project đã tích hợp flow mock theo contract:
+
+- `orval.config.ts` bật `mock: true` để sinh thêm `*.msw.ts` handlers theo từng tag API.
+- `src/mocks/handlers.ts` gom toàn bộ handlers được sinh từ Orval.
+- `src/mocks/browser.ts` khởi tạo MSW worker.
+- `src/main.tsx` chỉ bật worker khi:
+  - `import.meta.env.DEV === true`
+  - `VITE_ENABLE_MOCK_API=true`
+
+Sử dụng:
+
+```bash
+# 1) Nếu đổi contract, sinh lại client + handlers
+pnpm gen
+
+# 2) Đảm bảo file service worker mới nhất
+pnpm mock:init
+
+# 3) Bật mock trong .env
+VITE_ENABLE_MOCK_API=true
+
+# 4) Chạy app
+pnpm dev
 ```
 
 ## Cấu trúc dự án
@@ -124,6 +152,9 @@ src/
 │   ├── media/              # Media upload/display
 │   ├── posts/              # Public re-exports (PostCard, useFeed…)
 │   └── shared/             # Avatar, Sidebar, Breadcrumbs
+├── mocks/
+│   ├── browser.ts          # MSW browser worker setup
+│   └── handlers.ts         # Gộp handlers sinh từ Orval
 ├── lib/
 │   ├── api/
 │   │   ├── generated/      # AUTO-GENERATED — không chỉnh tay
