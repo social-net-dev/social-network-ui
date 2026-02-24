@@ -45,7 +45,7 @@ export function LoginLeftPanel() {
                         </div>
                     </div>
                 </div>
-                <div className="text-sm text-gray-400 text-center">© 2026 ETECHS. All Rights Reserved.</div>
+                <div className="text-sm text-gray-400 text-center"> 2026 ETECHS. All Rights Reserved.</div>
             </div>
         </>
     );

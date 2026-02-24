@@ -1,7 +1,7 @@
-import { LoginForm } from "../components/LoginForm";
-import { AuthLayout } from "../components/AuthLayout";
-import { LoginLeftPanel } from "../components/LoginLeftPanel";
 import { Link, useLocation } from "react-router-dom";
+import { LoginForm } from "../ui/LoginForm";
+import { AuthLayout } from "../ui/AuthLayout";
+import { LoginLeftPanel } from "../ui/LoginLeftPanel";
 
 export function LoginPage() {
     const location = useLocation();
@@ -22,7 +22,10 @@ export function LoginPage() {
 
                         <div className="mt-8 text-center text-sm">
                             <span className="text-gray-500 dark:text-gray-400">Chưa có tài khoản?</span>
-                            <Link to="/register" className="font-bold text-[#0E4E5A] dark:text-[#E2F046] hover:underline ml-1">
+                            <Link
+                                to="/register"
+                                className="font-bold text-[#0E4E5A] dark:text-[#E2F046] hover:underline ml-1"
+                            >
                                 Tạo tài khoản mới
                             </Link>
                         </div>

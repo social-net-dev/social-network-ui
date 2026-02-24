@@ -25,13 +25,17 @@ export const authHandlers = [
   // ============================================
   // POST /auth/register
   // ============================================
-  http.post('*/auth/register', async () => {
+  http.post('*/auth/register', async ({ request }) => {
     await delay(800);
+
+    const body = (await request.json().catch(() => ({}))) as { email?: string };
+
     return HttpResponse.json({
       success: true,
       data: {
-        user_id: `new-user-${Date.now()}`,
-        message: 'OTP đã được gửi đến email của bạn',
+        id: `new-user-${Date.now()}`,
+        email: body.email ?? `user${Date.now()}@etechs.com`,
+        username: `user_${Date.now()}`,
       },
     });
   }),

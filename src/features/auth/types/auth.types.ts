@@ -26,7 +26,7 @@ export const RegisterFormDataSchema = z.object({
     displayName: z.string().min(2, "Tên hiển thị tối thiểu 2 ký tự"),
     phone: z.string().optional(),
     role: z.enum(["STUDENT", "INSTRUCTOR"]),
-    gender: z.enum(["MALE", "FEMALE", "OTHER", ""]),
+    gender: z.enum(["MALE", "FEMALE", "OTHER"]),
     // Giấy tờ tùy thân (không bắt buộc)
     personalDocuments: z.array(z.instanceof(File)).optional(),
     consent: z.boolean().refine((val) => val === true, "Vui lòng đồng ý điều khoản"),

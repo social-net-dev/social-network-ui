@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import logoEtechs from "@/assets/logo-etechs-ETS.svg";
-import { RegisterForm } from "../components/RegisterForm";
+import { RegisterForm } from "../ui/RegisterForm/RegisterForm";
 
 export function RegisterPage() {
     return (
@@ -49,55 +49,6 @@ export function RegisterPage() {
                             Kết nối người học và người dạy để chia sẻ tài liệu, khóa học, và kinh nghiệm thực tiễn. Tương tác trực tiếp qua bài viết,
                             thảo luận chuyên sâu và mạng lưới kết nối học tập.
                         </p>
-                        <div className="grid grid-cols-2 gap-6 pt-4">
-                            <div className="flex items-start gap-3">
-                                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#1b7a78]/10 flex items-center justify-center text-[#1b7a78] dark:text-[#d4e937]">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M3 3v18h18" />
-                                        <path d="m19 9-5 5-4-4-3 3" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-slate-900 dark:text-white">Tài liệu & khóa học</h3>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Kho học liệu phong phú, chia sẻ dễ dàng.</p>
-                                </div>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#1b7a78]/10 flex items-center justify-center text-[#1b7a78] dark:text-[#d4e937]">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <circle cx="18" cy="5" r="3" />
-                                        <circle cx="6" cy="12" r="3" />
-                                        <circle cx="18" cy="19" r="3" />
-                                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-slate-900 dark:text-white">Kết nối giảng dạy</h3>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Kết nối học viên, giảng viên, mentor.</p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <div className="w-full max-w-md mx-auto">

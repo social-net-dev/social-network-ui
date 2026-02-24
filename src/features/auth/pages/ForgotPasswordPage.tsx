@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, Loader, ArrowLeft } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { authApi } from "@/lib/api/services/auth";
+import { useAuthForgotPassword, useAuthResetPassword } from "@/lib/api/generated/auth/auth";
 
 type Step = "email" | "otp" | "password";
 
@@ -23,38 +22,36 @@ export function ForgotPasswordPage() {
     const [error, setError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
 
-    const sendOtpMutation = useMutation({
-        mutationFn: () => {
-            return authApi.forgotPassword({ email: email.trim() });
-        },
-        onSuccess: (res) => {
-            const uid = (res as any)?.user_id || "";
-            if (uid) setUserId(uid);
-            setStep("otp");
-            setSuccessMessage("Mã OTP đã được gửi tới email của bạn");
-            setError("");
-        },
-        onError: (err: any) => {
-            setError(getErrorMessage(err));
+    const sendOtpMutation = useAuthForgotPassword({
+        mutation: {
+            onSuccess: (res) => {
+                const uid = res.data.user_id || "";
+                if (uid) setUserId(uid);
+                setStep("otp");
+                setSuccessMessage("Mã OTP đã được gửi tới email của bạn");
+                setError("");
+            },
+            onError: (err) => {
+                setError(getErrorMessage(err));
+            },
         },
     });
 
-    const resetPasswordMutation = useMutation({
-        mutationFn: () => {
-            return authApi.resetPassword({ user_id: userId, otp, new_password: password });
-        },
-        onSuccess: () => {
-            setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
-            setTimeout(() => {
-                navigate("/login", { state: { message: "Mật khẩu đã thay đổi. Vui lòng đăng nhập lại." } });
-            }, 1500);
-        },
-        onError: (err: any) => {
-            const detail = getErrorMessage(err);
-            setError(detail);
-            if (typeof detail === "string" && detail.toLowerCase().includes("otp")) {
-                setStep("otp");
-            }
+    const resetPasswordMutation = useAuthResetPassword({
+        mutation: {
+            onSuccess: () => {
+                setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
+                setTimeout(() => {
+                    navigate("/login", { state: { message: "Mật khẩu đã thay đổi. Vui lòng đăng nhập lại." } });
+                }, 1500);
+            },
+            onError: (err) => {
+                const detail = getErrorMessage(err);
+                setError(detail);
+                if (typeof detail === "string" && detail.toLowerCase().includes("otp")) {
+                    setStep("otp");
+                }
+            },
         },
     });
 
@@ -64,7 +61,11 @@ export function ForgotPasswordPage() {
             setError("Vui lòng nhập email");
             return;
         }
-        sendOtpMutation.mutate();
+        sendOtpMutation.mutate({
+            data: {
+                email: email.trim(),
+            },
+        });
     };
 
     const handleVerifyOtp = () => {
@@ -80,7 +81,11 @@ export function ForgotPasswordPage() {
     const handleResetPassword = () => {
         setError("");
         setSuccessMessage("");
-        // ... (validation logic keeps same)
+
+        if (!password || password.length < 8) {
+            setError("Mật khẩu tối thiểu 8 ký tự");
+            return;
+        }
         if (password !== confirmPassword) {
             setError("Mật khẩu xác nhận không khớp");
             return;
@@ -91,13 +96,18 @@ export function ForgotPasswordPage() {
             return;
         }
 
-        resetPasswordMutation.mutate();
+        resetPasswordMutation.mutate({
+            data: {
+                user_id: userId,
+                otp,
+                new_password: password,
+            },
+        });
     };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50 p-4">
             <Card className="w-full max-w-md">
-                {/* Header */}
                 <div className="bg-gradient-to-r from-teal-600 to-blue-600 text-white p-6 rounded-t-lg">
                     <div className="flex items-center gap-3">
                         <button onClick={() => navigate("/login")} className="hover:bg-white/20 p-1 rounded transition">
@@ -107,35 +117,25 @@ export function ForgotPasswordPage() {
                     </div>
                 </div>
 
-                {/* Content */}
                 <div className="p-8 space-y-6">
-                    {/* Error Alert */}
                     {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
 
-                    {/* Success Alert */}
                     {successMessage && (
                         <div className="bg-green-50 border border-green-200 text-green-700 p-3 rounded-lg text-sm">{successMessage}</div>
                     )}
 
-                    {/* Step 1: Email */}
                     {step === "email" && (
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                <Input
-                                    type="email"
-                                    placeholder="Nhập email của bạn"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    disabled={sendOtpMutation.isPending}
-                                />
+                                <label className="text-sm font-medium">Email</label>
+                                <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@company.com" />
                             </div>
-                            <Button onClick={handleSendOtp} disabled={sendOtpMutation.isPending} className="w-full bg-teal-600 hover:bg-teal-700">
+                            <Button className="w-full" onClick={handleSendOtp} disabled={sendOtpMutation.isPending}>
                                 {sendOtpMutation.isPending ? (
-                                    <>
-                                        <Loader className="w-4 h-4 mr-2 animate-spin" />
+                                    <span className="flex items-center justify-center gap-2">
+                                        <Loader className="w-4 h-4 animate-spin" />
                                         Đang gửi...
-                                    </>
+                                    </span>
                                 ) : (
                                     "Gửi Mã OTP"
                                 )}
@@ -143,115 +143,71 @@ export function ForgotPasswordPage() {
                         </div>
                     )}
 
-                    {/* Step 2: OTP */}
                     {step === "otp" && (
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Mã OTP 6 Chữ Số</label>
-                                <Input
-                                    type="text"
-                                    placeholder="Nhập mã OTP"
-                                    value={otp}
-                                    onChange={(e) => {
-                                        const val = e.target.value.replace(/\D/g, "").slice(0, 6);
-                                        setOtp(val);
-                                    }}
-                                    maxLength={6}
-                                    className="text-center text-2xl tracking-widest"
-                                />
+                                <label className="text-sm font-medium">Mã OTP</label>
+                                <Input value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" />
                             </div>
-                            <p className="text-xs text-gray-500">Mã OTP đã được gửi tới {email}</p>
-                            <Button onClick={handleVerifyOtp} className="w-full bg-teal-600 hover:bg-teal-700">
-                                Xác Thực OTP
+                            <Button className="w-full" onClick={handleVerifyOtp}>
+                                Xác thực OTP
                             </Button>
-                            <Button onClick={handleSendOtp} variant="outline" disabled={sendOtpMutation.isPending} className="w-full">
-                                {sendOtpMutation.isPending ? "Đang gửi..." : "Gửi Lại OTP"}
-                            </Button>
-                            <Button onClick={() => setStep("email")} variant="outline" className="w-full">
-                                Quay Lại
-                            </Button>
+                            <Button variant="outline" className="w-full" onClick={() => setStep("email")}>Quay lại</Button>
                         </div>
                     )}
 
-                    {/* Step 3: Password Reset */}
                     {step === "password" && (
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Mật Khẩu Mới</label>
+                                <label className="text-sm font-medium">Mật khẩu mới</label>
                                 <div className="relative">
                                     <Input
                                         type={showPassword ? "text" : "password"}
-                                        placeholder="Nhập mật khẩu mới"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400"
                                     >
                                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-2">
-                                    • Ít nhất 8 ký tự
-                                    <br />• 1 chữ hoa, 1 chữ thường, 1 chữ số
-                                </p>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Xác Nhận Mật Khẩu</label>
+                                <label className="text-sm font-medium">Xác nhận mật khẩu</label>
                                 <div className="relative">
                                     <Input
                                         type={showConfirmPassword ? "text" : "password"}
-                                        placeholder="Nhập lại mật khẩu"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
+                                        placeholder="••••••••"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400"
                                     >
                                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
                                 </div>
                             </div>
 
-                            <Button
-                                onClick={handleResetPassword}
-                                disabled={resetPasswordMutation.isPending}
-                                className="w-full bg-teal-600 hover:bg-teal-700"
-                            >
+                            <Button className="w-full" onClick={handleResetPassword} disabled={resetPasswordMutation.isPending}>
                                 {resetPasswordMutation.isPending ? (
-                                    <>
-                                        <Loader className="w-4 h-4 mr-2 animate-spin" />
-                                        Đang thay đổi...
-                                    </>
+                                    <span className="flex items-center justify-center gap-2">
+                                        <Loader className="w-4 h-4 animate-spin" />
+                                        Đang cập nhật...
+                                    </span>
                                 ) : (
-                                    "Thay Đổi Mật Khẩu"
+                                    "Đặt lại mật khẩu"
                                 )}
-                            </Button>
-                            <Button onClick={() => setStep("otp")} variant="outline" className="w-full">
-                                Quay Lại
                             </Button>
                         </div>
                     )}
-
-                    {/* Progress Indicator */}
-                    <div className="flex gap-2 justify-center pt-4">
-                        <div
-                            className={`w-2 h-2 rounded-full transition-colors ${
-                                step === "email" || step === "otp" || step === "password" ? "bg-teal-600" : "bg-gray-300"
-                            }`}
-                        />
-                        <div
-                            className={`w-2 h-2 rounded-full transition-colors ${
-                                step === "otp" || step === "password" ? "bg-teal-600" : "bg-gray-300"
-                            }`}
-                        />
-                        <div className={`w-2 h-2 rounded-full transition-colors ${step === "password" ? "bg-teal-600" : "bg-gray-300"}`} />
-                    </div>
                 </div>
             </Card>
         </div>

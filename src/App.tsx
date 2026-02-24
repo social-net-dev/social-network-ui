@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { LoginPage, RegisterPage, OTPVerifyPage, ForgotPasswordPage } from '@/features/auth/routes';
+import { LoginPage, RegisterPage, OTPVerifyPage, ForgotPasswordPage } from '@/features/auth';
 import { FeedPage } from '@/features/home/pages/FeedPage';
 import { ExplorePage } from '@/features/home/pages/ExplorePage';
 import { RecommendationPage } from '@/features/recommendation/pages/RecommendationPage';

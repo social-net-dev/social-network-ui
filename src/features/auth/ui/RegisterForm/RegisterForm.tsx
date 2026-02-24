@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Mail, Lock, User, Phone, Upload, X, Eye, EyeOff } from "lucide-react";
-import { useRegister } from "../hooks/useRegister";
+import { useRegister } from "../../use-cases/useRegister";
 
 export function RegisterForm() {
     const { form, onSubmit, error, isLoading } = useRegister();
@@ -12,7 +12,7 @@ export function RegisterForm() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [personalDocumentsPreviews, setPersonalDocumentsPreviews] = useState<string[]>([]);
 
-    const handlePersonalDocumentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePersonalDocumentsChange = (e: ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
             const currentFiles = form.getValues("personalDocuments") || [];
@@ -43,7 +43,6 @@ export function RegisterForm() {
 
     return (
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Email */}
             <div className="space-y-2">
                 <Label htmlFor="email">Email *</Label>
                 <div className="relative">
@@ -62,9 +61,7 @@ export function RegisterForm() {
                 {form.formState.errors.email && <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>}
             </div>
 
-            {/* Row 1: Password and Confirm Password */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Password */}
                 <div className="space-y-2">
                     <Label htmlFor="password">Mật khẩu *</Label>
                     <div className="relative">
@@ -90,7 +87,6 @@ export function RegisterForm() {
                     {form.formState.errors.password && <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>}
                 </div>
 
-                {/* Confirm Password */}
                 <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Xác nhận mật khẩu *</Label>
                     <div className="relative">
@@ -113,15 +109,15 @@ export function RegisterForm() {
                             {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
                     </div>
-                    {form.formState.errors.confirmPassword && <p className="text-sm text-red-500">{form.formState.errors.confirmPassword.message}</p>}
+                    {form.formState.errors.confirmPassword && (
+                        <p className="text-sm text-red-500">{form.formState.errors.confirmPassword.message}</p>
+                    )}
                 </div>
             </div>
 
             <p className="text-xs text-slate-500 -mt-2">Mật khẩu tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt</p>
 
-            {/* Row 2: Display Name and Phone */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Display Name */}
                 <div className="space-y-2">
                     <Label htmlFor="displayName">Tên hiển thị *</Label>
                     <div className="relative">
@@ -137,10 +133,11 @@ export function RegisterForm() {
                             disabled={isLoading}
                         />
                     </div>
-                    {form.formState.errors.displayName && <p className="text-sm text-red-500">{form.formState.errors.displayName.message}</p>}
+                    {form.formState.errors.displayName && (
+                        <p className="text-sm text-red-500">{form.formState.errors.displayName.message}</p>
+                    )}
                 </div>
 
-                {/* Phone */}
                 <div className="space-y-2">
                     <Label htmlFor="phone">Số điện thoại</Label>
                     <div className="relative">
@@ -164,7 +161,6 @@ export function RegisterForm() {
                 </div>
             </div>
 
-            {/* Role and Gender */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="role">Loại tài khoản *</Label>
@@ -188,7 +184,7 @@ export function RegisterForm() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1b7a78] dark:bg-[#132d3b] dark:border-gray-600"
                         disabled={isLoading}
                     >
-                        <option value="">-- Chọn giới tính --</option>
+                        <option defaultValue="" value="">-- Chọn giới tính --</option>
                         <option value="MALE">Nam</option>
                         <option value="FEMALE">Nữ</option>
                         <option value="OTHER">Khác</option>
@@ -196,7 +192,6 @@ export function RegisterForm() {
                 </div>
             </div>
 
-            {/* Giấy tờ tùy thân (không bắt buộc) */}
             <div className="space-y-2">
                 <Label htmlFor="personalDocuments">Giấy tờ tùy thân (CCCD, thẻ sinh viên, thẻ học sinh)</Label>
                 {personalDocumentsPreviews.length > 0 ? (
@@ -253,10 +248,11 @@ export function RegisterForm() {
                         />
                     </label>
                 )}
-                {form.formState.errors.personalDocuments && <p className="text-sm text-red-500">{form.formState.errors.personalDocuments.message}</p>}
+                {form.formState.errors.personalDocuments && (
+                    <p className="text-sm text-red-500">{form.formState.errors.personalDocuments.message}</p>
+                )}
             </div>
 
-            {/* Terms */}
             <div className="flex items-center gap-2">
                 <div className="flex items-center h-4 flex-shrink-0">
                     <Checkbox

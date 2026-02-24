@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Mail, RefreshCw } from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
-import { authApi } from '@/lib/api/services/auth';
+import { useAuthResendOtp, useAuthVerifyOtp } from '@/lib/api/generated/auth/auth';
 
 const OTP_STORAGE_EMAIL = 'otp_verify_email';
 const OTP_STORAGE_USER_ID = 'otp_verify_user_id';
@@ -26,7 +25,6 @@ export function OTPVerifyPage() {
   const location = useLocation();
   const state = location.state as { email?: string; user_id?: string } | null;
 
-  // Derive values directly instead of using state + effect
   const email = state?.email ?? getStoredEmail();
   const user_id = state?.user_id ?? getStoredUserId();
 
@@ -34,38 +32,36 @@ export function OTPVerifyPage() {
   const [error, setError] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const verifyMutation = useMutation({
-    mutationFn: () => {
-      return authApi.verifyOtp({ user_id, otp: otpCode });
-    },
-    onSuccess: async () => {
-      if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.removeItem(OTP_STORAGE_EMAIL);
-        sessionStorage.removeItem(OTP_STORAGE_USER_ID);
-      }
-      navigate('/login', {
-        state: {
-          email,
-          message: 'Xác thực OTP thành công! Vui lòng đăng nhập.',
-        },
-      });
-    },
-    onError: (err: any) => {
-      setError(getErrorMessage(err));
+  const verifyMutation = useAuthVerifyOtp({
+    mutation: {
+      onSuccess: async () => {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem(OTP_STORAGE_EMAIL);
+          sessionStorage.removeItem(OTP_STORAGE_USER_ID);
+        }
+        navigate('/login', {
+          state: {
+            email,
+            message: 'Xác thực OTP thành công! Vui lòng đăng nhập.',
+          },
+        });
+      },
+      onError: err => {
+        setError(getErrorMessage(err));
+      },
     },
   });
 
-  const resendMutation = useMutation({
-    mutationFn: () => {
-      return authApi.resendOtp({ user_id });
-    },
-    onSuccess: () => {
-      setResendSuccess(true);
-      setError('');
-      setTimeout(() => setResendSuccess(false), 3000);
-    },
-    onError: (err: any) => {
-      setError(getErrorMessage(err));
+  const resendMutation = useAuthResendOtp({
+    mutation: {
+      onSuccess: () => {
+        setResendSuccess(true);
+        setError('');
+        setTimeout(() => setResendSuccess(false), 3000);
+      },
+      onError: err => {
+        setError(getErrorMessage(err));
+      },
     },
   });
 
@@ -81,7 +77,13 @@ export function OTPVerifyPage() {
       setError('Thiếu thông tin email. Vui lòng đăng ký lại.');
       return;
     }
-    verifyMutation.mutate();
+
+    verifyMutation.mutate({
+      data: {
+        user_id,
+        otp: otpCode,
+      },
+    });
   };
 
   const handleResend = () => {
@@ -89,7 +91,12 @@ export function OTPVerifyPage() {
       setError('Thiếu email. Vui lòng đăng ký lại.');
       return;
     }
-    resendMutation.mutate();
+
+    resendMutation.mutate({
+      data: {
+        user_id,
+      },
+    });
   };
 
   if (!user_id || !email) {
@@ -98,7 +105,7 @@ export function OTPVerifyPage() {
         <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg">
           <div className="text-center">
             <h2 className="text-2xl font-bold">Thiếu thông tin xác thực</h2>
-            <p className="mt-2 text-gray-600">Trang nhập mã OTP chỉ dùng sau khi bạn đăng ký thành công. Nếu bạn vừa đăng ký, hãy kiểm tra email và thử quay lại bước đăng ký rồi hoàn tất để được chuyển đến trang nhập mã.</p>
+            <p className="mt-2 text-gray-600">Trang nhập mã OTP chỉ dùng sau khi bạn đăng ký thành công.</p>
             <Button className="mt-4" onClick={() => navigate('/register')}>
               Quay lại đăng ký
             </Button>
@@ -135,7 +142,18 @@ export function OTPVerifyPage() {
 
           <div>
             <Label htmlFor="otpCode">Mã OTP (6 chữ số)</Label>
-            <Input id="otpCode" type="text" inputMode="numeric" maxLength={6} value={otpCode} onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))} placeholder="000000" className="mt-1 text-center text-2xl tracking-widest" required autoFocus />
+            <Input
+              id="otpCode"
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={otpCode}
+              onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              className="mt-1 text-center text-2xl tracking-widest"
+              required
+              autoFocus
+            />
           </div>
 
           <div>
@@ -152,7 +170,12 @@ export function OTPVerifyPage() {
           </div>
 
           <div className="text-center">
-            <button type="button" onClick={handleResend} disabled={resendMutation.isPending} className="inline-flex items-center text-sm text-blue-600 hover:text-blue-500 disabled:text-gray-400">
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resendMutation.isPending}
+              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-500 disabled:text-gray-400"
+            >
               {resendMutation.isPending ? (
                 <>
                   <Loader2 className="mr-1 h-4 w-4 animate-spin" />
