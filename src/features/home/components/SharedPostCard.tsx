@@ -2,7 +2,7 @@ import { Avatar } from '@/features/shared/components/Avatar';
 import { FormattedContent } from '@/features/shared/components/FormattedContent';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import type { Post as PostType } from '../types/feed.types';
+import type { PostSummary as PostType } from '@/lib/api/generated/model';
 import { useMediaBlobs } from '../hooks/useMedia';
 import { cn } from '@/lib/utils';
 

@@ -2,13 +2,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
-import { authApi } from "@/lib/api/services/auth";
+import { useAuthChangePassword } from "@/lib/api/generated/auth/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader } from "lucide-react";
-import { getErrorMessage } from "@/lib/api/transforms";
+import { getErrorMessage } from "@/lib/utils/api";
 
 const ChangePasswordSchema = z
 
@@ -45,23 +44,22 @@ export function ChangePasswordForm() {
         },
     });
 
-    const mutation = useMutation({
-        mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
-            authApi.changePassword({ current_password: currentPassword, new_password: newPassword }),
-        onSuccess: () => {
-            setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
-            form.reset();
-            setTimeout(() => setSuccessMessage(""), 3000);
-        },
-        onError: (error: any) => {
-            form.setError("currentPassword", { message: getErrorMessage(error) });
+    const mutation = useAuthChangePassword({
+        mutation: {
+            onSuccess: () => {
+                setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
+                form.reset();
+                setTimeout(() => setSuccessMessage(""), 3000);
+            },
+            onError: (error: unknown) => {
+                form.setError("currentPassword", { message: getErrorMessage(error) });
+            },
         },
     });
 
     const onSubmit = (data: ChangePasswordFormData) => {
         mutation.mutate({
-            currentPassword: data.currentPassword,
-            newPassword: data.newPassword,
+            data: { current_password: data.currentPassword, new_password: data.newPassword },
         });
     };
 

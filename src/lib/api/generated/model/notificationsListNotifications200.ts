@@ -5,13 +5,13 @@
  * API contract cho social-network-ui (main API + message service).
  * OpenAPI spec version: 1.0
  */
-import type { NotificationsListNotifications200Data } from './notificationsListNotifications200Data';
+import type { NotificationListResponse } from './notificationListResponse';
 
 /**
  * Envelope response chuẩn như middleware/UI: success + data + request_id.
  */
 export type NotificationsListNotifications200 = {
   success: boolean;
-  data: NotificationsListNotifications200Data;
+  data: NotificationListResponse;
   request_id?: string;
 };

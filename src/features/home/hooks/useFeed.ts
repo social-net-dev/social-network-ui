@@ -1,6 +1,9 @@
-import { useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useInfiniteFeed, usePostActions } from '@/lib/api/hooks/usePosts';
+import { useCallback, useMemo } from 'react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { feedGetFeed, getFeedGetFeedQueryKey } from '@/lib/api/generated/feed/feed';
+import { usePostsCreatePost } from '@/lib/api/generated/posts/posts';
+import type { FeedGetFeedParams, PostSummary, PostType } from '@/lib/api/generated/model';
+import { uploadMediaAsset } from '@/features/posts/lib/uploadMediaAsset';
 
 interface UseFeedOptions {
   fieldId?: string;
@@ -12,34 +15,65 @@ export function useFeed(options?: UseFeedOptions) {
   const fieldId = options?.fieldId || '';
   const postType = options?.postType || '';
 
-  const query = useInfiniteFeed({
-    field_id: fieldId,
-    post_type: postType,
+  const params = useMemo<FeedGetFeedParams>(
+    () => ({
+      field_id: fieldId || undefined,
+      post_type: postType || undefined,
+      page: undefined,
+      page_size: undefined,
+    }),
+    [fieldId, postType],
+  );
+
+  const queryKey = useMemo(
+    () => getFeedGetFeedQueryKey(params) as unknown as readonly unknown[],
+    [params],
+  );
+
+  const query = useInfiniteQuery({
+    queryKey,
+    queryFn: ({ pageParam = 1, signal }) =>
+      feedGetFeed({
+        ...params,
+        page: pageParam,
+      }, undefined, signal),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { pagination } = lastPage.data;
+      if (pagination.page < pagination.total_pages) return pagination.page + 1;
+      return undefined;
+    },
   });
 
-  const { createPost: createPostMutation, isLoading: isCreating } = usePostActions();
+  const createPostMutation = usePostsCreatePost();
 
-  const posts = query.data?.pages.flatMap(page => page.posts || []) ?? [];
+  const posts: PostSummary[] = query.data?.pages.flatMap((p) => p.data.items) ?? [];
 
   const createPost = useCallback(
     async (content: string, files: File[], postType?: string, fieldId?: string) => {
-      const res = await createPostMutation({
-        content_text: content,
-        files,
-        post_type: (postType as any) || 'SOCIAL',
-        field_id: fieldId,
+      const media_asset_ids = files?.length
+        ? await Promise.all(files.map((f) => uploadMediaAsset(f, 'post')))
+        : undefined;
+
+      return createPostMutation.mutateAsync({
+        data: {
+          content_text: content,
+          post_type: (postType as PostType) || 'SOCIAL',
+          field_id: fieldId || undefined,
+          media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
+        },
       });
-      return res;
     },
     [createPostMutation]
   );
 
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['feed'] });
-  }, [queryClient]);
+    queryClient.invalidateQueries({ queryKey });
+  }, [queryClient, queryKey]);
 
   return {
     posts,
+    queryKey,
     isLoading: query.isPending,
     isFetchingNextPage: query.isFetchingNextPage,
     hasNextPage: query.hasNextPage,
@@ -47,6 +81,6 @@ export function useFeed(options?: UseFeedOptions) {
     error: query.error,
     createPost,
     refresh,
-    isCreating,
+    isCreating: createPostMutation.isPending,
   };
 }

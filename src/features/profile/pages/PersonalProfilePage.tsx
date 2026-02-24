@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '../hooks/useProfile';
-import type { User, Project } from '@/lib/api/types/user.types';
+import type { User, Project } from '@/lib/api/generated/model';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit2, MapPin, School, PlusCircle, BookOpen, Heart, Terminal, Loader2 } from 'lucide-react';
@@ -15,8 +15,7 @@ export function PersonalProfilePage() {
   const profile = rawProfile as User;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Derived projects list
-  const projects = profile?.personalInfo?.projects || [];
+  const projects = profile?.personalInfo?.projects ?? [];
 
   // --- Handlers for Backend Sync ---
   const saveToBackend = async (updates: any) => {

@@ -13,18 +13,34 @@ import type { PostType } from './postType';
 import type { ReactionType } from './reactionType';
 import type { Visibility } from './visibility';
 
+/**
+ * Full post model with all details including shared post.
+ */
 export interface Post {
+  /** Post ID. */
   id: string;
+  /** Post author information. */
   author: Author;
+  /** Post content text. */
   content: string;
+  /** Array of media URLs (legacy). */
   mediaUrls: string[];
+  /** Array of media assets with metadata. */
   media?: MediaAssetSummary[];
+  /** Post statistics. */
   stats: PostStats;
+  /** Current user's reaction to this post. */
   userReaction: ReactionType | null;
+  /** Shared post if this is a share. */
   sharedPost: PostSummary | null;
+  /** Post visibility setting. */
   visibility: Visibility;
+  /** Type of post. */
   postType: PostType;
+  /** Field/category ID. */
   fieldId?: string;
+  /** Post creation timestamp. */
   createdAt: string;
+  /** Last update timestamp. */
   updatedAt: string;
 }

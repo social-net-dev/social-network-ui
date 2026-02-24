@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchRoomsForUser, callCreateRoom } from '../services/messageApi';
-import { usersApi, profilesApi } from '@/lib/api/services';
+import { usersGetMe } from '@/lib/api/generated/users/users';
+import { profilesGetProfile } from '@/lib/api/generated/profiles/profiles';
 import type { IRoomUser } from '../types/message.types';
 
 import { useMessageStore } from '@/stores/messageStore';
@@ -89,10 +90,10 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
         let myUsername: string | undefined;
         let meResp: any = undefined;
         try {
-          meResp = await usersApi.getMe();
-          console.log('[useRoomManager] usersApi.getMe returned', meResp);
-          myDisplayName = (meResp as any)?.displayName || (meResp as any)?.display_name || undefined;
-          myUsername = (meResp as any)?.username || (meResp as any)?.email || undefined;
+          meResp = await usersGetMe();
+          console.log('[useRoomManager] usersGetMe returned', meResp);
+          myDisplayName = meResp.data?.displayName || meResp.data?.username || undefined;
+          myUsername = meResp.data?.username || meResp.data?.email || undefined;
         } catch (err) {
           console.error('[useRoomManager] usersApi.getMe error', err);
           myDisplayName = undefined;
@@ -108,17 +109,18 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
         for (const m of memberIds) {
           console.log('[useRoomManager] resolving member', m);
           if (myUsername && m === myUsername) {
-            const myId = (meResp as any)?.id || myUsername;
+            const myId = (meResp as any)?.data?.id || myUsername;
             members.push({ user_id: String(myId), display_name: myDisplayName });
             console.log('[useRoomManager] added current user as member', { user_id: myId, display_name: myDisplayName });
             continue;
           }
 
           try {
-            const prof = await profilesApi.getProfile(m);
-            console.log('[useRoomManager] profilesApi.getProfile returned', prof);
-            const profId = (prof as any)?.id || null;
-            const display = (prof as any)?.display_name || (prof as any)?.displayName || (prof as any)?.username || undefined;
+            const profResp = await profilesGetProfile(m);
+            console.log('[useRoomManager] profilesGetProfile returned', profResp);
+            const prof = profResp.data;
+            const profId = prof?.id || null;
+            const display = prof?.displayName || prof?.username || undefined;
             if (!display || !profId) {
               const msg = `Missing profile id or display name for user ${m}; cannot create room without display names for all members`;
               console.error('[useRoomManager]', msg, { prof });

@@ -6,9 +6,28 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Profile update request payload.
+ */
 export interface UpdateProfileRequest {
+  /**
+   * Updated display name.
+   * @minLength 1
+   * @maxLength 100
+   */
   display_name?: string;
+  /**
+   * Updated username (alphanumeric and underscores only).
+   * @minLength 3
+   * @maxLength 30
+   * @pattern ^[a-zA-Z0-9_]+$
+   */
   username?: string;
+  /**
+   * Updated bio/description.
+   * @maxLength 500
+   */
   bio?: string;
+  /** Updated birth date (ISO 8601 format). */
   birth_date?: string;
 }

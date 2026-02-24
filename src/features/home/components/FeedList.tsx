@@ -1,8 +1,10 @@
 import { PostCard } from "./PostCard";
-import type { Post } from "../types/feed.types";
+import type { PostSummary } from "@/lib/api/generated/model";
+
+type PostWithShared = PostSummary & { sharedPost?: PostSummary | null };
 
 interface FeedListProps {
-  posts: Post[];
+  posts: PostWithShared[];
   isLoading: boolean;
   onLike: (postId: string, liked: boolean) => void;
   onComment: (postId: string) => void;

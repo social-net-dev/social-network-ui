@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import { getErrorMessage } from "@/lib/api/transforms";
+import { getErrorMessage } from "@/lib/utils/api";
 import { RegisterFormDataSchema, type RegisterFormData } from "../types/auth.types";
 import { useAuthRegister } from "@/lib/api/generated/auth/auth";
 import { useMediaCompletePublicUpload, useMediaInitPublicUpload } from "@/lib/api/generated/media/media";
@@ -9,7 +9,6 @@ import type {
   PresignedUploadInitRequest,
   PresignedUploadInitRequestAccess,
   PresignedUploadInitRequestPurpose,
-  PresignedUploadInitResponse,
   RegisterRequest,
   Role,
 } from "@/lib/api/generated/model";
@@ -51,7 +50,7 @@ export function useRegister() {
         };
 
         const initRes = await initPublicUploadMutation.mutateAsync({ data: initRequest });
-        const initData = initRes as unknown as PresignedUploadInitResponse;
+        const initData = initRes.data;
 
         const uploadUrl = initData.upload_url;
         const uploadMethod = initData.method;

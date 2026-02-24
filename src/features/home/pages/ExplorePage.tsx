@@ -15,10 +15,12 @@ import { Input } from '@/components/ui/input';
 export function ExplorePage() {
   const [selectedField, setSelectedField] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
-  const { posts, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, error, refresh } = useFeed({
+  const { posts, queryKey, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, error, refresh } = useFeed({
     fieldId: selectedField,
   });
-  const { deletePost, updatePost, sharePost, likePost } = usePostActions();
+  const { deletePost, updatePost, sharePost, likePost } = usePostActions({
+    affectedQueryKeys: [queryKey],
+  });
   const { user: currentUser } = useAuthStore();
 
   const loadMoreRef = useRef<HTMLDivElement>(null);

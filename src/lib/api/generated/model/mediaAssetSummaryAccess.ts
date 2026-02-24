@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Access level.
+ */
 export type MediaAssetSummaryAccess = typeof MediaAssetSummaryAccess[keyof typeof MediaAssetSummaryAccess];
 
 

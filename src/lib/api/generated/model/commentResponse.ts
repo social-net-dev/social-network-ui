@@ -6,11 +6,14 @@
  * OpenAPI spec version: 1.0
  */
 import type { Comment } from './comment';
+import type { PaginationMeta } from './paginationMeta';
 
-export interface CommentResponse {
-  comments: Comment[];
-  page: number;
-  page_size: number;
-  total: number;
-  total_pages: number;
-}
+/**
+ * Comment response with paginated comments.
+ */
+export type CommentResponse = {
+  /** Array of items for current page. */
+  items: Comment[];
+  /** Pagination metadata. */
+  pagination: PaginationMeta;
+};

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAdminVerificationRequests, useApproveVerification, useRejectVerification } from "@/lib/api/hooks/useAdmin";
+import { useAdminVerificationRequests, useApproveVerification, useRejectVerification } from "../hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, XCircle, Loader } from "lucide-react";

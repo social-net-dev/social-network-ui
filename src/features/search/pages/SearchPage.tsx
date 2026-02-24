@@ -6,21 +6,20 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/features/shared/components/Avatar';
 import { Search, UserPlus, UserCheck, Clock, UserX, Loader2 } from 'lucide-react';
-import { getErrorMessage } from '@/lib/api/transforms';
-import { profilesApi } from '@/lib/api/services';
+import { profilesGetProfile } from '@/lib/api/generated/profiles/profiles';
+import { usersGetMe } from '@/lib/api/generated/users/users';
 import { useAuthStore } from '@/stores/authStore';
-import { usersApi } from '@/lib/api/services';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { callGetDMRoom } from '@/features/message/services/messageApi';
 import { useRoomManager } from '@/features/message/hooks/useRoomManager';
-import { useFriendActions } from '@/lib/api/hooks/useFriends';
+import { useFriendsSendRequest, useFriendsAcceptRequest, useFriendsCancelRequest } from '@/lib/api/generated/friends/friends';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { User } from '@/lib/api/types/user.types';
+import type { UserPublic } from '@/lib/api/generated/model';
 
-interface SearchUser extends User {
+interface SearchUser extends UserPublic {
   friendshipStatus: 'none' | 'friends' | 'request_sent' | 'request_received';
   friendRequestId: string | null;
 }
@@ -70,7 +69,7 @@ export function SearchPage() {
     });
 
   // Replace generic search endpoint with exact-profile lookup
-  const [data, setData] = useState<{ users: User[]; total: number } | undefined>(undefined);
+  const [data, setData] = useState<{ users: UserPublic[]; total: number } | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
@@ -88,9 +87,10 @@ export function SearchPage() {
       setIsError(false);
       try {
         // Call exact-match profile endpoint instead of search list
-        const p = await profilesApi.getProfile(query.trim());
+        const resp = await profilesGetProfile(query.trim());
+        const p = resp.data;
         if (!mounted) return;
-        setData({ users: p ? [p as User] : [], total: p ? 1 : 0 });
+        setData({ users: p ? [p] : [], total: p ? 1 : 0 });
       } catch (err: any) {
         console.error('[SearchPage] profilesApi.getProfile error', err);
         if (!mounted) return;
@@ -105,7 +105,9 @@ export function SearchPage() {
       mounted = false;
     };
   }, [query]);
-  const { sendRequest, acceptRequest, cancelRequest } = useFriendActions();
+  const sendRequestMutation = useFriendsSendRequest();
+  const acceptRequestMutation = useFriendsAcceptRequest();
+  const cancelRequestMutation = useFriendsCancelRequest();
 
   // Messaging helpers
   const { tenantSlug } = useAuthStore();
@@ -126,13 +128,14 @@ export function SearchPage() {
   const handleSendRequest = async (userId: string, username: string) => {
     addProcessing(userId);
     try {
-      const res = await sendRequest({ addressee_username: username });
+      const res = await sendRequestMutation.mutateAsync({ data: { addressee_username: username } });
       toast.success('Đã gửi lời mời kết bạn');
-      const requestId = res?.id || null;
+      const requestId = res.data?.id || null;
       updateUserStatus(userId, 'request_sent', requestId ? String(requestId) : null);
-      qc.invalidateQueries({ queryKey: ['friends'] });
-    } catch (err) {
-      toast.error(getErrorMessage(err));
+      qc.invalidateQueries({ queryKey: ['/friends/'] });
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(e?.response?.data?.message || e?.message || 'Lỗi khi gửi lời mời');
     } finally {
       removeProcessing(userId);
     }
@@ -141,10 +144,10 @@ export function SearchPage() {
   const handleAcceptRequest = async (userId: string, requestId: string) => {
     addProcessing(userId);
     try {
-      await acceptRequest(requestId);
+      await acceptRequestMutation.mutateAsync({ requestId });
       toast.success('Đã chấp nhận lời mời kết bạn');
       updateUserStatus(userId, 'friends');
-      qc.invalidateQueries({ queryKey: ['friends'] });
+      qc.invalidateQueries({ queryKey: ['/friends/'] });
     } catch (_err) {
       toast.error('Lỗi khi chấp nhận lời mời');
     } finally {
@@ -155,10 +158,10 @@ export function SearchPage() {
   const handleCancelRequest = async (userId: string, requestId: string) => {
     addProcessing(userId);
     try {
-      await cancelRequest(requestId);
+      await cancelRequestMutation.mutateAsync({ requestId });
       toast.success('Đã hủy lời mời kết bạn');
       updateUserStatus(userId, 'none', null);
-      qc.invalidateQueries({ queryKey: ['friends'] });
+      qc.invalidateQueries({ queryKey: ['/friends/'] });
     } catch (_err) {
       toast.error('Lỗi khi hủy lời mời');
     } finally {
@@ -213,15 +216,16 @@ export function SearchPage() {
 
             // Ensure both users have display names before creating a room
             try {
-              const me = await usersApi.getMe();
-              const myDisplay = (me as any)?.displayName || (me as any)?.display_name || null;
-              const otherDisplay = (user as any).displayName || (user as any).display_name || null;
+              const meResp = await usersGetMe();
+              const me = meResp.data;
+              const myDisplay = me?.displayName || null;
+              const otherDisplay = user.displayName || null;
               if (!myDisplay || !otherDisplay) {
                 alert('Cần display name hợp lệ của cả hai người để tạo phòng. Vui lòng cập nhật tên hiển thị.');
               } else {
                 const roomDisplay = `${myDisplay} & ${otherDisplay}`;
-                const myUsername = (me as any)?.username || (me as any)?.email || null;
-                const otherUsername = (user as any).username || (user as any).email || null;
+                const myUsername = me?.username || null;
+                const otherUsername = user.username || null;
                 if (!myUsername || !otherUsername) {
                   alert('Không thể xác định username của một trong hai người.');
                 } else {
@@ -286,7 +290,7 @@ export function SearchPage() {
         return (
           <div className="flex items-center gap-2">
             {messageButton}
-            <Button variant="outline" size="sm" className="flex-shrink-0 rounded-full" onClick={() => handleSendRequest(user.id, user.username || user.email)} disabled={isProcessing}>
+            <Button variant="outline" size="sm" className="flex-shrink-0 rounded-full" onClick={() => handleSendRequest(user.id, user.username)} disabled={isProcessing}>
               {isProcessing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserPlus className="h-4 w-4 mr-1" />}
               Kết bạn
             </Button>
@@ -345,14 +349,14 @@ export function SearchPage() {
           {users.map(user => (
             <Card key={user.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex items-center justify-between gap-4">
-                <Link to={`/profile/${user.username || user.email}`} className="flex items-center gap-3 min-w-0 flex-1">
+                <Link to={`/profile/${user.username}`} className="flex items-center gap-3 min-w-0 flex-1">
                   <Avatar user={user as any} size="lg" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-foreground truncate">{user.displayName || user.username}</p>
                       <FriendshipStatusBadge status={user.friendshipStatus} />
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">@{user.username || user.email}</p>
+                    <p className="text-sm text-muted-foreground truncate">@{user.username}</p>
                     {user.bio && <p className="text-xs text-muted-foreground truncate mt-0.5">{user.bio}</p>}
                   </div>
                 </Link>

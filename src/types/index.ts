@@ -1,24 +1,17 @@
 import { z } from "zod";
-import * as Models from "@/lib/api/types";
-import type { Post as FEPost, ReactionType as FEReactionType } from "@/lib/api/types";
-import type { Comment as FEComment } from "@/lib/api/types";
+import type { User, Post, Comment } from "@/lib/api/generated/model";
 
 /**
  * Single Source of Truth for Types
- * This file re-exports types from Orval and defines Frontend-specific views.
+ * This file re-exports types from Orval-generated model.
  */
-
-// Re-export all manual api types
-export { Models };
 
 // Stub for ZodModels
 export const ZodModels = {};
 
-// Define Aliases for clarity
-export type User = Models.User;
-export type Post = FEPost;
-export type Comment = FEComment;
-export type ReactionType = FEReactionType;
+// Re-export generated model types
+export type { User, Post, Comment };
+export type ReactionType = string;
 
 // Standard Response Wrapper (Matching etechs-middleware)
 export interface ApiResponse<T> {

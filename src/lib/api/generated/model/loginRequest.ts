@@ -6,7 +6,15 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Login request payload.
+ */
 export interface LoginRequest {
+  /** User email address. */
   email: string;
+  /**
+   * User password.
+   * @minLength 8
+   */
   password: string;
 }

@@ -6,11 +6,14 @@
  * OpenAPI spec version: 1.0
  */
 import type { Friend } from './friend';
+import type { PaginationMeta } from './paginationMeta';
 
+/**
+ * Generic paginated response wrapper.
+ */
 export type FriendsListFriends200Data = {
-  friends: Friend[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
+  /** Array of items for current page. */
+  items: Friend[];
+  /** Pagination metadata. */
+  pagination: PaginationMeta;
 };

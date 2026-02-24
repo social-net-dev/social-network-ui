@@ -21,8 +21,10 @@ const CreatePostModal = lazy(() =>
 );
 
 export function FeedPage() {
-  const { posts, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, error, createPost, refresh } = useFeed();
-  const { deletePost, updatePost, sharePost, likePost } = usePostActions();
+  const { posts, queryKey, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, error, createPost, refresh } = useFeed();
+  const { deletePost, updatePost, sharePost, likePost } = usePostActions({
+    affectedQueryKeys: [queryKey],
+  });
   const { user: currentUser } = useAuthStore();
 
   const loadMoreRef = useRef<HTMLDivElement>(null);

@@ -6,4 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Page number (1-indexed).
+ */
 export type PaginationQueryPageParameter = number;

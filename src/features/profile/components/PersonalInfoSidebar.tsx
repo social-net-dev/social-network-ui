@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { School, Heart, Edit2, Save, X, Plus } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
-import type { User, PersonalInfo } from '@/lib/api/types/user.types';
+import type { User, PersonalInfo } from '@/lib/api/generated/model';
 
 export function PersonalInfoSidebar() {
   const { profile: rawProfile, updateProfile, isUpdating, isMe } = useProfile();

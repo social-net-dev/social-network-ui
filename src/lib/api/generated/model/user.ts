@@ -8,30 +8,70 @@
 import type { PersonalInfo } from './personalInfo';
 import type { UserPrivacy } from './userPrivacy';
 
+/**
+ * Full user model with all fields (internal use).
+ */
 export interface User {
+  /** User ID. */
   id: string;
+  /** User email address. */
   email: string;
+  /** User phone number. */
   phone?: string | null;
+  /** Unique username. */
   username: string;
+  /** Display name. */
   displayName: string;
+  /** User bio/description. */
   bio?: string;
+  /** Personal information. */
   personalInfo?: PersonalInfo;
+  /** Birth date. */
   birthDate?: string | null;
+  /** Avatar file path. */
   avatarPath?: string;
+  /** Avatar URL. */
   avatar?: string | null;
+  /** Background image file path. */
   backgroundPath?: string;
+  /** Background image URL. */
   background?: string | null;
+  /** Account status. */
   accountStatus: string;
+  /** User role. */
   role: string;
+  /**
+   * Storage quota in MB.
+   * @minimum 0
+   */
   storageQuotaMb?: number;
+  /** Account creation timestamp. */
   createdAt: string;
+  /** Last update timestamp. */
   updatedAt?: string;
+  /** Privacy settings. */
   privacy?: UserPrivacy;
+  /**
+   * Number of followers.
+   * @minimum 0
+   */
   followers?: number;
+  /**
+   * Number of following.
+   * @minimum 0
+   */
   following?: number;
+  /**
+   * Number of posts.
+   * @minimum 0
+   */
   postsCount?: number;
+  /** Whether the viewer is friends with this user. */
   isFriend?: boolean;
+  /** Whether the viewer is the owner of this profile. */
   isOwner?: boolean;
+  /** Friendship status with viewer. */
   friendshipStatus?: string;
+  /** Friend request ID if applicable. */
   friendRequestId?: string | null;
 }

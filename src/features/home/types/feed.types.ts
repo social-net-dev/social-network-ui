@@ -1,4 +1,15 @@
 import { z } from 'zod';
+import type { 
+  MediaAssetSummary, 
+  PostSummary, 
+  Author as GeneratedAuthor,
+  PersonalInfo as GeneratedPersonalInfo,
+  Project as GeneratedProject,
+  ReactionType as GeneratedReactionType,
+  Comment as GeneratedComment,
+  CommentStats as GeneratedCommentStats,
+  PostStats as GeneratedPostStats
+} from '@/lib/api/generated/model';
 
 export type ProfileVisibilityResponse = {
   visibility: string;
@@ -12,41 +23,20 @@ export type ProfileVisibilityResponse = {
 // 🎯 FRONTEND MODELS (Chuẩn FE)
 // ===========================
 
-export type ReactionType = 'LIKE' | 'LOVE' | 'HAHA' | 'WOW' | 'SAD' | 'ANGRY';
-
-export interface Project {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  imageUrl: string;
-  sourceLink?: string;
-}
-
-export interface PersonalInfo {
-  educationLevel?: string;
-  school?: string;
-  class?: string;
-  degree?: string;
-  major?: string;
-  graduationYear?: string;
-  academicYear?: string;
-  schoolYear?: string;
-  favoriteSubjects?: string[];
-  hobbies?: string[];
-  projects?: Project[];
-}
+/**
+ * Re-export types from generated models
+ */
+export type ReactionType = GeneratedReactionType;
+export type Project = GeneratedProject;
+export type PersonalInfo = GeneratedPersonalInfo;
+export type PostStats = GeneratedPostStats;
+export type CommentStats = GeneratedCommentStats;
 
 /**
- * Frontend Author Model
+ * Frontend Author Model - extends generated Author with optional legacy fields
  */
-export interface Author {
-  id: string;
-  displayName: string;
-  avatar: string | null;
+export type Author = GeneratedAuthor & {
   background?: string | null;
-  username?: string | null;
-  role?: string;
   bio?: string;
   personalInfo?: PersonalInfo;
   birthDate?: string;
@@ -55,21 +45,19 @@ export interface Author {
   postsCount?: number;
   createdAt?: string;
   updatedAt?: string;
-  accountStatus?: string;
   storageQuotaMb?: number;
   privacy?: ProfileVisibilityResponse;
-  /** true when the viewer is friends with this user (from /profiles/{username}/) */
   isFriend?: boolean;
-  /** true when the viewer owns this profile (from /profiles/{username}/) */
   isOwner?: boolean;
   // Legacy support
   firstName?: string;
   lastName?: string;
   email?: string;
-}
+};
 
 /**
  * Frontend Media Model
+ * @deprecated Sử dụng MediaAssetSummary từ generated model
  */
 export interface MediaFile {
   id: string;
@@ -83,20 +71,23 @@ export interface MediaFile {
 }
 
 /**
- * Frontend Post Model - Schema FE RÕ RÀNG
+ * Re-export MediaAssetSummary for convenience
+ */
+export type { MediaAssetSummary };
+
+/**
+ * Frontend Post Model - extends PostSummary with sharedPost field
+ * Align với TypeSpec contract: có mediaUrls + media?: MediaAssetSummary[]
  */
 export interface FeedPost {
   id: string;
   author: Author;
   content: string;
   mediaUrls: string[];
-  stats: {
-    reactions: number;
-    comments: number;
-    shares: number;
-  };
+  media?: MediaAssetSummary[];
+  stats: PostStats;
   userReaction: ReactionType | null;
-  sharedPost: FeedPost | null;
+  sharedPost: PostSummary | null;
   visibility: string;
   postType?: string;
   fieldId?: string;
@@ -105,22 +96,11 @@ export interface FeedPost {
 }
 
 /**
- * Frontend Comment Model
+ * Frontend Comment Model - uses generated Comment type
  */
-export interface FeedComment {
-  id: string;
-  postId: string;
+export type FeedComment = GeneratedComment & {
   author: Author;
-  parentCommentId: string | null;
-  content: string;
-  mediaUrls: string[];
-  stats: {
-    reactions: number;
-    replies: number;
-  };
-  userReaction: ReactionType | null;
-  createdAt: string;
-}
+};
 
 // ===========================
 // 📝 FORM SCHEMAS (Validated against Generated Zod)
@@ -133,42 +113,12 @@ export const CreatePostFormDataSchema = z.object({
 
 export type CreatePostFormData = z.infer<typeof CreatePostFormDataSchema>;
 
-// ===========================
-// 🔄 LEGACY SUPPORT (tương thích ngược)
-// ===========================
+/**
+ * @deprecated Use FeedPost directly
+ */
+export type Post = FeedPost;
 
 /**
- * @deprecated Dùng FeedPost thay thế
+ * @deprecated Use FeedComment directly
  */
-export type Post = FeedPost & {
-  author_id?: string;
-  content_text?: string;
-  reaction_count?: number;
-  comment_count?: number;
-  share_count?: number;
-  user_reaction?: string | null;
-  shared_post_id?: string | null;
-  shared_post?: Post | null;
-};
-
-/**
- * @deprecated Dùng FeedComment thay thế
- */
-export type Comment = FeedComment & {
-  post_id?: string;
-  author_id?: string;
-  parent_comment_id?: string | null;
-  content_text?: string;
-  reaction_count?: number;
-  reply_count?: number;
-  user_reaction?: string | null;
-};
-
-/**
- * Re-exporting Backend Models for use in transforms
- * @deprecated Use manual types from @/lib/api/types
- */
-export type IBackendPost = any;
-export type IBackendAuthor = any;
-export type IBackendComment = any;
-export type IBackendFeedResponse = any;
+export type Comment = FeedComment;

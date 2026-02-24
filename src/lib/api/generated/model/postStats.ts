@@ -6,8 +6,23 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Post statistics.
+ */
 export interface PostStats {
+  /**
+   * Total number of reactions.
+   * @minimum 0
+   */
   reactions: number;
+  /**
+   * Total number of comments.
+   * @minimum 0
+   */
   comments: number;
+  /**
+   * Total number of shares.
+   * @minimum 0
+   */
   shares: number;
 }

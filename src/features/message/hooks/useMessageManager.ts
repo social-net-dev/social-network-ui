@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { callFetchMessagesRoom } from '../services/messageApi';
 import { getMessageApiUrl, getApiBaseUrl } from '@/lib/config';
-import { appendAuthToken } from '@/lib/api/transforms/common';
+import { appendAuthToken } from '@/lib/utils/api';
 import type { IMessage, MessageFull, MessageOut } from '../types/message.types';
 import { deduplicateMessages } from '../utils/messageDedupe';
 

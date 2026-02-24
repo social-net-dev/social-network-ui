@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { getErrorMessage } from '@/lib/api/transforms';
+import { getErrorMessage } from '@/lib/utils/api';
 import { LoginFormDataSchema, type LoginFormData } from '../types/auth.types';
 import apiClient from '@/lib/api';
 import { useE2EEStore } from '@/stores/e2eeStore';

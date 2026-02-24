@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/features/shared/components/Avatar";
 import { GraduationCap, Search, Sparkles, Users, UserCheck, Clock, Loader2, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { recommendationApi } from "@/lib/api/services";
-import { useFriendActions } from "@/lib/api/hooks/useFriends";
-import { transformUser, getErrorMessage } from "@/lib/api/transforms";
+import { useRecommendationsSuggestions } from "@/lib/api/generated/recommendations/recommendations";
+import { useFriendsSendRequest, useFriendsAcceptRequest } from "@/lib/api/generated/friends/friends";
+import { getErrorMessage } from "@/lib/utils/api";
 import { toast } from "sonner";
-import type { ApiSuggestion } from "@/lib/api/types";
+import type { ApiSuggestion } from "@/lib/api/generated/model";
 
 const TAB_OPTIONS = [
     { value: "ALL", label: "Tất cả" },
@@ -76,12 +76,6 @@ function mapApiToSuggestion(r: ApiSuggestion): Suggestion {
     };
 }
 
-async function fetchSuggestions(filter: TabValue): Promise<Suggestion[]> {
-    const res = await recommendationApi.getSuggestions({ filter });
-    const list = Array.isArray(res?.suggestions) ? res.suggestions : [];
-    return list.map(mapApiToSuggestion);
-}
-
 export function RecommendationPage() {
     const [activeTab, setActiveTab] = useState<TabValue>("ALL");
     const [query, setQuery] = useState("");
@@ -98,7 +92,8 @@ export function RecommendationPage() {
             return next;
         });
 
-    const { sendRequest, acceptRequest } = useFriendActions();
+    const sendRequestMutation = useFriendsSendRequest();
+    const acceptRequestMutation = useFriendsAcceptRequest();
 
     const updateSuggestionStatus = (userId: string, newStatus: Suggestion["friendshipStatus"], requestId?: string | null) => {
         for (const tab of TAB_OPTIONS) {
@@ -119,11 +114,11 @@ export function RecommendationPage() {
     const handleConnect = async (userId: string, username: string) => {
         addProcessing(userId);
         try {
-            const res = await sendRequest({ addressee_username: username });
+            const res = await sendRequestMutation.mutateAsync({ data: { addressee_username: username } });
             toast.success("Đã gửi lời mời kết bạn");
-            const requestId = res?.id || null;
+            const requestId = res.data?.id || null;
             updateSuggestionStatus(userId, "REQUEST_SENT", requestId ? String(requestId) : null);
-            queryClient.invalidateQueries({ queryKey: ["friends"] });
+            queryClient.invalidateQueries({ queryKey: ["/friends/"] });
         } catch (err) {
             toast.error(getErrorMessage(err));
         } finally {
@@ -134,10 +129,10 @@ export function RecommendationPage() {
     const handleAccept = async (userId: string, requestId: string) => {
         addProcessing(userId);
         try {
-            await acceptRequest(requestId);
+            await acceptRequestMutation.mutateAsync({ requestId });
             toast.success("Đã chấp nhận lời mời kết bạn");
             updateSuggestionStatus(userId, "FRIENDS");
-            queryClient.invalidateQueries({ queryKey: ["friends"] });
+            queryClient.invalidateQueries({ queryKey: ["/friends/"] });
         } catch (_err) {
             toast.error("Lỗi khi chấp nhận lời mời");
         } finally {
@@ -145,11 +140,13 @@ export function RecommendationPage() {
         }
     };
 
-    const { data: apiSuggestions = [], isLoading } = useQuery({
-        queryKey: ["recommendations", "suggestions", activeTab],
-        queryFn: () => fetchSuggestions(activeTab),
-        staleTime: 60 * 1000,
-    });
+    const { data: suggestionsResp, isLoading } = useRecommendationsSuggestions(
+        { filter: activeTab },
+        { query: { queryKey: ["recommendations", "suggestions", activeTab], staleTime: 60 * 1000 } }
+    );
+    const rawSuggestions = (suggestionsResp?.data?.suggestions || []) as ApiSuggestion[];
+
+    const apiSuggestions = useMemo(() => rawSuggestions.map(mapApiToSuggestion), [rawSuggestions]);
 
     const suggestions = useMemo(() => {
         const filteredByTab =
@@ -232,31 +229,21 @@ export function RecommendationPage() {
                                     </Card>
                                 ) : (
                                     suggestions.map((user) => {
-                                        const transformedUser = transformUser(user);
                                         return (
                                             <Card key={user.id} className="border-none shadow-lg bg-white dark:bg-card overflow-hidden">
                                                 <Link to={`/profile/${user.username}`}>
                                                     <div
                                                         className="relative h-28 bg-gradient-to-br from-etechs-primary/30 via-white to-etechs-secondary/10 dark:from-etechs-secondary/30 dark:to-etechs-primary/10"
-                                                        style={
-                                                            transformedUser.background
-                                                                ? {
-                                                                      backgroundImage: `url(${transformedUser.background})`,
-                                                                      backgroundSize: "cover",
-                                                                      backgroundPosition: "center",
-                                                                  }
-                                                                : undefined
-                                                        }
                                                     >
                                                         <div className="size-16 absolute left-1/2 -bottom-8 -translate-x-1/2">
-                                                            <Avatar user={transformedUser} size="lg" className="ring-4 ring-white dark:ring-[#0a1f29]" />
+                                                            <Avatar user={user} size="lg" className="ring-4 ring-white dark:ring-[#0a1f29]" />
                                                         </div>
                                                     </div>
                                                 </Link>
                                                 <CardContent className="pt-10 pb-4 px-4 flex flex-col gap-3">
                                                     <Link to={`/profile/${user.username}`} className="text-center space-y-0.5 hover:opacity-80 transition-opacity">
                                                         <div className="flex items-center justify-center gap-2">
-                                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{transformedUser.displayName}</h3>
+                                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{user.name}</h3>
                                                             <Badge variant="secondary" className="text-xs">
                                                                 {user.role}
                                                             </Badge>

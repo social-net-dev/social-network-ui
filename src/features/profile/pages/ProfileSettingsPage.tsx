@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,10 +15,22 @@ import { exportPrivateKey, importPrivateKey, encryptPrivateKeyWithPassphrase, de
 import { callBackupPrivateKey, callGetPrivateKeyBackup, callGetUserPublicKey } from '@/features/message/services/messageApi';
 import { PassphraseModal } from '@/features/message/components/PassphraseModal';
 import { ChangePasswordForm } from '../components/ChangePasswordForm';
-import { usersApi } from '@/lib/api/services/users';
+import { useUsersDeactivate } from '@/lib/api/generated/users/users';
 import { useAuthStore } from '@/stores/authStore';
-import { getErrorMessage } from '@/lib/api/transforms';
-import type { User } from '@/lib/api/types/user.types';
+import type { User, UserPrivacy } from '@/lib/api/generated/model';
+
+function privacyToFlatSettings(privacy: UserPrivacy): Record<string, string> {
+  const defaults: Record<string, string> = {
+    display_name_visibility: privacy.default_visibility,
+    birth_date_visibility: privacy.default_visibility,
+    bio_visibility: privacy.default_visibility,
+    avatar_visibility: privacy.default_visibility,
+  };
+  for (const override of privacy.overrides ?? []) {
+    defaults[`${override.field}_visibility`] = override.visibility;
+  }
+  return defaults;
+}
 
 export function ProfileSettingsPage() {
   const { profile: rawProfile, isLoading, updateProfile, updatePrivacy, isUpdating } = useProfile();
@@ -68,11 +79,12 @@ export function ProfileSettingsPage() {
     });
 
     if (profile.privacy) {
+      const flat = privacyToFlatSettings(profile.privacy);
       setPrivacySettings({
-        display_name_visibility: profile.privacy.display_name_visibility || 'PUBLIC',
-        birth_date_visibility: profile.privacy.birth_date_visibility || 'PRIVATE',
-        bio_visibility: profile.privacy.bio_visibility || 'FRIENDS',
-        avatar_visibility: profile.privacy.avatar_visibility || 'PUBLIC',
+        display_name_visibility: flat.display_name_visibility || 'PUBLIC',
+        birth_date_visibility: flat.birth_date_visibility || 'PRIVATE',
+        bio_visibility: flat.bio_visibility || 'FRIENDS',
+        avatar_visibility: flat.avatar_visibility || 'PUBLIC',
       });
     }
   }, [profile]);
@@ -132,24 +144,27 @@ export function ProfileSettingsPage() {
       });
 
       if (profile.privacy) {
+        const flat = privacyToFlatSettings(profile.privacy);
         setPrivacySettings({
-          display_name_visibility: profile.privacy.display_name_visibility || 'PUBLIC',
-          birth_date_visibility: profile.privacy.birth_date_visibility || 'PRIVATE',
-          bio_visibility: profile.privacy.bio_visibility || 'FRIENDS',
-          avatar_visibility: profile.privacy.avatar_visibility || 'PUBLIC',
+          display_name_visibility: flat.display_name_visibility || 'PUBLIC',
+          birth_date_visibility: flat.birth_date_visibility || 'PRIVATE',
+          bio_visibility: flat.bio_visibility || 'FRIENDS',
+          avatar_visibility: flat.avatar_visibility || 'PUBLIC',
         });
       }
     }
   };
 
-  const deactivateMutation = useMutation({
-    mutationFn: () => usersApi.deactivate({ password: deactivatePassword }),
-    onSuccess: async () => {
-      await logout();
-      navigate('/login', { replace: true });
-    },
-    onError: (error: any) => {
-      setDeactivateError(getErrorMessage(error));
+  const deactivateMutation = useUsersDeactivate({
+    mutation: {
+      onSuccess: async () => {
+        await logout();
+        navigate('/login', { replace: true });
+      },
+      onError: (error: unknown) => {
+        const e = error as { response?: { data?: { detail?: string; message?: string }; }; message?: string };
+        setDeactivateError(e?.response?.data?.detail || e?.response?.data?.message || e?.message || 'Đã có lỗi xảy ra');
+      },
     },
   });
 
@@ -458,7 +473,7 @@ export function ProfileSettingsPage() {
               <Button variant="outline" onClick={() => setIsDeactivateOpen(false)} className="rounded-xl">
                 Hủy
               </Button>
-              <Button variant="destructive" onClick={() => deactivateMutation.mutate()} disabled={!deactivatePassword || !confirmDeactivate || deactivateMutation.isPending} className="rounded-xl">
+              <Button variant="destructive" onClick={() => deactivateMutation.mutate({ data: { password: deactivatePassword } })} disabled={!deactivatePassword || !confirmDeactivate || deactivateMutation.isPending} className="rounded-xl">
                 {deactivateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Xác nhận vô hiệu hóa
               </Button>

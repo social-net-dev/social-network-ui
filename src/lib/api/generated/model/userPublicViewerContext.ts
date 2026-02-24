@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Viewer context information.
+ */
 export type UserPublicViewerContext = {
   is_owner: boolean;
   is_friend: boolean;

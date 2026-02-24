@@ -1,45 +1,18 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { useProfile } from '../hooks/useProfile';
-import type { FeedPost } from '@/features/home/types/feed.types';
-import type { User } from '@/lib/api/types/user.types';
+import { useNavigate } from 'react-router-dom';
+import { useProfilePageModel } from '../hooks/useProfilePageModel';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { ProfileStats } from '../components/ProfileStats';
 import { PersonalInfoSidebar } from '../components/PersonalInfoSidebar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { useAuthStore } from '@/stores/authStore';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { StorageQuotaCard } from '../components/StorageQuotaCard';
-import { useQuery } from '@tanstack/react-query';
-import { postsApi } from '@/lib/api/services/posts';
-import { usePostActions } from '@/features/home/hooks/usePostActions';
-import { PostCard } from '@/features/home/components/PostCard';
-
-const USER_POSTS_QUERY_KEY = ['user-posts'] as const;
+import { ProfilePostsTab } from '../components/ProfilePostsTab';
 
 function ProfilePage() {
   const navigate = useNavigate();
-  const { userId: _userId } = useParams();
-  const { profile: rawProfile, isLoading: isProfileLoading, error, isMe } = useProfile();
-  const profile = rawProfile as User;
-  const { user: currentUser } = useAuthStore();
-
-  const postsUserId = isMe ? currentUser?.id : profile?.id;
-  const currentQueryKey = [...USER_POSTS_QUERY_KEY, postsUserId] as unknown as readonly unknown[];
-  const { deletePost, updatePost, likePost } = usePostActions(currentQueryKey);
-
-  const { data: postsList, isLoading: isPostsLoading } = useQuery({
-    queryKey: [...USER_POSTS_QUERY_KEY, postsUserId],
-    queryFn: async () => {
-      const res = isMe ? await postsApi.getMyPosts() : await postsApi.getPostsByUser(postsUserId!);
-      return res.posts;
-    },
-    enabled: !!postsUserId,
-  });
-
-  const posts: FeedPost[] = postsList ?? [];
+  const { mode, profile, isLoading: isProfileLoading, error, canEdit, subjectUserId, currentUserId } = useProfilePageModel();
 
   if (isProfileLoading) {
     return (
@@ -63,9 +36,8 @@ function ProfilePage() {
     );
   }
 
-  const isCurrentUser = isMe; // isMe is already calculated by useProfile
   const stats = {
-    posts: profile.postsCount || posts.length || 0,
+    posts: profile.postsCount || 0,
     followers: profile.followers || 0,
     following: profile.following || 0,
   };
@@ -74,8 +46,8 @@ function ProfilePage() {
     <div className="space-y-6">
       <ProfileHeader 
         profile={profile} 
-        isCurrentUser={isCurrentUser} 
-        onEdit={() => isCurrentUser && navigate('/settings')} 
+        isCurrentUser={canEdit} 
+        onEdit={() => canEdit && navigate('/settings')} 
       />
 
       <ProfileStats stats={stats} />
@@ -91,36 +63,18 @@ function ProfilePage() {
             </TabsList>
 
             <TabsContent value="posts" className="mt-6 space-y-6 outline-none animate-fadeInUp">
-              {isPostsLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                </div>
-              ) : posts.length > 0 ? (
-                <div className="space-y-6">
-                  {posts.map(post => (
-                    <PostCard key={post.id} post={post} currentUserId={currentUser?.id} onLike={(id, liked) => likePost?.(id, liked)} onComment={() => {}} onShare={() => {}} onDelete={id => deletePost?.(id)} onEdit={(id, content) => updatePost?.(id, content)} />
-                  ))}
-                  <Button variant="ghost" className="w-full rounded-xl py-5 border-2 border-dashed border-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all-300 hover-lift">
-                    Xem tất cả bài viết
-                  </Button>
-                </div>
-              ) : (
-                <Card className="border-border/50 shadow-sm bg-card rounded-xl overflow-hidden animate-fadeIn">
-                  <CardContent className="p-12 text-center">
-                    <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <FileText className="w-10 h-10 text-muted-foreground/50" />
-                    </div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">Chưa có bài viết nào</h3>
-                    <p className="text-muted-foreground max-w-sm mx-auto text-sm leading-relaxed">Khi {profile.displayName} chia sẻ bài viết, chúng sẽ xuất hiện ở đây.</p>
-                  </CardContent>
-                </Card>
-              )}
+              <ProfilePostsTab
+                mode={mode}
+                subjectUserId={subjectUserId}
+                currentUserId={currentUserId}
+                profileDisplayName={profile.displayName}
+              />
             </TabsContent>
           </Tabs>
         </div>
 
         <div className="w-full lg:w-80 space-y-6 shrink-0">
-          {isMe && profile.storageQuotaMb && <StorageQuotaCard quotaMb={profile.storageQuotaMb} />}
+          {mode === 'me' && profile.storageQuotaMb && <StorageQuotaCard quotaMb={profile.storageQuotaMb} />}
           <PersonalInfoSidebar />
           <ActivityFeed limit={5} />
         </div>

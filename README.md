@@ -1,140 +1,207 @@
-# 🚀 ETECHS Social Network UI
+# ETECHS Social Network UI
 
-> Giao diện mạng xã hội hiện đại, tập trung vào trải nghiệm người dùng và hiệu suất, được xây dựng cho hệ sinh thái công nghệ ETECHS.
+> Frontend cho mạng xã hội ETECHS — xây dựng theo mô hình **contract-first** với TypeSpec + Orval, React 19, Tailwind CSS v4.
 
-![Project Status](https://img.shields.io/badge/status-development-orange)
+![Status](https://img.shields.io/badge/status-active-brightgreen)
 ![React](https://img.shields.io/badge/React-19-blue)
-![Vite](https://img.shields.io/badge/Vite-7-purple)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Vite](https://img.shields.io/badge/Vite-7-purple)
 
-## 🌟 Giới thiệu
+## Giới thiệu
 
-Dự án này là Frontend cho mạng xã hội ETECHS, được thiết kế với phong cách hiện đại (Modern Tech), hỗ trợ đầy đủ Dark/Light mode và tương thích tốt trên mọi thiết bị.
+Dự án là giao diện người dùng của mạng xã hội ETECHS, kết nối với backend qua một **API client được sinh tự động** từ TypeSpec contract. Toàn bộ kiểu dữ liệu trên frontend đều bắt nguồn từ contract — không có manual service hay type định nghĩa lại.
 
-Hệ thống sử dụng các công nghệ mới nhất như React 19, Tailwind CSS v4 và shadcn/ui để đảm bảo hiệu suất và khả năng mở rộng.
+## Tính năng
 
-## ✨ Tính năng chính
+- **Auth** — Đăng nhập, đăng ký (kèm upload ảnh xác minh), OTP, đổi mật khẩu
+- **Feed** — Bảng tin vô hạn (infinite scroll), tạo bài viết, reaction, comment, chia sẻ
+- **Profile** — Xem/chỉnh sửa hồ sơ, avatar, ảnh nền, thông tin học vấn, dự án
+- **Bạn bè** — Danh sách bạn bè, lời mời kết bạn, gợi ý kết bạn
+- **Thông báo** — Danh sách thông báo với unread count
+- **Messages (E2EE)** — Nhắn tin mã hóa đầu cuối, backup/restore private key
+- **Tìm kiếm** — Tìm kiếm người dùng theo username/tên
+- **Admin** — Duyệt xác minh tài khoản, quản lý người dùng
+- **Quyền riêng tư** — Kiểm soát từng trường thông tin (PUBLIC / FRIENDS / PRIVATE)
 
-*   **🔐 Xác thực (Auth)**: Đăng nhập, Đăng ký, Xác thực OTP.
-*   **📰 Bảng tin (Feed)**: Xem bài viết, hình ảnh, tương tác (Like, Comment).
-*   **👤 Hồ sơ người dùng (Profile)**:
-    *   Ảnh bìa & Avatar tùy chỉnh.
-    *   Thống kê (Followers, Following, Posts).
-    *   Tabs nội dung (Bài viết, Ảnh, Video).
-*   **⚙️ Cài đặt (Settings)**:
-    *   Chỉnh sửa thông tin cá nhân.
-    *   **Trung tâm quyền riêng tư**: Kiểm soát ai xem được thông tin của bạn.
-*   **🎨 Giao diện**:
-    *   Theme thương hiệu ETECHS (Dark Teal & Lime Green).
-    *   Chế độ Sáng/Tối (Dark Mode) hoàn chỉnh.
-    *   Responsive Design (Mobile First).
+## Tech Stack
 
-## 🛠 Tech Stack
+| Lớp | Công nghệ |
+|-----|-----------|
+| UI Framework | React 19 + Vite 7 |
+| Language | TypeScript 5 (strict) |
+| Styling | Tailwind CSS v4 + shadcn/ui + Lucide |
+| Server State | TanStack Query v5 |
+| Global State | Zustand |
+| Forms | React Hook Form + Zod |
+| API Client | Orval (tự động sinh từ OpenAPI) |
+| API Contract | TypeSpec (`learn-typespec/`) |
+| HTTP | Axios (interceptors, token refresh, response unwrap) |
+| Routing | React Router v7 |
 
-*   **Core**: [React 19](https://react.dev/), [Vite 7](https://vitejs.dev/), [TypeScript](https://www.typescriptlang.org/)
-*   **Styling**: [Tailwind CSS 4](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/), [Lucide React](https://lucide.dev/)
-*   **State Management**: [Zustand](https://github.com/pmndrs/zustand) (Global State), [TanStack Query](https://tanstack.com/query/latest) (Server State)
-*   **Forms**: React Hook Form + Zod Validation
-*   **Networking**: Axios (với Interceptors & Refresh Token logic)
+## Kiến trúc Contract-First
 
-## 🚀 Cài đặt & Chạy dự án
+```
+contract/main.tsp                  ← nguồn sự thật duy nhất
+        ↓  pnpm gen:spec
+tsp-output/schema/openapi.json     ← OpenAPI spec được sinh ra
+        ↓  pnpm gen:api
+src/lib/api/generated/             ← hooks + types tự động sinh
+        ↓  import
+src/features/*/hooks/              ← custom hooks dùng generated hooks
+        ↓
+src/features/*/components/         ← UI components
+```
 
-### 1. Yêu cầu tiên quyết
-*   **Node.js** (v18 trở lên)
-*   **pnpm** (khuyên dùng, project dùng `packageManager: "pnpm@10.28.2"`) hoặc **npm**
+**Quy tắc bất biến:**
+- Không viết kiểu dữ liệu trùng với generated model — import trực tiếp từ `@/lib/api/generated/model`
+- Không viết Axios call thủ công — dùng generated hooks (`useXxx`, `xxxMutation`)
+- Khi cần thêm field hay endpoint → sửa TypeSpec → chạy lại pipeline
 
-### 2. Cài đặt dependencies
+## Cài đặt
+
+### Yêu cầu
+- Node.js ≥ 18
+- pnpm ≥ 10 (`npm i -g pnpm`)
+
+### Cài đặt & chạy
 
 ```bash
-cd social-network-ui
 pnpm install
-```
 
-*(Nếu không dùng pnpm: `npm install`)*
-
-### 3. Cấu hình môi trường
-
-Tạo file `.env` từ mẫu (hoặc tạo mới):
-
-```bash
 cp .env.example .env
-```
+# Chỉnh VITE_API_BASE_URL=http://localhost:8000/api
 
-Chỉnh `.env`:
-
-| Biến | Mô tả | Ví dụ |
-|------|--------|--------|
-| `VITE_API_BASE_URL` | URL API backend (**etechs-middleware**). UI gọi thẳng middleware. | `http://localhost:8000/api` (dev) hoặc `/api` (production) |
-| `VITE_ENABLE_MOCK_API` | Bật API giả (không cần backend). | `true` / `false` |
-
-* **Chạy với backend thật** (etechs-middleware): đặt `VITE_API_BASE_URL=http://localhost:8000/api` và `VITE_ENABLE_MOCK_API=false` (hoặc bỏ dòng này). Mặc định dev đã dùng `http://localhost:8000/api`.
-* **Chạy chỉ với dữ liệu giả**: `VITE_ENABLE_MOCK_API=true`.
-
-### 4. Chạy Development Server
-
-```bash
 pnpm dev
+# → http://localhost:5173
 ```
 
-*(Hoặc `npm run dev` nếu dùng npm.)*
+### Biến môi trường
 
-Mở trình duyệt: **http://localhost:5173**
+| Biến | Mô tả | Mặc định dev |
+|------|-------|--------------|
+| `VITE_API_BASE_URL` | URL backend middleware | `http://localhost:8000/api` |
+| `VITE_ENABLE_MOCK_API` | Dùng mock data (không cần backend) | `false` |
 
-## 📜 Các lệnh (Scripts) có sẵn
+## Scripts
 
 | Lệnh | Mô tả |
-| :--- | :--- |
-| `pnpm dev` | Chạy server phát triển (Hot Reload) |
-| `pnpm build` | Kiểm tra Type và Build production |
-| `pnpm preview` | Xem trước bản build production |
-| `pnpm lint` | Kiểm tra lỗi cú pháp (ESLint) |
+|------|-------|
+| `pnpm dev` | Dev server với HMR |
+| `pnpm build` | Type-check + build production |
+| `pnpm preview` | Xem trước build |
+| `pnpm lint` | ESLint |
+| `pnpm gen:spec` | Compile TypeSpec contract → `tsp-output/schema/openapi.json` |
+| `pnpm gen:api` | Tái sinh API client từ openapi.json |
+| `pnpm gen` | Chạy `gen:spec` + `gen:api` liên tiếp |
 
-## 📂 Cấu trúc dự án
+### Tái sinh API client (sau khi sửa TypeSpec)
 
-```text
-src/
-├── components/         # Các component tái sử dụng
-│   └── ui/             # Component từ shadcn/ui
-├── features/           # Modules theo tính năng (Auth, Profile, Home...)
-│   ├── auth/           # Login, Register, OTP...
-│   ├── home/           # News Feed...
-│   └── profile/        # Profile Page, Settings...
-├── lib/                # Tiện ích chung (Axios, Utils...)
-├── stores/             # Quản lý state toàn cục (Zustand)
-├── types/              # Định nghĩa TypeScript Types
-└── App.tsx             # Routing & Main Layout
+```bash
+# Compile contract + tái sinh client trong một lệnh
+pnpm gen
+
+# Hoặc từng bước:
+pnpm gen:spec   # contract/main.tsp → tsp-output/schema/openapi.json
+pnpm gen:api    # openapi.json → src/lib/api/generated/
 ```
 
-## 📚 Tài liệu
+## Cấu trúc dự án
 
-Tài liệu kỹ thuật được tổ chức như sau:
+```
+src/
+├── components/ui/          # shadcn/ui components
+├── features/               # Feature modules
+│   ├── auth/               # Login, Register, OTP
+│   ├── home/               # Feed, PostCard, Comments
+│   │   ├── components/
+│   │   ├── hooks/          # useFeed, useComments, usePostActions
+│   │   └── types/          # feed.types.ts (re-exports từ generated)
+│   ├── profile/            # Profile, Settings, Privacy
+│   ├── message/            # E2EE messaging
+│   ├── friends/            # Friends list, requests
+│   ├── notifications/      # Notification center
+│   ├── admin/              # Admin dashboard
+│   ├── media/              # Media upload/display
+│   ├── posts/              # Public re-exports (PostCard, useFeed…)
+│   └── shared/             # Avatar, Sidebar, Breadcrumbs
+├── lib/
+│   ├── api/
+│   │   ├── generated/      # AUTO-GENERATED — không chỉnh tay
+│   │   │   ├── model/      # TypeScript types
+│   │   │   └── */          # Hooks theo domain (feed, posts, users…)
+│   │   ├── attachRequestInterceptor.ts
+│   │   ├── attachResponseInterceptor.ts   # Response unwrap + skipUnwrap
+│   │   └── createApiClient.ts
+│   └── utils/
+│       └── api.ts          # getErrorMessage, buildMediaUrl, getDefaultAvatar
+├── stores/
+│   ├── authStore.ts        # User session (Zustand)
+│   └── e2eeStore.ts        # E2EE key store
+└── types/
+    └── index.ts            # Re-exports từ generated model
+```
 
-- **[AGENTS.md](AGENTS.md)** - Hướng dẫn toàn diện cho AI agents và developers
-- **[DOCUMENTATION.md](DOCUMENTATION.md)** - Cấu trúc và quy ước documentation
-- **[openapi.yml](openapi.yml)** - Đặc tả API đầy đủ (OpenAPI 3.0)
-- **[src/features/FEATURE_STRUCTURE.md](src/features/FEATURE_STRUCTURE.md)** - Cấu trúc module
-- **TypeScript code** - Types và comments trong source code
-  - [E2EE_README.md](docs/features/E2EE_README.md) - E2EE Feature Guide
-  - [DISPLAY_NAME_README.md](docs/features/DISPLAY_NAME_README.md) - Display Name Feature
-  - [SEARCH_USERS_README.md](docs/features/SEARCH_USERS_README.md) - User Search
+## Quy ước quan trọng
 
-## 🎨 Màu sắc thương hiệu (Brand Colors)
+### Import types
 
-Dự án sử dụng bảng màu đặc trưng của ETECHS:
+```ts
+// ✅ Đúng — import từ generated model
+import type { PostSummary, User, Author } from '@/lib/api/generated/model';
 
-| Màu | Hex | Variable | Sử dụng |
-| :--- | :--- | :--- | :--- |
-| **Dark Teal** | `#0E4E5A` | `--primary` (Light) / `--secondary` (Dark) | Nền chính, Text đậm |
-| **Lime Green** | `#E2F046` | `--secondary` (Light) / `--primary` (Dark) | Điểm nhấn, Buttons, Active states |
-| **Deep Blue** | `#02182B` | `--background` (Dark) | Nền chế độ tối |
+// ❌ Sai — không định nghĩa lại kiểu đã có trong contract
+interface Post { id: string; author: { ... } }
+```
 
-## 🤝 Đóng góp
+### Gọi API
 
-1.  Fork dự án
-2.  Tạo branch tính năng (`git checkout -b feature/AmazingFeature`)
-3.  Commit thay đổi (`git commit -m 'Add some AmazingFeature'`)
-4.  Push lên branch (`git push origin feature/AmazingFeature`)
-5.  Mở Pull Request
+```ts
+// ✅ Đúng — dùng generated hook
+import { useFeedGetFeed } from '@/lib/api/generated/feed/feed';
+
+// ❌ Sai — không gọi axios thủ công
+axios.get('/feed')
+```
+
+### Pagination
+
+Tất cả paginated responses đều dùng cấu trúc:
+```ts
+{
+  items: T[];
+  pagination: { page, page_size, total, total_pages }
+}
+```
+
+## Docker Deployment
+
+Tất cả file Docker đã được tổ chức trong thư mục `docker/`:
+
+```bash
+# Chạy với docker-compose
+cd docker && docker compose up --build
+
+# Hoặc từ root:
+docker compose -f docker/docker-compose.yml up --build
+```
+
+Chi tiết xem **[docker/README.md](docker/README.md)**
+
+## Brand Colors
+
+| Màu | Hex | Dùng cho |
+|-----|-----|----------|
+| Dark Teal | `#0E4E5A` | Primary (light mode) |
+| Lime Green | `#E2F046` | Accent, buttons, active states |
+| Deep Blue | `#02182B` | Background (dark mode) |
+
+## Tài liệu
+
+- **[AGENTS.md](AGENTS.md)** — Hướng dẫn đầy đủ cho AI agents và contributors
+- **[src/features/FEATURE_STRUCTURE.md](src/features/FEATURE_STRUCTURE.md)** — Cấu trúc feature module
+- **[tsp-output/schema/openapi.json](tsp-output/schema/openapi.json)** — OpenAPI spec (được sinh tự động, không sửa tay)
+- **[contract/main.tsp](contract/main.tsp)** — TypeSpec contract (nguồn sự thật)
 
 ---
+
 © 2026 ETECHS Social Network.

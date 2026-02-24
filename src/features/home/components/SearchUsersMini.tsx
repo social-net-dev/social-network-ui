@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { profilesApi } from '@/lib/api/services';
+import { profilesGetProfile } from '@/lib/api/generated/profiles/profiles';
+import { usersGetMe } from '@/lib/api/generated/users/users';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { callGetDMRoom } from '@/features/message/services/messageApi';
 import { useRoomManager } from '@/features/message/hooks/useRoomManager';
-import { usersApi } from '@/lib/api/services';
-import type { User } from '@/lib/api/types/user.types';
+import type { UserPublic } from '@/lib/api/generated/model';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,7 @@ export const SearchUsersMini: React.FC = () => {
   const navigate = useNavigate();
   const { tenantSlug } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [searchResults, setSearchResults] = useState<UserPublic[]>([]);
   const [loading, setLoading] = useState(false);
   const [creatingRoomFor, setCreatingRoomFor] = useState<string | null>(null);
 
@@ -53,15 +53,16 @@ export const SearchUsersMini: React.FC = () => {
     setSearchResults([]);
 
     try {
-      // Gọi trực tiếp profilesApi để tìm theo username/email (exact match)
-      const p = await profilesApi.getProfile(searchQuery.trim());
+      // Use Orval-generated profilesGetProfile for type-safe API call
+      const response = await profilesGetProfile(searchQuery.trim());
+      const p = response.data;
       if (p) {
-        setSearchResults([p as User]);
+        setSearchResults([p]);
       } else {
         setSearchResults([]);
       }
-    } catch (err: any) {
-      console.error('[SearchUsersMini] profilesApi error:', err);
+    } catch (err: unknown) {
+      console.error('[SearchUsersMini] profilesGetProfile error:', err);
       setSearchResults([]);
     } finally {
       setLoading(false);
@@ -70,7 +71,7 @@ export const SearchUsersMini: React.FC = () => {
 
   const { createRoom } = useRoomManager({ userId: currentUserId || '' });
 
-  const handleStartChat = async (targetUser: User) => {
+  const handleStartChat = async (targetUser: UserPublic) => {
     if (!currentUserId) {
       console.error('[SearchUsersMini] No current user ID');
       return;
@@ -78,12 +79,13 @@ export const SearchUsersMini: React.FC = () => {
 
     setCreatingRoomFor(targetUser.id);
     try {
-      // Fetch current user info (username + display)
-      const me = await usersApi.getMe();
-      const myDisplay = (me as any)?.displayName || (me as any)?.display_name || null;
-      const myUsername = (me as any)?.username || (me as any)?.email || null;
-      const otherDisplay = (targetUser as any).displayName || (targetUser as any).display_name || null;
-      const otherUsername = targetUser.username || targetUser.email || null;
+      // Fetch current user info using Orval-generated usersGetMe
+      const meResponse = await usersGetMe();
+      const me = meResponse.data;
+      const myDisplay = me.displayName || null;
+      const myUsername = me.username || me.email || null;
+      const otherDisplay = targetUser.displayName || null;
+      const otherUsername = targetUser.username || null;
 
       if (!myDisplay || !otherDisplay) {
         alert('Cần display name hợp lệ của cả hai người để tạo phòng. Vui lòng cập nhật tên hiển thị.');

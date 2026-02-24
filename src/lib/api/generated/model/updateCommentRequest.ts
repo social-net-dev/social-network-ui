@@ -7,5 +7,5 @@
  */
 
 export interface UpdateCommentRequest {
-  content_text: string;
+  content_text?: string;
 }

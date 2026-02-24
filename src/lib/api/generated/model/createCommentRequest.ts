@@ -6,8 +6,18 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Create comment request payload.
+ */
 export interface CreateCommentRequest {
+  /** ID of the post to comment on. */
   post_id: string;
+  /**
+   * Comment content text.
+   * @minLength 1
+   * @maxLength 5000
+   */
   content_text: string;
+  /** Array of media asset IDs to attach. */
   media_asset_ids?: string[];
 }

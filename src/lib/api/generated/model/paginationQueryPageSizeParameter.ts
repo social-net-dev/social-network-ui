@@ -6,4 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Number of items per page.
+ */
 export type PaginationQueryPageSizeParameter = number;

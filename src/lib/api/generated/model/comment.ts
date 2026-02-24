@@ -9,15 +9,28 @@ import type { Author } from './author';
 import type { CommentStats } from './commentStats';
 import type { ReactionType } from './reactionType';
 
+/**
+ * Comment model.
+ */
 export interface Comment {
+  /** Comment ID. */
   id: string;
+  /** ID of the post this comment belongs to. */
   postId: string;
+  /** Comment author information. */
   author: Author;
+  /** Parent comment ID for replies. */
   parentCommentId: string | null;
+  /** Comment content text. */
   content: string;
+  /** Array of media URLs. */
   mediaUrls: string[];
+  /** Comment statistics. */
   stats: CommentStats;
+  /** Current user's reaction to this comment. */
   userReaction: ReactionType | null;
+  /** Comment creation timestamp. */
   createdAt: string;
+  /** Last update timestamp. */
   updatedAt: string;
 }

@@ -9,26 +9,59 @@ import type { PersonalInfo } from './personalInfo';
 import type { PrivacyField } from './privacyField';
 import type { UserPublicViewerContext } from './userPublicViewerContext';
 
+/**
+ * Public user profile (respects privacy settings).
+ */
 export interface UserPublic {
+  /** User ID. */
   id: string;
+  /** Unique username. */
   username: string;
+  /** Display name. */
   displayName: string;
+  /** User bio/description. */
   bio?: string;
+  /** Personal information. */
   personalInfo?: PersonalInfo;
+  /** Birth date. */
   birthDate?: string | null;
+  /** Avatar file path. */
   avatarPath?: string;
+  /** Avatar URL. */
   avatar?: string | null;
+  /** Background image file path. */
   backgroundPath?: string;
+  /** Background image URL. */
   background?: string | null;
+  /** Account status. */
   accountStatus: string;
+  /** User role. */
   role: string;
+  /** Account creation timestamp. */
   createdAt: string;
+  /** Last update timestamp. */
   updatedAt?: string;
+  /**
+   * Number of followers.
+   * @minimum 0
+   */
   followers?: number;
+  /**
+   * Number of following.
+   * @minimum 0
+   */
   following?: number;
+  /**
+   * Number of posts.
+   * @minimum 0
+   */
   postsCount?: number;
+  /** Viewer context information. */
   viewer_context?: UserPublicViewerContext;
+  /** Fields redacted due to privacy settings. */
   redacted_fields?: PrivacyField[];
+  /** Friendship status with viewer. */
   friendshipStatus?: string;
+  /** Friend request ID if applicable. */
   friendRequestId?: string | null;
 }

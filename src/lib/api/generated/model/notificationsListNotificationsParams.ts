@@ -9,6 +9,12 @@ import type { PaginationQueryPageParameter } from './paginationQueryPageParamete
 import type { PaginationQueryPageSizeParameter } from './paginationQueryPageSizeParameter';
 
 export type NotificationsListNotificationsParams = {
+/**
+ * Page number (1-indexed).
+ */
 page?: PaginationQueryPageParameter;
+/**
+ * Number of items per page.
+ */
 page_size?: PaginationQueryPageSizeParameter;
 };

@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Media type.
+ */
 export type MediaAssetSummaryType = typeof MediaAssetSummaryType[keyof typeof MediaAssetSummaryType];
 
 

@@ -1,6 +1,6 @@
 import type { MessageIn, MessageOut, ServerAck } from '../types/message.types';
 import { getMessageApiUrl, getApiBaseUrl } from '@/lib/config';
-import { appendAuthToken } from '@/lib/api/transforms/common';
+import { appendAuthToken } from '@/lib/utils/api';
 
 type ChatClientOpts = {
   wsUrl: string;

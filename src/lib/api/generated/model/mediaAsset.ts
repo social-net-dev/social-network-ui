@@ -8,7 +8,12 @@
 import type { MediaAssetStatus } from './mediaAssetStatus';
 import type { MediaAssetSummary } from './mediaAssetSummary';
 
+/**
+ * Full media asset model with status.
+ */
 export type MediaAsset = MediaAssetSummary & {
+  /** Processing status. */
   status: MediaAssetStatus;
+  /** Asset creation timestamp. */
   createdAt: string;
 };

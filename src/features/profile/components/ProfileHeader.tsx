@@ -5,10 +5,10 @@ import { Calendar, Edit2, MoreHorizontal, Camera, Loader2, UserPlus, UserCheck }
 import { useRef } from "react"
 import { useProfile } from "../hooks/useProfile"
 import { useQueryClient } from "@tanstack/react-query"
-import { useFriendActions } from "@/lib/api/hooks/useFriends"
+import { useFriendsSendRequest } from "@/lib/api/generated/friends/friends"
 import { toast } from "sonner"
-import { getDefaultAvatar } from "@/lib/api/transforms/common"
-import type { User } from "@/lib/api/types/user.types"
+import { getDefaultAvatar } from "@/lib/utils/api"
+import type { User } from "@/lib/api/generated/model"
 
 interface ProfileHeaderProps {
   profile: User
@@ -37,11 +37,12 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
   const fileInputRef = useRef<HTMLInputElement>(null)
   const backgroundInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
-  const { sendRequest, isLoading: isFriendActionPending } = useFriendActions()
+  const sendRequestMutation = useFriendsSendRequest()
+  const isFriendActionPending = sendRequestMutation.isPending
 
   const handleSendFriendRequest = async () => {
     try {
-      await sendRequest({ addressee_username: profile.username || '' })
+      await sendRequestMutation.mutateAsync({ data: { addressee_username: profile.username || '' } })
       toast.success("Đã gửi lời mời kết bạn")
       queryClient.invalidateQueries({ queryKey: ['profiles', profile.username] })
       queryClient.invalidateQueries({ queryKey: ["friends"] })

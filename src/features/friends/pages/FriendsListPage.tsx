@@ -14,11 +14,10 @@ import {
 import { customInstance } from "@/lib/api";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
-import { transformUser } from "@/lib/api/transforms";
-import type { User } from "@/lib/api/types/user.types";
+import type { Friend } from "@/lib/api/generated/model";
 
 interface FriendsResponse {
-  friends: User[];
+  friends: Friend[];
   total: number;
   page: number;
   page_size: number;
@@ -51,10 +50,7 @@ export function FriendsListPage() {
 
   const { data, isLoading, isError } = useFriendsList(query, currentPage);
 
-  const friends = useMemo(() => 
-    (data?.friends || []).map(friend => transformUser(friend)),
-    [data?.friends]
-  );
+  const friends = useMemo(() => data?.friends || [], [data?.friends]);
 
   const removeFriendMutation = useMutation({
     mutationFn: (friendId: string) =>
@@ -139,20 +135,13 @@ export function FriendsListPage() {
           <CardContent className="p-8 text-center text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="text-lg font-medium">
-              {query
-                ? "Không tìm thấy bạn bè"
-                : "Chưa có bạn bè nào"}
+              {query ? "Không tìm thấy bạn bè" : "Chưa có bạn bè nào"}
             </p>
             <p className="text-sm mt-1">
-              {query
-                ? "Thử tìm kiếm với từ khóa khác."
-                : "Hãy kết bạn với mọi người!"}
+              {query ? "Thử tìm kiếm với từ khóa khác." : "Hãy kết bạn với mọi người!"}
             </p>
             {!query && (
-              <Button
-                className="mt-4"
-                onClick={() => navigate("/search")}
-              >
+              <Button className="mt-4" onClick={() => navigate("/search")}>
                 Tìm kiếm người dùng
               </Button>
             )}
@@ -163,31 +152,20 @@ export function FriendsListPage() {
       {friends.length > 0 && (
         <div className="space-y-3">
           {friends.map((friend) => (
-            <Card
-              key={friend.id}
-              className="hover:shadow-md transition-shadow"
-            >
+            <Card key={friend.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex items-center justify-between gap-4">
                 <Link
-                  to={`/profile/${friend.username || friend.email}`}
+                  to={`/profile/${friend.user.username}`}
                   className="flex items-center gap-3 min-w-0 flex-1"
                 >
-                  <Avatar
-                    user={friend}
-                    size="lg"
-                  />
+                  <Avatar user={friend.user as Parameters<typeof Avatar>[0]['user']} size="lg" />
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground truncate">
-                      {friend.displayName || friend.username}
+                      {friend.user.displayName || friend.user.username}
                     </p>
                     <p className="text-sm text-muted-foreground truncate">
-                      @{friend.username || friend.email}
+                      @{friend.user.username}
                     </p>
-                    {friend.bio && (
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        {friend.bio}
-                      </p>
-                    )}
                   </div>
                 </Link>
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -195,11 +173,7 @@ export function FriendsListPage() {
                     variant="outline"
                     size="sm"
                     className="rounded-full"
-                    onClick={() =>
-                      navigate(
-                        `/messages?user=${friend.username}`
-                      )
-                    }
+                    onClick={() => navigate(`/messages?user=${friend.user.username}`)}
                   >
                     <MessageCircle className="h-4 w-4 mr-1" />
                     Nhắn tin
@@ -208,111 +182,7 @@ export function FriendsListPage() {
                     variant="ghost"
                     size="sm"
                     className="rounded-full text-destructive hover:bg-destructive/10"
-                    onClick={() =>
-                      handleRemoveFriend(
-                        friend.id,
-                        friend.displayName || friend.username
-                      )
-                    }
-                    disabled={removeFriendMutation.isPending}
-                  >
-                    <UserMinus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {isError && (
-        <Card className="border-destructive/20">
-          <CardContent className="p-6 text-center text-destructive">
-            Đã xảy ra lỗi khi tải danh sách bạn bè.
-          </CardContent>
-        </Card>
-      )}
-
-      {!isLoading && friends.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">
-            <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="text-lg font-medium">
-              {query
-                ? "Không tìm thấy bạn bè"
-                : "Chưa có bạn bè nào"}
-            </p>
-            <p className="text-sm mt-1">
-              {query
-                ? "Thử tìm kiếm với từ khóa khác."
-                : "Hãy kết bạn với mọi người!"}
-            </p>
-            {!query && (
-              <Button
-                className="mt-4"
-                onClick={() => navigate("/search")}
-              >
-                Tìm kiếm người dùng
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {!isLoading && friends.length > 0 && (
-        <div className="space-y-3">
-          {friends.map((friend) => (
-            <Card
-              key={friend.id}
-              className="hover:shadow-md transition-shadow"
-            >
-              <CardContent className="p-4 flex items-center justify-between gap-4">
-                <Link
-                  to={`/profile/${friend.username || friend.email}`}
-                  className="flex items-center gap-3 min-w-0 flex-1"
-                >
-                  <Avatar
-                    user={friend}
-                    size="lg"
-                  />
-                  <div className="min-w-0">
-                    <p className="font-semibold text-foreground truncate">
-                      {friend.displayName || friend.username}
-                    </p>
-                    <p className="text-sm text-muted-foreground truncate">
-                      @{friend.username || friend.email}
-                    </p>
-                    {friend.bio && (
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        {friend.bio}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full"
-                    onClick={() =>
-                      navigate(
-                        `/messages?user=${friend.username}`
-                      )
-                    }
-                  >
-                    <MessageCircle className="h-4 w-4 mr-1" />
-                    Nhắn tin
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-full text-destructive hover:bg-destructive/10"
-                    onClick={() =>
-                      handleRemoveFriend(
-                        friend.id,
-                        friend.displayName || friend.username
-                      )
-                    }
+                    onClick={() => handleRemoveFriend(friend.id, friend.user.displayName || friend.user.username)}
                     disabled={removeFriendMutation.isPending}
                   >
                     <UserMinus className="h-4 w-4" />

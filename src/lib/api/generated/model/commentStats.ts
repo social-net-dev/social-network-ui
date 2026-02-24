@@ -6,7 +6,18 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Comment statistics.
+ */
 export interface CommentStats {
+  /**
+   * Total number of reactions.
+   * @minimum 0
+   */
   reactions: number;
+  /**
+   * Total number of replies.
+   * @minimum 0
+   */
   replies: number;
 }

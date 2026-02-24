@@ -5,17 +5,34 @@
  * API contract cho social-network-ui (main API + message service).
  * OpenAPI spec version: 1.0
  */
+import type { Project } from './project';
 
+/**
+ * Personal information for user profile.
+ */
 export interface PersonalInfo {
+  /** Education level. */
   educationLevel?: string;
+  /** School name. */
   school?: string;
+  /** Class name. */
   class?: string;
+  /** Academic degree. */
   degree?: string;
+  /** Major/field of study. */
   major?: string;
+  /** Graduation year. */
   graduationYear?: string;
+  /** Current academic year. */
   academicYear?: string;
+  /** Current school year. */
   schoolYear?: string;
+  /** List of favorite subjects. */
   favoriteSubjects?: string[];
+  /** List of hobbies. */
   hobbies?: string[];
+  /** Location/address. */
   location?: string;
+  /** User projects. */
+  projects?: Project[];
 }

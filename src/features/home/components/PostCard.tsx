@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Edit } from 'lucide-react';
-import type { Post as PostType } from '../types/feed.types';
+import type { PostSummary } from '@/lib/api/generated/model';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CommentSection } from './CommentSection';
@@ -12,6 +12,8 @@ import { FormattedContent } from '@/features/shared/components/FormattedContent'
 import { useMediaBlobs } from '../hooks/useMedia';
 import { cn } from '@/lib/utils';
 import { POST_TYPES, ACADEMIC_FIELDS } from '../constants/fields';
+
+type PostWithShared = PostSummary & { sharedPost?: PostSummary | null };
 
 const ROLE_MAP: Record<string, { label: string; class: string }> = {
   STUDENT: { label: 'Người học', class: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
@@ -24,7 +26,7 @@ const STATUS_MAP: Record<string, { label: string; class: string }> = {
 };
 
 interface PostProps {
-  post: PostType;
+  post: PostWithShared;
   onLike: (postId: string, liked: boolean) => void;
   onComment: (postId: string) => void;
   onShare: (postId: string) => void;

@@ -12,6 +12,7 @@ import type { FriendsListFriends200Data } from './friendsListFriends200Data';
  */
 export type FriendsListFriends200 = {
   success: boolean;
+  /** Generic paginated response wrapper. */
   data: FriendsListFriends200Data;
   request_id?: string;
 };

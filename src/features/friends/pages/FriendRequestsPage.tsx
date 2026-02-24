@@ -1,18 +1,18 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useFriends, useFriendActions } from "@/lib/api/hooks/useFriends";
+import { useFriendsListIncomingRequests, useFriendsListOutgoingRequests, useFriendsAcceptRequest, useFriendsRejectRequest, useFriendsCancelRequest } from "@/lib/api/generated/friends/friends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar } from "@/features/shared/components/Avatar";
-import { getErrorMessage, transformUser } from "@/lib/api/transforms";
+import { getErrorMessage } from "@/lib/utils/api";
 import { Loader2, UserCheck, UserX, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import type { User } from "@/lib/api/types/user.types";
-import type { FriendRequest } from "@/lib/api/types/friend.types";
+import type { FriendRequest } from "@/lib/api/generated/model";
 
-function userLabel(u: User) {
-  return u.displayName || u.username || u.email || "Người dùng";
+function userLabel(fr: FriendRequest, side: 'requester' | 'addressee') {
+  const u = side === 'requester' ? fr.requester : fr.addressee;
+  return u?.displayName || u?.username || "Người dùng";
 }
 
 export function FriendRequestsPage() {
@@ -28,17 +28,22 @@ export function FriendRequestsPage() {
       return next;
     });
 
-  const { incomingRequests, outgoingRequests, isLoading: isQueryLoading, isError } = useFriends();
-  const { acceptRequest, rejectRequest, cancelRequest } = useFriendActions();
+  const incomingQuery = useFriendsListIncomingRequests();
+  const outgoingQuery = useFriendsListOutgoingRequests();
+  const acceptMutation = useFriendsAcceptRequest();
+  const rejectMutation = useFriendsRejectRequest();
+  const cancelMutation = useFriendsCancelRequest();
+
+  const isQueryLoading = incomingQuery.isLoading || outgoingQuery.isLoading;
+  const isError = incomingQuery.isError || outgoingQuery.isError;
 
   const handleAccept = async (requestId: string) => {
     addProcessing(requestId);
     try {
-      await acceptRequest(requestId);
+      await acceptMutation.mutateAsync({ requestId });
       toast.success("Đã chấp nhận lời mời kết bạn");
-      qc.invalidateQueries({ queryKey: ["friends"] });
-      qc.invalidateQueries({ queryKey: ["recommendations"] });
-    } catch (err: any) {
+      qc.invalidateQueries({ queryKey: ["/friends/"] });
+    } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Lỗi khi chấp nhận lời mời");
     } finally {
       removeProcessing(requestId);
@@ -48,10 +53,10 @@ export function FriendRequestsPage() {
   const handleReject = async (requestId: string) => {
     addProcessing(requestId);
     try {
-      await rejectRequest(requestId);
+      await rejectMutation.mutateAsync({ requestId });
       toast.success("Đã từ chối lời mời kết bạn");
-      qc.invalidateQueries({ queryKey: ["friends", "requests"] });
-    } catch (err: any) {
+      qc.invalidateQueries({ queryKey: ["/friends/"] });
+    } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Lỗi khi từ chối lời mời");
     } finally {
       removeProcessing(requestId);
@@ -61,18 +66,18 @@ export function FriendRequestsPage() {
   const handleCancel = async (requestId: string) => {
     addProcessing(requestId);
     try {
-      await cancelRequest(requestId);
+      await cancelMutation.mutateAsync({ requestId });
       toast.success("Đã hủy lời mời kết bạn");
-      qc.invalidateQueries({ queryKey: ["friends", "requests"] });
-    } catch (err: any) {
+      qc.invalidateQueries({ queryKey: ["/friends/"] });
+    } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Lỗi khi hủy lời mời");
     } finally {
       removeProcessing(requestId);
     }
   };
 
-  const incoming = useMemo(() => (incomingRequests || []) as FriendRequest[], [incomingRequests]);
-  const outgoing = useMemo(() => (outgoingRequests || []) as FriendRequest[], [outgoingRequests]);
+  const incoming = useMemo(() => incomingQuery.data?.data || [], [incomingQuery.data]);
+  const outgoing = useMemo(() => outgoingQuery.data?.data || [], [outgoingQuery.data]);
 
   return (
     <div className="space-y-6">
@@ -100,15 +105,14 @@ export function FriendRequestsPage() {
             <Card className="p-6 text-center text-gray-500">Chưa có lời mời nào.</Card>
           ) : (
             incoming.map((fr) => {
-              const requester = transformUser(fr.requester);
               const isProcessing = processingIds.has(fr.id);
               return (
                 <Card key={fr.id} className={`p-4 flex items-center justify-between gap-4 transition-opacity ${isProcessing ? "opacity-60" : ""}`}>
                   <div className="flex items-center gap-3 min-w-0">
-                    <Avatar user={requester} size="md" />
+                    <Avatar user={fr.requester as Parameters<typeof Avatar>[0]['user']} size="md" />
                     <div className="min-w-0">
-                      <div className="font-semibold truncate">{userLabel(requester)}</div>
-                      <div className="text-xs text-gray-500 truncate">@{requester.username || requester.email || "-"}</div>
+                      <div className="font-semibold truncate">{userLabel(fr, 'requester')}</div>
+                      <div className="text-xs text-gray-500 truncate">@{fr.requester?.username || "-"}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -149,15 +153,14 @@ export function FriendRequestsPage() {
             <Card className="p-6 text-center text-gray-500">Bạn chưa gửi lời mời nào.</Card>
           ) : (
             outgoing.map((fr) => {
-              const addressee = transformUser(fr.addressee);
               const isProcessing = processingIds.has(fr.id);
               return (
                 <Card key={fr.id} className={`p-4 flex items-center justify-between gap-4 transition-opacity ${isProcessing ? "opacity-60" : ""}`}>
                   <div className="flex items-center gap-3 min-w-0">
-                    <Avatar user={addressee} size="md" />
+                    <Avatar user={fr.addressee as Parameters<typeof Avatar>[0]['user']} size="md" />
                     <div className="min-w-0">
-                      <div className="font-semibold truncate">{userLabel(addressee)}</div>
-                      <div className="text-xs text-gray-500 truncate">@{addressee.username || addressee.email || "-"}</div>
+                      <div className="font-semibold truncate">{userLabel(fr, 'addressee')}</div>
+                      <div className="text-xs text-gray-500 truncate">@{fr.addressee?.username || "-"}</div>
                     </div>
                   </div>
                   <div>

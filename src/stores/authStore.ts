@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { authApi } from '@/lib/api/services';
+import { authLogout } from '@/lib/api/generated/auth/auth';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { useE2EEStore } from './e2eeStore';
 import { callSetPublicKey } from '@/features/message/services/messageApi';
@@ -82,7 +82,7 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         try {
           // Call backend logout API
-          await authApi.logout();
+          await authLogout();
         } catch (error) {
           console.error('Logout error:', error);
         } finally {

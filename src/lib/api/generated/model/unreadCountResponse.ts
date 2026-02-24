@@ -6,6 +6,13 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Unread notification count response.
+ */
 export interface UnreadCountResponse {
+  /**
+   * Number of unread notifications.
+   * @minimum 0
+   */
   unread_count: number;
 }

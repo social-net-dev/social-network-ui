@@ -1,9 +1,10 @@
-import type { User } from '@/types'
 import { cn } from '@/lib/utils'
-import { buildMediaUrl, getDefaultAvatar } from '@/lib/api/transforms/common'
+import { buildMediaUrl, getDefaultAvatar } from '@/lib/utils/api'
+
+type AvatarUser = { id?: string; displayName?: string; username?: string; avatar?: string | null; avatar_path?: string; display_name?: string; name?: string; email?: string; createdAt?: string }
 
 interface AvatarProps {
-  user?: User | { id?: string; displayName?: string; avatar?: string; avatar_path?: string; display_name?: string; name?: string }
+  user?: AvatarUser
   src?: string
   alt?: string
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'

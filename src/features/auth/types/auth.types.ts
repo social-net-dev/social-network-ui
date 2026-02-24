@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { RegisterResponse as BackendRegisterResponse } from "@/lib/api/types/auth.types";
+import type { AuthRegister200 } from "@/lib/api/generated/model";
 
 /**
  * UI-specific Form Schemas
@@ -59,7 +59,7 @@ export type AuthResponse = {
     refreshToken: string;
 }
 
-export type RegisterResponse = BackendRegisterResponse;
+export type RegisterResponse = AuthRegister200;
 
 export interface AuthError {
     message: string;

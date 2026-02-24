@@ -8,9 +8,19 @@
 import type { UserPrivacy } from './userPrivacy';
 import type { UserPublic } from './userPublic';
 
+/**
+ * Current user profile (includes private fields).
+ */
 export type UserMe = UserPublic & ({
+  /** User email address. */
   email: string;
+  /** User phone number. */
   phone?: string | null;
+  /**
+   * Storage quota in MB.
+   * @minimum 0
+   */
   storageQuotaMb?: number;
+  /** Privacy settings. */
   privacy?: UserPrivacy;
 });

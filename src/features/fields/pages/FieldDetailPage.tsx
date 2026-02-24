@@ -2,8 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useField } from '../hooks/useField';
 import { FieldHeader } from '../components/FieldHeader';
 import { FieldExplorer } from '../components/FieldExplorer';
-import { FeedList } from '@/features/home/components/FeedList';
-import { usePostActions } from '@/features/home/hooks/usePostActions';
+import { FeedList, usePostActions } from '@/features/posts';
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -14,7 +13,9 @@ export function FieldDetailPage() {
 
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
-  const { likePost, sharePost, deletePost, updatePost } = usePostActions(['fields', fieldId, 'posts']);
+  const { likePost, sharePost, deletePost, updatePost } = usePostActions({
+    affectedQueryKeys: [['fields', fieldId, 'posts']],
+  });
 
   const onComment = (postId: string) => {
     setSelectedPostId(selectedPostId === postId ? null : postId);

@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Processing status.
+ */
 export type MediaAssetStatus = typeof MediaAssetStatus[keyof typeof MediaAssetStatus];
 
 

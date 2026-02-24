@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader, RefreshCcw } from "lucide-react";
-import { useAdminUsers, useReactivateUser } from "@/lib/api/hooks/useAdmin";
+import { useAdminUsers, useReactivateUser } from "../hooks/useAdmin";
 import { AdminVerificationPanel } from "./VerificationPage";
 
 const STATUS_LABELS: Record<string, string> = {

@@ -1,5 +1,5 @@
 import type { Notification, NotificationType } from "@/types/notification";
-import { buildMediaUrl } from "@/lib/api/transforms/common";
+import { buildMediaUrl } from "@/lib/utils/api";
 
 /** Backend notification item (API list + WS payload) */
 export interface BackendNotificationRaw {

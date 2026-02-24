@@ -8,13 +8,34 @@
 import type { Gender } from './gender';
 import type { Role } from './role';
 
+/**
+ * Registration request payload.
+ */
 export interface RegisterRequest {
+  /** User email address. */
   email: string;
+  /**
+   * User password (minimum 8 characters).
+   * @minLength 8
+   */
   password: string;
+  /**
+   * Display name for the user.
+   * @minLength 1
+   * @maxLength 100
+   */
   display_name: string;
+  /** User gender. */
   gender: Gender | string;
+  /** User role in the system. */
   role: Role;
+  /**
+   * Optional phone number.
+   * @pattern ^\+?[1-9]\d{1,14}$
+   */
   phone?: string;
+  /** User consent to terms and conditions. */
   consent?: boolean;
+  /** Media asset IDs for verification documents. */
   verification_media_asset_ids?: string[];
 }

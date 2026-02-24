@@ -8,10 +8,22 @@
 import type { PostType } from './postType';
 import type { Visibility } from './visibility';
 
+/**
+ * Create post request payload.
+ */
 export interface CreatePostRequest {
+  /**
+   * Post content text.
+   * @minLength 1
+   * @maxLength 10000
+   */
   content_text: string;
+  /** Post visibility setting. */
   visibility?: Visibility;
+  /** Type of post. */
   post_type?: PostType;
+  /** Field/category ID for the post. */
   field_id?: string;
+  /** Array of media asset IDs to attach. */
   media_asset_ids?: string[];
 }

@@ -6,11 +6,20 @@
  * OpenAPI spec version: 1.0
  */
 
+/**
+ * Author information for posts and comments.
+ */
 export interface Author {
+  /** User ID. */
   id: string;
+  /** Display name. */
   displayName: string;
+  /** Username. */
   username: string;
+  /** Avatar URL or null if not set. */
   avatar: string | null;
+  /** User role. */
   role?: string;
+  /** Account status. */
   accountStatus?: string;
 }

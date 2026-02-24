@@ -1,69 +1,67 @@
-import { useQuery } from '@tanstack/react-query';
-import { customInstance } from '@/lib/api';
-
 /**
- * Hook to fetch media as blob and create object URL.
- * URLs with access_token query params (from buildMediaUrl) are fetched
- * directly via the authed API client.
+ * @deprecated Use hooks from @/features/media instead
+ * This file is kept for backward compatibility and re-exports from the new media feature
  */
-export function useMediaBlob(url: string | null | undefined) {
-  return useQuery({
-    queryKey: ['media-blob', url],
-    queryFn: async () => {
-      if (!url) return '';
 
-      // Absolute URLs (external CDN): return as-is
-      if (url.startsWith('http')) return url;
+import { useQuery } from '@tanstack/react-query';
+import { getMediaStreamQueryKey, mediaStream } from '@/lib/api/generated/media/media';
+import type { MediaStreamParams } from '@/lib/api/generated/model';
 
-      // Fetch via authenticated API client as blob
-      try {
-        const res = await customInstance<Blob>({
-          url,
-          method: 'GET',
-          responseType: 'blob',
-        });
-        return URL.createObjectURL(res);
-      } catch (e) {
-        console.error('Failed to fetch media blob:', url, e);
-        return '';
-      }
-    },
-    enabled: !!url,
-    staleTime: 1000 * 60 * 30, // Cache blobs for 30 minutes
-    gcTime: 1000 * 60 * 60,    // Keep in GC for 1 hour
-  });
+function extractPath(url: string): string {
+  if (url.startsWith('http')) {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.pathname + urlObj.search;
+    } catch {
+      return url;
+    }
+  }
+  return url.startsWith('/') ? url : `/${url}`;
 }
 
-/**
- * Hook to fetch multiple media as blobs
- */
-export function useMediaBlobs(urls: string[]) {
+function useMediaBlob(url: string) {
+  const path = extractPath(url);
+  const params: MediaStreamParams = { path };
+
   return useQuery({
-    queryKey: ['media-blobs', ...urls],
+    queryKey: [...getMediaStreamQueryKey(params), 'blob'] as const,
     queryFn: async () => {
-      if (!urls || urls.length === 0) return [];
+      if (!path) return '';
+      if (url.startsWith('http')) return url;
 
-      const promises = urls.map(async url => {
-        // Absolute URLs: return as-is
-        if (url.startsWith('http')) return url;
-        if (!url) return '';
-
-        try {
-          const res = await customInstance<Blob>({
-            url,
-            method: 'GET',
-            responseType: 'blob',
-          });
-          return URL.createObjectURL(res);
-        } catch (e) {
-          console.error('Failed to fetch media blob for:', url, e);
-          return '';
-        }
-      });
-      return Promise.all(promises);
+      const blob = await mediaStream(params);
+      return URL.createObjectURL(blob);
     },
-    enabled: urls.length > 0,
+    enabled: !!url,
     staleTime: 1000 * 60 * 30,
     gcTime: 1000 * 60 * 60,
   });
 }
+
+function useMediaBlobs(urls: string[]) {
+  const validUrls = urls.filter(Boolean);
+
+  return useQuery({
+    queryKey: ['media-blobs', ...validUrls.map(extractPath)],
+    queryFn: async () => {
+      if (!validUrls.length) return [];
+
+      const promises = validUrls.map(async (url) => {
+        if (url.startsWith('http')) return url;
+        const path = extractPath(url);
+        const blob = await mediaStream({ path });
+        return URL.createObjectURL(blob);
+      });
+
+      return Promise.all(promises);
+    },
+    enabled: validUrls.length > 0,
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
+  });
+}
+
+export {
+  useMediaBlob,
+  useMediaBlobs,
+};

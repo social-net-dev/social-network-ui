@@ -2,7 +2,7 @@ import { defineConfig } from 'orval';
 
 export default defineConfig({
   api: {
-    input: '../learn-typespec/tsp-output/schema/openapi.json',
+    input: './tsp-output/schema/openapi.json',
     output: {
       client: 'react-query',
       httpClient: 'axios',

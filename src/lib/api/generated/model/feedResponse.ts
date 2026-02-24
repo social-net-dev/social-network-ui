@@ -5,12 +5,15 @@
  * API contract cho social-network-ui (main API + message service).
  * OpenAPI spec version: 1.0
  */
+import type { PaginationMeta } from './paginationMeta';
 import type { PostSummary } from './postSummary';
 
-export interface FeedResponse {
-  posts: PostSummary[];
-  page: number;
-  page_size: number;
-  total: number;
-  total_pages: number;
-}
+/**
+ * Feed response with paginated posts.
+ */
+export type FeedResponse = {
+  /** Array of items for current page. */
+  items: PostSummary[];
+  /** Pagination metadata. */
+  pagination: PaginationMeta;
+};

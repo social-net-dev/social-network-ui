@@ -28,7 +28,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/config";
-import { mockUsers, mockPosts } from "@/mocks/fixtures";
 import { useAuthStore } from "@/stores/authStore";
 
 export function DevToolsPage() {
@@ -163,59 +162,18 @@ export function DevToolsPage() {
         {/* Mock Data Tab */}
         <TabsContent value="mock" className="space-y-4">
           {isMockEnabled ? (
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Mock Users ({mockUsers.length})</CardTitle>
-                  <CardDescription>Danh sách users giả cho testing</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {mockUsers.map((user) => (
-                      <div key={user.id} className="p-3 rounded-lg bg-muted flex items-center gap-3">
-                        <img 
-                          src={user.avatar_path || "https://github.com/shadcn.png"} 
-                          alt={user.display_name}
-                          className="w-10 h-10 rounded-full"
-                        />
-                        <div>
-                          <p className="font-medium">{user.display_name}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
-                        </div>
-                        <Badge variant="outline" className="ml-auto">{user.id}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Mock Posts ({mockPosts.length})</CardTitle>
-                  <CardDescription>Danh sách bài viết giả cho testing</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {mockPosts.map((post) => (
-                      <div key={post.id} className="p-3 rounded-lg bg-muted">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline">{post.id}</Badge>
-                          <span className="text-sm text-muted-foreground">
-                            by {post.author.display_name}
-                          </span>
-                        </div>
-                        <p className="text-sm line-clamp-2">{post.content_text}</p>
-                        <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                          <span>{post.reaction_count} reactions</span>
-                          <span>{post.comment_count} comments</span>
-                          <span>{post.media_files.length} media</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </>
+            <Card>
+              <CardHeader>
+                <CardTitle>Mock Data</CardTitle>
+                <CardDescription>Mock fixtures have been removed. Create your own mock server.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  MSW and mock fixtures were removed from this project. 
+                  You can create your own mock server implementation as needed.
+                </p>
+              </CardContent>
+            </Card>
           ) : (
             <Card>
               <CardContent className="py-12 text-center">
@@ -297,23 +255,6 @@ export function DevToolsPage() {
                   <span>Clear Storage</span>
                 </Button>
 
-                <Button 
-                  variant="outline" 
-                  className="h-auto py-4 flex flex-col items-center gap-2"
-                  onClick={() => console.table(mockUsers)}
-                >
-                  <Database className="w-5 h-5" />
-                  <span>Log Users</span>
-                </Button>
-
-                <Button 
-                  variant="outline" 
-                  className="h-auto py-4 flex flex-col items-center gap-2"
-                  onClick={() => console.table(mockPosts)}
-                >
-                  <Database className="w-5 h-5" />
-                  <span>Log Posts</span>
-                </Button>
               </div>
 
               <div className="pt-4 border-t">
