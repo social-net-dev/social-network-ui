@@ -124,7 +124,6 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
   const handleEdit = () => {
     setEditContent(content);
     setIsEditing(true);
-    setShowMenu(false);
   };
 
   const handleSaveEdit = async () => {

@@ -54,9 +54,9 @@ export function EditProfileSheet({ open, onOpenChange }: EditProfileSheetProps) 
   const handleSave = async () => {
     try {
       await updateProfile({
-        display_name: formData.displayName,
+        displayName: formData.displayName,
         username: formData.username,
-        birth_date: formData.birthDate && formData.birthDate.trim() !== '' ? formData.birthDate : undefined,
+        birthDate: formData.birthDate && formData.birthDate.trim() !== '' ? formData.birthDate : undefined,
         bio: formData.bio,
         personal_info: {
           ...(profile?.personalInfo || {}),

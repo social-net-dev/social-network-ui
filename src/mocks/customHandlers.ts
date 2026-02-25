@@ -1821,8 +1821,7 @@ export const customHandlers = [
   }),
 
   // Messages handlers
-  http.get('*/api/users/:userId/rooms', async ({ params }) => {
-    const userId = String(params.userId ?? '');
+  http.get('*/api/users/:userId/rooms', async () => {
     
     await delay(300);
     return HttpResponse.json({
@@ -1892,7 +1891,12 @@ export const customHandlers = [
 
     allConversations.push({
       ...newRoom,
-      last_message: null,
+      last_message: {
+        id: 'msg_system_empty',
+        sender_id: 'system',
+        created_at: new Date().toISOString(),
+        snippet: 'Bắt đầu cuộc trò chuyện mới',
+      },
       unread: 0,
     });
 
@@ -1930,7 +1934,12 @@ export const customHandlers = [
       type: 'DIRECT',
       name: 'New Conversation',
       created_at: new Date().toISOString(),
-      last_message: null,
+      last_message: {
+        id: 'msg_system_new',
+        sender_id: 'system',
+        created_at: new Date().toISOString(),
+        snippet: 'Cuộc trò chuyện mới',
+      },
       unread: 0,
     };
 
