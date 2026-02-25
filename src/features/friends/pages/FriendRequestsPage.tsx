@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { useFriendsListIncomingRequests, useFriendsListOutgoingRequests, useFriendsAcceptRequest, useFriendsRejectRequest, useFriendsCancelRequest } from "@/lib/api/generated/friends/friends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ function userLabel(fr: FriendRequest, side: 'requester' | 'addressee') {
 
 export function FriendRequestsPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   const addProcessing = (id: string) =>
@@ -27,6 +29,10 @@ export function FriendRequestsPage() {
       next.delete(id);
       return next;
     });
+
+  const handleUserClick = (username: string) => {
+    navigate(`/profile/${username}`);
+  };
 
   const incomingQuery = useFriendsListIncomingRequests();
   const outgoingQuery = useFriendsListOutgoingRequests();
@@ -87,11 +93,11 @@ export function FriendRequestsPage() {
       </div>
 
       <Tabs defaultValue="incoming">
-        <TabsList className="bg-white dark:bg-card p-1 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800">
-          <TabsTrigger value="incoming" className="rounded-xl px-6 py-2.5">
+        <TabsList className="h-auto bg-transparent border-b border-border w-full justify-start mb-6 p-0 rounded-none">
+          <TabsTrigger value="incoming" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 font-medium">
             Đến ({incoming.length})
           </TabsTrigger>
-          <TabsTrigger value="outgoing" className="rounded-xl px-6 py-2.5">
+          <TabsTrigger value="outgoing" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 font-medium">
             Đã gửi ({outgoing.length})
           </TabsTrigger>
         </TabsList>
@@ -104,43 +110,54 @@ export function FriendRequestsPage() {
           ) : incoming.length === 0 ? (
             <Card className="p-6 text-center text-gray-500">Chưa có lời mời nào.</Card>
           ) : (
-            incoming.map((fr) => {
-              const isProcessing = processingIds.has(fr.id);
-              return (
-                <Card key={fr.id} className={`p-4 flex items-center justify-between gap-4 transition-opacity ${isProcessing ? "opacity-60" : ""}`}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar user={fr.requester as Parameters<typeof Avatar>[0]['user']} size="md" />
-                    <div className="min-w-0">
-                      <div className="font-semibold truncate">{userLabel(fr, 'requester')}</div>
-                      <div className="text-xs text-gray-500 truncate">@{fr.requester?.username || "-"}</div>
+            <div className="max-w-3xl mx-auto space-y-3">
+              {incoming.map((fr) => {
+                const isProcessing = processingIds.has(fr.id);
+                const requester = fr.requester;
+                return (
+                  <Card key={fr.id} className={`p-4 transition-opacity ${isProcessing ? "opacity-60" : ""}`}>
+                    <div className="flex items-center justify-between gap-4">
+                      <button
+                        className="flex items-center gap-3 min-w-0 flex-1 hover:bg-accent/50 rounded-lg p-2 -m-2 transition-colors"
+                        onClick={() => requester?.username && handleUserClick(requester.username)}
+                        disabled={!requester?.username}
+                      >
+                        <Avatar user={requester as Parameters<typeof Avatar>[0]['user']} size="md" />
+                        <div className="min-w-0 flex-1 text-left">
+                          <div className="font-semibold truncate">{userLabel(fr, 'requester')}</div>
+                          <div className="text-xs text-gray-500 truncate">@{requester?.username || "-"}</div>
+                        </div>
+                      </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          size="sm"
+                          className="rounded-full"
+                          disabled={isProcessing}
+                          onClick={() => handleAccept(fr.id)}
+                        >
+                          {isProcessing ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                          ) : (
+                            <UserCheck className="h-4 w-4 mr-1" />
+                          )}
+                          Chấp nhận
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full"
+                          disabled={isProcessing}
+                          onClick={() => handleReject(fr.id)}
+                        >
+                          <UserX className="h-4 w-4 mr-1" />
+                          Từ chối
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      className="rounded-full"
-                      disabled={isProcessing}
-                      onClick={() => handleAccept(fr.id)}
-                    >
-                      {isProcessing ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                      ) : (
-                        <UserCheck className="h-4 w-4 mr-1" />
-                      )}
-                      Chấp nhận
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="rounded-full"
-                      disabled={isProcessing}
-                      onClick={() => handleReject(fr.id)}
-                    >
-                      <UserX className="h-4 w-4 mr-1" />
-                      Từ chối
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })
+                  </Card>
+                );
+              })}
+            </div>
           )}
         </TabsContent>
 
@@ -152,35 +169,45 @@ export function FriendRequestsPage() {
           ) : outgoing.length === 0 ? (
             <Card className="p-6 text-center text-gray-500">Bạn chưa gửi lời mời nào.</Card>
           ) : (
-            outgoing.map((fr) => {
-              const isProcessing = processingIds.has(fr.id);
-              return (
-                <Card key={fr.id} className={`p-4 flex items-center justify-between gap-4 transition-opacity ${isProcessing ? "opacity-60" : ""}`}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar user={fr.addressee as Parameters<typeof Avatar>[0]['user']} size="md" />
-                    <div className="min-w-0">
-                      <div className="font-semibold truncate">{userLabel(fr, 'addressee')}</div>
-                      <div className="text-xs text-gray-500 truncate">@{fr.addressee?.username || "-"}</div>
+            <div className="max-w-3xl mx-auto space-y-3">
+              {outgoing.map((fr) => {
+                const isProcessing = processingIds.has(fr.id);
+                const addressee = fr.addressee;
+                return (
+                  <Card key={fr.id} className={`p-4 transition-opacity ${isProcessing ? "opacity-60" : ""}`}>
+                    <div className="flex items-center justify-between gap-4">
+                      <button
+                        className="flex items-center gap-3 min-w-0 flex-1 hover:bg-accent/50 rounded-lg p-2 -m-2 transition-colors"
+                        onClick={() => addressee?.username && handleUserClick(addressee.username)}
+                        disabled={!addressee?.username}
+                      >
+                        <Avatar user={addressee as Parameters<typeof Avatar>[0]['user']} size="md" />
+                        <div className="min-w-0 flex-1 text-left">
+                          <div className="font-semibold truncate">{userLabel(fr, 'addressee')}</div>
+                          <div className="text-xs text-gray-500 truncate">@{addressee?.username || "-"}</div>
+                        </div>
+                      </button>
+                      <div className="shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full"
+                          disabled={isProcessing}
+                          onClick={() => handleCancel(fr.id)}
+                        >
+                          {isProcessing ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                          ) : (
+                            <XCircle className="h-4 w-4 mr-1" />
+                          )}
+                          Huỷ lời mời
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <Button
-                      variant="outline"
-                      className="rounded-full"
-                      disabled={isProcessing}
-                      onClick={() => handleCancel(fr.id)}
-                    >
-                      {isProcessing ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                      ) : (
-                        <XCircle className="h-4 w-4 mr-1" />
-                      )}
-                      Huỷ lời mời
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })
+                  </Card>
+                );
+              })}
+            </div>
           )}
         </TabsContent>
       </Tabs>

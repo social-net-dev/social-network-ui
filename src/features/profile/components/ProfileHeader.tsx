@@ -1,8 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Edit2, MoreHorizontal, Camera, Loader2, UserPlus, UserCheck } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { Calendar, Edit2, MoreHorizontal, Camera, Loader2, UserPlus, UserCheck, MapPin, FileText, Users, Settings } from "lucide-react"
 import { useRef } from "react"
+import { useNavigate } from "react-router-dom"
 import { useProfile } from "../hooks/useProfile"
 import { useQueryClient } from "@tanstack/react-query"
 import { useFriendsSendRequest } from "@/lib/api/generated/friends/friends"
@@ -16,24 +18,41 @@ interface ProfileHeaderProps {
   onEdit?: () => void
 }
 
+interface ApiError {
+  response?: {
+    data?: {
+      error?: string
+      detail?: string
+    }
+  }
+}
+
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  VERIFIED: { label: "ĐÃ XÁC MINH", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-  UNVERIFIED: { label: "CHƯA XÁC MINH", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
-  LOCKED: { label: "BỊ KHÓA", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
-  DISABLED: { label: "VÔ HIỆU HÓA", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400" },
-  DEACTIVATED: { label: "ĐÃ HỦY KÍCH HOẠT", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400" },
-  TERMINATED: { label: "ĐÃ XÓA", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+  ACTIVE: { label: "Hoạt động", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  VERIFIED: { label: "Đã xác minh", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  UNVERIFIED: { label: "Chưa xác minh", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  LOCKED: { label: "Bị khóa", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+  DISABLED: { label: "Vô hiệu hóa", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400" },
+  DEACTIVATED: { label: "Đã hủy kích hoạt", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400" },
+  TERMINATED: { label: "Đã xóa", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
 }
 
 const ROLE_MAP: Record<string, { label: string; className: string }> = {
-  ADMIN: { label: "QUẢN TRỊ VIÊN", className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
-  TEACHER: { label: "GIẢNG VIÊN", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-  STUDENT: { label: "SINH VIÊN", className: "bg-etechs-primary/10 text-etechs-secondary dark:text-etechs-primary" },
-  INSTRUCTOR: { label: "GIẢNG VIÊN", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  ADMIN: { label: "Quản trị viên", className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
+  TEACHER: { label: "Giảng viên", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  STUDENT: { label: "Sinh viên", className: "bg-etechs-primary/10 text-etechs-secondary dark:text-etechs-primary" },
+  INSTRUCTOR: { label: "Giảng viên", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+}
+
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return n.toString()
 }
 
 export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: ProfileHeaderProps) {
   const { uploadAvatar, uploadBackground, isUpdating } = useProfile()
+  const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const backgroundInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
@@ -46,202 +65,235 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
       toast.success("Đã gửi lời mời kết bạn")
       queryClient.invalidateQueries({ queryKey: ['profiles', profile.username] })
       queryClient.invalidateQueries({ queryKey: ["friends"] })
-    } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.response?.data?.detail || "Lỗi khi gửi lời mời"
+    } catch (err: unknown) {
+      const apiError = err as ApiError
+      const msg = apiError?.response?.data?.error || apiError?.response?.data?.detail || "Lỗi khi gửi lời mời"
       toast.error(typeof msg === "string" ? msg : JSON.stringify(msg))
     }
   }
 
-  const handleAvatarClick = () => {
-    if (isCurrentUser) {
-      fileInputRef.current?.click()
-    }
-  }
-
-  const handleBackgroundClick = () => {
-    if (isCurrentUser) {
-      backgroundInputRef.current?.click()
-    }
-  }
+  const handleAvatarClick = () => { if (isCurrentUser) fileInputRef.current?.click() }
+  const handleBackgroundClick = () => { if (isCurrentUser) backgroundInputRef.current?.click() }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      try {
-        await uploadAvatar(file)
-      } catch (error) {
-        console.error("Failed to upload avatar:", error)
-        alert("Đã có lỗi khi tải lên ảnh đại diện")
-      }
-    }
+    if (!file) return
+    try { await uploadAvatar(file) } catch { toast.error("Đã có lỗi khi tải lên ảnh đại diện") }
   }
 
   const handleBackgroundChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      try {
-        await uploadBackground(file)
-      } catch (error) {
-        console.error("Failed to upload background:", error)
-        alert("Đã có lỗi khi tải lên ảnh bìa")
-      }
-    }
+    if (!file) return
+    try { await uploadBackground(file) } catch { toast.error("Đã có lỗi khi tải lên ảnh bìa") }
   }
 
-  const getInitials = () => {
-    if (profile.displayName) {
-      return profile.displayName.slice(0, 2).toUpperCase()
-    }
-    return "?"
-  }
-
-  const initials = getInitials()
+  const initials = profile.displayName ? profile.displayName.slice(0, 2).toUpperCase() : "?"
   const statusConfig = profile.accountStatus ? STATUS_MAP[profile.accountStatus] : null
   const roleConfig = profile.role ? ROLE_MAP[profile.role] : null
-  const joinDate = profile.createdAt 
+  const joinDate = profile.createdAt
     ? new Date(profile.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
-    : 'Tháng 1 năm 2024'
+    : null
 
-  // Dynamic avatar and cover based on profile id from free sources (DiceBear & Picsum)
-  const fallbackAvatarUrl = getDefaultAvatar();
-  const fallbackCoverUrl = `https://picsum.photos/seed/${profile.id}/1200/400`;
-  const coverUrl = profile.background || fallbackCoverUrl;
+  const fallbackAvatarUrl = getDefaultAvatar()
+  const coverUrl = profile.background
+
+  const postsCount = profile.postsCount ?? 0
+  const followersCount = profile.followers ?? 0
+  const followingCount = profile.following ?? 0
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden group">
-      {/* Compact Cover Image */}
-      <div className="relative h-32 sm:h-40 bg-etechs-secondary">
-        <input 
-          type="file" 
-          ref={backgroundInputRef} 
-          className="hidden" 
-          accept="image/*" 
-          onChange={handleBackgroundChange}
-        />
-        <div 
-          className="absolute inset-0 bg-cover bg-center" 
-          style={{ backgroundImage: `url(${coverUrl})` }} 
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-        
+    <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
+      {/* Cover */}
+      <div className="relative h-40 sm:h-56 bg-etechs-secondary group/cover overflow-hidden">
+        <input type="file" ref={backgroundInputRef} className="hidden" accept="image/*" onChange={handleBackgroundChange} />
+        {coverUrl ? (
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover/cover:scale-[1.02]"
+              style={{ backgroundImage: `url(${coverUrl})` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-etechs-primary/20 to-etechs-secondary/30" />
+        )}
         {isCurrentUser && (
-          <Button 
-            size="sm" 
-            variant="secondary"
+          <Button
+            size="sm"
             onClick={handleBackgroundClick}
-            className="absolute top-4 right-4 h-8 bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+            className="absolute top-3 right-3 h-8 text-xs bg-black/40 hover:bg-black/60 text-white border-0 backdrop-blur-sm gap-1.5 opacity-0 group-hover/cover:opacity-100 transition-opacity"
           >
-            <Camera className="w-4 h-4 mr-2" />
-            Cập nhật ảnh bìa
+            <Camera className="w-3.5 h-3.5" />
+            Đổi ảnh bìa
           </Button>
         )}
       </div>
 
-      <div className="px-6 pb-6">
-        <div className="relative flex flex-col sm:flex-row items-start sm:items-end -mt-12 sm:-mt-16 gap-4 sm:gap-6">
-          {/* Avatar Section */}
-          <div className="relative shrink-0 mx-auto sm:mx-0">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*" 
-              onChange={handleFileChange}
-            />
-            <Avatar 
-              className={`w-24 h-24 sm:w-32 sm:h-32 border-4 border-card shadow-sm ring-1 ring-border/10 ${isCurrentUser ? 'cursor-pointer' : ''}`}
+      <div className="px-4 sm:px-6 pb-5">
+        {/* Avatar + Name row */}
+        <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 -mt-12 sm:-mt-16 mb-4">
+          {/* Avatar */}
+          <div className="relative shrink-0 self-center sm:self-auto">
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+            <Avatar
+              className={`w-24 h-24 sm:w-32 sm:h-32 border-4 border-card shadow-lg ring-2 ring-primary/20 transition-all ${isCurrentUser ? 'cursor-pointer hover:ring-primary/50' : ''}`}
               onClick={handleAvatarClick}
             >
               <AvatarImage src={profile.avatar || fallbackAvatarUrl} alt={profile.displayName} className="object-cover" />
               <AvatarFallback className="text-2xl font-bold bg-muted text-muted-foreground">
-                {isUpdating ? <Loader2 className="w-6 h-6 animate-spin" /> : (initials || "?")}
+                {isUpdating ? <Loader2 className="w-6 h-6 animate-spin" /> : initials}
               </AvatarFallback>
             </Avatar>
             {isCurrentUser && !isUpdating && (
-              <div 
-                className="absolute bottom-0 right-0 p-1.5 bg-etechs-primary text-etechs-secondary rounded-full shadow-sm cursor-pointer border-2 border-card hover:scale-110 transition-transform"
+              <div
+                className="absolute bottom-1 right-1 p-1.5 bg-etechs-primary text-etechs-secondary rounded-full shadow-md cursor-pointer border-2 border-card hover:scale-110 transition-transform"
                 onClick={handleAvatarClick}
               >
-                <Edit2 className="w-3.5 h-3.5" />
+                <Camera className="w-3.5 h-3.5" />
               </div>
             )}
           </div>
 
-          {/* Info Section */}
-          <div className="flex-1 min-w-0 pt-2 sm:pb-1 w-full text-center sm:text-left">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Name + badges + actions */}
+          <div className="flex-1 min-w-0 pb-1 text-center sm:text-left">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-center sm:justify-start gap-2 mb-1">
-                  <h1 className="text-2xl font-bold text-foreground truncate">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mb-1.5">
+                  <h1 className="text-2xl font-bold text-foreground leading-tight tracking-tight">
                     {profile.displayName}
                   </h1>
                   {profile.username && (
-                    <span className="text-muted-foreground text-base font-medium">@{profile.username}</span>
+                    <span className="text-muted-foreground text-sm font-medium">@{profile.username}</span>
                   )}
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {statusConfig && (
-                        <Badge variant="secondary" className={`${statusConfig.className} border-0 h-5 px-2 text-[10px] uppercase font-bold tracking-wider`}>
-                        {statusConfig.label}
-                        </Badge>
-                    )}
-                    {roleConfig && (
-                        <Badge variant="secondary" className={`${roleConfig.className} border-0 h-5 px-2 text-[10px] uppercase font-bold tracking-wider`}>
-                        {roleConfig.label}
-                        </Badge>
-                    )}
-                  </div>
+                </div>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
+                  {roleConfig && (
+                    <Badge variant="secondary" className={`${roleConfig.className} border-0 h-5 px-2.5 text-[11px] font-semibold`}>
+                      {roleConfig.label}
+                    </Badge>
+                  )}
+                  {statusConfig && (
+                    <Badge variant="secondary" className={`${statusConfig.className} border-0 h-5 px-2.5 text-[11px] font-semibold`}>
+                      {statusConfig.label}
+                    </Badge>
+                  )}
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-center gap-2">
+              {/* Action Buttons */}
+              <div className="flex items-center justify-center sm:justify-end gap-2 shrink-0">
                 {isCurrentUser ? (
-                  <Button onClick={onEdit} className="bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 h-9 px-4 rounded-lg font-medium text-sm">
-                    <Edit2 className="w-4 h-4 mr-2" />
-                    Chỉnh sửa
-                  </Button>
+                  <>
+                    <Button
+                      onClick={onEdit}
+                      size="sm"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 rounded-lg font-medium text-sm gap-1.5"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      Chỉnh sửa hồ sơ
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 rounded-lg border-border hover:bg-muted"
+                      onClick={() => navigate('/settings')}
+                      title="Cài đặt"
+                    >
+                      <Settings className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  </>
                 ) : profile.isFriend ? (
-                  <Button variant="secondary" className="h-9 px-4 rounded-lg font-medium text-sm bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 cursor-default" disabled>
-                    <UserCheck className="w-4 h-4 mr-2" />
+                  <Button variant="secondary" size="sm" className="h-9 px-4 rounded-lg font-medium text-sm bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 gap-1.5" disabled>
+                    <UserCheck className="w-3.5 h-3.5" />
                     Bạn bè
                   </Button>
                 ) : (
                   <Button
-                    className="bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 h-9 px-4 rounded-lg font-medium text-sm"
+                    size="sm"
+                    className="h-9 px-4 rounded-lg font-medium text-sm gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
                     disabled={isFriendActionPending || !profile.username}
                     onClick={handleSendFriendRequest}
                   >
-                    {isFriendActionPending ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <UserPlus className="w-4 h-4 mr-2" />
-                    )}
+                    {isFriendActionPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
                     Kết bạn
                   </Button>
                 )}
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-muted">
-                  <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-                </Button>
+                {!isCurrentUser && (
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-muted">
+                    <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bio & Details - Indented on Desktop to align with Name */}
-        <div className="mt-6 sm:ml-[152px]">
-          {profile.bio && (
-            <p className="text-foreground/80 leading-relaxed mb-4 text-sm max-w-2xl text-center sm:text-left">
-              {profile.bio}
-            </p>
-          )}
+        {/* Bio */}
+        {profile.bio && (
+          <p className="text-foreground/80 leading-relaxed text-sm max-w-2xl mb-3 line-clamp-3">
+            {profile.bio}
+          </p>
+        )}
 
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-6 gap-y-2 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 shrink-0" />
+        {/* Meta info */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mb-4">
+          {profile.personalInfo?.location && (
+            <div className="flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <span>{profile.personalInfo.location}</span>
+            </div>
+          )}
+          {profile.personalInfo?.school && (
+            <div className="flex items-center gap-1">
+              <span>🎓</span>
+              <span>{profile.personalInfo.school}</span>
+            </div>
+          )}
+          {joinDate && (
+            <div className="flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 shrink-0" />
               <span>Tham gia {joinDate}</span>
             </div>
-          </div>
+          )}
+        </div>
+
+        <Separator className="mb-4" />
+
+        {/* Integrated Stats */}
+        <div className="flex items-center gap-1 justify-center sm:justify-start">
+          <button className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors group/stat text-center sm:text-left">
+            <div className="flex items-center gap-1.5 justify-center">
+              <FileText className="w-4 h-4 text-blue-500" />
+              <span className="text-base font-bold text-foreground group-hover/stat:text-primary transition-colors">
+                {formatCount(postsCount)}
+              </span>
+            </div>
+            <span className="text-xs text-muted-foreground">Bài viết</span>
+          </button>
+
+          <div className="w-px h-8 bg-border mx-1" />
+
+          <button className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors group/stat text-center sm:text-left">
+            <div className="flex items-center gap-1.5 justify-center">
+              <Users className="w-4 h-4 text-etechs-primary" />
+              <span className="text-base font-bold text-foreground group-hover/stat:text-primary transition-colors">
+                {formatCount(followersCount)}
+              </span>
+            </div>
+            <span className="text-xs text-muted-foreground">Người theo dõi</span>
+          </button>
+
+          <div className="w-px h-8 bg-border mx-1" />
+
+          <button className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors group/stat text-center sm:text-left">
+            <div className="flex items-center gap-1.5 justify-center">
+              <UserCheck className="w-4 h-4 text-purple-500" />
+              <span className="text-base font-bold text-foreground group-hover/stat:text-primary transition-colors">
+                {formatCount(followingCount)}
+              </span>
+            </div>
+            <span className="text-xs text-muted-foreground">Đang theo dõi</span>
+          </button>
         </div>
       </div>
     </div>
