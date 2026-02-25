@@ -48,10 +48,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ text, selectedFiles,
 
       <div className="flex gap-2 items-end">
         <input type="file" ref={fileInputRef} className="hidden" multiple onChange={onFileSelect} />
-        <button className="px-3 py-2 border rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={onAttachClick} title="Đính kèm ảnh">
+        <button className="px-3 py-2 border border-border rounded hover:bg-muted transition-colors" onClick={onAttachClick} title="Đính kèm ảnh">
           📎
         </button>
-        <textarea ref={textareaRef} value={text} onChange={handleTextChange} placeholder="Nhập tin nhắn..." className="flex-1 p-2 rounded border bg-white dark:bg-[#02182B] resize-none max-h-32 overflow-y-auto" rows={1} onKeyDown={handleKeyDown} />
+        <textarea ref={textareaRef} value={text} onChange={handleTextChange} placeholder="Nhập tin nhắn..." className="flex-1 p-2 rounded border border-border bg-background text-foreground placeholder:text-muted-foreground resize-none max-h-32 overflow-y-auto" rows={1} onKeyDown={handleKeyDown} />
         <button className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90" onClick={onSend}>
           Gửi
         </button>

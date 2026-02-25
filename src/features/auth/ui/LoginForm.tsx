@@ -46,14 +46,14 @@ export function LoginForm({ initialEmail }: LoginFormProps) {
         </Label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Mail className="h-5 w-5 text-gray-400" />
+            <Mail className="h-5 w-5 text-muted-foreground" />
           </div>
           <Input
             id="email"
             type="email"
             placeholder="name@company.com"
             {...form.register('email')}
-            className="pl-10 h-12 rounded-xl bg-gray-50 dark:bg-black/20 border-gray-200 dark:border-gray-600"
+            className="pl-10 h-12 rounded-xl bg-input/50 border-border"
             disabled={isLoading}
           />
         </div>
@@ -66,20 +66,20 @@ export function LoginForm({ initialEmail }: LoginFormProps) {
         </Label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Lock className="h-5 w-5 text-gray-400" />
+            <Lock className="h-5 w-5 text-muted-foreground" />
           </div>
           <Input
             id="password"
             type={showPassword ? 'text' : 'password'}
             placeholder="••••••••"
             {...form.register('password')}
-            className="pl-10 pr-10 h-12 rounded-xl bg-gray-50 dark:bg-black/20 border-gray-200 dark:border-gray-600"
+            className="pl-10 pr-10 h-12 rounded-xl bg-input/50 border-border"
             disabled={isLoading}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer hover:text-gray-600 dark:hover:text-gray-200 text-gray-400 transition-colors"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
           >
             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
@@ -96,7 +96,7 @@ export function LoginForm({ initialEmail }: LoginFormProps) {
             className="h-4 w-4"
             disabled={isLoading}
           />
-          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+          <label htmlFor="remember-me" className="ml-2 block text-sm text-muted-foreground cursor-pointer">
             Ghi nhớ đăng nhập
           </label>
         </div>
@@ -104,7 +104,7 @@ export function LoginForm({ initialEmail }: LoginFormProps) {
           <button
             type="button"
             onClick={() => navigate('/forgot-password')}
-            className="font-medium text-[#0E4E5A] dark:text-[#E2F046] hover:underline transition-all"
+            className="font-medium text-primary hover:underline transition-all"
           >
             Quên mật khẩu?
           </button>
@@ -116,7 +116,7 @@ export function LoginForm({ initialEmail }: LoginFormProps) {
       <Button
         type="submit"
         disabled={isLoading}
-        className="w-full h-12 rounded-xl font-bold text-[#0E4E5A] bg-[#E2F046] hover:bg-[#cedd30] shadow-sm transform hover:scale-[1.02] transition-all duration-200"
+        className="w-full h-12 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:scale-[1.02] transition-all duration-200"
       >
         {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập vào nền tảng'}
       </Button>

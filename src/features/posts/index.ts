@@ -1,18 +1,20 @@
-export { PostCard } from '@/features/home/components/PostCard';
-export { FeedList } from '@/features/home/components/FeedList';
-export { CommentSection } from '@/features/home/components/CommentSection';
-export { ShareDialog } from '@/features/home/components/ShareDialog';
-export { SharedPostCard } from '@/features/home/components/SharedPostCard';
-export { CreatePostModal } from '@/features/home/components/CreatePostModal';
-export { CreatePostTrigger } from '@/features/home/components/CreatePostTrigger';
+export { PostCard } from './components/PostCard';
+export { FeedList } from './components/FeedList';
+export { CommentSection } from './components/CommentSection';
+export { ShareDialog } from './components/ShareDialog';
+export { SharedPostCard } from './components/SharedPostCard';
+export { CreatePostModal } from './components/CreatePostModal';
+export { CreatePostTrigger } from './components/CreatePostTrigger';
+export { CreatePostForm } from './components/CreatePostForm';
+export { LikeButton } from './components/LikeButton';
 
-export { usePostActions } from '@/features/home/hooks/usePostActions';
-export { useComments } from '@/features/home/hooks/useComments';
-export { useFeed } from '@/features/home/hooks/useFeed';
+export { usePostActions } from './hooks/usePostActions';
+export { useComments } from './hooks/useComments';
+export { useFeed } from './hooks/useFeed';
 
 export type {
   FeedComment,
   ReactionType,
   Author,
   MediaFile,
-} from '@/features/home/types/feed.types';
+} from './types/feed.types';

@@ -173,7 +173,7 @@ export const SearchUsers: React.FC = () => {
               <div key={user.id} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 {/* Avatar */}
                 <Avatar className="w-14 h-14 flex-shrink-0">
-                  {user.avatarPath ? <img src={user.avatarPath} alt={user.displayName} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-primary text-white flex items-center justify-center text-lg font-semibold">{user.displayName.charAt(0).toUpperCase()}</div>}
+                  {user.avatar ? <img src={user.avatar} alt={user.displayName} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-primary text-white flex items-center justify-center text-lg font-semibold">{user.displayName.charAt(0).toUpperCase()}</div>}
                 </Avatar>
 
                 {/* User Info */}

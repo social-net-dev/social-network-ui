@@ -174,7 +174,7 @@ export const SearchUsersMini: React.FC = () => {
             {searchResults.map(user => (
               <div key={user.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <Avatar className="w-10 h-10 flex-shrink-0">
-                  {user.avatarPath ? <img src={user.avatarPath} alt={user.displayName} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-primary text-white flex items-center justify-center text-sm font-semibold">{user.displayName.charAt(0).toUpperCase()}</div>}
+                  {user.avatar ? <img src={user.avatar} alt={user.displayName} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-primary text-white flex items-center justify-center text-sm font-semibold">{user.displayName.charAt(0).toUpperCase()}</div>}
                 </Avatar>
 
                 <div className="flex-1 min-w-0">

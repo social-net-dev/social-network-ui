@@ -8,11 +8,10 @@ import { GroupDetailPage } from '@/features/groups/pages/GroupDetailPage';
 import { GroupsPage } from '@/features/groups/pages/GroupsPage';
 import { MarketplacePage } from '@/features/marketplace/pages/MarketplacePage';
 import { SearchPage } from '@/features/search/pages/SearchPage';
-import { ProfilePage, ProfileSettingsPage, PersonalProfilePage } from '@/features/profile/routes';
+import { ProfilePage, ProfileSettingsPage } from '@/features/profile/routes';
 import { FieldDetailPage } from '@/features/fields/pages/FieldDetailPage';
 import { AdminAccountsPage } from '@/features/admin/pages/AdminAccountsPage';
 import { AdminVerificationPage } from '@/features/admin/pages/VerificationPage';
-import { DevToolsPage } from '@/features/dev/pages/DevToolsPage';
 import { ConversationPage } from '@/features/message/routes';
 import { FriendRequestsPage } from '@/features/friends/pages/FriendRequestsPage';
 import { FriendsListPage } from '@/features/friends/pages/FriendsListPage';
@@ -55,9 +54,6 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         </Route>
 
-        {/* DevTools - accessible in development only */}
-        {import.meta.env.DEV && <Route path="/devtools" element={<DevToolsPage />} />}
-
         {/* Protected Routes - Only accessible when logged in */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
@@ -74,7 +70,7 @@ function App() {
             <Route path="/friends" element={<FriendsListPage />} />
             <Route path="/friends/requests" element={<FriendRequestsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/me" element={<PersonalProfilePage />} />
+            <Route path="/me" element={<Navigate to="/profile" replace />} />
             <Route path="/profile/:userId" element={<ProfilePage />} />
             <Route path="/recommendations" element={<RecommendationPage />} />
             <Route path="/groups/:groupId" element={<GroupDetailPage />} />

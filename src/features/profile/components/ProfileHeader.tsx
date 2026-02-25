@@ -10,10 +10,12 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useFriendsSendRequest } from "@/lib/api/generated/friends/friends"
 import { toast } from "sonner"
 import { getDefaultAvatar } from "@/lib/utils/api"
-import type { User } from "@/lib/api/generated/model"
+import type { UserPublic, UserMe, UserPublicViewerContext } from "@/lib/api/generated/model"
+
+type ProfileUser = UserPublic | UserMe
 
 interface ProfileHeaderProps {
-  profile: User
+  profile: ProfileUser
   isCurrentUser?: boolean
   onEdit?: () => void
 }
@@ -58,6 +60,11 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
   const queryClient = useQueryClient()
   const sendRequestMutation = useFriendsSendRequest()
   const isFriendActionPending = sendRequestMutation.isPending
+
+  // Type guard to check if profile has viewer_context (UserPublic)
+  const hasViewerContext = (profile: ProfileUser): profile is UserPublic & { viewer_context: UserPublicViewerContext } => {
+    return 'viewer_context' in profile && profile.viewer_context !== undefined
+  }
 
   const handleSendFriendRequest = async () => {
     try {
@@ -202,7 +209,7 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
                       <Settings className="w-4 h-4 text-muted-foreground" />
                     </Button>
                   </>
-                ) : profile.isFriend ? (
+                ) : hasViewerContext(profile) && profile.viewer_context.is_friend ? (
                   <Button variant="secondary" size="sm" className="h-9 px-4 rounded-lg font-medium text-sm bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 gap-1.5" disabled>
                     <UserCheck className="w-3.5 h-3.5" />
                     Bạn bè

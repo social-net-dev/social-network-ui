@@ -44,8 +44,14 @@ export function FieldHeader({ field, isLoading, onFollow, onUnfollow, isActionLo
     <div className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/50 mb-6 animate-fadeIn">
       {/* Banner */}
       <div className="h-48 w-full relative overflow-hidden group">
-        <img src={field.bannerUrl || 'https://picsum.photos/1200/400?random=default-banner'} alt={field.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        {field.bannerUrl ? (
+          <>
+            <img src={field.bannerUrl} alt={field.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          </>
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5" />
+        )}
       </div>
 
       {/* Info Section */}

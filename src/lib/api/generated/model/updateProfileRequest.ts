@@ -5,6 +5,7 @@
  * API contract cho social-network-ui (main API + message service).
  * OpenAPI spec version: 1.0
  */
+import type { PersonalInfo } from './personalInfo';
 
 /**
  * Profile update request payload.
@@ -30,4 +31,6 @@ export interface UpdateProfileRequest {
   bio?: string;
   /** Updated birth date (ISO 8601 format). */
   birth_date?: string;
+  /** Updated personal information (education, location, etc). */
+  personal_info?: PersonalInfo;
 }

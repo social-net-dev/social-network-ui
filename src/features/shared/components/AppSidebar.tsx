@@ -1,4 +1,4 @@
-import { Home, User, MessageSquare, Bell, Sparkles, Hash, UserPlus, Users, Search, Compass } from 'lucide-react';
+import { Home, User, MessageSquare, Bell, Sparkles, UserPlus, Users, Search, Compass, Store } from 'lucide-react';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { NavMain } from './sidebar/NavMain';
 import { NavAdmin } from './sidebar/NavAdmin';
@@ -13,18 +13,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { unreadCount } = useNotifications();
   const unreadMessagesCount = useMessageStore(state => state.totalUnread);
 
-  const menuItems = [
+  const mainItems = [
     { icon: Home, label: 'Trang chủ', path: '/' },
-    { icon: Compass, label: 'Lĩnh vực', path: '/explore' },
-    { icon: User, label: 'Tôi', path: '/profile/me' },
-    { icon: User, label: 'Trang cá nhân', path: '/profile' },
+    { icon: Compass, label: 'Khám phá', path: '/explore' },
+    { icon: MessageSquare, label: 'Tin nhắn', path: '/messages', badge: unreadMessagesCount },
+    { icon: Bell, label: 'Thông báo', path: '/notifications', badge: unreadCount },
+  ];
+
+  const socialItems = [
+    { icon: User, label: 'Trang cá nhân', path: '/me' },
     { icon: Search, label: 'Tìm kiếm', path: '/search' },
     { icon: Users, label: 'Bạn bè', path: '/friends' },
     { icon: UserPlus, label: 'Lời mời kết bạn', path: '/friends/requests' },
     { icon: Sparkles, label: 'Gợi ý kết nối', path: '/recommendations' },
-    { icon: Hash, label: 'Lĩnh vực', path: '/fields/cong-nghe' },
-    { icon: MessageSquare, label: 'Tin nhắn', path: '/messages', badge: unreadMessagesCount },
-    { icon: Bell, label: 'Thông báo', path: '/notifications', badge: unreadCount },
+    { icon: Store, label: 'Marketplace', path: '/marketplace' },
   ];
 
   return (
@@ -39,7 +41,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">ETECHS</span>
-                  <span className="truncate text-xs">Mạng xã hội</span>
+                  <span className="truncate text-xs text-muted-foreground">Mạng xã hội</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -47,7 +49,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={menuItems} />
+        <NavMain items={mainItems} groupLabel="Chính" />
+        <NavMain items={socialItems} groupLabel="Kết nối" />
         <NavAdmin />
         <NavSecondary />
       </SidebarContent>

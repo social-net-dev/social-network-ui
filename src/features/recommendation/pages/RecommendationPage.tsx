@@ -169,8 +169,8 @@ export function RecommendationPage() {
                         <Sparkles className="h-6 w-6" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gợi ý kết nối</h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <h1 className="text-3xl font-bold text-foreground">Gợi ý kết nối</h1>
+                        <p className="text-sm text-muted-foreground">
                             Khám phá những người học phù hợp dựa trên lớp, trường và lĩnh vực học tập.
                         </p>
                     </div>
@@ -178,7 +178,7 @@ export function RecommendationPage() {
 
                 <div className="flex flex-col md:flex-row md:items-center gap-3">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
@@ -186,9 +186,9 @@ export function RecommendationPage() {
                             className="pl-10 h-11"
                         />
                     </div>
-                    <div className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f2430] px-3 h-11">
+                    <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 h-11">
                         <GraduationCap className="h-4 w-4 text-amber-500" />
-                        <span className="text-sm text-gray-600 dark:text-gray-300">Tối thiểu</span>
+                        <span className="text-sm text-muted-foreground">Tối thiểu</span>
                         <Input
                             type="number"
                             min={0}
@@ -197,18 +197,18 @@ export function RecommendationPage() {
                             onChange={(event) => setMinHats(Number(event.target.value) || 0)}
                             className="h-8 w-20"
                         />
-                        <span className="text-sm text-gray-600 dark:text-gray-300">nón</span>
+                        <span className="text-sm text-muted-foreground">nón</span>
                     </div>
                 </div>
             </header>
 
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)}>
-                <TabsList className="bg-white dark:bg-card p-1 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 w-full justify-start flex flex-wrap">
+                <TabsList className="h-auto bg-transparent border-b border-border w-full justify-start p-0 rounded-none flex flex-wrap">
                     {TAB_OPTIONS.map((tab) => (
                         <TabsTrigger
                             key={tab.value}
                             value={tab.value}
-                            className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5"
+                            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 font-medium"
                         >
                             {tab.label}
                         </TabsTrigger>
@@ -218,40 +218,34 @@ export function RecommendationPage() {
                 {TAB_OPTIONS.map((tab) => (
                     <TabsContent key={tab.value} value={tab.value} className="space-y-6 mt-6">
                         {isLoading ? (
-                            <div className="py-12 text-center text-gray-500">Đang tải gợi ý...</div>
+                            <div className="py-12 text-center text-muted-foreground">Đang tải gợi ý...</div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
                                 {suggestions.length === 0 ? (
                                     <Card className="border-dashed md:col-span-2 xl:col-span-4">
-                                        <CardContent className="py-12 text-center text-gray-500">
+                                        <CardContent className="py-12 text-center text-muted-foreground">
                                             Không có gợi ý phù hợp. Hãy thử giảm bộ lọc hoặc tìm kiếm khác.
                                         </CardContent>
                                     </Card>
                                 ) : (
                                     suggestions.map((user) => {
                                         return (
-                                            <Card key={user.id} className="border-none shadow-lg bg-white dark:bg-card overflow-hidden">
+                                            <Card key={user.id} className="border border-border/50 shadow-sm bg-card overflow-hidden hover:shadow-md transition-shadow">
                                                 <Link to={`/profile/${user.username}`}>
-                                                    <div
-                                                        className="relative h-28 bg-gradient-to-br from-etechs-primary/30 via-white to-etechs-secondary/10 dark:from-etechs-secondary/30 dark:to-etechs-primary/10"
-                                                    >
-                                                        <div className="size-16 absolute left-1/2 -bottom-8 -translate-x-1/2">
-                                                            <Avatar user={user} size="lg" className="ring-4 ring-white dark:ring-[#0a1f29]" />
-                                                        </div>
+                                                    <div className="relative h-24 bg-card flex items-center justify-center">
+                                                        <Avatar user={user} size="xl" className="ring-4 ring-card" />
                                                     </div>
                                                 </Link>
                                                 <CardContent className="pt-10 pb-4 px-4 flex flex-col gap-3">
-                                                    <Link to={`/profile/${user.username}`} className="text-center space-y-0.5 hover:opacity-80 transition-opacity">
-                                                        <div className="flex items-center justify-center gap-2">
-                                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{user.name}</h3>
-                                                            <Badge variant="secondary" className="text-xs">
-                                                                {user.role}
-                                                            </Badge>
-                                                        </div>
-                                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                    <Link to={`/profile/${user.username}`} className="text-center space-y-1 hover:opacity-80 transition-opacity min-w-0">
+                                                        <h3 className="text-lg font-semibold text-foreground break-words px-2">{user.name}</h3>
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            {user.role}
+                                                        </Badge>
+                                                        <p className="text-sm text-muted-foreground truncate px-2">
                                                             {user.className} • {user.school}
                                                         </p>
-                                                        <p className="text-sm text-gray-500 dark:text-gray-400">Lĩnh vực: {user.field}</p>
+                                                        <p className="text-sm text-muted-foreground truncate px-2">Lĩnh vực: {user.field}</p>
                                                     </Link>
 
                                                     <div className="flex flex-wrap justify-center gap-2">

@@ -47,7 +47,7 @@ export function RegisterForm() {
                 <Label htmlFor="email">Email *</Label>
                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
+                        <Mail className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <Input
                         id="email"
@@ -66,7 +66,7 @@ export function RegisterForm() {
                     <Label htmlFor="password">Mật khẩu *</Label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Lock className="h-5 w-5 text-gray-400" />
+                            <Lock className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <Input
                             id="password"
@@ -79,7 +79,7 @@ export function RegisterForm() {
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer hover:text-gray-600 dark:hover:text-gray-200 text-gray-400 transition-colors"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
                         >
                             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
@@ -91,7 +91,7 @@ export function RegisterForm() {
                     <Label htmlFor="confirmPassword">Xác nhận mật khẩu *</Label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Lock className="h-5 w-5 text-gray-400" />
+                            <Lock className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <Input
                             id="confirmPassword"
@@ -104,7 +104,7 @@ export function RegisterForm() {
                         <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer hover:text-gray-600 dark:hover:text-gray-200 text-gray-400 transition-colors"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
                         >
                             {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
@@ -122,7 +122,7 @@ export function RegisterForm() {
                     <Label htmlFor="displayName">Tên hiển thị *</Label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <User className="h-5 w-5 text-gray-400" />
+                            <User className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <Input
                             id="displayName"
@@ -142,7 +142,7 @@ export function RegisterForm() {
                     <Label htmlFor="phone">Số điện thoại</Label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Phone className="h-5 w-5 text-gray-400" />
+                            <Phone className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <Input
                             id="phone"
@@ -167,7 +167,7 @@ export function RegisterForm() {
                     <select
                         id="role"
                         {...form.register("role")}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1b7a78] dark:bg-[#132d3b] dark:border-gray-600"
+                        className="w-full px-3 py-2 border border-border rounded-md bg-input/50 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         disabled={isLoading}
                     >
                         <option value="STUDENT">Người học</option>
@@ -181,7 +181,7 @@ export function RegisterForm() {
                     <select
                         id="gender"
                         {...form.register("gender")}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1b7a78] dark:bg-[#132d3b] dark:border-gray-600"
+                        className="w-full px-3 py-2 border border-border rounded-md bg-input/50 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         disabled={isLoading}
                     >
                         <option defaultValue="" value="">-- Chọn giới tính --</option>
@@ -213,10 +213,10 @@ export function RegisterForm() {
                             {personalDocumentsPreviews.length < 5 && (
                                 <label
                                     htmlFor="personalDocuments"
-                                    className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-[#1b7a78] dark:border-gray-600"
+                                    className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-border rounded-md cursor-pointer hover:border-primary transition-colors"
                                 >
-                                    <Upload className="h-6 w-6 text-gray-400 mb-1" />
-                                    <span className="text-xs text-gray-500">Thêm ảnh</span>
+                                    <Upload className="h-6 w-6 text-muted-foreground mb-1" />
+                                    <span className="text-xs text-muted-foreground">Thêm ảnh</span>
                                 </label>
                             )}
                         </div>
@@ -233,10 +233,10 @@ export function RegisterForm() {
                 ) : (
                     <label
                         htmlFor="personalDocuments"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-[#1b7a78] dark:border-gray-600"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-md cursor-pointer hover:border-primary transition-colors"
                     >
-                        <Upload className="h-8 w-8 text-gray-400 mb-1" />
-                        <span className="text-xs text-gray-500">Click để upload (tuỳ chọn)</span>
+                        <Upload className="h-8 w-8 text-muted-foreground mb-1" />
+                        <span className="text-xs text-muted-foreground">Click để upload (tuỳ chọn)</span>
                         <input
                             id="personalDocuments"
                             type="file"
@@ -262,13 +262,13 @@ export function RegisterForm() {
                         disabled={isLoading}
                     />
                 </div>
-                <Label htmlFor="consent" className="font-normal text-xs text-slate-600 dark:text-slate-300 cursor-pointer whitespace-nowrap">
+                <Label htmlFor="consent" className="font-normal text-xs text-muted-foreground cursor-pointer whitespace-nowrap">
                     Tôi đồng ý với{" "}
-                    <a href="#" className="font-medium text-[#1b7a78] hover:underline">
+                    <a href="#" className="font-medium text-primary hover:underline">
                         Điều khoản sử dụng
                     </a>{" "}
                     và{" "}
-                    <a href="#" className="font-medium text-[#1b7a78] hover:underline">
+                    <a href="#" className="font-medium text-primary hover:underline">
                         Chính sách bảo mật
                     </a>
                 </Label>
@@ -280,7 +280,7 @@ export function RegisterForm() {
             <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-[#1b7a78] hover:bg-teal-700 focus:ring-4 focus:outline-none focus:ring-teal-300"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
             >
                 {isLoading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
             </Button>

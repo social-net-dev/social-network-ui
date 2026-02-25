@@ -545,14 +545,8 @@ model User {
   @doc("Birth date.")
   birthDate?: string | null;
 
-  @doc("Avatar file path.")
-  avatarPath?: string;
-
   @doc("Avatar URL.")
   avatar?: string | null;
-
-  @doc("Background image file path.")
-  backgroundPath?: string;
 
   @doc("Background image URL.")
   background?: string | null;
@@ -588,12 +582,6 @@ model User {
   @minValue(0)
   postsCount?: int32;
 
-  @doc("Whether the viewer is friends with this user.")
-  isFriend?: boolean;
-
-  @doc("Whether the viewer is the owner of this profile.")
-  isOwner?: boolean;
-
   @doc("Friendship status with viewer.")
   friendshipStatus?: string;
 
@@ -621,14 +609,8 @@ model UserPublic {
   @doc("Birth date.")
   birthDate?: string | null;
 
-  @doc("Avatar file path.")
-  avatarPath?: string;
-
   @doc("Avatar URL.")
   avatar?: string | null;
-
-  @doc("Background image file path.")
-  backgroundPath?: string;
 
   @doc("Background image URL.")
   background?: string | null;
@@ -674,7 +656,10 @@ model UserPublic {
 }
 
 @doc("Current user profile (includes private fields).")
-model UserMe extends UserPublic {
+model UserMe {
+  @doc("User ID.")
+  id: string;
+
   @doc("User email address.")
   @format("email")
   email: string;
@@ -682,12 +667,57 @@ model UserMe extends UserPublic {
   @doc("User phone number.")
   phone?: string | null;
 
+  @doc("Unique username.")
+  username: string;
+
+  @doc("Display name.")
+  displayName: string;
+
+  @doc("User bio/description.")
+  bio?: string;
+
+  @doc("Personal information.")
+  personalInfo?: PersonalInfo;
+
+  @doc("Birth date.")
+  birthDate?: string | null;
+
+  @doc("Avatar URL.")
+  avatar?: string | null;
+
+  @doc("Background image URL.")
+  background?: string | null;
+
+  @doc("Account status.")
+  accountStatus: string;
+
+  @doc("User role.")
+  role: string;
+
   @doc("Storage quota in MB.")
   @minValue(0)
   storageQuotaMb?: int32;
 
+  @doc("Account creation timestamp.")
+  createdAt: string;
+
+  @doc("Last update timestamp.")
+  updatedAt?: string;
+
   @doc("Privacy settings.")
   privacy?: UserPrivacy;
+
+  @doc("Number of followers.")
+  @minValue(0)
+  followers?: int32;
+
+  @doc("Number of following.")
+  @minValue(0)
+  following?: int32;
+
+  @doc("Number of posts.")
+  @minValue(0)
+  postsCount?: int32;
 }
 
 @doc("Login request payload.")
@@ -824,6 +854,9 @@ model UpdateProfileRequest {
   @doc("Updated birth date (ISO 8601 format).")
   @format("date")
   birth_date?: string;
+
+  @doc("Updated personal information (education, location, etc).")
+  personal_info?: PersonalInfo;
 }
 
 model UpdatePrivacyRequest {

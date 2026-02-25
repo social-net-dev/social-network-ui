@@ -105,9 +105,9 @@ export function AdminAccountsPage() {
 
             <Card className="p-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="flex flex-wrap gap-2">
+                    <TabsList className="h-auto bg-transparent border-b border-border w-full justify-start mb-6 p-0 rounded-none flex flex-wrap">
                         {tabs.map((tab) => (
-                            <TabsTrigger key={tab.value} value={tab.value} className="px-4">
+                            <TabsTrigger key={tab.value} value={tab.value} className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 font-medium">
                                 {tab.label}
                             </TabsTrigger>
                         ))}

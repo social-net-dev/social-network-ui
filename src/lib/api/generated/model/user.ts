@@ -28,12 +28,8 @@ export interface User {
   personalInfo?: PersonalInfo;
   /** Birth date. */
   birthDate?: string | null;
-  /** Avatar file path. */
-  avatarPath?: string;
   /** Avatar URL. */
   avatar?: string | null;
-  /** Background image file path. */
-  backgroundPath?: string;
   /** Background image URL. */
   background?: string | null;
   /** Account status. */
@@ -66,10 +62,6 @@ export interface User {
    * @minimum 0
    */
   postsCount?: number;
-  /** Whether the viewer is friends with this user. */
-  isFriend?: boolean;
-  /** Whether the viewer is the owner of this profile. */
-  isOwner?: boolean;
   /** Friendship status with viewer. */
   friendshipStatus?: string;
   /** Friend request ID if applicable. */

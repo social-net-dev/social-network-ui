@@ -6,9 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Save, User as UserIcon, Shield, Trash2, Lock, AlertTriangle, Eye, EyeOff, Loader2, Info, Calendar } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Save, Shield, Trash2, Lock, AlertTriangle, Eye, EyeOff, Loader2, Info, Calendar, Edit2, User as UserIcon, Globe, Users as UsersIcon, LockKeyhole } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { useE2EEStore } from '@/stores/e2eeStore';
 import { exportPrivateKey, importPrivateKey, encryptPrivateKeyWithPassphrase, decryptPrivateKeyWithPassphrase, saveKeyPair } from '@/features/message/lib/e2ee';
@@ -33,9 +32,9 @@ function privacyToFlatSettings(privacy: UserPrivacy): Record<string, string> {
 }
 
 export function ProfileSettingsPage() {
-  const { profile: rawProfile, isLoading, updateProfile, updatePrivacy, isUpdating } = useProfile();
+  const { profile: rawProfile, isLoading, updatePrivacy, isUpdating } = useProfile();
   const profile = rawProfile as User;
-  const [activeTab, setActiveTab] = useState('basic');
+  const [activeTab, setActiveTab] = useState('privacy');
   const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
   const [deactivatePassword, setDeactivatePassword] = useState('');
   const [showDeactivatePassword, setShowDeactivatePassword] = useState(false);
@@ -48,15 +47,6 @@ export function ProfileSettingsPage() {
   const [passMode, setPassMode] = useState<'create' | 'restore'>('create');
   const [_backupLoading, _setBackupLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
-    username: '',
-    displayName: '',
-    birthDate: '',
-    bio: '',
-    school: '',
-    class: '',
-    location: '',
-  });
 
   const [privacySettings, setPrivacySettings] = useState({
     display_name_visibility: 'PUBLIC',
@@ -67,16 +57,6 @@ export function ProfileSettingsPage() {
 
   useEffect(() => {
     if (!profile) return;
-
-    setFormData({
-      username: profile.username || '',
-      displayName: profile.displayName || '',
-      birthDate: profile.birthDate || '',
-      bio: profile.bio || '',
-      school: profile.personalInfo?.school || '',
-      class: profile.personalInfo?.class || '',
-      location: profile.personalInfo?.location || '',
-    });
 
     if (profile.privacy) {
       const flat = privacyToFlatSettings(profile.privacy);
@@ -89,36 +69,8 @@ export function ProfileSettingsPage() {
     }
   }, [profile]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
-  };
-
   const handlePrivacyChange = (field: string, value: string) => {
     setPrivacySettings(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSaveBasic = async () => {
-    try {
-      const bioPayload = JSON.stringify({
-        ...(profile?.personalInfo || {}),
-        bioText: formData.bio,
-        school: formData.school,
-        class: formData.class,
-        location: formData.location,
-      });
-
-      await updateProfile({
-        displayName: formData.displayName,
-        username: formData.username,
-        birthDate: formData.birthDate,
-        bio: bioPayload,
-      });
-      alert('Cập nhật thành công!');
-    } catch (error) {
-      console.error(error);
-      alert('Cập nhật thất bại!');
-    }
   };
 
   const handleSavePrivacy = async () => {
@@ -132,26 +84,14 @@ export function ProfileSettingsPage() {
   };
 
   const handleReset = () => {
-    if (profile) {
-      setFormData({
-        username: profile.username || '',
-        displayName: profile.displayName || '',
-        birthDate: profile.birthDate || '',
-        bio: profile.bio || '',
-        school: profile.personalInfo?.school || '',
-        class: profile.personalInfo?.class || '',
-        location: profile.personalInfo?.location || '',
+    if (profile && profile.privacy) {
+      const flat = privacyToFlatSettings(profile.privacy);
+      setPrivacySettings({
+        display_name_visibility: flat.display_name_visibility || 'PUBLIC',
+        birth_date_visibility: flat.birth_date_visibility || 'PRIVATE',
+        bio_visibility: flat.bio_visibility || 'FRIENDS',
+        avatar_visibility: flat.avatar_visibility || 'PUBLIC',
       });
-
-      if (profile.privacy) {
-        const flat = privacyToFlatSettings(profile.privacy);
-        setPrivacySettings({
-          display_name_visibility: flat.display_name_visibility || 'PUBLIC',
-          birth_date_visibility: flat.birth_date_visibility || 'PRIVATE',
-          bio_visibility: flat.bio_visibility || 'FRIENDS',
-          avatar_visibility: flat.avatar_visibility || 'PUBLIC',
-        });
-      }
     }
   };
 
@@ -287,116 +227,102 @@ export function ProfileSettingsPage() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-32">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">Cài đặt hồ sơ</h1>
-        <p className="text-gray-500 dark:text-gray-400">Quản lý chi tiết cá nhân và quyền riêng tư của bạn.</p>
+    <div className="max-w-5xl mx-auto space-y-5 pb-32">
+      <div className="bg-card rounded-xl border border-border/50 shadow-sm p-6">
+        <h1 className="text-3xl font-bold text-foreground tracking-tight mb-2">Cài đặt</h1>
+        <p className="text-muted-foreground text-sm">Quản lý quyền riêng tư và bảo mật tài khoản của bạn.</p>
       </div>
 
-      <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-white dark:bg-card p-1 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 w-full justify-start mb-8 overflow-x-auto no-scrollbar">
-          <TabsTrigger value="basic" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
-            <UserIcon className="w-4 h-4 mr-2" /> Thông tin cơ bản
+      <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 flex items-start gap-4">
+        <div className="p-2 rounded-lg bg-primary/10">
+          <Info className="w-5 h-5 text-primary" />
+        </div>
+        <div className="flex-1">
+          <h3 className="font-semibold text-sm mb-1">Chỉnh sửa thông tin cá nhân</h3>
+          <p className="text-sm text-muted-foreground mb-3">
+            Để cập nhật tên hiển thị, ảnh đại diện, giới thiệu, học vấn và thông tin cá nhân khác, vui lòng truy cập trang hồ sơ của bạn.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 rounded-lg gap-2 border-primary/30 hover:bg-primary/10"
+            onClick={() => navigate('/profile/me')}
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+            Đi tới trang hồ sơ
+          </Button>
+        </div>
+      </div>
+
+      <Tabs defaultValue="privacy" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="h-auto bg-transparent border-b border-border w-full justify-start mb-6 p-0 rounded-none">
+          <TabsTrigger 
+            value="privacy" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 gap-2 font-medium"
+          >
+            <Shield className="w-4 h-4" /> Quyền riêng tư
           </TabsTrigger>
-          <TabsTrigger value="privacy" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
-            <Shield className="w-4 h-4 mr-2" /> Quyền riêng tư
-          </TabsTrigger>
-          <TabsTrigger value="security" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
-            <Lock className="w-4 h-4 mr-2" /> Bảo mật
+          <TabsTrigger 
+            value="security" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 gap-2 font-medium"
+          >
+            <Lock className="w-4 h-4" /> Bảo mật
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="basic" className="outline-none">
-          <Card className="border-none shadow-xl bg-white dark:bg-card rounded-3xl overflow-hidden">
-            <CardHeader>
-              <CardTitle>Thông tin cá nhân</CardTitle>
-              <CardDescription>Cập nhật định danh và thông tin hiển thị của bạn.</CardDescription>
+        <TabsContent value="privacy" className="outline-none space-y-5">
+          <Card className="border border-border/50 shadow-sm bg-card rounded-xl overflow-hidden">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-semibold">Trung tâm quyền riêng tư</CardTitle>
+              <CardDescription className="text-sm">Quyết định ai có thể xem thông tin của bạn.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input id="username" value={formData.username} onChange={handleInputChange} className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">Tên hiển thị</Label>
-                  <Input id="displayName" value={formData.displayName} onChange={handleInputChange} className="rounded-xl" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="birthDate">Ngày sinh</Label>
-                <Input id="birthDate" type="date" value={formData.birthDate} onChange={handleInputChange} className="rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bio">Giới thiệu bản thân</Label>
-                <textarea id="bio" value={formData.bio} onChange={handleInputChange} rows={4} className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent px-3 py-2 text-sm focus:ring-2 focus:ring-etechs-primary outline-none resize-none" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="school">Trường học</Label>
-                  <Input id="school" value={formData.school} onChange={handleInputChange} className="rounded-xl" placeholder="VD: Đại học Bách Khoa" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="class">Lớp / Khóa</Label>
-                  <Input id="class" value={formData.class} onChange={handleInputChange} className="rounded-xl" placeholder="VD: K65-HEDSPI" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="location">Vị trí</Label>
-                <Input id="location" value={formData.location} onChange={handleInputChange} className="rounded-xl" placeholder="VD: Hà Nội, Việt Nam" />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="privacy" className="outline-none space-y-6">
-          <Card className="border-none shadow-xl bg-white dark:bg-card rounded-3xl overflow-hidden">
-            <CardHeader>
-              <CardTitle>Trung tâm quyền riêng tư</CardTitle>
-              <CardDescription>Quyết định ai có thể xem thông tin của bạn.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader className="bg-gray-50 dark:bg-white/5">
-                  <TableRow>
-                    <TableHead className="w-[300px] px-6">Danh mục</TableHead>
-                    <TableHead className="text-center">Mọi người</TableHead>
-                    <TableHead className="text-center">Bạn bè</TableHead>
-                    <TableHead className="text-center">Chỉ mình tôi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {privacyItems.map(item => (
-                    <TableRow key={item.id}>
-                      <TableCell className="px-6 font-medium">
-                        <div className="flex items-center gap-3">
-                          <item.icon className="w-4 h-4 text-gray-400" />
-                          {item.label}
+            <CardContent className="space-y-4">
+              {privacyItems.map(item => (
+                <div key={item.id} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted/50">
+                      <item.icon className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{item.label}</p>
+                      <p className="text-xs text-muted-foreground">Ai có thể xem {item.label.toLowerCase()} của bạn</p>
+                    </div>
+                  </div>
+                  <Select
+                    value={(privacySettings as any)[item.id]}
+                    onValueChange={(v) => handlePrivacyChange(item.id, v)}
+                  >
+                    <SelectTrigger className="w-[180px] rounded-lg">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PUBLIC">
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4" />
+                          <span>Mọi người</span>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <RadioGroup value={(privacySettings as any)[item.id]} onValueChange={v => handlePrivacyChange(item.id, v)} className="flex justify-center">
-                          <RadioGroupItem value="PUBLIC" />
-                        </RadioGroup>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <RadioGroup value={(privacySettings as any)[item.id]} onValueChange={v => handlePrivacyChange(item.id, v)} className="flex justify-center">
-                          <RadioGroupItem value="FRIENDS" />
-                        </RadioGroup>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <RadioGroup value={(privacySettings as any)[item.id]} onValueChange={v => handlePrivacyChange(item.id, v)} className="flex justify-center">
-                          <RadioGroupItem value="PRIVATE" />
-                        </RadioGroup>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <div className="m-6 p-6 rounded-2xl bg-etechs-primary/10 border border-etechs-primary/20 flex justify-between items-center">
+                      </SelectItem>
+                      <SelectItem value="FRIENDS">
+                        <div className="flex items-center gap-2">
+                          <UsersIcon className="w-4 h-4" />
+                          <span>Bạn bè</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="PRIVATE">
+                        <div className="flex items-center gap-2">
+                          <LockKeyhole className="w-4 h-4" />
+                          <span>Chỉ mình tôi</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+              
+              <div className="mt-6 p-5 rounded-lg bg-primary/5 border border-primary/20 flex justify-between items-center">
                 <div>
-                  <h4 className="font-bold">Công cụ tìm kiếm</h4>
-                  <p className="text-sm text-muted-foreground">Cho phép Google hiển thị hồ sơ của bạn.</p>
+                  <h4 className="font-semibold text-sm">Công cụ tìm kiếm</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">Cho phép Google hiển thị hồ sơ của bạn.</p>
                 </div>
                 <Switch defaultChecked />
               </div>
@@ -404,27 +330,27 @@ export function ProfileSettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="security" className="outline-none space-y-6">
-          <Card className="p-6 rounded-3xl shadow-xl border-none">
+        <TabsContent value="security" className="outline-none space-y-5">
+          <Card className="p-6 rounded-xl shadow-sm border border-border/50">
             <h3 className="text-lg font-semibold mb-4">Đổi mật khẩu</h3>
             <ChangePasswordForm />
           </Card>
-          <Card className="p-6 rounded-3xl shadow-xl border border-red-100 dark:border-red-900/40 bg-white dark:bg-card">
+          <Card className="p-6 rounded-xl shadow-sm border border-red-200 dark:border-red-900/40 bg-card">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-red-600">Vô hiệu hóa tài khoản</h3>
-                <p className="text-sm text-gray-500">Dữ liệu của bạn sẽ bị ẩn cho đến khi kích hoạt lại.</p>
+                <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">Vô hiệu hóa tài khoản</h3>
+                <p className="text-sm text-muted-foreground mt-1">Dữ liệu của bạn sẽ bị ẩn cho đến khi kích hoạt lại.</p>
               </div>
-              <Button variant="destructive" onClick={() => setIsDeactivateOpen(true)}>
+              <Button variant="destructive" onClick={() => setIsDeactivateOpen(true)} className="rounded-lg">
                 Vô hiệu hóa
               </Button>
             </div>
           </Card>
-          <Card className="p-6 rounded-3xl shadow-xl border-none">
-            <h3 className="text-lg font-semibold mb-4">Sao lưu E2EE (Đồng bộ)</h3>
-            <p className="text-sm text-gray-500 mb-4">Kiểm tra và đồng bộ trạng thái backup private key trên server.</p>
+          <Card className="p-6 rounded-xl shadow-sm border border-border/50">
+            <h3 className="text-lg font-semibold mb-2">Sao lưu E2EE (Đồng bộ)</h3>
+            <p className="text-sm text-muted-foreground mb-4">Kiểm tra và đồng bộ trạng thái backup private key trên server.</p>
             <div className="flex gap-3">
-              <Button onClick={handleSync} disabled={_backupLoading} className="rounded-xl">
+              <Button onClick={handleSync} disabled={_backupLoading} className="rounded-lg">
                 {_backupLoading ? 'Đang xử lý...' : 'Đồng bộ'}
               </Button>
             </div>
@@ -432,48 +358,48 @@ export function ProfileSettingsPage() {
         </TabsContent>
       </Tabs>
 
-      <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-card/80 backdrop-blur-xl border-t p-4 z-40 shadow-lg">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Button variant="ghost" onClick={handleReset} disabled={isUpdating} className="flex items-center gap-2 text-gray-500 hover:text-red-500">
+      <div className="fixed bottom-0 left-0 w-full bg-card/95 backdrop-blur-xl border-t border-border p-4 z-40 shadow-lg">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <Button variant="ghost" onClick={handleReset} disabled={isUpdating} className="flex items-center gap-2 text-muted-foreground hover:text-destructive rounded-lg">
             <Trash2 className="w-4 h-4" /> Hủy thay đổi
           </Button>
-          <Button onClick={activeTab === 'basic' ? handleSaveBasic : handleSavePrivacy} disabled={isUpdating} className="bg-etechs-primary text-etechs-secondary px-8 rounded-xl shadow-lg flex items-center gap-2">
+          <Button onClick={handleSavePrivacy} disabled={isUpdating} className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 rounded-lg shadow-md flex items-center gap-2">
             {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Lưu thay đổi
           </Button>
         </div>
       </div>
 
       {isDeactivateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-card p-6 rounded-3xl max-w-md w-full shadow-2xl space-y-4 border border-border">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="bg-card p-6 rounded-xl max-w-md w-full shadow-2xl space-y-4 border border-border">
             <div className="flex items-start gap-3">
-              <div className="p-2 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600">
+              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
                 <AlertTriangle className="w-6 h-6" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold">Xác nhận vô hiệu hóa</h3>
-                <p className="text-sm text-gray-500">Bạn sẽ bị đăng xuất ngay lập tức. Vui lòng nhập mật khẩu để xác nhận.</p>
+                <p className="text-sm text-muted-foreground mt-1">Bạn sẽ bị đăng xuất ngay lập tức. Vui lòng nhập mật khẩu để xác nhận.</p>
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Mật khẩu xác nhận</Label>
+              <Label className="text-sm font-medium">Mật khẩu xác nhận</Label>
               <div className="relative">
-                <Input type={showDeactivatePassword ? 'text' : 'password'} value={deactivatePassword} onChange={e => setDeactivatePassword(e.target.value)} placeholder="Nhập mật khẩu..." className="pr-10" />
-                <button type="button" onClick={() => setShowDeactivatePassword(!showDeactivatePassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <Input type={showDeactivatePassword ? 'text' : 'password'} value={deactivatePassword} onChange={e => setDeactivatePassword(e.target.value)} placeholder="Nhập mật khẩu..." className="pr-10 rounded-lg h-10" />
+                <button type="button" onClick={() => setShowDeactivatePassword(!showDeactivatePassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   {showDeactivatePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
             <label className="flex items-start gap-2 text-sm cursor-pointer select-none">
               <input type="checkbox" checked={confirmDeactivate} onChange={e => setConfirmDeactivate(e.target.checked)} className="mt-1" />
-              <span>Tôi xác nhận và hiểu rằng dữ liệu sẽ bị ẩn.</span>
+              <span className="text-muted-foreground">Tôi xác nhận và hiểu rằng dữ liệu sẽ bị ẩn.</span>
             </label>
-            {deactivateError && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-900/40">{deactivateError}</p>}
+            {deactivateError && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-900/40">{deactivateError}</p>}
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setIsDeactivateOpen(false)} className="rounded-xl">
+              <Button variant="outline" onClick={() => setIsDeactivateOpen(false)} className="rounded-lg">
                 Hủy
               </Button>
-              <Button variant="destructive" onClick={() => deactivateMutation.mutate({ data: { password: deactivatePassword } })} disabled={!deactivatePassword || !confirmDeactivate || deactivateMutation.isPending} className="rounded-xl">
+              <Button variant="destructive" onClick={() => deactivateMutation.mutate({ data: { password: deactivatePassword } })} disabled={!deactivatePassword || !confirmDeactivate || deactivateMutation.isPending} className="rounded-lg">
                 {deactivateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Xác nhận vô hiệu hóa
               </Button>

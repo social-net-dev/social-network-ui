@@ -26,7 +26,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen pt-16 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a1f29] transition-all w-64 hidden lg:block">
+    <aside className="fixed left-0 top-0 z-40 h-screen pt-16 border-r border-border bg-background transition-all w-64 hidden lg:block">
       <div className="h-full px-3 pb-4 overflow-y-auto">
         <ul className="space-y-2 font-medium mt-4">
           {menuItems.map(item => {

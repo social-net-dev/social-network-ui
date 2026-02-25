@@ -1,14 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { useFeed } from '../hooks/useFeed';
-import { FeedList } from '../components/FeedList';
-import { ShareDialog } from '../components/ShareDialog';
-import { usePostActions } from '../hooks/usePostActions';
+import { useFeed, FeedList, ShareDialog, usePostActions } from '@/features/posts';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Compass, Search } from 'lucide-react';
+import { Loader2, Compass, Search, X } from 'lucide-react';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
-import { ACADEMIC_FIELDS } from '../constants/fields';
+import { ACADEMIC_FIELDS } from '@/features/posts/constants/fields';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
@@ -91,33 +88,43 @@ export function ExplorePage() {
     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[280px_minmax(0,2fr)] gap-6">
       {/* Sidebar: Field List */}
       <div className="lg:sticky lg:top-24 h-fit">
-        <div className="bg-card rounded-xl shadow-sm border border-border/50 p-4 space-y-3">
-          <div className="flex items-center gap-2 mb-2">
-            <Compass className="h-5 w-5 text-primary" />
-            <h2 className="font-semibold text-lg text-foreground">Khám phá lĩnh vực</h2>
+        <div className="bg-card rounded-xl border border-border/50 shadow-sm p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Compass className="h-4 w-4 text-primary" />
+            </div>
+            <h2 className="font-semibold text-sm text-foreground">Khám phá lĩnh vực</h2>
           </div>
 
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Tìm lĩnh vực..."
-              className="pl-9 h-9 text-sm"
+              className="pl-8 pr-8 h-8 text-xs"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
 
-          <div className="space-y-1 max-h-[60vh] overflow-y-auto">
+          <div className="space-y-0.5 max-h-[60vh] overflow-y-auto sidebar-scroll">
             <button
               onClick={() => setSelectedField('')}
               className={cn(
-                'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all relative',
                 !selectedField
-                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  ? 'bg-primary/10 text-primary nav-active-accent'
                   : 'text-foreground hover:bg-muted/50'
               )}
             >
-              <span className="text-base">🌐</span>
+              <span className="text-sm">🌐</span>
               <span>Tất cả lĩnh vực</span>
             </button>
 
@@ -126,19 +133,14 @@ export function ExplorePage() {
                 key={field.value}
                 onClick={() => setSelectedField(field.value)}
                 className={cn(
-                  'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                  'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all relative',
                   selectedField === field.value
-                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    ? 'bg-primary/10 text-primary nav-active-accent'
                     : 'text-foreground hover:bg-muted/50'
                 )}
               >
-                <span className="text-base">{field.icon}</span>
+                <span className="text-sm">{field.icon}</span>
                 <span className="flex-1 text-left">{field.label}</span>
-                {selectedField === field.value && (
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary-foreground/20">
-                    Đang xem
-                  </Badge>
-                )}
               </button>
             ))}
           </div>

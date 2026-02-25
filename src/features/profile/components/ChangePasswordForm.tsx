@@ -64,85 +64,86 @@ export function ChangePasswordForm() {
     };
 
     return (
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {successMessage && (
-                <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-400">
+                <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-400">
                     {successMessage}
                 </div>
             )}
 
             <div className="space-y-2">
-                <Label htmlFor="currentPassword">Mật khẩu hiện tại *</Label>
+                <Label htmlFor="currentPassword" className="text-sm font-medium">Mật khẩu hiện tại *</Label>
                 <div className="relative">
                     <Input
                         id="currentPassword"
                         type={showCurrentPassword ? "text" : "password"}
                         placeholder="Nhập mật khẩu hiện tại"
                         {...form.register("currentPassword")}
-                        className="pr-10 rounded-xl"
+                        className="pr-10 rounded-lg h-10"
                         disabled={mutation.isPending}
                     />
                     <button
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                         {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                 </div>
-                {form.formState.errors.currentPassword && <p className="text-sm text-red-500">{form.formState.errors.currentPassword.message}</p>}
+                {form.formState.errors.currentPassword && <p className="text-sm text-destructive">{form.formState.errors.currentPassword.message}</p>}
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="newPassword">Mật khẩu mới *</Label>
+                <Label htmlFor="newPassword" className="text-sm font-medium">Mật khẩu mới *</Label>
                 <div className="relative">
                     <Input
                         id="newPassword"
                         type={showNewPassword ? "text" : "password"}
                         placeholder="Nhập mật khẩu mới"
                         {...form.register("newPassword")}
-                        className="pr-10 rounded-xl"
+                        className="pr-10 rounded-lg h-10"
                         disabled={mutation.isPending}
                     />
                     <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                         {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                 </div>
-                {form.formState.errors.newPassword && <p className="text-sm text-red-500">{form.formState.errors.newPassword.message}</p>}
+                {form.formState.errors.newPassword && <p className="text-sm text-destructive">{form.formState.errors.newPassword.message}</p>}
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới *</Label>
+                <Label htmlFor="confirmPassword" className="text-sm font-medium">Xác nhận mật khẩu mới *</Label>
                 <div className="relative">
                     <Input
                         id="confirmPassword"
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Xác nhận mật khẩu mới"
                         {...form.register("confirmPassword")}
-                        className="pr-10 rounded-xl"
+                        className="pr-10 rounded-lg h-10"
                         disabled={mutation.isPending}
                     />
                     <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                 </div>
-                {form.formState.errors.confirmPassword && <p className="text-sm text-red-500">{form.formState.errors.confirmPassword.message}</p>}
+                {form.formState.errors.confirmPassword && <p className="text-sm text-destructive">{form.formState.errors.confirmPassword.message}</p>}
             </div>
 
             <Button
                 type="submit"
                 disabled={mutation.isPending}
-                className="w-full bg-etechs-primary text-etechs-secondary hover:bg-etechs-primary/90 font-bold py-2 rounded-xl"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-10 font-medium gap-2"
             >
-                {mutation.isPending ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : "Thay đổi mật khẩu"}
+                {mutation.isPending && <Loader className="w-4 h-4 animate-spin" />}
+                Thay đổi mật khẩu
             </Button>
         </form>
     );

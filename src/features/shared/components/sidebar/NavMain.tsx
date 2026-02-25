@@ -10,19 +10,23 @@ interface NavMainProps {
     path: string;
     badge?: number;
   }[];
+  groupLabel?: string;
 }
 
-export function NavMain({ items }: NavMainProps) {
+export function NavMain({ items, groupLabel = 'Điều hướng' }: NavMainProps) {
   const location = useLocation();
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Điều hướng</SidebarGroupLabel>
+      <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map(item => {
-          const isActive = location.pathname === item.path;
+          // Check exact match first, then prefix match only for nested routes
+          const isActive = location.pathname === item.path ||
+            (item.path !== '/' && location.pathname.startsWith(item.path + '/') && 
+             !items.some(otherItem => otherItem.path !== item.path && location.pathname.startsWith(otherItem.path)));
           return (
-            <SidebarMenuItem key={item.path}>
+            <SidebarMenuItem key={item.path} className={cn(isActive && 'nav-active-accent')}>
               <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
                 <Link to={item.path}>
                   <item.icon />
@@ -32,12 +36,11 @@ export function NavMain({ items }: NavMainProps) {
               {typeof item.badge === 'number' && item.badge > 0 && (
                 <SidebarMenuBadge
                   className={cn(
-                    // Keep badge muted even when the menu item is active so it
-                    // doesn't blend into the active background.
-                    'bg-muted-foreground/10 text-muted-foreground'
+                    'bg-primary/15 text-primary font-semibold text-[10px] min-w-[18px]',
+                    item.badge > 0 && 'badge-pulse'
                   )}
                 >
-                  {item.badge}
+                  {item.badge > 99 ? '99+' : item.badge}
                 </SidebarMenuBadge>
               )}
             </SidebarMenuItem>

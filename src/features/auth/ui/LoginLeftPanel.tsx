@@ -22,25 +22,25 @@ export function LoginLeftPanel() {
                 </div>
                 <div className="mb-12 max-w-lg mx-auto text-center">
                     <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                        <span className="text-[#E2F046]">Kết nối</span> người học <br />
-                        <span className="text-[#E2F046]">và</span> người dạy <br />
-                        <span className="text-[#E2F046]">trên một nền tảng</span>
+                        <span className="text-etechs-primary">Kết nối</span> người học <br />
+                        <span className="text-etechs-primary">và</span> người dạy <br />
+                        <span className="text-etechs-primary">trên một nền tảng</span>
                     </h1>
-                    <p className="text-lg text-gray-300 leading-relaxed mb-8">
+                    <p className="text-lg text-white/70 leading-relaxed mb-8">
                         Mạng xã hội học tập giúp chia sẻ tài liệu, trao đổi khóa học, thảo luận chuyên môn và xây dựng cộng đồng kết nối bền vững giữa
                         giảng viên và người học.
                     </p>
                     <div className="flex flex-wrap gap-3 justify-center">
                         <div className="px-4 py-2 rounded-full glass-effect flex items-center gap-2 text-sm font-medium">
-                            <BookOpen className="w-5 h-5 text-[#E2F046]" />
+                            <BookOpen className="w-5 h-5 text-etechs-primary" />
                             Tài liệu & khóa học
                         </div>
                         <div className="px-4 py-2 rounded-full glass-effect flex items-center gap-2 text-sm font-medium">
-                            <Users className="w-5 h-5 text-[#E2F046]" />
+                            <Users className="w-5 h-5 text-etechs-primary" />
                             Kết nối học tập
                         </div>
                         <div className="px-4 py-2 rounded-full glass-effect flex items-center gap-2 text-sm font-medium">
-                            <MessageCircle className="w-5 h-5 text-[#E2F046]" />
+                            <MessageCircle className="w-5 h-5 text-etechs-primary" />
                             Tương tác chuyên sâu
                         </div>
                     </div>

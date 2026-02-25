@@ -46,7 +46,7 @@ export function useField(fieldId: string) {
     },
   });
 
-  const posts = postsQuery.data?.pages.flatMap(page => page.posts) ?? [];
+  const posts = postsQuery.data?.pages.flatMap(page => page.posts?.filter(post => post != null) ?? []) ?? [];
 
   return {
     field: fieldQuery.data,

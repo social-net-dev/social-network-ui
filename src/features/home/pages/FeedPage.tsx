@@ -1,10 +1,6 @@
 import { useState, lazy, Suspense, useRef, useEffect } from 'react';
-import { useFeed } from '../hooks/useFeed';
-import { CreatePostTrigger } from '../components/CreatePostTrigger';
-import { FeedList } from '../components/FeedList';
-import { ShareDialog } from '../components/ShareDialog';
+import { useFeed, CreatePostTrigger, FeedList, ShareDialog, usePostActions } from '@/features/posts';
 import { Button } from '@/components/ui/button';
-import { usePostActions } from '../hooks/usePostActions';
 import { useAuthStore } from '@/stores/authStore';
 import { AlertCircle, CheckCircle, GraduationCap, HardDrive, MessageSquareText, Users, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +11,7 @@ import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
 // Lazy load CreatePostModal để giảm bundle size
 const CreatePostModal = lazy(() =>
-  import('../components/CreatePostModal').then(module => ({
+  import('@/features/posts/components/CreatePostModal').then(module => ({
     default: module.CreatePostModal,
   }))
 );
@@ -195,28 +191,30 @@ export function FeedPage() {
         </div>
       </div>
 
-      <div className="lg:sticky lg:top-24 h-[calc(100vh-7rem)] overflow-y-auto pr-1 space-y-6 sidebar-scroll">
-        <Card className="border-none shadow-xl bg-white dark:bg-card overflow-hidden">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
+      <div className="lg:sticky lg:top-20 h-[calc(100vh-6rem)] overflow-y-auto pr-1 space-y-4 sidebar-scroll">
+        <Card className="border border-border/50 shadow-sm bg-card overflow-hidden">
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
+              <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Users className="h-3.5 w-3.5 text-primary" />
+              </div>
               Cộng đồng đang tham gia
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-0.5 pb-3 px-2">
             {communities.map(community => (
-              <Link key={community.id} to={`/groups/${community.id}`} className="flex items-center justify-between rounded-xl px-3 py-2 transition hover:bg-primary/5 group">
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-10">
+              <Link key={community.id} to={`/groups/${community.id}`} className="flex items-center justify-between rounded-lg px-2 py-2 transition-all hover:bg-primary/5 group">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Avatar className="size-8 shrink-0">
                     <AvatarImage src={community.avatar} alt={community.name} />
-                    <AvatarFallback>{community.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback className="text-xs">{community.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary">{community.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{community.tag}</p>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate group-hover:text-primary transition-colors">{community.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{community.tag}</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="rounded-full">
+                <Badge variant="outline" className="rounded-full text-[10px] px-1.5 py-0 h-4 shrink-0 ml-1">
                   {(community.members / 1000).toFixed(1)}k
                 </Badge>
               </Link>
@@ -224,44 +222,44 @@ export function FeedPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-xl bg-white dark:bg-card overflow-hidden">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MessageSquareText className="h-5 w-5 text-emerald-500" />
+        <Card className="border border-border/50 shadow-sm bg-card overflow-hidden">
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
+              <div className="h-6 w-6 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <MessageSquareText className="h-3.5 w-3.5 text-emerald-500" />
+              </div>
               Bạn bè đang hoạt động
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-0.5 pb-3 px-2">
             {activeFriends.map(friend => (
-              <Link key={friend.id} to={`/messages?user=${friend.username}`} className="flex items-center justify-between rounded-xl px-3 py-2 transition hover:bg-emerald-500/10 group">
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-10">
+              <Link key={friend.id} to={`/messages?user=${friend.username}`} className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition-all hover:bg-emerald-500/8 group">
+                <div className="relative shrink-0">
+                  <Avatar className="size-8">
                     <AvatarImage src={friend.avatar} alt={friend.name} />
-                    <AvatarFallback>{friend.name.slice(0, 2)}</AvatarFallback>
+                    <AvatarFallback className="text-xs">{friend.name.slice(0, 2)}</AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-emerald-600">{friend.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Nhấn để nhắn tin</p>
-                  </div>
+                  <span className="online-dot" />
                 </div>
-                <Badge className="bg-emerald-500/10 text-emerald-600 rounded-full" variant="secondary">
-                  {friend.status}
-                </Badge>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-foreground truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{friend.name}</p>
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">{friend.status}</p>
+                </div>
               </Link>
             ))}
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-xl bg-gradient-to-br from-amber-50 via-white to-emerald-50 dark:from-amber-900/20 dark:via-card dark:to-emerald-900/20">
-          <CardContent className="p-5 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+        <Card className="border border-primary/15 shadow-sm bg-gradient-to-br from-primary/5 via-card to-secondary/5 overflow-hidden">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
               <GraduationCap className="h-5 w-5" />
             </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Tăng điểm nón</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Hoàn thiện hồ sơ để tăng uy tín.</p>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">Tăng điểm uy tín</p>
+              <p className="text-xs text-muted-foreground">Hoàn thiện hồ sơ để tăng uy tín.</p>
             </div>
-            <Button size="sm" className="ml-auto rounded-full">
+            <Button size="sm" className="ml-auto rounded-full h-7 text-xs shrink-0">
               Thực hiện
             </Button>
           </CardContent>

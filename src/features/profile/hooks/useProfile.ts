@@ -121,13 +121,14 @@ export function useProfile(userIdParam?: string) {
     return init.asset_id
   }
 
-  const handleUpdateProfile = async (data: EditProfileFormData) => {
+  const handleUpdateProfile = async (data: EditProfileFormData & { personal_info?: any }) => {
     const res = await updateProfileMutation.mutateAsync({
       data: {
         display_name: data.displayName,
         username: data.username || undefined,
         birth_date: data.birthDate && data.birthDate.trim() !== '' ? data.birthDate : undefined,
         bio: data.bio,
+        personal_info: data.personal_info,
       },
     })
 

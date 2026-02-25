@@ -1,23 +1,24 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useProfilePageModel } from '../hooks/useProfilePageModel';
 import { ProfileHeader } from '../components/ProfileHeader';
-import { ProfileStats } from '../components/ProfileStats';
 import { PersonalInfoSidebar } from '../components/PersonalInfoSidebar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText } from 'lucide-react';
-import { ActivityFeed } from '../components/ActivityFeed';
+import { FileText, Info, Users } from 'lucide-react';
 import { StorageQuotaCard } from '../components/StorageQuotaCard';
 import { ProfilePostsTab } from '../components/ProfilePostsTab';
+import { ProfileAboutTab } from '../components/ProfileAboutTab';
+import { ProfileFriendsTab } from '../components/ProfileFriendsTab';
+import { EditProfileSheet } from '../components/EditProfileSheet';
 
 function ProfilePage() {
-  const navigate = useNavigate();
   const { mode, profile, isLoading: isProfileLoading, error, canEdit, subjectUserId, currentUserId } = useProfilePageModel();
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
 
   if (isProfileLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
@@ -36,33 +37,43 @@ function ProfilePage() {
     );
   }
 
-  const stats = {
-    posts: profile.postsCount || 0,
-    followers: profile.followers || 0,
-    following: profile.following || 0,
-  };
-
   return (
-    <div className="space-y-6">
-      <ProfileHeader 
-        profile={profile} 
-        isCurrentUser={canEdit} 
-        onEdit={() => canEdit && navigate('/settings')} 
+    <div className="space-y-5">
+      <ProfileHeader
+        profile={profile}
+        isCurrentUser={canEdit}
+        onEdit={() => setEditSheetOpen(true)}
       />
 
-      <ProfileStats stats={stats} />
-
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="flex-1 min-w-0 space-y-6">
+      <div className="flex flex-col lg:flex-row gap-5">
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
           <Tabs defaultValue="posts" className="w-full">
-            <TabsList className="bg-card p-1.5 rounded-xl shadow-sm border border-border/50 w-full justify-start overflow-x-auto no-scrollbar">
-              <TabsTrigger value="posts" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-5 py-2.5 transition-all-300">
-                <FileText className="w-4 h-4 mr-2" />
+            <TabsList className="h-auto bg-transparent border-b border-border w-full justify-start mb-6 p-0 rounded-none overflow-x-auto no-scrollbar">
+              <TabsTrigger
+                value="posts"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 gap-2 font-medium"
+              >
+                <FileText className="w-4 h-4" />
                 Bài viết
+              </TabsTrigger>
+              <TabsTrigger
+                value="about"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 gap-2 font-medium"
+              >
+                <Info className="w-4 h-4" />
+                Giới thiệu
+              </TabsTrigger>
+              <TabsTrigger
+                value="friends"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 gap-2 font-medium"
+              >
+                <Users className="w-4 h-4" />
+                Bạn bè
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="posts" className="mt-6 space-y-6 outline-none animate-fadeInUp">
+            <TabsContent value="posts" className="outline-none">
               <ProfilePostsTab
                 mode={mode}
                 subjectUserId={subjectUserId}
@@ -70,15 +81,29 @@ function ProfilePage() {
                 profileDisplayName={profile.displayName}
               />
             </TabsContent>
+
+            <TabsContent value="about" className="outline-none">
+              <ProfileAboutTab profile={profile} isCurrentUser={canEdit} />
+            </TabsContent>
+
+            <TabsContent value="friends" className="outline-none">
+              <ProfileFriendsTab userId={subjectUserId} />
+            </TabsContent>
           </Tabs>
         </div>
 
-        <div className="w-full lg:w-80 space-y-6 shrink-0">
-          {mode === 'me' && profile.storageQuotaMb && <StorageQuotaCard quotaMb={profile.storageQuotaMb} />}
+        {/* Sidebar */}
+        <div className="w-full lg:w-72 xl:w-80 space-y-5 shrink-0">
+          {mode === 'me' && profile.storageQuotaMb && (
+            <StorageQuotaCard quotaMb={profile.storageQuotaMb} />
+          )}
           <PersonalInfoSidebar />
-          <ActivityFeed limit={5} />
         </div>
       </div>
+
+      {canEdit && (
+        <EditProfileSheet open={editSheetOpen} onOpenChange={setEditSheetOpen} />
+      )}
     </div>
   );
 }

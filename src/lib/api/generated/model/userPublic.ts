@@ -25,12 +25,8 @@ export interface UserPublic {
   personalInfo?: PersonalInfo;
   /** Birth date. */
   birthDate?: string | null;
-  /** Avatar file path. */
-  avatarPath?: string;
   /** Avatar URL. */
   avatar?: string | null;
-  /** Background image file path. */
-  backgroundPath?: string;
   /** Background image URL. */
   background?: string | null;
   /** Account status. */
