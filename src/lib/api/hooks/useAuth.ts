@@ -7,7 +7,6 @@ import { authApi } from '../services';
 import { useAuthStore } from '@/stores/authStore';
 import { useE2EEStore } from '@/stores/e2eeStore';
 import { callSetPublicKey } from '@/features/message/services/messageApi';
-import { toast } from 'sonner';
 import type { LoginRequest, RegisterRequest, VerifyOtpRequest } from '../types';
 
 export function useAuth() {
@@ -37,15 +36,9 @@ export function useAuth() {
         if (publicKey) {
           await callSetPublicKey({ user_id: userId, public_key: publicKey });
         }
-      } catch (err: any) {
+      } catch (err) {
         // Do not block registration flow on key upload errors
         console.warn('[useAuth] Failed to initialize/upload public key on register:', err);
-        try {
-          const msg = err?.message || 'Lỗi khi tải public key lên server tin nhắn';
-          toast.error(`Không thể upload public key: ${msg}`);
-        } catch {
-          // ignore toast errors
-        }
       }
     },
   });
