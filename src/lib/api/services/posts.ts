@@ -5,31 +5,20 @@
 import apiClient from '../../api';
 import { transformPost, transformComment } from '../transforms';
 
-import type {
-  Post,
-  CreatePostRequest,
-  UpdatePostRequest,
-  CreateCommentRequest,
-  UpdateCommentRequest,
-  Comment,
-  CommentResponse,
-  FeedResponse,
-  PaginationParams,
-  ReplyRequest,
-} from '../types';
+import type { Post, CreatePostRequest, UpdatePostRequest, CreateCommentRequest, UpdateCommentRequest, Comment, CommentResponse, FeedResponse, PaginationParams, ReplyRequest } from '../types';
 
 export const postsApi = {
   async getFeed(params?: PaginationParams): Promise<FeedResponse> {
-    const res = await apiClient.get<Record<string, any>>('/feed/', { 
+    const res = await apiClient.get<Record<string, any>>('/feed/', {
       params: {
         page: params?.page,
         page_size: params?.pageSize,
         field_id: params?.field_id,
-        post_type: params?.post_type
-      } 
+        post_type: params?.post_type,
+      },
     });
     const data = res?.data || res;
-    const items = (Array.isArray(data) ? data : (data.posts || data.items || [])) as Record<string, any>[];
+    const items = (Array.isArray(data) ? data : data.posts || data.items || []) as Record<string, any>[];
 
     return {
       posts: items.map(p => transformPost(p)),
@@ -43,7 +32,7 @@ export const postsApi = {
   async getPosts(params?: PaginationParams): Promise<FeedResponse> {
     const res = await apiClient.get<Record<string, any>>('/posts/', { params });
     const data = res?.data || res;
-    const items = (Array.isArray(data) ? data : (data.posts || data.items || [])) as Record<string, any>[];
+    const items = (Array.isArray(data) ? data : data.posts || data.items || []) as Record<string, any>[];
 
     return {
       posts: items.map(p => transformPost(p)),
@@ -68,9 +57,9 @@ export const postsApi = {
     if (data.files && data.files.length > 0) {
       data.files.forEach(file => formData.append('files', file));
     }
-    
+
     const res = await apiClient.post<Record<string, any>>('/posts/create/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
     return transformPost((res?.data || res) as Record<string, any>);
   },
@@ -88,7 +77,7 @@ export const postsApi = {
   async getMyPosts(params?: PaginationParams): Promise<FeedResponse> {
     const res = await apiClient.get<Record<string, any>>('/posts/me/list/', { params });
     const data = res?.data || res;
-    const items = (Array.isArray(data) ? data : (data.posts || data.items || [])) as Record<string, any>[];
+    const items = (Array.isArray(data) ? data : data.posts || data.items || []) as Record<string, any>[];
 
     return {
       posts: items.map(p => transformPost(p)),
@@ -102,7 +91,7 @@ export const postsApi = {
   async getPostsByUser(userId: string, params?: PaginationParams): Promise<FeedResponse> {
     const res = await apiClient.get<Record<string, any>>(`/posts/user/${userId}/`, { params });
     const data = res?.data || res;
-    const items = (Array.isArray(data) ? data : (data.posts || data.items || [])) as Record<string, any>[];
+    const items = (Array.isArray(data) ? data : data.posts || data.items || []) as Record<string, any>[];
 
     return {
       posts: items.map(p => transformPost(p)),
@@ -116,8 +105,8 @@ export const postsApi = {
   async getPostComments(postId: string, params?: PaginationParams): Promise<CommentResponse> {
     const res = await apiClient.get<Record<string, any>>(`/posts/${postId}/comments/`, { params });
     const data = res?.data || res;
-    const items = (Array.isArray(data) ? data : (data.comments || data.items || [])) as Record<string, any>[];
-    
+    const items = (Array.isArray(data) ? data : data.comments || data.items || []) as Record<string, any>[];
+
     return {
       comments: items.map(c => transformComment(c)),
       page: (data.page || 1) as number,
@@ -128,15 +117,20 @@ export const postsApi = {
   },
 
   async createComment(data: CreateCommentRequest): Promise<Comment> {
+    // Prefer post-scoped endpoint: /posts/{post_id}/comments/
     const formData = new FormData();
-    formData.append('post_id', data.post_id);
     formData.append('content_text', data.content_text);
     if (data.files && data.files.length > 0) {
       data.files.forEach(file => formData.append('files', file));
+      const res = await apiClient.post<Record<string, any>>(`/posts/${data.post_id}/comments/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return transformComment((res?.data || res) as Record<string, any>);
     }
-    const res = await apiClient.post<Record<string, any>>(`/comments/`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+
+    // No files -> send JSON payload to post-scoped comments endpoint
+    const payload = { content_text: data.content_text };
+    const res = await apiClient.post<Record<string, any>>(`/posts/${data.post_id}/comments/`, payload);
     return transformComment((res?.data || res) as Record<string, any>);
   },
 
@@ -158,7 +152,7 @@ export const postsApi = {
       data.files.forEach(file => formData.append('files', file));
     }
     const res = await apiClient.post<Record<string, any>>(`/comments/${commentId}/replies/`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
     return transformComment((res?.data || res) as Record<string, any>);
   },

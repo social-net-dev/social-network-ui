@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { InfiniteData } from '@tanstack/react-query';
 import { useInfiniteComments, useCommentActions } from '@/lib/api/hooks/useComments';
 import { useReactions } from '@/lib/api/hooks/useReactions';
 import { useAuthStore } from '@/stores/authStore';
@@ -19,19 +18,45 @@ export function useComments(postId: string) {
 
   const updateCache = useCallback(
     (updater: (comments: FeedComment[]) => FeedComment[]) => {
-      queryClient.setQueryData<InfiniteData<any>>(queryKey, (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          pages: old.pages.map((page: any) => {
-            const comments = Array.isArray(page) ? page : page.comments || [];
-            const updatedComments = updater(comments);
-            return Array.isArray(page) ? updatedComments : { ...page, comments: updatedComments };
-          }),
-        };
+      const all = (queryClient.getQueriesData && queryClient.getQueriesData({})) || [];
+      all.forEach(([key]: any) => {
+        try {
+          if (!Array.isArray(key)) return;
+          if (key[0] !== 'comments') return;
+
+          queryClient.setQueryData(key as any, (old: any) => {
+            if (!old) return old;
+
+            // Infinite query shape: { pages: [...] }
+            if (old.pages) {
+              return {
+                ...old,
+                pages: old.pages.map((page: any) => {
+                  const comments = Array.isArray(page) ? page : page.comments || [];
+                  const updatedComments = updater(comments);
+                  return Array.isArray(page) ? updatedComments : { ...page, comments: updatedComments };
+                }),
+              };
+            }
+
+            // Simple query that returns { comments: [...] }
+            if (Array.isArray(old)) {
+              return updater(old);
+            }
+
+            if (old.comments) {
+              const comments = Array.isArray(old.comments) ? old.comments : [];
+              return { ...old, comments: updater(comments) };
+            }
+
+            return old;
+          });
+        } catch (e) {
+          // ignore errors per-query to avoid breaking others
+        }
       });
     },
-    [queryClient, queryKey]
+    [queryClient]
   );
 
   const addComment = useCallback(
@@ -56,18 +81,7 @@ export function useComments(postId: string) {
         stats: { reactions: 0, replies: 0 },
       };
 
-      queryClient.setQueryData<InfiniteData<any>>(queryKey, (old: any) => {
-        if (!old) return { pages: [{ comments: [newComment], page: 1, total: 1, total_pages: 1 }], pageParams: [1] };
-        return {
-          ...old,
-          pages: old.pages.map((page: any, i: number) => {
-            if (i !== 0) return page;
-            const comments = Array.isArray(page) ? page : page.comments || [];
-            const updatedComments = [newComment, ...comments];
-            return Array.isArray(page) ? updatedComments : { ...page, comments: updatedComments };
-          }),
-        };
-      });
+      updateCache(comments => [newComment, ...comments]);
 
       try {
         await manualAddComment({
@@ -183,18 +197,8 @@ export function useComments(postId: string) {
         stats: { reactions: 0, replies: 0 },
       };
 
-      // Optimistic: append reply to the flat list
-      queryClient.setQueryData<InfiniteData<any>>(queryKey, (old: any) => {
-        if (!old) return { pages: [{ comments: [newReply], page: 1 }], pageParams: [1] };
-        return {
-          ...old,
-          pages: old.pages.map((page: any) => {
-            const comments = Array.isArray(page) ? page : page.comments || [];
-            const updatedComments = [...comments, newReply];
-            return Array.isArray(page) ? updatedComments : { ...page, comments: updatedComments };
-          }),
-        };
-      });
+      // Optimistic: append reply to all comment caches
+      updateCache(comments => [...comments, newReply]);
 
       try {
         await manualReplyToComment({
@@ -216,7 +220,7 @@ export function useComments(postId: string) {
     [postId, manualReplyToComment, queryClient, queryKey, user]
   );
 
-  const comments = query.data?.pages.flatMap(page => Array.isArray(page) ? page : page.comments || []) || [];
+  const comments = query.data?.pages.flatMap(page => (Array.isArray(page) ? page : page.comments || [])) || [];
 
   return {
     comments,

@@ -5,6 +5,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../services';
 import { useAuthStore } from '@/stores/authStore';
+import { useE2EEStore } from '@/stores/e2eeStore';
+import { callSetPublicKey } from '@/features/message/services/messageApi';
+import { toast } from 'sonner';
 import type { LoginRequest, RegisterRequest, VerifyOtpRequest } from '../types';
 
 export function useAuth() {
@@ -12,7 +15,7 @@ export function useAuth() {
 
   const loginMutation = useMutation({
     mutationFn: (data: LoginRequest) => authApi.login(data),
-    onSuccess: (data) => {
+    onSuccess: data => {
       setAuth({
         access: data.access,
         refresh: data.refresh,
@@ -23,6 +26,28 @@ export function useAuth() {
 
   const registerMutation = useMutation({
     mutationFn: (data: RegisterRequest) => authApi.register(data),
+    onSuccess: async data => {
+      try {
+        const userId = (data as any).user_id || (data as any).userId || (data as any).id;
+        if (!userId) return;
+
+        // Ensure E2EE keys exist for this device/user and upload public key to message service
+        await useE2EEStore.getState().initialize(userId);
+        const publicKey = useE2EEStore.getState().publicKeyString;
+        if (publicKey) {
+          await callSetPublicKey({ user_id: userId, public_key: publicKey });
+        }
+      } catch (err: any) {
+        // Do not block registration flow on key upload errors
+        console.warn('[useAuth] Failed to initialize/upload public key on register:', err);
+        try {
+          const msg = err?.message || 'Lỗi khi tải public key lên server tin nhắn';
+          toast.error(`Không thể upload public key: ${msg}`);
+        } catch {
+          // ignore toast errors
+        }
+      }
+    },
   });
 
   const verifyOtpMutation = useMutation({
@@ -45,13 +70,11 @@ export function useAuth() {
   });
 
   const resetPasswordMutation = useMutation({
-    mutationFn: (data: { user_id: string; otp: string; new_password: string }) =>
-      authApi.resetPassword(data),
+    mutationFn: (data: { user_id: string; otp: string; new_password: string }) => authApi.resetPassword(data),
   });
 
   const changePasswordMutation = useMutation({
-    mutationFn: (data: { current_password: string; new_password: string }) =>
-      authApi.changePassword(data),
+    mutationFn: (data: { current_password: string; new_password: string }) => authApi.changePassword(data),
   });
 
   return {
@@ -63,11 +86,7 @@ export function useAuth() {
     forgotPassword: forgotPasswordMutation.mutateAsync,
     resetPassword: resetPasswordMutation.mutateAsync,
     changePassword: changePasswordMutation.mutateAsync,
-    isLoading:
-      loginMutation.isPending ||
-      registerMutation.isPending ||
-      verifyOtpMutation.isPending ||
-      logoutMutation.isPending,
+    isLoading: loginMutation.isPending || registerMutation.isPending || verifyOtpMutation.isPending || logoutMutation.isPending,
     errors: {
       login: loginMutation.error,
       register: registerMutation.error,

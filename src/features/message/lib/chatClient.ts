@@ -118,19 +118,16 @@ export class ChatClient {
               if (url.startsWith('http')) {
                 try {
                   const u = new URL(url);
-                  if (u.origin === apiBase.origin && (u.pathname.startsWith('/files') || u.pathname.startsWith('/media') || u.pathname.startsWith('/api/media') || u.pathname.startsWith('/media/stream'))) {
-                    const swapped = url.replace(apiBase.origin, msgBase.origin);
-                    try {
-                      const swappedUrl = new URL(swapped);
-                      if (swappedUrl.origin === msgBase.origin) {
-                        const separator = swapped.includes('?') ? '&' : '?';
-                        const token = localStorage.getItem('auth_token')?.replace(/"/g, '');
-                        return token ? `${swapped}${separator}access_token=${encodeURIComponent(token)}` : swapped;
-                      }
-                    } catch (e) {
-                      return swapped;
-                    }
-                    return swapped;
+                  // If localhost URL has media/files path, always use message service (port 8002)
+                  const isMediaPath = u.pathname.startsWith('/files') || u.pathname.startsWith('/media') || u.pathname.startsWith('/api/media') || u.pathname.startsWith('/media/stream');
+                  const isLocalhost = u.hostname === 'localhost' || u.hostname === '127.0.0.1';
+
+                  if (isMediaPath && (isLocalhost || u.origin === apiBase.origin)) {
+                    // Swap origin to message service base
+                    const swapped = `${msgBase.origin}${u.pathname}${u.search}${u.hash}`;
+                    const separator = swapped.includes('?') ? '&' : '?';
+                    const token = localStorage.getItem('auth_token')?.replace(/"/g, '');
+                    return token ? `${swapped}${separator}access_token=${encodeURIComponent(token)}` : swapped;
                   }
                 } catch (e) {
                   return url;

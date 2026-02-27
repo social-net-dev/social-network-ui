@@ -41,7 +41,7 @@ export const getNotificationWebSocketUrl = (): string => {
       base
         .slice(7)
         .replace(/\/api$/, '')
-        .replace(/\/+$/, '') || 'localhost:8001';
+        .replace(/\/+$/g, '') || 'localhost:8001';
     return `ws://${host}/ws/social/notifications/`;
   }
   if (base.startsWith('https://')) {
@@ -49,7 +49,7 @@ export const getNotificationWebSocketUrl = (): string => {
       base
         .slice(8)
         .replace(/\/api$/, '')
-        .replace(/\/+$/, '') ||
+        .replace(/\/+$/g, '') ||
       window?.location?.host ||
       'localhost';
     return `wss://${host}/ws/social/notifications/`;
@@ -65,13 +65,14 @@ export const getNotificationWebSocketUrl = (): string => {
  * UI kết nối với query user_id & room_id.
  */
 export const getChatWebSocketUrl = (): string => {
-  const base = getApiBaseUrl().trim().replace(/\/$/, '');
+  // Use message service base (may be a different microservice host)
+  const base = getMessageApiUrl().trim().replace(/\/$/, '');
   if (base.startsWith('http://')) {
     const host =
       base
         .slice(7)
         .replace(/\/api$/, '')
-        .replace(/\/+$/, '') || 'localhost:8000';
+        .replace(/\/+$/g, '') || 'localhost:8000';
     return `ws://${host}/ws`;
   }
   if (base.startsWith('https://')) {
@@ -79,7 +80,7 @@ export const getChatWebSocketUrl = (): string => {
       base
         .slice(8)
         .replace(/\/api$/, '')
-        .replace(/\/+$/, '') ||
+        .replace(/\/+$/g, '') ||
       window?.location?.host ||
       'localhost';
     return `wss://${host}/ws`;

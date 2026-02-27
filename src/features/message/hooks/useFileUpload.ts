@@ -1,6 +1,8 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { callUploadFile } from '../services/messageApi';
 import type { MessageFull } from '../types/message.types';
+import { getApiBaseUrl, getMessageApiUrl } from '@/lib/config';
+import { appendAuthToken } from '@/lib/api/transforms/common';
 
 export interface UseFileUploadProps {
   roomId: string;
@@ -59,6 +61,39 @@ export const useFileUpload = ({ roomId, userId, onUploadStart, onUploadSuccess, 
 
       const client_id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+      // Helper to resolve attachment URLs to use message service port
+      const resolveAttachmentUrl = (url: string | null | undefined): string | null => {
+        if (!url) return null;
+        try {
+          const apiBase = new URL(getApiBaseUrl());
+          const msgBase = new URL(getMessageApiUrl());
+
+          if (url.startsWith('http')) {
+            try {
+              const u = new URL(url);
+              const isMediaPath = u.pathname.startsWith('/files') || u.pathname.startsWith('/media') || u.pathname.startsWith('/api/media') || u.pathname.startsWith('/media/stream');
+              const isLocalhost = u.hostname === 'localhost' || u.hostname === '127.0.0.1';
+
+              if (isMediaPath && (isLocalhost || u.origin === apiBase.origin)) {
+                const swapped = `${msgBase.origin}${u.pathname}${u.search}${u.hash}`;
+                const separator = swapped.includes('?') ? '&' : '?';
+                const token = localStorage.getItem('auth_token')?.replace(/"/g, '');
+                return token ? `${swapped}${separator}access_token=${encodeURIComponent(token)}` : swapped;
+              }
+            } catch (e) {
+              return url;
+            }
+            return url;
+          }
+
+          const msgBaseStr = getMessageApiUrl().replace(/\/$/, '');
+          const full = `${msgBaseStr}${url.startsWith('/') ? '' : '/'}${url}`;
+          return appendAuthToken(full);
+        } catch (e) {
+          return url;
+        }
+      };
+
       try {
         onUploadStart?.();
 
@@ -116,9 +151,14 @@ export const useFileUpload = ({ roomId, userId, onUploadStart, onUploadSuccess, 
                     ciphertext: serverMsg.ciphertext ?? (m as any).ciphertext ?? null,
                     created_at: serverMsg.created_at ?? new Date().toISOString(),
                     _status: 'sent',
-                    attachments: serverMsg.attachments ?? (m as any).attachments ?? null,
-                    attachment_url: serverMsg.attachment_url ?? (m as any).attachment_url ?? null,
-                    attachment_urls: serverMsg.attachment_urls ?? (m as any).attachment_urls ?? null,
+                    attachments: serverMsg.attachments
+                      ? serverMsg.attachments.map((a: any) => ({
+                          ...a,
+                          url: resolveAttachmentUrl(a.url),
+                        }))
+                      : ((m as any).attachments ?? null),
+                    attachment_url: resolveAttachmentUrl(serverMsg.attachment_url ?? (m as any).attachment_url ?? null),
+                    attachment_urls: (serverMsg.attachment_urls ?? (m as any).attachment_urls ?? []).map((u: string) => resolveAttachmentUrl(u)),
                     pinned: serverMsg.pinned ?? (m as any).pinned ?? false,
                     reactions: serverMsg.reactions ?? (m as any).reactions ?? [],
                   } as any;
