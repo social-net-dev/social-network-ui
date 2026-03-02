@@ -35,8 +35,8 @@ export function CommentSection({ postId, currentUserId, postAuthorId }: CommentS
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const organizedComments = useMemo(() => {
-    const topLevel = comments.filter(c => !c.parentCommentId);
-    const replies = comments.filter(c => !!c.parentCommentId);
+    const topLevel = comments.filter(c => !c.parent_comment_id);
+    const replies = comments.filter(c => !!c.parent_comment_id);
 
     // Group replies: map each reply to its top-level parent
     // (handles replying to a reply — still shows under the original top-level comment)
@@ -45,15 +45,15 @@ export function CommentSection({ postId, currentUserId, postAuthorId }: CommentS
 
     for (const reply of replies) {
       // Find the top-level ancestor
-      let parentId = reply.parentCommentId!;
+      let parentId = reply.parent_comment_id!;
       // If parentId is not a top-level comment, it's a reply-to-reply
       // Walk up to find the top-level parent
       const visited = new Set<string>();
       while (parentId && !topLevelIds.has(parentId) && !visited.has(parentId)) {
         visited.add(parentId);
         const parentReply = replies.find(r => r.id === parentId);
-        if (parentReply?.parentCommentId) {
-          parentId = parentReply.parentCommentId;
+        if (parentReply?.parent_comment_id) {
+          parentId = parentReply.parent_comment_id;
         } else {
           break;
         }
@@ -231,7 +231,7 @@ function CommentItem({ comment, currentUserId, postAuthorId, onReply, onDelete, 
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
-  const { data: mediaUrls = [] } = useMediaBlobs(comment.mediaUrls || []);
+  const { data: mediaUrls = [] } = useMediaBlobs(comment.media_urls || []);
   const isAuthor = currentUserId === comment.author.id;
   const isPostOwner = currentUserId === postAuthorId;
   const canDelete = isAuthor || isPostOwner;
@@ -255,14 +255,14 @@ function CommentItem({ comment, currentUserId, postAuthorId, onReply, onDelete, 
         <div className="bg-card rounded-lg px-4 py-3 shadow-sm border border-border/30">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <p className="font-semibold text-sm text-foreground hover:text-primary transition-colors-300 cursor-pointer" onClick={() => navigate(`/profile/${comment.author.username}`)}>
-              {comment.author.displayName}
+              {comment.author.display_name}
             </p>
             {comment.author.role && ROLE_MAP[comment.author.role] && (
               <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-semibold', ROLE_MAP[comment.author.role].class)}>
                 {ROLE_MAP[comment.author.role].label}
               </span>
             )}
-            {comment.author.accountStatus === 'VERIFIED' && (
+            {comment.author.account_status === 'VERIFIED' && (
               <span className={cn('text-[10px] font-bold', STATUS_MAP.VERIFIED.class)} title="Đã xác minh">
                 {STATUS_MAP.VERIFIED.label}
               </span>
@@ -292,12 +292,12 @@ function CommentItem({ comment, currentUserId, postAuthorId, onReply, onDelete, 
           )}
         </div>
         <div className="flex items-center gap-4 mt-2 ml-1">
-          <span className="text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleDateString('vi-VN')}</span>
-          <button onClick={() => onLike(comment.id, comment.userReaction ? null : 'LIKE')} className={cn('text-xs flex items-center gap-1.5 transition-all-300', comment.userReaction ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground hover:text-red-500 dark:hover:text-red-400')}>
-            <Heart className={cn('w-4 h-4 transition-transform', comment.userReaction ? 'fill-current scale-110' : '')} />
+          <span className="text-xs text-muted-foreground">{new Date(comment.created_at).toLocaleDateString('vi-VN')}</span>
+          <button onClick={() => onLike(comment.id, comment.user_reaction ? null : 'LIKE')} className={cn('text-xs flex items-center gap-1.5 transition-all-300', comment.user_reaction ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground hover:text-red-500 dark:hover:text-red-400')}>
+            <Heart className={cn('w-4 h-4 transition-transform', comment.user_reaction ? 'fill-current scale-110' : '')} />
             {comment.stats.reactions > 0 && <span className="font-medium">{comment.stats.reactions}</span>}
           </button>
-          <button onClick={() => onReply(comment.id, comment.author.displayName)} className="text-xs flex items-center gap-1.5 text-muted-foreground hover:text-primary dark:hover:text-primary transition-colors-300">
+          <button onClick={() => onReply(comment.id, comment.author.display_name)} className="text-xs flex items-center gap-1.5 text-muted-foreground hover:text-primary dark:hover:text-primary transition-colors-300">
             <Reply className="w-4 h-4" />
             <span className="font-medium">Trả lời</span>
           </button>

@@ -12,7 +12,7 @@ import type { Project } from './project';
  */
 export interface PersonalInfo {
   /** Education level. */
-  educationLevel?: string;
+  education_level?: string;
   /** School name. */
   school?: string;
   /** Class name. */
@@ -22,13 +22,13 @@ export interface PersonalInfo {
   /** Major/field of study. */
   major?: string;
   /** Graduation year. */
-  graduationYear?: string;
+  graduation_year?: string;
   /** Current academic year. */
-  academicYear?: string;
+  academic_year?: string;
   /** Current school year. */
-  schoolYear?: string;
+  school_year?: string;
   /** List of favorite subjects. */
-  favoriteSubjects?: string[];
+  favorite_subjects?: string[];
   /** List of hobbies. */
   hobbies?: string[];
   /** Location/address. */

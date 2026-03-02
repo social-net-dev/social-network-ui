@@ -13,7 +13,7 @@ export interface Author {
   /** User ID. */
   id: string;
   /** Display name. */
-  displayName: string;
+  display_name: string;
   /** Username. */
   username: string;
   /** Avatar URL or null if not set. */
@@ -21,5 +21,5 @@ export interface Author {
   /** User role. */
   role?: string;
   /** Account status. */
-  accountStatus?: string;
+  account_status?: string;
 }

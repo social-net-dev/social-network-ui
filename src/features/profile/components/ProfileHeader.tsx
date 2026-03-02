@@ -94,17 +94,17 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
     try { await uploadBackground(file) } catch { toast.error("Đã có lỗi khi tải lên ảnh bìa") }
   }
 
-  const initials = profile.displayName ? profile.displayName.slice(0, 2).toUpperCase() : "?"
-  const statusConfig = profile.accountStatus ? STATUS_MAP[profile.accountStatus] : null
+  const initials = profile.display_name ? profile.display_name.slice(0, 2).toUpperCase() : "?"
+  const statusConfig = profile.account_status ? STATUS_MAP[profile.account_status] : null
   const roleConfig = profile.role ? ROLE_MAP[profile.role] : null
-  const joinDate = profile.createdAt
-    ? new Date(profile.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
+  const joinDate = profile.created_at
+    ? new Date(profile.created_at).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
     : null
 
   const fallbackAvatarUrl = getDefaultAvatar()
   const coverUrl = profile.background
 
-  const postsCount = profile.postsCount ?? 0
+  const postsCount = profile.posts_count ?? 0
   const followersCount = profile.followers ?? 0
   const followingCount = profile.following ?? 0
 
@@ -146,7 +146,7 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
               className={`w-24 h-24 sm:w-32 sm:h-32 border-4 border-card shadow-lg ring-2 ring-primary/20 transition-all ${isCurrentUser ? 'cursor-pointer hover:ring-primary/50' : ''}`}
               onClick={handleAvatarClick}
             >
-              <AvatarImage src={profile.avatar || fallbackAvatarUrl} alt={profile.displayName} className="object-cover" />
+              <AvatarImage src={profile.avatar || fallbackAvatarUrl} alt={profile.display_name} className="object-cover" />
               <AvatarFallback className="text-2xl font-bold bg-muted text-muted-foreground">
                 {isUpdating ? <Loader2 className="w-6 h-6 animate-spin" /> : initials}
               </AvatarFallback>
@@ -167,7 +167,7 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
               <div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mb-1.5">
                   <h1 className="text-2xl font-bold text-foreground leading-tight tracking-tight">
-                    {profile.displayName}
+                    {profile.display_name}
                   </h1>
                   {profile.username && (
                     <span className="text-muted-foreground text-sm font-medium">@{profile.username}</span>
@@ -255,16 +255,16 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
 
         {/* Meta info */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mb-4">
-          {profile.personalInfo?.location && (
+          {profile.personal_info?.location && (
             <div className="flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5 shrink-0" />
-              <span>{profile.personalInfo.location}</span>
+              <span>{profile.personal_info.location}</span>
             </div>
           )}
-          {profile.personalInfo?.school && (
+          {profile.personal_info?.school && (
             <div className="flex items-center gap-1">
               <span>🎓</span>
-              <span>{profile.personalInfo.school}</span>
+              <span>{profile.personal_info.school}</span>
             </div>
           )}
           {joinDate && (

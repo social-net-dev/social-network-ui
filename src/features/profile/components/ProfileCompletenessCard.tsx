@@ -18,12 +18,12 @@ function getCompletenessItems(profile: User | null | undefined): CompletenessIte
   if (!profile) return [];
   return [
     { label: 'Ảnh đại diện', done: !!profile.avatar },
-    { label: 'Tên hiển thị', done: !!profile.displayName },
+    { label: 'Tên hiển thị', done: !!profile.display_name },
     { label: 'Giới thiệu bản thân', done: !!profile.bio },
-    { label: 'Trường học', done: !!profile.personalInfo?.school },
-    { label: 'Vị trí', done: !!profile.personalInfo?.location },
-    { label: 'Lĩnh vực quan tâm', done: (profile.personalInfo?.favoriteSubjects?.length ?? 0) > 0 },
-    { label: 'Sở thích', done: (profile.personalInfo?.hobbies?.length ?? 0) > 0 },
+    { label: 'Trường học', done: !!profile.personal_info?.school },
+    { label: 'Vị trí', done: !!profile.personal_info?.location },
+    { label: 'Lĩnh vực quan tâm', done: (profile.personal_info?.favorite_subjects?.length ?? 0) > 0 },
+    { label: 'Sở thích', done: (profile.personal_info?.hobbies?.length ?? 0) > 0 },
     { label: 'Ảnh bìa', done: !!profile.background },
   ];
 }

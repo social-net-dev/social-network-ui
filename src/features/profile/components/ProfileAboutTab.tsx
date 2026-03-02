@@ -19,15 +19,15 @@ interface ProfileAboutTabProps {
 export function ProfileAboutTab({ profile, isCurrentUser }: ProfileAboutTabProps) {
   const { updateProfile } = useProfile();
 
-  const projects = profile?.personalInfo?.projects ?? [];
+  const projects = profile?.personal_info?.projects ?? [];
 
   const saveToBackend = async (updates: Record<string, unknown>) => {
     try {
       await updateProfile({
-        displayName: profile?.displayName || '',
+        displayName: profile?.display_name || '',
         bio: profile?.bio,
         personal_info: {
-          ...(profile?.personalInfo || {}),
+          ...(profile?.personal_info || {}),
           ...updates,
         },
       });
@@ -38,7 +38,7 @@ export function ProfileAboutTab({ profile, isCurrentUser }: ProfileAboutTabProps
 
   const handleUpdateAcademicBackground = (newData: Record<string, unknown>) => saveToBackend(newData);
   const handleUpdateAcademicInterests = (newInterests: Array<{ label: string }>) =>
-    saveToBackend({ favoriteSubjects: newInterests.map((i) => i.label) });
+    saveToBackend({ favorite_subjects: newInterests.map((i) => i.label) });
   const handleUpdatePersonalInterests = (newInterests: Array<{ label: string }>) =>
     saveToBackend({ hobbies: newInterests.map((i) => i.label) });
 
@@ -50,12 +50,12 @@ export function ProfileAboutTab({ profile, isCurrentUser }: ProfileAboutTabProps
     saveToBackend({ projects: newProjects });
   };
 
-  const academicInterests = (profile.personalInfo?.favoriteSubjects || []).map((s) => ({
+  const academicInterests = (profile.personal_info?.favorite_subjects || []).map((s) => ({
     label: s,
     color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800',
   }));
 
-  const personalInterests = (profile.personalInfo?.hobbies || []).map((h) => ({
+  const personalInterests = (profile.personal_info?.hobbies || []).map((h) => ({
     label: h,
     icon: Heart,
   }));
@@ -76,12 +76,12 @@ export function ProfileAboutTab({ profile, isCurrentUser }: ProfileAboutTabProps
             {isCurrentUser && (
               <EditAcademicBackgroundDialog
                 data={{
-                  educationLevel: profile.personalInfo?.educationLevel || '',
-                  school: profile.personalInfo?.school || '',
-                  major: profile.personalInfo?.major || '',
-                  class: profile.personalInfo?.class || '',
-                  academicYear: profile.personalInfo?.academicYear || '',
-                  schoolYear: profile.personalInfo?.schoolYear || '',
+                  education_level: profile.personal_info?.education_level || '',
+                  school: profile.personal_info?.school || '',
+                  major: profile.personal_info?.major || '',
+                  class: profile.personal_info?.class || '',
+                  academic_year: profile.personal_info?.academic_year || '',
+                  school_year: profile.personal_info?.school_year || '',
                 }}
                 onSave={handleUpdateAcademicBackground}
                 trigger={
@@ -93,27 +93,27 @@ export function ProfileAboutTab({ profile, isCurrentUser }: ProfileAboutTabProps
             )}
           </CardHeader>
           <CardContent className="px-5 pb-5">
-            {profile.personalInfo?.school ? (
+            {profile.personal_info?.school ? (
               <div className="flex items-center gap-3 bg-muted/40 p-3 rounded-lg border-l-4 border-etechs-primary">
                 <div className="h-10 w-10 bg-card rounded-lg flex items-center justify-center shadow-sm shrink-0">
                   <img
                     alt="School"
                     className="w-full h-full object-contain rounded-lg p-1"
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.personalInfo.school)}&background=random`}
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.personal_info.school)}&background=random`}
                   />
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-etechs-primary uppercase tracking-wide">
-                    {profile.personalInfo.educationLevel === 'university'
+                    {profile.personal_info.education_level === 'university'
                       ? 'Đại học / Cao đẳng'
-                      : profile.personalInfo.educationLevel === 'high'
+                      : profile.personal_info.education_level === 'high'
                       ? 'Trung học phổ thông'
                       : 'Học sinh / Sinh viên'}
                   </p>
-                  <p className="text-sm font-semibold leading-snug">{profile.personalInfo.school}</p>
-                  {(profile.personalInfo.major || profile.personalInfo.class) && (
+                  <p className="text-sm font-semibold leading-snug">{profile.personal_info.school}</p>
+                  {(profile.personal_info.major || profile.personal_info.class) && (
                     <p className="text-xs text-muted-foreground">
-                      {[profile.personalInfo.major, profile.personalInfo.class].filter(Boolean).join(' · ')}
+                      {[profile.personal_info.major, profile.personal_info.class].filter(Boolean).join(' · ')}
                     </p>
                   )}
                 </div>
@@ -238,10 +238,10 @@ export function ProfileAboutTab({ profile, isCurrentUser }: ProfileAboutTabProps
               <Card key={project.id} className="rounded-xl border border-border shadow-sm overflow-hidden group/project hover:shadow-md transition-shadow">
                 <CardContent className="p-0">
                   <div className="flex flex-col sm:flex-row gap-0">
-                    {project.imageUrl && (
+                    {project.image_url && (
                       <div className="sm:w-48 h-36 sm:h-auto shrink-0 overflow-hidden">
                         <img
-                          src={project.imageUrl}
+                          src={project.image_url}
                           alt={project.title}
                           className="w-full h-full object-cover group-project:scale-105 transition-transform duration-500"
                         />
@@ -260,11 +260,11 @@ export function ProfileAboutTab({ profile, isCurrentUser }: ProfileAboutTabProps
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        {project.sourceLink && (
+                        {project.source_link && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(project.sourceLink, '_blank')}
+                            onClick={() => window.open(project.source_link, '_blank')}
                             className="rounded-lg text-xs h-8"
                           >
                             Mã nguồn

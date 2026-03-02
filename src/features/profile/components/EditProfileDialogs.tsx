@@ -78,23 +78,23 @@ export function EditAcademicBackgroundDialog({
   trigger
 }: {
   data: {
-    educationLevel?: string;
+    education_level?: string;
     school?: string;
     major?: string;
     class?: string;
-    academicYear?: string;
-    schoolYear?: string;
+    academic_year?: string;
+    school_year?: string;
   },
   onSave: (data: any) => void,
   trigger: React.ReactNode
 }) {
   const [formData, setFormData] = useState({
-    educationLevel: data.educationLevel || '',
+    education_level: data.education_level || '',
     school: data.school || '',
     major: data.major || '',
     class: data.class || '',
-    academicYear: data.academicYear || '',
-    schoolYear: data.schoolYear || '',
+    academic_year: data.academic_year || '',
+    school_year: data.school_year || '',
   })
   const [open, setOpen] = useState(false)
 
@@ -103,7 +103,7 @@ export function EditAcademicBackgroundDialog({
     setOpen(false)
   }
 
-  const isUniversityLevel = formData.educationLevel === 'university'
+  const isUniversityLevel = formData.education_level === 'university'
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -115,10 +115,10 @@ export function EditAcademicBackgroundDialog({
         <div className="grid gap-6 py-4">
           {/* Education Level Selection */}
           <div className="grid gap-2">
-            <Label htmlFor="educationLevel">Cấp học</Label>
+            <Label htmlFor="education_level">Cấp học</Label>
             <Select
-              value={formData.educationLevel}
-              onValueChange={(value) => setFormData({...formData, educationLevel: value})}
+              value={formData.education_level}
+              onValueChange={(value) => setFormData({...formData, education_level: value})}
             >
               <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder="Chọn cấp học" />
@@ -133,7 +133,7 @@ export function EditAcademicBackgroundDialog({
           </div>
 
           {/* School Name - Common for all levels */}
-          {formData.educationLevel && (
+          {formData.education_level && (
             <div className="grid gap-2">
               <Label htmlFor="school">Tên trường</Label>
               <Input
@@ -170,11 +170,11 @@ export function EditAcademicBackgroundDialog({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="academicYear">Niên khóa</Label>
+                <Label htmlFor="academic_year">Niên khóa</Label>
                 <Input
-                  id="academicYear"
-                  value={formData.academicYear}
-                  onChange={(e) => setFormData({...formData, academicYear: e.target.value})}
+                  id="academic_year"
+                  value={formData.academic_year}
+                  onChange={(e) => setFormData({...formData, academic_year: e.target.value})}
                   className="rounded-xl"
                   placeholder="Ví dụ: 2020-2024, 2021-2025"
                 />
@@ -183,7 +183,7 @@ export function EditAcademicBackgroundDialog({
           )}
 
           {/* School Level Fields (TH, THCS, THPT) */}
-          {!isUniversityLevel && formData.educationLevel && (
+          {!isUniversityLevel && formData.education_level && (
             <>
               <div className="grid gap-2">
                 <Label htmlFor="class">Lớp</Label>
@@ -196,11 +196,11 @@ export function EditAcademicBackgroundDialog({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="schoolYear">Năm học</Label>
+                <Label htmlFor="school_year">Năm học</Label>
                 <Input
-                  id="schoolYear"
-                  value={formData.schoolYear}
-                  onChange={(e) => setFormData({...formData, schoolYear: e.target.value})}
+                  id="school_year"
+                  value={formData.school_year}
+                  onChange={(e) => setFormData({...formData, school_year: e.target.value})}
                   className="rounded-xl"
                   placeholder="Ví dụ: 2023-2024, 2024-2025"
                 />
@@ -368,8 +368,8 @@ export function EditProjectDialog({
     title: '',
     category: '',
     description: '',
-    imageUrl: '',
-    sourceLink: ''
+    image_url: '',
+    source_link: ''
   })
   const [open, setOpen] = useState(false)
 
@@ -386,8 +386,8 @@ export function EditProjectDialog({
         title: '',
         category: '',
         description: '',
-        imageUrl: '',
-        sourceLink: ''
+        image_url: '',
+        source_link: ''
       })
     }
   }
@@ -414,11 +414,11 @@ export function EditProjectDialog({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="imageUrl">URL hình ảnh minh họa</Label>
-            <Input id="imageUrl" value={formData.imageUrl} onChange={(e) => setFormData({...formData, imageUrl: e.target.value})} className="rounded-xl" placeholder="https://..." />
+            <Input id="imageUrl" value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} className="rounded-xl" placeholder="https://..." />
           </div>
            <div className="grid gap-2">
             <Label htmlFor="sourceLink">Link mã nguồn/demo</Label>
-            <Input id="sourceLink" value={formData.sourceLink} onChange={(e) => setFormData({...formData, sourceLink: e.target.value})} className="rounded-xl" placeholder="GitHub link..." />
+            <Input id="sourceLink" value={formData.source_link} onChange={(e) => setFormData({...formData, source_link: e.target.value})} className="rounded-xl" placeholder="GitHub link..." />
           </div>
         </div>
         <DialogFooter>

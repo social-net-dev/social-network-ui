@@ -8,10 +8,10 @@ interface VerificationRequest {
   user?: {
     id: string;
     email: string;
-    displayName: string;
+    display_name: string;
     phone?: string;
-    accountStatus: string;
-    storageQuotaMb?: number;
+    account_status: string;
+    storage_quota_mb?: number;
     cccd_front_path?: string;
     cccd_back_path?: string;
   };

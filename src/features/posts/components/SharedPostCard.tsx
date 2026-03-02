@@ -11,7 +11,7 @@ interface SharedPostCardProps {
 
 export function SharedPostCard({ post }: SharedPostCardProps) {
   const mediaAssets = post.media || [];
-  const legacyUrls = post.mediaUrls || [];
+  const legacyUrls = post.media_urls || [];
 
   const mediaUrls = mediaAssets.length > 0 
     ? mediaAssets.map(asset => asset.cdn_url || asset.original_url).filter(Boolean)
@@ -19,7 +19,7 @@ export function SharedPostCard({ post }: SharedPostCardProps) {
 
   const validMediaUrls = mediaUrls.filter(Boolean);
 
-  const createdAt = post.createdAt || new Date().toISOString();
+  const createdAt = post.created_at || new Date().toISOString();
 
   const dateObj = new Date(createdAt);
   const validDate = isNaN(dateObj.getTime()) ? new Date() : dateObj;
@@ -36,7 +36,7 @@ export function SharedPostCard({ post }: SharedPostCardProps) {
       <div className="flex items-center gap-3 mb-3">
         <Avatar user={post.author as any} size="sm" />
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-semibold text-foreground truncate">{post.author?.displayName || 'Người dùng'}</h4>
+          <h4 className="text-sm font-semibold text-foreground truncate">{post.author?.display_name || 'Người dùng'}</h4>
           <p className="text-[10px] text-muted-foreground">{timeAgo}</p>
         </div>
       </div>

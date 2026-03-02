@@ -35,14 +35,14 @@ export function EditProfileSheet({ open, onOpenChange }: EditProfileSheetProps) 
   useEffect(() => {
     if (!profile) return;
     setFormData({
-      displayName: profile.displayName || '',
+      displayName: profile.display_name || '',
       username: profile.username || '',
-      birthDate: profile.birthDate || '',
+      birthDate: profile.birth_date || '',
       bio: profile.bio || '',
-      location: profile.personalInfo?.location || '',
-      school: profile.personalInfo?.school || '',
-      class: profile.personalInfo?.class || '',
-      major: profile.personalInfo?.major || '',
+      location: profile.personal_info?.location || '',
+      school: profile.personal_info?.school || '',
+      class: profile.personal_info?.class || '',
+      major: profile.personal_info?.major || '',
     });
   }, [profile, open]);
 
@@ -59,7 +59,7 @@ export function EditProfileSheet({ open, onOpenChange }: EditProfileSheetProps) 
         birthDate: formData.birthDate && formData.birthDate.trim() !== '' ? formData.birthDate : undefined,
         bio: formData.bio,
         personal_info: {
-          ...(profile?.personalInfo || {}),
+          ...(profile?.personal_info || {}),
           location: formData.location,
           school: formData.school,
           class: formData.class,
@@ -86,7 +86,7 @@ export function EditProfileSheet({ open, onOpenChange }: EditProfileSheetProps) 
 
   if (isLoading || !profile) return null;
 
-  const initials = profile.displayName ? profile.displayName.slice(0, 2).toUpperCase() : '?';
+  const initials = profile.display_name ? profile.display_name.slice(0, 2).toUpperCase() : '?';
   const fallbackAvatar = getDefaultAvatar();
 
   return (
@@ -111,7 +111,7 @@ export function EditProfileSheet({ open, onOpenChange }: EditProfileSheetProps) 
                 className="w-16 h-16 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/50 transition-all"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <AvatarImage src={profile.avatar || fallbackAvatar} alt={profile.displayName} className="object-cover" />
+                <AvatarImage src={profile.avatar || fallbackAvatar} alt={profile.display_name} className="object-cover" />
                 <AvatarFallback className="text-lg font-bold bg-muted text-muted-foreground">
                   {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : initials}
                 </AvatarFallback>
@@ -124,7 +124,7 @@ export function EditProfileSheet({ open, onOpenChange }: EditProfileSheetProps) 
               </div>
             </div>
             <div>
-              <p className="text-sm font-semibold">{profile.displayName}</p>
+              <p className="text-sm font-semibold">{profile.display_name}</p>
               <p className="text-xs text-muted-foreground mb-2">@{profile.username}</p>
               <Button
                 variant="outline"

@@ -21,30 +21,30 @@ export interface User {
   /** Unique username. */
   username: string;
   /** Display name. */
-  displayName: string;
+  display_name: string;
   /** User bio/description. */
   bio?: string;
   /** Personal information. */
-  personalInfo?: PersonalInfo;
+  personal_info?: PersonalInfo;
   /** Birth date. */
-  birthDate?: string | null;
+  birth_date?: string | null;
   /** Avatar URL. */
   avatar?: string | null;
   /** Background image URL. */
   background?: string | null;
   /** Account status. */
-  accountStatus: string;
+  account_status: string;
   /** User role. */
   role: string;
   /**
    * Storage quota in MB.
    * @minimum 0
    */
-  storageQuotaMb?: number;
+  storage_quota_mb?: number;
   /** Account creation timestamp. */
-  createdAt: string;
+  created_at: string;
   /** Last update timestamp. */
-  updatedAt?: string;
+  updated_at?: string;
   /** Privacy settings. */
   privacy?: UserPrivacy;
   /**
@@ -61,9 +61,9 @@ export interface User {
    * Number of posts.
    * @minimum 0
    */
-  postsCount?: number;
+  posts_count?: number;
   /** Friendship status with viewer. */
-  friendshipStatus?: string;
+  friendship_status?: string;
   /** Friend request ID if applicable. */
-  friendRequestId?: string | null;
+  friend_request_id?: string | null;
 }

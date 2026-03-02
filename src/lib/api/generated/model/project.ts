@@ -26,7 +26,7 @@ export interface Project {
    */
   description: string;
   /** Project image URL. */
-  imageUrl: string;
+  image_url: string;
   /** Optional source code link. */
-  sourceLink?: string;
+  source_link?: string;
 }

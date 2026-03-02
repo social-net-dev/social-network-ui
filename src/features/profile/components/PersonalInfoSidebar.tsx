@@ -10,14 +10,14 @@ interface PersonalInfoSidebarProps {
 
 export function PersonalInfoSidebar({ profile }: PersonalInfoSidebarProps) {
 
-  const personalInfo = profile?.personalInfo;
+  const personalInfo = profile?.personal_info;
   const hasContent =
     personalInfo?.school ||
     personalInfo?.class ||
     personalInfo?.location ||
-    personalInfo?.favoriteSubjects?.length ||
+    personalInfo?.favorite_subjects?.length ||
     personalInfo?.hobbies?.length ||
-    profile?.createdAt;
+    profile?.created_at;
 
   return (
     <Card className="rounded-xl border-border shadow-sm bg-card">
@@ -51,33 +51,33 @@ export function PersonalInfoSidebar({ profile }: PersonalInfoSidebarProps) {
               </div>
             )}
 
-            {profile?.createdAt && (
+            {profile?.created_at && (
               <div className="flex items-start gap-3">
                 <Calendar className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground">Thành viên từ</p>
                   <p className="text-sm font-medium">
-                    {new Date(profile.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}
+                    {new Date(profile.created_at).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}
                   </p>
                 </div>
               </div>
             )}
 
-            {personalInfo?.favoriteSubjects && personalInfo.favoriteSubjects.length > 0 && (
+            {personalInfo?.favorite_subjects && personalInfo.favorite_subjects.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Heart className="w-3.5 h-3.5 text-pink-500" />
                   <p className="text-xs text-muted-foreground">Lĩnh vực quan tâm</p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {personalInfo.favoriteSubjects.slice(0, 5).map((s, i) => (
+                  {personalInfo.favorite_subjects.slice(0, 5).map((s, i) => (
                     <Badge key={i} variant="secondary" className="text-xs">
                       {s}
                     </Badge>
                   ))}
-                  {personalInfo.favoriteSubjects.length > 5 && (
+                  {personalInfo.favorite_subjects.length > 5 && (
                     <Badge variant="outline" className="text-xs text-muted-foreground">
-                      +{personalInfo.favoriteSubjects.length - 5}
+                      +{personalInfo.favorite_subjects.length - 5}
                     </Badge>
                   )}
                 </div>

@@ -18,25 +18,25 @@ export interface UserPublic {
   /** Unique username. */
   username: string;
   /** Display name. */
-  displayName: string;
+  display_name: string;
   /** User bio/description. */
   bio?: string;
   /** Personal information. */
-  personalInfo?: PersonalInfo;
+  personal_info?: PersonalInfo;
   /** Birth date. */
-  birthDate?: string | null;
+  birth_date?: string | null;
   /** Avatar URL. */
   avatar?: string | null;
   /** Background image URL. */
   background?: string | null;
   /** Account status. */
-  accountStatus: string;
+  account_status: string;
   /** User role. */
   role: string;
   /** Account creation timestamp. */
-  createdAt: string;
+  created_at: string;
   /** Last update timestamp. */
-  updatedAt?: string;
+  updated_at?: string;
   /**
    * Number of followers.
    * @minimum 0
@@ -51,13 +51,13 @@ export interface UserPublic {
    * Number of posts.
    * @minimum 0
    */
-  postsCount?: number;
+  posts_count?: number;
   /** Viewer context information. */
   viewer_context?: UserPublicViewerContext;
   /** Fields redacted due to privacy settings. */
   redacted_fields?: PrivacyField[];
   /** Friendship status with viewer. */
-  friendshipStatus?: string;
+  friendship_status?: string;
   /** Friend request ID if applicable. */
-  friendRequestId?: string | null;
+  friend_request_id?: string | null;
 }

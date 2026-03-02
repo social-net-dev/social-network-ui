@@ -15,5 +15,5 @@ export type MediaAsset = MediaAssetSummary & {
   /** Processing status. */
   status: MediaAssetStatus;
   /** Asset creation timestamp. */
-  createdAt: string;
+  created_at: string;
 };

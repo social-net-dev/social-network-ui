@@ -23,21 +23,21 @@ export interface PostSummary {
   /** Post content text. */
   content: string;
   /** Array of media URLs (legacy). */
-  mediaUrls: string[];
+  media_urls: string[];
   /** Array of media assets with metadata. */
   media?: MediaAssetSummary[];
   /** Post statistics. */
   stats: PostStats;
   /** Current user's reaction to this post. */
-  userReaction: ReactionType | null;
+  user_reaction: ReactionType | null;
   /** Post visibility setting. */
   visibility: Visibility;
   /** Type of post. */
-  postType: PostType;
+  post_type: PostType;
   /** Field/category ID. */
-  fieldId?: string;
+  field_id?: string;
   /** Post creation timestamp. */
-  createdAt: string;
+  created_at: string;
   /** Last update timestamp. */
-  updatedAt: string;
+  updated_at: string;
 }

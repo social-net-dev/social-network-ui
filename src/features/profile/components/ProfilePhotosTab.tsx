@@ -25,12 +25,12 @@ export function ProfilePhotosTab({ mode, subjectUserId }: ProfilePhotosTabProps)
       if (post.media && post.media.length > 0) {
         for (const asset of post.media) {
           const url = asset.cdn_url || asset.original_url || asset.thumbnail_url;
-          if (url && asset.type === 'IMAGE') {
+          if (url && asset.type === 'image') {
             items.push({ url, postId: post.id });
           }
         }
-      } else if (post.mediaUrls && post.mediaUrls.length > 0) {
-        for (const url of post.mediaUrls) {
+      } else if (post.media_urls && post.media_urls.length > 0) {
+        for (const url of post.media_urls) {
           items.push({ url, postId: post.id });
         }
       }

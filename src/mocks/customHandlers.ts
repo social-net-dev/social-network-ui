@@ -24,26 +24,26 @@ const now = new Date();
 const studentUser: UserMe = {
   id: 'usr_student_001',
   username: 'hiru.dev',
-  displayName: 'Hiru Nguyễn',
+  display_name: 'Hiru Nguyễn',
   email: 'hiru@example.com',
   avatar: 'https://i.pravatar.cc/160?img=12',
   background: null,
   bio: 'Full-stack developer passionate về TypeScript, React và system design. Đang học AI/ML.',
-  birthDate: '2000-05-15',
-  accountStatus: 'ACTIVE',
+  birth_date: '2000-05-15',
+  account_status: 'ACTIVE',
   role: 'USER',
-  createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 280).toISOString(),
+  created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 280).toISOString(),
   followers: 128,
   following: 87,
-  postsCount: 42,
-  personalInfo: {
-    educationLevel: 'university',
+  posts_count: 42,
+  personal_info: {
+    education_level: 'university',
     school: 'Đại học Bách Khoa Hà Nội',
     major: 'Khoa học máy tính',
     class: 'K65-CS1',
-    academicYear: '2023-2024',
-    graduationYear: '2024',
-    favoriteSubjects: ['Software Engineering', 'AI & Machine Learning', 'Cloud & DevOps'],
+    academic_year: '2023-2024',
+    graduation_year: '2024',
+    favorite_subjects: ['Software Engineering', 'AI & Machine Learning', 'Cloud & DevOps'],
     hobbies: ['Coding', 'Reading tech blogs', 'Gaming', 'Photography'],
     location: 'Hà Nội, Việt Nam',
     projects: [
@@ -52,16 +52,16 @@ const studentUser: UserMe = {
         title: 'Social Network Platform',
         category: 'Web Development',
         description: 'Nền tảng mạng xã hội với TypeSpec contract-first architecture, React, và MSW cho testing.',
-        imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800',
-        sourceLink: 'https://github.com/hiru/social-network',
+        image_url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800',
+        source_link: 'https://github.com/hiru/social-network',
       },
       {
         id: 'proj_002',
         title: 'AI Chat Assistant',
         category: 'AI/ML',
         description: 'Chatbot thông minh sử dụng RAG và LangChain để trả lời câu hỏi về tài liệu kỹ thuật.',
-        imageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
-        sourceLink: 'https://github.com/hiru/ai-chat',
+        image_url: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
+        source_link: 'https://github.com/hiru/ai-chat',
       },
     ],
   },
@@ -70,25 +70,25 @@ const studentUser: UserMe = {
 const adminUser: UserMe = {
   id: 'usr_admin_001',
   username: 'admin.etechs',
-  displayName: 'Etechs Admin',
+  display_name: 'Etechs Admin',
   email: 'admin@etechs.vn',
   avatar: 'https://i.pravatar.cc/160?img=50',
   background: null,
   bio: 'Platform administrator. Hỗ trợ cộng đồng và quản lý hệ thống.',
-  birthDate: '1995-03-20',
-  accountStatus: 'ACTIVE',
+  birth_date: '1995-03-20',
+  account_status: 'ACTIVE',
   role: 'ADMIN',
-  createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 640).toISOString(),
+  created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 640).toISOString(),
   followers: 502,
   following: 16,
-  postsCount: 8,
-  personalInfo: {
-    educationLevel: 'university',
+  posts_count: 8,
+  personal_info: {
+    education_level: 'university',
     school: 'Đại học Công nghệ',
     major: 'Hệ thống thông tin',
     degree: 'Thạc sĩ',
-    graduationYear: '2019',
-    favoriteSubjects: ['System Architecture', 'Database Design', 'Security'],
+    graduation_year: '2019',
+    favorite_subjects: ['System Architecture', 'Database Design', 'Security'],
     hobbies: ['Community building', 'Mentoring', 'Tech events'],
     location: 'Hà Nội, Việt Nam',
   },
@@ -99,27 +99,27 @@ let activeUser: UserMe = studentUser;
 const commentAuthors = {
   mentor: {
     id: 'usr_mentor_001',
-    displayName: 'Mentor Hoàng',
+    display_name: 'Mentor Hoàng',
     username: 'mentor.hoang',
     avatar: 'https://i.pravatar.cc/160?img=65',
     role: 'INSTRUCTOR',
-    accountStatus: 'VERIFIED',
+    account_status: 'VERIFIED',
   },
   student: {
     id: 'usr_student_001',
-    displayName: 'Hiru Nguyễn',
+    display_name: 'Hiru Nguyễn',
     username: 'hiru.dev',
     avatar: 'https://i.pravatar.cc/160?img=12',
     role: 'STUDENT',
-    accountStatus: 'VERIFIED',
+    account_status: 'VERIFIED',
   },
   peer: {
     id: 'usr_peer_001',
-    displayName: 'Linh Trần',
+    display_name: 'Linh Trần',
     username: 'linh.ui',
     avatar: 'https://i.pravatar.cc/160?img=31',
     role: 'STUDENT',
-    accountStatus: 'VERIFIED',
+    account_status: 'VERIFIED',
   },
 } as const;
 
@@ -128,146 +128,146 @@ const allFeedPosts: PostSummary[] = [
     id: 'post_001',
     author: {
       id: 'usr_student_001',
-      displayName: 'Hiru Nguyễn',
+      display_name: 'Hiru Nguyễn',
       username: 'hiru.dev',
       avatar: 'https://i.pravatar.cc/160?img=12',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     content:
       'Vừa hoàn thành luồng contract-first với TypeSpec + Orval + MSW. Dev experience mượt hơn hẳn 🔥',
-    mediaUrls: [],
+    media_urls: [],
     stats: {
       reactions: 26,
       comments: 9,
       shares: 2,
     },
-    userReaction: 'LIKE',
+    user_reaction: 'LIKE',
     visibility: 'PUBLIC',
-    postType: 'SOCIAL',
-    fieldId: 'software-engineering',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 22).toISOString(),
-    updatedAt: new Date(now.getTime() - 1000 * 60 * 20).toISOString(),
+    post_type: 'SOCIAL',
+    field_id: 'software-engineering',
+    created_at: new Date(now.getTime() - 1000 * 60 * 22).toISOString(),
+    updated_at: new Date(now.getTime() - 1000 * 60 * 20).toISOString(),
   },
   {
     id: 'post_002',
     author: {
       id: 'usr_design_001',
-      displayName: 'Linh Trần',
+      display_name: 'Linh Trần',
       username: 'linh.ui',
       avatar: 'https://i.pravatar.cc/160?img=31',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     content: 'Case study mới: cải thiện onboarding từ 41% lên 68% bằng progressive disclosure.',
-    mediaUrls: ['https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200'],
+    media_urls: ['https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200'],
     stats: {
       reactions: 41,
       comments: 14,
       shares: 6,
     },
-    userReaction: null,
+    user_reaction: null,
     visibility: 'PUBLIC',
-    postType: 'SOCIAL',
-    fieldId: 'product-design',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString(),
-    updatedAt: new Date(now.getTime() - 1000 * 60 * 60).toISOString(),
+    post_type: 'SOCIAL',
+    field_id: 'product-design',
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString(),
+    updated_at: new Date(now.getTime() - 1000 * 60 * 60).toISOString(),
   },
   {
     id: 'post_003',
     author: {
       id: 'usr_data_001',
-      displayName: 'Phúc Lê',
+      display_name: 'Phúc Lê',
       username: 'phucle.ai',
       avatar: 'https://i.pravatar.cc/160?img=19',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     content: 'Anh em cần tài liệu học RAG cho production không? Mình tổng hợp 1 checklist thực chiến rồi.',
-    mediaUrls: [],
+    media_urls: [],
     stats: {
       reactions: 33,
       comments: 17,
       shares: 4,
     },
-    userReaction: 'LOVE',
+    user_reaction: 'LOVE',
     visibility: 'PUBLIC',
-    postType: 'QUESTION',
-    fieldId: 'ai-ml',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 4).toISOString(),
-    updatedAt: new Date(now.getTime() - 1000 * 60 * 60 * 4).toISOString(),
+    post_type: 'QUESTION',
+    field_id: 'ai-ml',
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 4).toISOString(),
+    updated_at: new Date(now.getTime() - 1000 * 60 * 60 * 4).toISOString(),
   },
   {
     id: 'post_004',
     author: {
       id: 'usr_ops_001',
-      displayName: 'An Vũ',
+      display_name: 'An Vũ',
       username: 'an.devops',
       avatar: 'https://i.pravatar.cc/160?img=21',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     content: 'Bên mình đang tuyển Fresher DevOps intern (HCM, hybrid). Có mentor 1-1 và budget học cert.',
-    mediaUrls: [],
+    media_urls: [],
     stats: {
       reactions: 12,
       comments: 5,
       shares: 10,
     },
-    userReaction: null,
+    user_reaction: null,
     visibility: 'PUBLIC',
-    postType: 'JOB',
-    fieldId: 'cloud-devops',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 6).toISOString(),
-    updatedAt: new Date(now.getTime() - 1000 * 60 * 60 * 5).toISOString(),
+    post_type: 'JOB',
+    field_id: 'cloud-devops',
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 6).toISOString(),
+    updated_at: new Date(now.getTime() - 1000 * 60 * 60 * 5).toISOString(),
   },
   {
     id: 'post_005',
     author: {
       id: 'usr_pm_001',
-      displayName: 'Mai Nguyễn',
+      display_name: 'Mai Nguyễn',
       username: 'mai.pm',
       avatar: 'https://i.pravatar.cc/160?img=44',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     content: 'Weekly learning: 5 anti-pattern phổ biến khi scale micro-frontend và cách tránh.',
-    mediaUrls: [],
+    media_urls: [],
     stats: {
       reactions: 18,
       comments: 7,
       shares: 3,
     },
-    userReaction: 'WOW',
+    user_reaction: 'WOW',
     visibility: 'PUBLIC',
-    postType: 'SOCIAL',
-    fieldId: 'frontend-architecture',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 11).toISOString(),
-    updatedAt: new Date(now.getTime() - 1000 * 60 * 60 * 10).toISOString(),
+    post_type: 'SOCIAL',
+    field_id: 'frontend-architecture',
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 11).toISOString(),
+    updated_at: new Date(now.getTime() - 1000 * 60 * 60 * 10).toISOString(),
   },
   {
     id: 'post_006',
     author: {
       id: 'usr_backend_001',
-      displayName: 'Duy Phạm',
+      display_name: 'Duy Phạm',
       username: 'duy.backend',
       avatar: 'https://i.pravatar.cc/160?img=7',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     content: 'So sánh 3 chiến lược cache invalidation cho social feed ở quy mô 100k DAU.',
-    mediaUrls: [],
+    media_urls: [],
     stats: {
       reactions: 24,
       comments: 11,
       shares: 5,
     },
-    userReaction: null,
+    user_reaction: null,
     visibility: 'PUBLIC',
-    postType: 'QUESTION',
-    fieldId: 'backend',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 20).toISOString(),
-    updatedAt: new Date(now.getTime() - 1000 * 60 * 60 * 19).toISOString(),
+    post_type: 'QUESTION',
+    field_id: 'backend',
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 20).toISOString(),
+    updated_at: new Date(now.getTime() - 1000 * 60 * 60 * 19).toISOString(),
   },
 ];
 
@@ -275,13 +275,13 @@ const profileSeeds: Record<string, UserPublic> = {
   'linh.ui': {
     id: 'usr_peer_001',
     username: 'linh.ui',
-    displayName: 'Linh Trần',
+    display_name: 'Linh Trần',
     bio: 'Product designer tập trung vào trải nghiệm học tập và cộng đồng. Mê design systems và storytelling.',
-    personalInfo: {
+    personal_info: {
       school: 'Đại học Mỹ thuật Công nghiệp',
       major: 'Thiết kế sản phẩm số',
-      academicYear: '2024',
-      favoriteSubjects: ['Design Systems', 'UX Research', 'Motion'],
+      academic_year: '2024',
+      favorite_subjects: ['Design Systems', 'UX Research', 'Motion'],
       hobbies: ['Sketching', 'Coffee brewing', 'Trail running'],
       location: 'TP.HCM, Việt Nam',
       projects: [
@@ -290,56 +290,56 @@ const profileSeeds: Record<string, UserPublic> = {
           title: 'Onboarding 2.0 Experience',
           category: 'Product Design',
           description: 'Thiết kế onboarding đa bước giúp tăng completion rate +41% cho app học online.',
-          imageUrl: 'https://images.unsplash.com/photo-1559028006-08167dd04271?w=800',
-          sourceLink: 'https://dribbble.com/shots/linh-onboarding',
+          image_url: 'https://images.unsplash.com/photo-1559028006-08167dd04271?w=800',
+          source_link: 'https://dribbble.com/shots/linh-onboarding',
         },
       ],
     },
-    birthDate: '1998-07-12',
+    birth_date: '1998-07-12',
     avatar: 'https://i.pravatar.cc/160?img=31',
     background: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200',
-    accountStatus: 'ACTIVE',
+    account_status: 'ACTIVE',
     role: 'USER',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 620).toISOString(),
-    updatedAt: new Date(now.getTime() - 1000 * 60 * 60 * 6).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 620).toISOString(),
+    updated_at: new Date(now.getTime() - 1000 * 60 * 60 * 6).toISOString(),
     followers: 1840,
     following: 326,
-    postsCount: 72,
+    posts_count: 72,
     viewer_context: { is_owner: false, is_friend: true },
     redacted_fields: [],
-    friendshipStatus: 'FRIENDS',
-    friendRequestId: null,
+    friendship_status: 'FRIENDS',
+    friend_request_id: null,
   },
   'duy.backend': {
     id: 'usr_backend_001',
     username: 'duy.backend',
-    displayName: 'Duy Phạm',
+    display_name: 'Duy Phạm',
     bio: 'Backend engineer @ScaleFlow. Nghĩ nhiều về caching, observability và resiliency.',
-    personalInfo: undefined,
-    birthDate: null,
+    personal_info: undefined,
+    birth_date: null,
     avatar: 'https://i.pravatar.cc/160?img=7',
     background: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200',
-    accountStatus: 'ACTIVE',
+    account_status: 'ACTIVE',
     role: 'USER',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 780).toISOString(),
-    updatedAt: new Date(now.getTime() - 1000 * 60 * 60 * 12).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 780).toISOString(),
+    updated_at: new Date(now.getTime() - 1000 * 60 * 60 * 12).toISOString(),
     followers: 980,
     following: 210,
-    postsCount: 54,
+    posts_count: 54,
     viewer_context: { is_owner: false, is_friend: false },
     redacted_fields: [PrivacyField.personal_info, PrivacyField.birth_date],
-    friendshipStatus: 'NONE',
-    friendRequestId: null,
+    friendship_status: 'NONE',
+    friend_request_id: null,
   },
 };
 
-const friendshipScenarioByUserId: Record<string, { detail: FriendshipStatus; label: 'FRIENDS' | 'NONE' | 'REQUEST_SENT' | 'REQUEST_RECEIVED'; friendRequestId?: string | null }> = {
-  usr_peer_001: { detail: { is_friend: true }, label: 'FRIENDS', friendRequestId: null },
-  usr_backend_001: { detail: { is_friend: false }, label: 'NONE', friendRequestId: null },
+const friendshipScenarioByUserId: Record<string, { detail: FriendshipStatus; label: 'FRIENDS' | 'NONE' | 'REQUEST_SENT' | 'REQUEST_RECEIVED'; friend_request_id?: string | null }> = {
+  usr_peer_001: { detail: { is_friend: true }, label: 'FRIENDS', friend_request_id: null },
+  usr_backend_001: { detail: { is_friend: false }, label: 'NONE', friend_request_id: null },
 };
 
 const getFriendshipScenario = (userId: string) =>
-  friendshipScenarioByUserId[userId] ?? { detail: { is_friend: false }, label: 'NONE', friendRequestId: null };
+  friendshipScenarioByUserId[userId] ?? { detail: { is_friend: false }, label: 'NONE', friend_request_id: null };
 
 const cloneProfileSeed = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
@@ -347,23 +347,23 @@ const userMeToPublic = (user: UserMe): UserPublic => {
   const publicProfile: UserPublic = {
     id: user.id,
     username: user.username,
-    displayName: user.displayName,
+    display_name: user.display_name,
     bio: user.bio,
-    personalInfo: user.personalInfo,
-    birthDate: user.birthDate ?? null,
+    personal_info: user.personal_info,
+    birth_date: user.birth_date ?? null,
     avatar: user.avatar ?? null,
     background: user.background ?? null,
-    accountStatus: user.accountStatus,
+    account_status: user.account_status,
     role: user.role,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    created_at: user.created_at,
+    updated_at: user.updated_at,
     followers: user.followers,
     following: user.following,
-    postsCount: user.postsCount,
+    posts_count: user.posts_count,
     viewer_context: { is_owner: true, is_friend: true },
     redacted_fields: [],
-    friendshipStatus: 'SELF',
-    friendRequestId: null,
+    friendship_status: 'SELF',
+    friend_request_id: null,
   };
 
   (publicProfile as UserPublic & { isFriend?: boolean }).isFriend = true;
@@ -393,8 +393,8 @@ const buildProfileForViewer = (username: string): UserPublic | null => {
     is_owner: false,
     is_friend: scenario.detail.is_friend,
   };
-  profile.friendshipStatus = scenario.label;
-  profile.friendRequestId = scenario.friendRequestId ?? null;
+  profile.friendship_status = scenario.label;
+  profile.friend_request_id = scenario.friend_request_id ?? null;
   (profile as UserPublic & { isFriend?: boolean }).isFriend = scenario.detail.is_friend;
 
   if (!scenario.detail.is_friend) {
@@ -402,8 +402,8 @@ const buildProfileForViewer = (username: string): UserPublic | null => {
     redacted.add(PrivacyField.personal_info);
     redacted.add(PrivacyField.birth_date);
     profile.redacted_fields = Array.from(redacted);
-    profile.personalInfo = undefined;
-    profile.birthDate = null;
+    profile.personal_info = undefined;
+    profile.birth_date = null;
   } else {
     profile.redacted_fields = profile.redacted_fields ?? [];
   }
@@ -420,7 +420,7 @@ const allFields = [
     description: 'Khám phá các phương pháp lập trình, kiến trúc phần mềm, và best practices trong phát triển phần mềm.',
     bannerUrl: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200',
     avatarUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400',
-    stats: { postsCount: 156, followersCount: 2847 },
+    stats: { posts_count: 156, followersCount: 2847 },
     isFollowing: false,
   },
   {
@@ -430,7 +430,7 @@ const allFields = [
     description: 'UI/UX design, design systems, user research và product thinking cho digital products.',
     bannerUrl: 'https://images.unsplash.com/photo-1559028006-08167dd04271?w=1200',
     avatarUrl: 'https://images.unsplash.com/photo-1559028006-08167dd04271?w=400',
-    stats: { postsCount: 89, followersCount: 1923 },
+    stats: { posts_count: 89, followersCount: 1923 },
     isFollowing: true,
   },
   {
@@ -440,7 +440,7 @@ const allFields = [
     description: 'Deep learning, NLP, computer vision và các ứng dụng AI trong thực tế.',
     bannerUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200',
     avatarUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400',
-    stats: { postsCount: 234, followersCount: 3567 },
+    stats: { posts_count: 234, followersCount: 3567 },
     isFollowing: false,
   },
   {
@@ -450,7 +450,7 @@ const allFields = [
     description: 'Cloud architecture, CI/CD, Kubernetes và DevOps practices.',
     bannerUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200',
     avatarUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400',
-    stats: { postsCount: 178, followersCount: 2145 },
+    stats: { posts_count: 178, followersCount: 2145 },
     isFollowing: true,
   },
   {
@@ -460,7 +460,7 @@ const allFields = [
     description: 'Modern frontend patterns, micro-frontends, performance optimization và scalability.',
     bannerUrl: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=1200',
     avatarUrl: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=400',
-    stats: { postsCount: 92, followersCount: 1567 },
+    stats: { posts_count: 92, followersCount: 1567 },
     isFollowing: false,
   },
   {
@@ -470,7 +470,7 @@ const allFields = [
     description: 'API design, database architecture, microservices và backend optimization.',
     bannerUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200',
     avatarUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400',
-    stats: { postsCount: 145, followersCount: 2341 },
+    stats: { posts_count: 145, followersCount: 2341 },
     isFollowing: true,
   },
   {
@@ -480,7 +480,7 @@ const allFields = [
     description: 'iOS, Android, React Native, Flutter và mobile app development.',
     bannerUrl: 'https://images.unsplash.com/photo-1512941937609-7625e61fe288?w=1200',
     avatarUrl: 'https://images.unsplash.com/photo-1512941937609-7625e61fe288?w=400',
-    stats: { postsCount: 67, followersCount: 1234 },
+    stats: { posts_count: 67, followersCount: 1234 },
     isFollowing: false,
   },
   {
@@ -490,7 +490,7 @@ const allFields = [
     description: 'Data analysis, visualization, statistics và business intelligence.',
     bannerUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200',
     avatarUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400',
-    stats: { postsCount: 198, followersCount: 2890 },
+    stats: { posts_count: 198, followersCount: 2890 },
     isFollowing: true,
   },
   {
@@ -500,7 +500,7 @@ const allFields = [
     description: 'Network security, ethical hacking, cryptography và security best practices.',
     bannerUrl: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=1200',
     avatarUrl: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400',
-    stats: { postsCount: 112, followersCount: 1678 },
+    stats: { posts_count: 112, followersCount: 1678 },
     isFollowing: false,
   },
   {
@@ -510,7 +510,7 @@ const allFields = [
     description: 'Cryptocurrency, smart contracts, DeFi và Web3 development.',
     bannerUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=1200',
     avatarUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400',
-    stats: { postsCount: 78, followersCount: 1456 },
+    stats: { posts_count: 78, followersCount: 1456 },
     isFollowing: false,
   },
 ];
@@ -523,11 +523,11 @@ const allGroups = [
     description: 'Cộng đồng React developers Việt Nam. Chia sẻ kiến thức, kinh nghiệm và best practices về React, Next.js và ecosystem.',
     avatarUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400',
     bannerUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200',
-    stats: { membersCount: 3421, postsCount: 892, onlineCount: 156 },
+    stats: { membersCount: 3421, posts_count: 892, onlineCount: 156 },
     isJoined: true,
     tags: ['React', 'Next.js', 'JavaScript', 'Frontend'],
     type: 'PUBLIC',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 365).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 365).toISOString(),
   },
   {
     id: 'ai-ml-vietnam',
@@ -535,11 +535,11 @@ const allGroups = [
     description: 'Nhóm nghiên cứu và ứng dụng AI/ML tại Việt Nam. Deep learning, NLP, computer vision và các dự án thực tế.',
     avatarUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400',
     bannerUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200',
-    stats: { membersCount: 2856, postsCount: 1234, onlineCount: 89 },
+    stats: { membersCount: 2856, posts_count: 1234, onlineCount: 89 },
     isJoined: false,
     tags: ['AI', 'Machine Learning', 'Deep Learning', 'Python'],
     type: 'PUBLIC',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 400).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 400).toISOString(),
   },
   {
     id: 'devops-vn',
@@ -547,11 +547,11 @@ const allGroups = [
     description: 'Cộng đồng DevOps Việt Nam. Chia sẻ về CI/CD, Kubernetes, Cloud architecture và monitoring.',
     avatarUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400',
     bannerUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200',
-    stats: { membersCount: 1923, postsCount: 567, onlineCount: 67 },
+    stats: { membersCount: 1923, posts_count: 567, onlineCount: 67 },
     isJoined: true,
     tags: ['DevOps', 'Kubernetes', 'Docker', 'AWS'],
     type: 'PUBLIC',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 280).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 280).toISOString(),
   },
   {
     id: 'ux-design-vn',
@@ -559,11 +559,11 @@ const allGroups = [
     description: 'Cộng đồng designer Việt Nam. UI/UX design, design systems, user research và product design.',
     avatarUrl: 'https://images.unsplash.com/photo-1559028006-08167dd04271?w=400',
     bannerUrl: 'https://images.unsplash.com/photo-1559028006-08167dd04271?w=1200',
-    stats: { membersCount: 2678, postsCount: 445, onlineCount: 98 },
+    stats: { membersCount: 2678, posts_count: 445, onlineCount: 98 },
     isJoined: false,
     tags: ['UI/UX', 'Design', 'Figma', 'Research'],
     type: 'PUBLIC',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 320).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 320).toISOString(),
   },
   {
     id: 'mobile-dev-vn',
@@ -571,11 +571,11 @@ const allGroups = [
     description: 'Cộng đồng mobile developers Việt Nam. iOS, Android, React Native, Flutter development.',
     avatarUrl: 'https://images.unsplash.com/photo-1512941937609-7625e61fe288?w=400',
     bannerUrl: 'https://images.unsplash.com/photo-1512941937609-7625e61fe288?w=1200',
-    stats: { membersCount: 1543, postsCount: 234, onlineCount: 45 },
+    stats: { membersCount: 1543, posts_count: 234, onlineCount: 45 },
     isJoined: false,
     tags: ['iOS', 'Android', 'React Native', 'Flutter'],
     type: 'PUBLIC',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 200).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 200).toISOString(),
   },
   {
     id: 'backend-vietnam',
@@ -583,11 +583,11 @@ const allGroups = [
     description: 'Cộng đồng backend developers Việt Nam. API design, database, microservices và system architecture.',
     avatarUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400',
     bannerUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200',
-    stats: { membersCount: 2234, postsCount: 678, onlineCount: 112 },
+    stats: { membersCount: 2234, posts_count: 678, onlineCount: 112 },
     isJoined: true,
     tags: ['Backend', 'API', 'Database', 'Microservices'],
     type: 'PUBLIC',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 450).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 450).toISOString(),
   },
 ];
 
@@ -611,7 +611,7 @@ const allMarketplaceItems = [
     tags: ['React', 'JavaScript', 'Frontend'],
     stats: { studentsCount: 1234, rating: 4.8, reviewsCount: 156 },
     isPurchased: false,
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 30).toISOString(),
   },
   {
     id: 'book-system-design',
@@ -631,7 +631,7 @@ const allMarketplaceItems = [
     tags: ['System Design', 'Interview', 'Backend'],
     stats: { studentsCount: 892, rating: 4.6, reviewsCount: 78 },
     isPurchased: true,
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 45).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 45).toISOString(),
   },
   {
     id: 'service-code-review',
@@ -651,7 +651,7 @@ const allMarketplaceItems = [
     tags: ['Code Review', 'Frontend', 'Mentoring'],
     stats: { studentsCount: 234, rating: 4.9, reviewsCount: 45 },
     isPurchased: false,
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 15).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 15).toISOString(),
   },
   {
     id: 'template-ui-kit',
@@ -671,7 +671,7 @@ const allMarketplaceItems = [
     tags: ['UI Kit', 'React', 'TypeScript'],
     stats: { studentsCount: 567, rating: 4.7, reviewsCount: 89 },
     isPurchased: false,
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 20).toISOString(),
   },
   {
     id: 'workshop-devops',
@@ -691,7 +691,7 @@ const allMarketplaceItems = [
     tags: ['DevOps', 'Docker', 'Kubernetes'],
     stats: { studentsCount: 445, rating: 4.8, reviewsCount: 67 },
     isPurchased: true,
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 10).toISOString(),
   },
 ];
 
@@ -701,49 +701,49 @@ const allFriends = [
     id: 'friend_001',
     user: {
       id: 'usr_mentor_001',
-      displayName: 'Mentor Hoàng',
+      display_name: 'Mentor Hoàng',
       username: 'mentor.hoang',
       avatar: 'https://i.pravatar.cc/160?img=65',
       role: 'INSTRUCTOR',
-      accountStatus: 'VERIFIED',
+      account_status: 'VERIFIED',
     },
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 120).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 120).toISOString(),
   },
   {
     id: 'friend_002',
     user: {
       id: 'usr_peer_001',
-      displayName: 'Linh Trần',
+      display_name: 'Linh Trần',
       username: 'linh.ui',
       avatar: 'https://i.pravatar.cc/160?img=31',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 90).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 90).toISOString(),
   },
   {
     id: 'friend_003',
     user: {
       id: 'usr_data_001',
-      displayName: 'Phúc Lê',
+      display_name: 'Phúc Lê',
       username: 'phucle.ai',
       avatar: 'https://i.pravatar.cc/160?img=19',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 60).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 60).toISOString(),
   },
   {
     id: 'friend_004',
     user: {
       id: 'usr_ops_001',
-      displayName: 'An Vũ',
+      display_name: 'An Vũ',
       username: 'an.devops',
       avatar: 'https://i.pravatar.cc/160?img=21',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 45).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 45).toISOString(),
   },
 ];
 
@@ -752,43 +752,43 @@ const incomingFriendRequests = [
     id: 'req_incoming_001',
     requester: {
       id: 'usr_backend_001',
-      displayName: 'Duy Phạm',
+      display_name: 'Duy Phạm',
       username: 'duy.backend',
       avatar: 'https://i.pravatar.cc/160?img=7',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     addressee: {
       id: 'usr_student_001',
-      displayName: 'Hiru Nguyễn',
+      display_name: 'Hiru Nguyễn',
       username: 'hiru.dev',
       avatar: 'https://i.pravatar.cc/160?img=12',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     status: 'PENDING',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 2).toISOString(),
   },
   {
     id: 'req_incoming_002',
     requester: {
       id: 'usr_pm_001',
-      displayName: 'Mai Nguyễn',
+      display_name: 'Mai Nguyễn',
       username: 'mai.pm',
       avatar: 'https://i.pravatar.cc/160?img=44',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     addressee: {
       id: 'usr_student_001',
-      displayName: 'Hiru Nguyễn',
+      display_name: 'Hiru Nguyễn',
       username: 'hiru.dev',
       avatar: 'https://i.pravatar.cc/160?img=12',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     status: 'PENDING',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 5).toISOString(),
   },
 ];
 
@@ -797,22 +797,22 @@ const outgoingFriendRequests = [
     id: 'req_outgoing_001',
     requester: {
       id: 'usr_student_001',
-      displayName: 'Hiru Nguyễn',
+      display_name: 'Hiru Nguyễn',
       username: 'hiru.dev',
       avatar: 'https://i.pravatar.cc/160?img=12',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     addressee: {
       id: 'usr_design_001',
-      displayName: 'Linh Designer',
+      display_name: 'Linh Designer',
       username: 'linh.design',
       avatar: 'https://i.pravatar.cc/160?img=15',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     status: 'PENDING',
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 1).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 1).toISOString(),
   },
 ];
 
@@ -825,11 +825,11 @@ const allConversations = [
     created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 30).toISOString(),
     other_user: {
       id: 'usr_mentor_001',
-      displayName: 'Mentor Hoàng',
+      display_name: 'Mentor Hoàng',
       username: 'mentor.hoang',
       avatar: 'https://i.pravatar.cc/160?img=65',
       role: 'INSTRUCTOR',
-      accountStatus: 'VERIFIED',
+      account_status: 'VERIFIED',
     },
     last_message: {
       id: 'msg_001',
@@ -846,11 +846,11 @@ const allConversations = [
     created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 45).toISOString(),
     other_user: {
       id: 'usr_peer_001',
-      displayName: 'Linh Trần',
+      display_name: 'Linh Trần',
       username: 'linh.ui',
       avatar: 'https://i.pravatar.cc/160?img=31',
       role: 'USER',
-      accountStatus: 'ACTIVE',
+      account_status: 'ACTIVE',
     },
     last_message: {
       id: 'msg_002',
@@ -946,9 +946,9 @@ const allNotifications = [
     title: 'Mentor Hoàng đã thích bài viết của bạn',
     message: '"Vừa hoàn thành luồng contract-first với TypeSpec + Orval + MSW..."',
     isRead: false,
-    createdAt: new Date(now.getTime() - 1000 * 60 * 15).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 15).toISOString(),
     avatar: 'https://i.pravatar.cc/160?img=65',
-    postId: 'post_001',
+    post_id: 'post_001',
     userId: 'usr_mentor_001',
     actionUrl: '/posts/post_001',
   },
@@ -958,9 +958,9 @@ const allNotifications = [
     title: 'Linh Trần đã bình luận về bài viết của bạn',
     message: 'Flow này sạch và dễ scale đó. Nhớ thêm case test cho refresh token nữa nhé.',
     isRead: false,
-    createdAt: new Date(now.getTime() - 1000 * 60 * 30).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 30).toISOString(),
     avatar: 'https://i.pravatar.cc/160?img=31',
-    postId: 'post_001',
+    post_id: 'post_001',
     userId: 'usr_peer_001',
     actionUrl: '/posts/post_001',
   },
@@ -970,7 +970,7 @@ const allNotifications = [
     title: 'Phúc Lê đã theo dõi bạn',
     message: 'Hãy xem profile của Phúc để biết thêm thông tin!',
     isRead: true,
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString(),
     avatar: 'https://i.pravatar.cc/160?img=19',
     userId: 'usr_data_001',
     actionUrl: '/profile/phucle.ai',
@@ -981,9 +981,9 @@ const allNotifications = [
     title: 'An Vũ đã đề cập đến bạn trong một bình luận',
     message: '@hiru.dev bạn có kinh nghiệm với Kubernetes không?',
     isRead: true,
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 4).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 4).toISOString(),
     avatar: 'https://i.pravatar.cc/160?img=21',
-    postId: 'post_004',
+    post_id: 'post_004',
     userId: 'usr_ops_001',
     actionUrl: '/posts/post_004',
   },
@@ -993,7 +993,7 @@ const allNotifications = [
     title: 'Chào mừng đến với Etechs Social Network!',
     message: 'Hoàn thành profile của bạn để kết nối với cộng đồng dễ dàng hơn.',
     isRead: true,
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7).toISOString(),
     avatar: undefined,
     actionUrl: '/settings',
   },
@@ -1003,9 +1003,9 @@ const allNotifications = [
     title: 'Duy Phạm đã thích bình luận của bạn',
     message: '"Dạ em đang thêm luôn scenario mock lỗi 401 để cover UX fallback."',
     isRead: false,
-    createdAt: new Date(now.getTime() - 1000 * 60 * 60).toISOString(),
+    created_at: new Date(now.getTime() - 1000 * 60 * 60).toISOString(),
     avatar: 'https://i.pravatar.cc/160?img=7',
-    postId: 'post_001',
+    post_id: 'post_001',
     userId: 'usr_backend_001',
     actionUrl: '/posts/post_001',
   },
@@ -1099,55 +1099,55 @@ const commentsByPost = new Map<string, Comment[]>([
     [
       {
         id: 'cmt_001',
-        postId: 'post_001',
+        post_id: 'post_001',
         author: commentAuthors.mentor,
-        parentCommentId: null,
+        parent_comment_id: null,
         content: 'Flow này sạch và dễ scale đó. Nhớ thêm case test cho refresh token nữa nhé.',
-        mediaUrls: ['https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600'],
+        media_urls: ['https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600'],
         stats: { reactions: 7, replies: 1 },
-        userReaction: 'LIKE',
-        createdAt: new Date(now.getTime() - 1000 * 60 * 18).toISOString(),
-        updatedAt: new Date(now.getTime() - 1000 * 60 * 16).toISOString(),
+        user_reaction: 'LIKE',
+        created_at: new Date(now.getTime() - 1000 * 60 * 18).toISOString(),
+        updated_at: new Date(now.getTime() - 1000 * 60 * 16).toISOString(),
       },
       {
         id: 'cmt_002',
-        postId: 'post_001',
+        post_id: 'post_001',
         author: commentAuthors.student,
-        parentCommentId: 'cmt_001',
+        parent_comment_id: 'cmt_001',
         content: 'Dạ em đang thêm luôn scenario mock lỗi 401 để cover UX fallback.',
-        mediaUrls: ['https://images.unsplash.com/photo-1518770660439-4636190af475?w=600'],
+        media_urls: ['https://images.unsplash.com/photo-1518770660439-4636190af475?w=600'],
         stats: { reactions: 2, replies: 0 },
-        userReaction: null,
-        createdAt: new Date(now.getTime() - 1000 * 60 * 13).toISOString(),
-        updatedAt: new Date(now.getTime() - 1000 * 60 * 12).toISOString(),
+        user_reaction: null,
+        created_at: new Date(now.getTime() - 1000 * 60 * 13).toISOString(),
+        updated_at: new Date(now.getTime() - 1000 * 60 * 12).toISOString(),
       },
       {
         id: 'cmt_003',
-        postId: 'post_001',
+        post_id: 'post_001',
         author: commentAuthors.peer,
-        parentCommentId: null,
+        parent_comment_id: null,
         content: 'Cho mình xin branch này để demo cho team frontend với.',
-        mediaUrls: [],
+        media_urls: [],
         stats: { reactions: 1, replies: 0 },
-        userReaction: null,
-        createdAt: new Date(now.getTime() - 1000 * 60 * 9).toISOString(),
-        updatedAt: new Date(now.getTime() - 1000 * 60 * 9).toISOString(),
+        user_reaction: null,
+        created_at: new Date(now.getTime() - 1000 * 60 * 9).toISOString(),
+        updated_at: new Date(now.getTime() - 1000 * 60 * 9).toISOString(),
       },
     ],
   ],
 ]);
 
-const getPostComments = (postId: string): Comment[] => commentsByPost.get(postId) ?? [];
+const getPostComments = (post_id: string): Comment[] => commentsByPost.get(post_id) ?? [];
 
-const setPostComments = (postId: string, comments: Comment[]) => {
-  commentsByPost.set(postId, comments);
+const setPostComments = (post_id: string, comments: Comment[]) => {
+  commentsByPost.set(post_id, comments);
 };
 
-const findCommentLocation = (commentId: string): { postId: string; comment: Comment } | null => {
+const findCommentLocation = (commentId: string): { post_id: string; comment: Comment } | null => {
   for (const [postId, comments] of commentsByPost.entries()) {
     const comment = comments.find((item) => item.id === commentId);
     if (comment) {
-      return { postId, comment };
+      return { post_id: postId, comment };
     }
   }
   return null;
@@ -1270,7 +1270,7 @@ export const customHandlers = [
     const body = await request.json() as any;
 
     if (body.display_name !== undefined) {
-      activeUser.displayName = body.display_name;
+      activeUser.display_name = body.display_name;
     }
     if (body.username !== undefined) {
       activeUser.username = body.username;
@@ -1279,11 +1279,11 @@ export const customHandlers = [
       activeUser.bio = body.bio;
     }
     if (body.birth_date !== undefined) {
-      activeUser.birthDate = body.birth_date;
+      activeUser.birth_date = body.birth_date;
     }
     if (body.personal_info !== undefined) {
-      activeUser.personalInfo = {
-        ...activeUser.personalInfo,
+      activeUser.personal_info = {
+        ...activeUser.personal_info,
         ...body.personal_info,
       };
     }
@@ -1302,11 +1302,11 @@ export const customHandlers = [
     let filtered = allFeedPosts;
 
     if (postType) {
-      filtered = filtered.filter(post => post.postType === postType);
+      filtered = filtered.filter(post => post.post_type === postType);
     }
 
     if (fieldId) {
-      filtered = filtered.filter(post => post.fieldId === fieldId);
+      filtered = filtered.filter(post => post.field_id === fieldId);
     }
 
     const start = Math.max(0, (page - 1) * pageSize);
@@ -1347,7 +1347,7 @@ export const customHandlers = [
   }),
 
   http.get('*/posts/:postId/comments', async ({ request, params }) => {
-    const postId = String(params.postId ?? '');
+    const postId = String(params.post_id ?? '');
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') ?? 1) || 1;
     const pageSize = Number(url.searchParams.get('page_size') ?? 20) || 20;
@@ -1366,22 +1366,22 @@ export const customHandlers = [
 
     const nextComment: Comment = {
       id: `cmt_${Date.now()}`,
-      postId: body.post_id,
-      parentCommentId: null,
+      post_id: body.post_id,
+      parent_comment_id: null,
       author: {
         id: activeUser.id,
-        displayName: activeUser.displayName,
+        display_name: activeUser.display_name,
         username: activeUser.username,
         avatar: activeUser.avatar ?? null,
         role: activeUser.role,
-        accountStatus: activeUser.accountStatus,
+        account_status: activeUser.account_status,
       },
       content: body.content_text,
-      mediaUrls: toMediaUrls(body.media_asset_ids),
+      media_urls: toMediaUrls(body.media_asset_ids),
       stats: { reactions: 0, replies: 0 },
-      userReaction: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      user_reaction: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     const current = getPostComments(body.post_id);
@@ -1403,22 +1403,22 @@ export const customHandlers = [
 
     const reply: Comment = {
       id: `cmt_${Date.now()}`,
-      postId: body.post_id,
-      parentCommentId,
+      post_id: body.post_id,
+      parent_comment_id: parentCommentId,
       author: {
         id: activeUser.id,
-        displayName: activeUser.displayName,
+        display_name: activeUser.display_name,
         username: activeUser.username,
         avatar: activeUser.avatar ?? null,
         role: activeUser.role,
-        accountStatus: activeUser.accountStatus,
+        account_status: activeUser.account_status,
       },
       content: body.content_text,
-      mediaUrls: toMediaUrls(body.media_asset_ids),
+      media_urls: toMediaUrls(body.media_asset_ids),
       stats: { reactions: 0, replies: 0 },
-      userReaction: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      user_reaction: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     const current = getPostComments(body.post_id);
@@ -1453,15 +1453,15 @@ export const customHandlers = [
       return HttpResponse.json({ success: false, error: 'Comment not found' }, { status: 404 });
     }
 
-    const comments = getPostComments(location.postId).map((item) => {
+    const comments = getPostComments(location.post_id).map((item) => {
       if (item.id !== commentId) return item;
       return {
         ...item,
         content: body.content_text ?? item.content,
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
     });
-    setPostComments(location.postId, comments);
+    setPostComments(location.post_id, comments);
 
     const updated = comments.find((item) => item.id === commentId) ?? location.comment;
     const response: CommentsUpdateComment200 = {
@@ -1482,10 +1482,10 @@ export const customHandlers = [
       return HttpResponse.json({ success: false, error: 'Comment not found' }, { status: 404 });
     }
 
-    const comments = getPostComments(location.postId).filter(
-      (item) => item.id !== commentId && item.parentCommentId !== commentId,
+    const comments = getPostComments(location.post_id).filter(
+      (item) => item.id !== commentId && item.parent_comment_id !== commentId,
     );
-    setPostComments(location.postId, comments);
+    setPostComments(location.post_id, comments);
 
     const response: CommentsDeleteComment200 = {
       success: true,
@@ -1499,7 +1499,7 @@ export const customHandlers = [
 
   // Field handlers
   http.get('*/fields/:fieldId/', async ({ params }) => {
-    const fieldId = String(params.fieldId ?? '');
+    const fieldId = String(params.field_id ?? '');
     const field = allFields.find(f => f.id === fieldId);
 
     if (!field) {
@@ -1515,12 +1515,12 @@ export const customHandlers = [
   }),
 
   http.get('*/fields/:fieldId/posts/', async ({ request, params }) => {
-    const fieldId = String(params.fieldId ?? '');
+    const fieldId = String(params.field_id ?? '');
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') ?? 1) || 1;
     const limit = Number(url.searchParams.get('limit') ?? 10) || 10;
 
-    const fieldPosts = allFeedPosts.filter(post => post.fieldId === fieldId);
+    const fieldPosts = allFeedPosts.filter(post => post.field_id === fieldId);
     const start = Math.max(0, (page - 1) * limit);
     const end = start + limit;
     const posts = fieldPosts.slice(start, end);
@@ -1538,7 +1538,7 @@ export const customHandlers = [
   }),
 
   http.post('*/fields/:fieldId/follow/', async ({ params }) => {
-    const fieldId = String(params.fieldId ?? '');
+    const fieldId = String(params.field_id ?? '');
     const fieldIndex = allFields.findIndex(f => f.id === fieldId);
 
     if (fieldIndex === -1) {
@@ -1557,7 +1557,7 @@ export const customHandlers = [
   }),
 
   http.delete('*/fields/:fieldId/follow/', async ({ params }) => {
-    const fieldId = String(params.fieldId ?? '');
+    const fieldId = String(params.field_id ?? '');
     const fieldIndex = allFields.findIndex(f => f.id === fieldId);
 
     if (fieldIndex === -1) {
@@ -1699,7 +1699,7 @@ export const customHandlers = [
 
     if (query) {
       filtered = filtered.filter(friend => 
-        friend.user.displayName.toLowerCase().includes(query.toLowerCase()) ||
+        friend.user.display_name.toLowerCase().includes(query.toLowerCase()) ||
         friend.user.username.toLowerCase().includes(query.toLowerCase())
       );
     }
@@ -1755,7 +1755,7 @@ export const customHandlers = [
     allFriends.push({
       id: `friend_${Date.now()}`,
       user: request.requester,
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     });
 
     await delay(200);
@@ -1977,30 +1977,30 @@ export const customHandlers = [
       ...Object.values(commentAuthors),
       {
         id: 'usr_design_001',
-        displayName: 'Linh Designer',
+        display_name: 'Linh Designer',
         username: 'linh.design',
         avatar: 'https://i.pravatar.cc/160?img=15',
         role: 'USER',
-        accountStatus: 'ACTIVE',
+        account_status: 'ACTIVE',
       },
     ];
 
     const matchedUsers = allUsers.filter(user => 
-      user.displayName.toLowerCase().includes(searchQuery) ||
+      user.display_name.toLowerCase().includes(searchQuery) ||
       user.username.toLowerCase().includes(searchQuery)
     ).map(user => ({
       ...user,
-      friendshipStatus: allFriends.some(f => f.user.id === user.id) ? 'friends' : 
+      friendship_status: allFriends.some(f => f.user.id === user.id) ? 'friends' : 
                       incomingFriendRequests.some(r => r.requester.id === user.id) ? 'request_received' :
                       outgoingFriendRequests.some(r => r.addressee.id === user.id) ? 'request_sent' : 'none',
-      friendRequestId: incomingFriendRequests.find(r => r.requester.id === user.id)?.id || 
+      friend_request_id: incomingFriendRequests.find(r => r.requester.id === user.id)?.id || 
                        outgoingFriendRequests.find(r => r.addressee.id === user.id)?.id || null,
     }));
 
     // Search posts
     const matchedPosts = allFeedPosts.filter(post =>
       post.content.toLowerCase().includes(searchQuery) ||
-      post.author.displayName.toLowerCase().includes(searchQuery) ||
+      post.author.display_name.toLowerCase().includes(searchQuery) ||
       post.author.username.toLowerCase().includes(searchQuery)
     );
 
@@ -2027,7 +2027,7 @@ export const customHandlers = [
     }
 
     // Sort by created_at descending
-    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    notifications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     await delay(250);
     return HttpResponse.json({

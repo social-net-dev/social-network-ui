@@ -2,7 +2,6 @@ import { faker } from '@faker-js/faker';
 import type {
   Author,
   Comment,
-  Field,
   Friend,
   FriendRequest,
   Notification,
@@ -11,6 +10,18 @@ import type {
   UserPublic,
 } from '@/lib/api/generated/model';
 import { NotificationType, PostType, ReactionType, Visibility } from '@/lib/api/generated/model';
+
+// Local type for Field (not in generated model)
+interface Field {
+  id: string;
+  name: string;
+  hashtag?: string;
+  description?: string;
+  banner_url?: string;
+  avatar_url?: string;
+  stats?: { posts_count: number; followers_count: number };
+  is_following?: boolean;
+}
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -71,7 +82,6 @@ export function makeAuthor(overrides: Partial<Author> = {}): Author {
       .replace(/[^a-z0-9_.]/g, '.')
       .slice(0, 20),
     avatar: pickAvatar(),
-    avatar_path: null,
     role: faker.helpers.arrayElement(['STUDENT', 'TEACHER', 'USER']),
     account_status: 'ACTIVE',
     ...overrides,
@@ -105,11 +115,11 @@ export function makePostSummary(overrides: Partial<PostSummary> = {}): PostSumma
   };
 }
 
-export function makeComment(postId: string, overrides: Partial<Comment> = {}): Comment {
+export function makeComment(post_id: string, overrides: Partial<Comment> = {}): Comment {
   const baseDate = faker.date.recent({ days: 2 });
   return {
     id: makeId('cmt'),
-    post_id: postId,
+    post_id: post_id,
     author: makeAuthor(),
     parent_comment_id: null,
     content: faker.helpers.arrayElement(VN_COMMENTS),
@@ -136,7 +146,6 @@ export function makeUserMe(overrides: Partial<UserMe> = {}): UserMe {
     display_name: faker.person.fullName(),
     bio: faker.lorem.sentences(2),
     avatar: pickAvatar(),
-    avatar_path: null,
     background: null,
     account_status: 'ACTIVE',
     role: 'STUDENT',
@@ -162,7 +171,6 @@ export function makeUserPublic(overrides: Partial<UserPublic> = {}): UserPublic 
     display_name: faker.person.fullName(),
     bio: faker.lorem.sentences(2),
     avatar: pickAvatar(),
-    avatar_path: null,
     background: null,
     account_status: 'ACTIVE',
     role: 'STUDENT',

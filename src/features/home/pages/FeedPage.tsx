@@ -156,13 +156,13 @@ export function FeedPage() {
     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
       <div className="space-y-6">
         {/* Account Status Banner */}
-        {currentUser?.accountStatus === 'UNVERIFIED' && !bannerDismissed && (
+        {currentUser?.account_status === 'UNVERIFIED' && !bannerDismissed && (
           <div className="bg-muted/50 border border-border rounded-lg p-4 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <p className="font-medium text-foreground">Tài khoản chưa xác minh</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Dung lượng hiện tại: <span className="font-semibold text-foreground">{currentUser?.storageQuotaMb || 100}MB</span>. Khi admin phê duyệt, bạn sẽ nhận được 5GB dung lượng.
+                Dung lượng hiện tại: <span className="font-semibold text-foreground">{currentUser?.storage_quota_mb || 100}MB</span>. Khi admin phê duyệt, bạn sẽ nhận được 5GB dung lượng.
               </p>
             </div>
             <button
@@ -175,14 +175,14 @@ export function FeedPage() {
           </div>
         )}
 
-        {currentUser?.accountStatus === 'VERIFIED' && (
+        {currentUser?.account_status === 'VERIFIED' && (
           <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4 flex items-start gap-3">
             <CheckCircle className="h-5 w-5 text-secondary mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <p className="font-medium text-secondary">Tài khoản đã xác minh</p>
               <p className="text-sm text-secondary/80 mt-1">
                 <HardDrive className="inline h-4 w-4 mr-1" />
-                Dung lượng sử dụng: <span className="font-semibold">{currentUser?.storageQuotaMb || 5120}MB (5GB)</span>
+                Dung lượng sử dụng: <span className="font-semibold">{currentUser?.storage_quota_mb || 5120}MB (5GB)</span>
               </p>
             </div>
           </div>

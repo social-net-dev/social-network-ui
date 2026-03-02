@@ -45,7 +45,7 @@ export function AdminVerificationPanel({ showTitle = true }: { showTitle?: boole
                             <div className="space-y-4">
                                 {/* User Info */}
                                 <div>
-                                <h3 className="font-semibold text-lg text-gray-900">{req.user?.displayName}</h3>
+                                <h3 className="font-semibold text-lg text-gray-900">{req.user?.display_name}</h3>
                                 <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
                                     <p className="text-gray-600">
                                         <span className="font-medium">Email:</span> {req.user?.email}
@@ -61,11 +61,11 @@ export function AdminVerificationPanel({ showTitle = true }: { showTitle?: boole
                                         <span className="font-medium">Ngày đăng ký:</span> {new Date(req.created_at).toLocaleString("vi-VN")}
                                     </p>
                                     <p className="text-gray-600">
-                                        <span className="font-medium">Trạng thái TK:</span> {req.user?.accountStatus || "UNVERIFIED"}
+                                        <span className="font-medium">Trạng thái TK:</span> {req.user?.account_status || "UNVERIFIED"}
                                     </p>
                                     <p className="text-gray-600">
-                                        <span className="font-medium">Dung lượng:</span> {req.user?.storageQuotaMb}MB →{" "}
-                                        {req.user?.accountStatus === "VERIFIED" ? "5GB" : "100MB sau phê duyệt"}
+                                        <span className="font-medium">Dung lượng:</span> {req.user?.storage_quota_mb}MB →{" "}
+                                        {req.user?.account_status === "VERIFIED" ? "5GB" : "100MB sau phê duyệt"}
                                     </p>
                                 </div>
                                 </div>

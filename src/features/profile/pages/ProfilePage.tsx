@@ -138,7 +138,7 @@ function ProfilePage() {
                 mode={mode}
                 subjectUserId={subjectUserId}
                 currentUserId={currentUserId}
-                profileDisplayName={profile.displayName}
+                profileDisplayName={profile.display_name}
               />
             </TabsContent>
 
@@ -158,8 +158,8 @@ function ProfilePage() {
 
         {/* Sidebar */}
         <div className="w-full lg:w-72 xl:w-80 space-y-5 shrink-0">
-          {mode === 'me' && profile.storageQuotaMb && (
-            <StorageQuotaCard quotaMb={profile.storageQuotaMb} />
+          {mode === 'me' && profile.storage_quota_mb && (
+            <StorageQuotaCard quotaMb={profile.storage_quota_mb} />
           )}
           {canEdit && (
             <ProfileCompletenessCard

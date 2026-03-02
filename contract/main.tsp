@@ -420,7 +420,7 @@ model Author {
   id: string;
 
   @doc("Display name.")
-  displayName: string;
+  display_name: string;
 
   @doc("Username.")
   username: string;
@@ -432,7 +432,7 @@ model Author {
   role?: string;
 
   @doc("Account status.")
-  accountStatus?: string;
+  account_status?: string;
 }
 
 enum PrivacyField {
@@ -472,17 +472,17 @@ model Project {
   description: string;
 
   @doc("Project image URL.")
-  imageUrl: string;
+  image_url: string;
 
   @doc("Optional source code link.")
   @format("uri")
-  sourceLink?: string;
+  source_link?: string;
 }
 
 @doc("Personal information for user profile.")
 model PersonalInfo {
   @doc("Education level.")
-  educationLevel?: string;
+  education_level?: string;
 
   @doc("School name.")
   school?: string;
@@ -497,16 +497,16 @@ model PersonalInfo {
   major?: string;
 
   @doc("Graduation year.")
-  graduationYear?: string;
+  graduation_year?: string;
 
   @doc("Current academic year.")
-  academicYear?: string;
+  academic_year?: string;
 
   @doc("Current school year.")
-  schoolYear?: string;
+  school_year?: string;
 
   @doc("List of favorite subjects.")
-  favoriteSubjects?: string[];
+  favorite_subjects?: string[];
 
   @doc("List of hobbies.")
   hobbies?: string[];
@@ -534,16 +534,16 @@ model User {
   username: string;
 
   @doc("Display name.")
-  displayName: string;
+  display_name: string;
 
   @doc("User bio/description.")
   bio?: string;
 
   @doc("Personal information.")
-  personalInfo?: PersonalInfo;
+  personal_info?: PersonalInfo;
 
   @doc("Birth date.")
-  birthDate?: string | null;
+  birth_date?: string | null;
 
   @doc("Avatar URL.")
   avatar?: string | null;
@@ -552,20 +552,20 @@ model User {
   background?: string | null;
 
   @doc("Account status.")
-  accountStatus: string;
+  account_status: string;
 
   @doc("User role.")
   role: string;
 
   @doc("Storage quota in MB.")
   @minValue(0)
-  storageQuotaMb?: int32;
+  storage_quota_mb?: int32;
 
   @doc("Account creation timestamp.")
-  createdAt: string;
+  created_at: string;
 
   @doc("Last update timestamp.")
-  updatedAt?: string;
+  updated_at?: string;
 
   @doc("Privacy settings.")
   privacy?: UserPrivacy;
@@ -580,13 +580,13 @@ model User {
 
   @doc("Number of posts.")
   @minValue(0)
-  postsCount?: int32;
+  posts_count?: int32;
 
   @doc("Friendship status with viewer.")
-  friendshipStatus?: string;
+  friendship_status?: string;
 
   @doc("Friend request ID if applicable.")
-  friendRequestId?: string | null;
+  friend_request_id?: string | null;
 }
 
 @doc("Public user profile (respects privacy settings).")
@@ -598,16 +598,16 @@ model UserPublic {
   username: string;
 
   @doc("Display name.")
-  displayName: string;
+  display_name: string;
 
   @doc("User bio/description.")
   bio?: string;
 
   @doc("Personal information.")
-  personalInfo?: PersonalInfo;
+  personal_info?: PersonalInfo;
 
   @doc("Birth date.")
-  birthDate?: string | null;
+  birth_date?: string | null;
 
   @doc("Avatar URL.")
   avatar?: string | null;
@@ -616,16 +616,16 @@ model UserPublic {
   background?: string | null;
 
   @doc("Account status.")
-  accountStatus: string;
+  account_status: string;
 
   @doc("User role.")
   role: string;
 
   @doc("Account creation timestamp.")
-  createdAt: string;
+  created_at: string;
 
   @doc("Last update timestamp.")
-  updatedAt?: string;
+  updated_at?: string;
 
   @doc("Number of followers.")
   @minValue(0)
@@ -637,7 +637,7 @@ model UserPublic {
 
   @doc("Number of posts.")
   @minValue(0)
-  postsCount?: int32;
+  posts_count?: int32;
 
   @doc("Viewer context information.")
   viewer_context?: {
@@ -649,10 +649,10 @@ model UserPublic {
   redacted_fields?: PrivacyField[];
 
   @doc("Friendship status with viewer.")
-  friendshipStatus?: string;
+  friendship_status?: string;
 
   @doc("Friend request ID if applicable.")
-  friendRequestId?: string | null;
+  friend_request_id?: string | null;
 }
 
 @doc("Current user profile (includes private fields).")
@@ -671,16 +671,16 @@ model UserMe {
   username: string;
 
   @doc("Display name.")
-  displayName: string;
+  display_name: string;
 
   @doc("User bio/description.")
   bio?: string;
 
   @doc("Personal information.")
-  personalInfo?: PersonalInfo;
+  personal_info?: PersonalInfo;
 
   @doc("Birth date.")
-  birthDate?: string | null;
+  birth_date?: string | null;
 
   @doc("Avatar URL.")
   avatar?: string | null;
@@ -689,20 +689,20 @@ model UserMe {
   background?: string | null;
 
   @doc("Account status.")
-  accountStatus: string;
+  account_status: string;
 
   @doc("User role.")
   role: string;
 
   @doc("Storage quota in MB.")
   @minValue(0)
-  storageQuotaMb?: int32;
+  storage_quota_mb?: int32;
 
   @doc("Account creation timestamp.")
-  createdAt: string;
+  created_at: string;
 
   @doc("Last update timestamp.")
-  updatedAt?: string;
+  updated_at?: string;
 
   @doc("Privacy settings.")
   privacy?: UserPrivacy;
@@ -717,7 +717,7 @@ model UserMe {
 
   @doc("Number of posts.")
   @minValue(0)
-  postsCount?: int32;
+  posts_count?: int32;
 }
 
 @doc("Login request payload.")
@@ -899,7 +899,7 @@ model PostSummary {
   content: string;
 
   @doc("Array of media URLs (legacy).")
-  mediaUrls: string[];
+  media_urls: string[];
 
   @doc("Array of media assets with metadata.")
   media?: MediaAssetSummary[];
@@ -908,22 +908,22 @@ model PostSummary {
   stats: PostStats;
 
   @doc("Current user's reaction to this post.")
-  userReaction: ReactionType | null;
+  user_reaction: ReactionType | null;
 
   @doc("Post visibility setting.")
   visibility: Visibility;
 
   @doc("Type of post.")
-  postType: PostType;
+  post_type: PostType;
 
   @doc("Field/category ID.")
-  fieldId?: string;
+  field_id?: string;
 
   @doc("Post creation timestamp.")
-  createdAt: string;
+  created_at: string;
 
   @doc("Last update timestamp.")
-  updatedAt: string;
+  updated_at: string;
 }
 
 @doc("Full post model with all details including shared post.")
@@ -938,7 +938,7 @@ model Post {
   content: string;
 
   @doc("Array of media URLs (legacy).")
-  mediaUrls: string[];
+  media_urls: string[];
 
   @doc("Array of media assets with metadata.")
   media?: MediaAssetSummary[];
@@ -947,25 +947,25 @@ model Post {
   stats: PostStats;
 
   @doc("Current user's reaction to this post.")
-  userReaction: ReactionType | null;
+  user_reaction: ReactionType | null;
 
   @doc("Shared post if this is a share.")
-  sharedPost: PostSummary | null;
+  shared_post: PostSummary | null;
 
   @doc("Post visibility setting.")
   visibility: Visibility;
 
   @doc("Type of post.")
-  postType: PostType;
+  post_type: PostType;
 
   @doc("Field/category ID.")
-  fieldId?: string;
+  field_id?: string;
 
   @doc("Post creation timestamp.")
-  createdAt: string;
+  created_at: string;
 
   @doc("Last update timestamp.")
-  updatedAt: string;
+  updated_at: string;
 }
 
 @doc("Feed response with paginated posts.")
@@ -1016,31 +1016,31 @@ model Comment {
   id: string;
 
   @doc("ID of the post this comment belongs to.")
-  postId: string;
+  post_id: string;
 
   @doc("Comment author information.")
   author: Author;
 
   @doc("Parent comment ID for replies.")
-  parentCommentId: string | null;
+  parent_comment_id: string | null;
 
   @doc("Comment content text.")
   content: string;
 
   @doc("Array of media URLs.")
-  mediaUrls: string[];
+  media_urls: string[];
 
   @doc("Comment statistics.")
   stats: CommentStats;
 
   @doc("Current user's reaction to this comment.")
-  userReaction: ReactionType | null;
+  user_reaction: ReactionType | null;
 
   @doc("Comment creation timestamp.")
-  createdAt: string;
+  created_at: string;
 
   @doc("Last update timestamp.")
-  updatedAt: string;
+  updated_at: string;
 }
 
 @doc("Comment response with paginated comments.")
@@ -1119,7 +1119,7 @@ model MediaAsset extends MediaAssetSummary {
   status: "pending" | "ready" | "failed";
 
   @doc("Asset creation timestamp.")
-  createdAt: string;
+  created_at: string;
 }
 
 model NameValueHeader {
@@ -1211,11 +1211,11 @@ model Notification {
   id: string;
   type: NotificationType;
   actor: Author;
-  targetId?: string;
-  targetType?: "post" | "comment" | "friend_request";
+  target_id?: string;
+  target_type?: "post" | "comment" | "friend_request";
   message: string;
-  isRead: boolean;
-  createdAt: string;
+  is_read: boolean;
+  created_at: string;
 }
 
 @doc("Unread notification count response.")

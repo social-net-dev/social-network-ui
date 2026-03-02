@@ -15,12 +15,12 @@ export function PersonalProfilePage() {
   const profile = rawProfile as User;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const projects = profile?.personalInfo?.projects ?? [];
+  const projects = profile?.personal_info?.projects ?? [];
 
   // --- Handlers for Backend Sync ---
   const saveToBackend = async (updates: any) => {
     try {
-      const currentPersonalInfo = profile?.personalInfo || {};
+      const currentPersonalInfo = profile?.personal_info || {};
       const bioPayload = JSON.stringify({
         bioText: profile?.bio || '',
         ...currentPersonalInfo,
@@ -28,7 +28,7 @@ export function PersonalProfilePage() {
       });
 
       await updateProfile({
-        displayName: profile?.displayName || '',
+        displayName: profile?.display_name || '',
         bio: bioPayload,
       });
     } catch (error) {
@@ -41,7 +41,7 @@ export function PersonalProfilePage() {
   };
 
   const handleUpdateAcademicInterests = (newInterests: any) => {
-    saveToBackend({ favoriteSubjects: newInterests.map((i: any) => i.label) });
+    saveToBackend({ favorite_subjects: newInterests.map((i: any) => i.label) });
   };
 
   const handleUpdatePersonalInterests = (newInterests: any) => {
@@ -83,12 +83,12 @@ export function PersonalProfilePage() {
     );
   }
 
-  const academicInterests = (profile.personalInfo?.favoriteSubjects || []).map(s => ({
+  const academicInterests = (profile.personal_info?.favorite_subjects || []).map(s => ({
     label: s,
     color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800',
   }));
 
-  const personalInterests = (profile.personalInfo?.hobbies || []).map(h => ({
+  const personalInterests = (profile.personal_info?.hobbies || []).map(h => ({
     label: h,
     icon: Heart,
   }));
@@ -130,7 +130,7 @@ export function PersonalProfilePage() {
 
             <div className="space-y-3">
               <div>
-                <h1 className="text-4xl font-black tracking-tight text-foreground">{profile.displayName}</h1>
+                <h1 className="text-4xl font-black tracking-tight text-foreground">{profile.display_name}</h1>
                 <div className="flex items-center justify-center md:justify-start gap-2 mt-1">
                   <p className="text-etechs-primary font-bold px-3 py-1 bg-etechs-primary/10 rounded-full text-xs uppercase tracking-widest">{profile.role || 'Member'}</p>
                   {profile.username && <span className="text-muted-foreground text-sm font-medium">@{profile.username}</span>}
@@ -140,7 +140,7 @@ export function PersonalProfilePage() {
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-muted-foreground font-medium">
                 <div className="flex items-center gap-1.5 bg-muted/50 px-3 py-1.5 rounded-xl">
                   <MapPin className="w-4 h-4 text-primary" />
-                  <span>{profile.personalInfo?.location || 'Vietnam'}</span>
+                  <span>{profile.personal_info?.location || 'Vietnam'}</span>
                 </div>
               </div>
               {profile.bio && <p className="text-sm text-muted-foreground max-w-md leading-relaxed">{profile.bio}</p>}
@@ -164,7 +164,7 @@ export function PersonalProfilePage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - Stats & Quota */}
         <div className="space-y-8">
-          {profile.storageQuotaMb && <StorageQuotaCard quotaMb={profile.storageQuotaMb} />}
+          {profile.storage_quota_mb && <StorageQuotaCard quotaMb={profile.storage_quota_mb} />}
 {/* 
           <Card className="rounded-3xl border border-border shadow-xl overflow-hidden bg-gradient-to-br from-etechs-primary/10 to-transparent">
             <CardContent className="p-8 flex flex-col justify-center text-center">
@@ -199,12 +199,12 @@ export function PersonalProfilePage() {
                 </div>
                 <EditAcademicBackgroundDialog
                   data={{
-                    educationLevel: profile.personalInfo?.educationLevel || '',
-                    school: profile.personalInfo?.school || '',
-                    major: profile.personalInfo?.major || '',
-                    class: profile.personalInfo?.class || '',
-                    academicYear: profile.personalInfo?.academicYear || '',
-                    schoolYear: profile.personalInfo?.schoolYear || '',
+                    education_level: profile.personal_info?.education_level || '',
+                    school: profile.personal_info?.school || '',
+                    major: profile.personal_info?.major || '',
+                    class: profile.personal_info?.class || '',
+                    academic_year: profile.personal_info?.academic_year || '',
+                    school_year: profile.personal_info?.school_year || '',
                   }}
                   onSave={handleUpdateAcademicBackground}
                   trigger={
@@ -215,24 +215,24 @@ export function PersonalProfilePage() {
                 />
               </CardHeader>
               <CardContent className="space-y-4 pt-6">
-                {profile.personalInfo?.school ? (
+                {profile.personal_info?.school ? (
                   <div className="flex items-center gap-4 bg-muted/30 p-5 rounded-2xl border-l-4 border-etechs-primary">
                     <div className="h-14 w-14 bg-white rounded-2xl flex items-center justify-center p-2 shadow-inner shrink-0">
-                      <img alt="School Logo" className="w-full h-full object-contain" src={`https://ui-avatars.com/api/?name=${profile.personalInfo.school}&background=random`} />
+                      <img alt="School Logo" className="w-full h-full object-contain" src={`https://ui-avatars.com/api/?name=${profile.personal_info.school}&background=random`} />
                     </div>
                     <div>
                       <p className="text-xs font-black text-etechs-primary uppercase tracking-tighter">
-                        {profile.personalInfo.educationLevel === 'university' ? 'Đại học/Cao đẳng' :
-                         profile.personalInfo.educationLevel === 'high' ? 'Trung học phổ thông' :
-                         profile.personalInfo.educationLevel === 'middle' ? 'Trung học cơ sở' :
-                         profile.personalInfo.educationLevel === 'elementary' ? 'Tiểu học' : 'Học sinh/Sinh viên'}
+                        {profile.personal_info.education_level === 'university' ? 'Đại học/Cao đẳng' :
+                         profile.personal_info.education_level === 'high' ? 'Trung học phổ thông' :
+                         profile.personal_info.education_level === 'middle' ? 'Trung học cơ sở' :
+                         profile.personal_info.education_level === 'elementary' ? 'Tiểu học' : 'Học sinh/Sinh viên'}
                       </p>
-                      <p className="text-base font-bold leading-tight">{profile.personalInfo.school}</p>
+                      <p className="text-base font-bold leading-tight">{profile.personal_info.school}</p>
                       <p className="text-muted-foreground text-xs font-medium">
-                        {profile.personalInfo.educationLevel === 'university' ? (
-                          `${profile.personalInfo.major ? profile.personalInfo.major + ' • ' : ''}${profile.personalInfo.class ? profile.personalInfo.class + ' • ' : ''}${profile.personalInfo.academicYear || ''}`
+                        {profile.personal_info.education_level === 'university' ? (
+                          `${profile.personal_info.major ? profile.personal_info.major + ' • ' : ''}${profile.personal_info.class ? profile.personal_info.class + ' • ' : ''}${profile.personal_info.academic_year || ''}`
                         ) : (
-                          `${profile.personalInfo.class ? profile.personalInfo.class + ' • ' : ''}${profile.personalInfo.schoolYear || ''}`
+                          `${profile.personal_info.class ? profile.personal_info.class + ' • ' : ''}${profile.personal_info.school_year || ''}`
                         )}
                       </p>
                     </div>
@@ -368,8 +368,8 @@ export function PersonalProfilePage() {
                     <Button className="bg-etechs-primary text-etechs-secondary font-black rounded-2xl h-12 px-8 shadow-lg shadow-etechs-primary/20 hover-lift">
                       <Terminal className="w-5 h-5 mr-2" /> XEM CHI TIẾT
                     </Button>
-                    {project.sourceLink && (
-                      <Button variant="ghost" onClick={() => window.open(project.sourceLink, '_blank')} className="font-bold rounded-2xl h-12 px-6 hover:bg-muted/50">
+                    {project.source_link && (
+                      <Button variant="ghost" onClick={() => window.open(project.source_link, '_blank')} className="font-bold rounded-2xl h-12 px-6 hover:bg-muted/50">
                         Mã nguồn
                       </Button>
                     )}
@@ -377,7 +377,7 @@ export function PersonalProfilePage() {
                 </div>
 
                 <div className="flex-1 min-h-[250px] md:max-w-[400px] rounded-[2rem] shadow-2xl border-8 border-white dark:border-white/5 overflow-hidden group-hover:scale-[1.02] transition-transform duration-700">
-                  <img src={project.imageUrl || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80'} alt="Project" className="w-full h-full object-cover" />
+                  <img src={project.image_url || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80'} alt="Project" className="w-full h-full object-cover" />
                 </div>
               </div>
             ))

@@ -70,19 +70,19 @@ export function useComments(postId: string) {
       const tempId = `temp-${Date.now()}`;
       const newComment: FeedComment = {
         id: tempId,
-        postId: postId,
-        parentCommentId: null,
+        post_id: postId,
+        parent_comment_id: null,
         author: {
           id: user.id,
-          displayName: user.displayName || user.username || 'Anonymous',
+          display_name: user.display_name || user.username || 'Anonymous',
           avatar: user.avatar || null,
           username: user.username,
         },
         content,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        mediaUrls: [],
-        userReaction: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        media_urls: [],
+        user_reaction: null,
         stats: { reactions: 0, replies: 0 },
       };
 
@@ -140,7 +140,7 @@ export function useComments(postId: string) {
 
           return {
             ...comment,
-            userReaction: reaction,
+            user_reaction: reaction,
             stats: {
               ...comment.stats,
               reactions: Math.max(0, currentLikes + delta),
@@ -193,19 +193,19 @@ export function useComments(postId: string) {
       const tempId = `temp-${Date.now()}`;
       const newReply: FeedComment = {
         id: tempId,
-        postId: postId,
-        parentCommentId: commentId,
+        post_id: postId,
+        parent_comment_id: commentId,
         author: {
           id: user.id,
-          displayName: user.displayName || user.username || 'Anonymous',
+          display_name: user.display_name || user.username || 'Anonymous',
           avatar: user.avatar || null,
           username: user.username,
         },
         content,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        mediaUrls: [],
-        userReaction: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        media_urls: [],
+        user_reaction: null,
         stats: { reactions: 0, replies: 0 },
       };
 

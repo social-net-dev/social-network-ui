@@ -92,7 +92,7 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
         try {
           meResp = await usersGetMe();
           console.log('[useRoomManager] usersGetMe returned', meResp);
-          myDisplayName = meResp.data?.displayName || meResp.data?.username || undefined;
+          myDisplayName = meResp.data?.display_name || meResp.data?.username || undefined;
           myUsername = meResp.data?.username || meResp.data?.email || undefined;
         } catch (err) {
           console.error('[useRoomManager] usersApi.getMe error', err);
@@ -120,7 +120,7 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
             console.log('[useRoomManager] profilesGetProfile returned', profResp);
             const prof = profResp.data;
             const profId = prof?.id || null;
-            const display = prof?.displayName || prof?.username || undefined;
+            const display = prof?.display_name || prof?.username || undefined;
             if (!display || !profId) {
               const msg = `Missing profile id or display name for user ${m}; cannot create room without display names for all members`;
               console.error('[useRoomManager]', msg, { prof });

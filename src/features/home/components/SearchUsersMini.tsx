@@ -82,9 +82,9 @@ export const SearchUsersMini: React.FC = () => {
       // Fetch current user info using Orval-generated usersGetMe
       const meResponse = await usersGetMe();
       const me = meResponse.data;
-      const myDisplay = me.displayName || null;
+      const myDisplay = me.display_name || null;
       const myUsername = me.username || me.email || null;
-      const otherDisplay = targetUser.displayName || null;
+      const otherDisplay = targetUser.display_name || null;
       const otherUsername = targetUser.username || null;
 
       if (!myDisplay || !otherDisplay) {
@@ -174,11 +174,11 @@ export const SearchUsersMini: React.FC = () => {
             {searchResults.map(user => (
               <div key={user.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <Avatar className="w-10 h-10 flex-shrink-0">
-                  {user.avatar ? <img src={user.avatar} alt={user.displayName} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-primary text-white flex items-center justify-center text-sm font-semibold">{user.displayName.charAt(0).toUpperCase()}</div>}
+                  {user.avatar ? <img src={user.avatar} alt={user.display_name} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-primary text-white flex items-center justify-center text-sm font-semibold">{user.display_name.charAt(0).toUpperCase()}</div>}
                 </Avatar>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{user.displayName}</p>
+                  <p className="text-sm font-medium truncate">{user.display_name}</p>
                   <p className="text-xs text-gray-500 truncate">@{user.username}</p>
                 </div>
 

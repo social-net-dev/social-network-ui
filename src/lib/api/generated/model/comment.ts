@@ -16,21 +16,21 @@ export interface Comment {
   /** Comment ID. */
   id: string;
   /** ID of the post this comment belongs to. */
-  postId: string;
+  post_id: string;
   /** Comment author information. */
   author: Author;
   /** Parent comment ID for replies. */
-  parentCommentId: string | null;
+  parent_comment_id: string | null;
   /** Comment content text. */
   content: string;
   /** Array of media URLs. */
-  mediaUrls: string[];
+  media_urls: string[];
   /** Comment statistics. */
   stats: CommentStats;
   /** Current user's reaction to this comment. */
-  userReaction: ReactionType | null;
+  user_reaction: ReactionType | null;
   /** Comment creation timestamp. */
-  createdAt: string;
+  created_at: string;
   /** Last update timestamp. */
-  updatedAt: string;
+  updated_at: string;
 }

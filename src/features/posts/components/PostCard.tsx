@@ -45,17 +45,17 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
 
   // Optimistic Like State
   const [optimisticLike, setOptimisticLike] = useState({
-    liked: !!post.userReaction,
+    liked: !!post.user_reaction,
     count: post.stats?.reactions ?? 0
   });
 
   // Sync with props when post changes (e.g. after API settles)
   useEffect(() => {
     setOptimisticLike({
-      liked: !!post.userReaction,
+      liked: !!post.user_reaction,
       count: post.stats?.reactions ?? 0
     });
-  }, [post.userReaction, post.stats?.reactions]);
+  }, [post.user_reaction, post.stats?.reactions]);
 
   useEffect(() => {
     if (showComments) {
@@ -70,7 +70,7 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
     return () => window.clearTimeout(timer);
   }, [showComments]);
 
-  const createdAt = post.createdAt || new Date().toISOString();
+  const createdAt = post.created_at || new Date().toISOString();
 
   const dateObj = new Date(createdAt);
   const validDate = isNaN(dateObj.getTime()) ? new Date() : dateObj;
@@ -83,7 +83,7 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
   const content = post.content || '';
 
   const mediaAssets = post.media || [];
-  const legacyUrls = post.mediaUrls || [];
+  const legacyUrls = post.media_urls || [];
 
   const mediaUrls = mediaAssets.length > 0 
     ? mediaAssets.map(asset => asset.cdn_url || asset.original_url).filter(Boolean)
@@ -143,16 +143,16 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-semibold text-foreground truncate hover:text-primary transition-colors-300 cursor-pointer" onClick={() => navigate(`/profile/${post.author.username}`)}>
-                  {post.author.displayName}
+                  {post.author.display_name}
                 </h3>
                 {post.author.role && ROLE_MAP[post.author.role] && (
                   <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-semibold', ROLE_MAP[post.author.role].class)}>
                     {ROLE_MAP[post.author.role].label}
                   </span>
                 )}
-                {post.author.accountStatus && STATUS_MAP[post.author.accountStatus] && (
-                  <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', STATUS_MAP[post.author.accountStatus].class)}>
-                    {STATUS_MAP[post.author.accountStatus].label}
+                {post.author.account_status && STATUS_MAP[post.author.account_status] && (
+                  <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', STATUS_MAP[post.author.account_status].class)}>
+                    {STATUS_MAP[post.author.account_status].label}
                   </span>
                 )}
               </div>
@@ -162,8 +162,8 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
                   {sharedPost && <span className="w-1 h-1 bg-muted-foreground/50 rounded-full"></span>}
                   {sharedPost && <span className="text-primary">đã chia sẻ</span>}
                 </p>
-                {post.postType && post.postType !== 'SOCIAL' && (() => {
-                  const pt = POST_TYPES.find(t => t.value === post.postType);
+                {post.post_type && post.post_type !== 'SOCIAL' && (() => {
+                  const pt = POST_TYPES.find(t => t.value === post.post_type);
                   return pt ? (
                     <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">{pt.icon} {pt.label}</span>
                   ) : null;
@@ -207,8 +207,8 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
         ) : (
           <>
             <FormattedContent content={content} className="text-foreground/90 leading-relaxed mb-3 text-sm block" />
-            {post.fieldId && (() => {
-              const f = ACADEMIC_FIELDS.find(af => af.value === post.fieldId);
+            {post.field_id && (() => {
+              const f = ACADEMIC_FIELDS.find(af => af.value === post.field_id);
               return f ? (
                 <div className="mb-3">
                   <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium', f.color)}>{f.icon} {f.label}</span>

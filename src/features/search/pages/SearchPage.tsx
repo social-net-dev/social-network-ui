@@ -20,11 +20,9 @@ import { Badge } from '@/components/ui/badge';
 import type { UserPublic } from '@/lib/api/generated/model';
 
 interface SearchUser extends UserPublic {
-  friendshipStatus: 'none' | 'friends' | 'request_sent' | 'request_received';
-  friendRequestId: string | null;
 }
 
-function FriendshipStatusBadge({ status }: { status: SearchUser['friendshipStatus'] }) {
+function FriendshipStatusBadge({ status }: { status: SearchUser['friendship_status'] }) {
   switch (status) {
     case 'friends':
       return (
@@ -115,12 +113,12 @@ export function SearchPage() {
   const { createRoom } = useRoomManager({ userId: currentUserId || '' });
 
   // Optimistically update a user's status in the search results cache
-  const updateUserStatus = (userId: string, newStatus: SearchUser['friendshipStatus'], requestId?: string | null) => {
+  const updateUserStatus = (userId: string, newStatus: SearchUser['friendship_status'], requestId?: string | null) => {
     qc.setQueryData(['search', 'users', { q: query }], (old: { users: SearchUser[]; total: number } | undefined) => {
       if (!old) return old;
       return {
         ...old,
-        users: old.users.map(u => (u.id === userId ? { ...u, friendshipStatus: newStatus, friendRequestId: requestId ?? u.friendRequestId } : u)),
+        users: old.users.map(u => (u.id === userId ? { ...u, friendship_status: newStatus, friend_request_id: requestId ?? u.friend_request_id } : u)),
       };
     });
   };
@@ -218,8 +216,8 @@ export function SearchPage() {
             try {
               const meResp = await usersGetMe();
               const me = meResp.data;
-              const myDisplay = me?.displayName || null;
-              const otherDisplay = user.displayName || null;
+              const myDisplay = me?.display_name || null;
+              const otherDisplay = user.display_name || null;
               if (!myDisplay || !otherDisplay) {
                 alert('Cần display name hợp lệ của cả hai người để tạo phòng. Vui lòng cập nhật tên hiển thị.');
               } else {
@@ -249,7 +247,7 @@ export function SearchPage() {
       </Button>
     );
 
-    switch (user.friendshipStatus) {
+    switch (user.friendship_status) {
       case 'friends':
         return (
           <div className="flex items-center gap-2">
@@ -268,8 +266,8 @@ export function SearchPage() {
               variant="outline"
               size="sm"
               className="flex-shrink-0 rounded-full text-yellow-600 border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
-              onClick={() => user.friendRequestId && handleCancelRequest(user.id, user.friendRequestId)}
-              disabled={isProcessing || !user.friendRequestId}
+              onClick={() => user.friend_request_id && handleCancelRequest(user.id, user.friend_request_id)}
+              disabled={isProcessing || !user.friend_request_id}
             >
               {isProcessing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserX className="h-4 w-4 mr-1" />}
               Hủy lời mời
@@ -280,7 +278,7 @@ export function SearchPage() {
         return (
           <div className="flex items-center gap-2">
             {messageButton}
-            <Button size="sm" className="flex-shrink-0 rounded-full" onClick={() => user.friendRequestId && handleAcceptRequest(user.id, user.friendRequestId)} disabled={isProcessing || !user.friendRequestId}>
+            <Button size="sm" className="flex-shrink-0 rounded-full" onClick={() => user.friend_request_id && handleAcceptRequest(user.id, user.friend_request_id)} disabled={isProcessing || !user.friend_request_id}>
               {isProcessing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserCheck className="h-4 w-4 mr-1" />}
               Chấp nhận
             </Button>
@@ -353,8 +351,8 @@ export function SearchPage() {
                   <Avatar user={user as any} size="lg" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-foreground truncate">{user.displayName || user.username}</p>
-                      <FriendshipStatusBadge status={user.friendshipStatus} />
+                      <p className="font-semibold text-foreground truncate">{user.display_name || user.username}</p>
+                      <FriendshipStatusBadge status={user.friendship_status} />
                     </div>
                     <p className="text-sm text-muted-foreground truncate">@{user.username}</p>
                     {user.bio && <p className="text-xs text-muted-foreground truncate mt-0.5">{user.bio}</p>}

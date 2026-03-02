@@ -13,9 +13,9 @@ export interface Notification {
   id: string;
   type: NotificationType;
   actor: Author;
-  targetId?: string;
-  targetType?: NotificationTargetType;
+  target_id?: string;
+  target_type?: NotificationTargetType;
   message: string;
-  isRead: boolean;
-  createdAt: string;
+  is_read: boolean;
+  created_at: string;
 }

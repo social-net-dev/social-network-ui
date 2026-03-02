@@ -14,7 +14,7 @@ interface ProfileIntroCardProps {
 
 export function ProfileIntroCard({ profile, isCurrentUser = false }: ProfileIntroCardProps) {
   const navigate = useNavigate();
-  const personalInfo = profile?.personalInfo;
+  const personalInfo = profile?.personal_info;
 
   const handleShare = () => {
     const url = window.location.href;
@@ -27,15 +27,15 @@ export function ProfileIntroCard({ profile, isCurrentUser = false }: ProfileIntr
 
   if (!profile) return null;
 
-  const joinDate = profile.createdAt
-    ? new Date(profile.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
+  const joinDate = profile.created_at
+    ? new Date(profile.created_at).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
     : null;
 
   const hasInfo =
     profile.bio ||
     personalInfo?.location ||
     personalInfo?.school ||
-    personalInfo?.favoriteSubjects?.length ||
+    personalInfo?.favorite_subjects?.length ||
     personalInfo?.hobbies?.length ||
     joinDate;
 
@@ -82,21 +82,21 @@ export function ProfileIntroCard({ profile, isCurrentUser = false }: ProfileIntr
               </div>
             )}
 
-            {personalInfo?.favoriteSubjects && personalInfo.favoriteSubjects.length > 0 && (
+            {personalInfo?.favorite_subjects && personalInfo.favorite_subjects.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-3.5 h-3.5 text-blue-500" />
                   <p className="text-xs font-medium text-muted-foreground">Lĩnh vực quan tâm</p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {personalInfo.favoriteSubjects.slice(0, 4).map((s, i) => (
+                  {personalInfo.favorite_subjects.slice(0, 4).map((s, i) => (
                     <Badge key={i} variant="secondary" className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-0">
                       {s}
                     </Badge>
                   ))}
-                  {personalInfo.favoriteSubjects.length > 4 && (
+                  {personalInfo.favorite_subjects.length > 4 && (
                     <Badge variant="outline" className="text-xs text-muted-foreground">
-                      +{personalInfo.favoriteSubjects.length - 4}
+                      +{personalInfo.favorite_subjects.length - 4}
                     </Badge>
                   )}
                 </div>

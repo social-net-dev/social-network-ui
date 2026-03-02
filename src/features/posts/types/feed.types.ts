@@ -38,14 +38,14 @@ export type CommentStats = GeneratedCommentStats;
 export type Author = GeneratedAuthor & {
   background?: string | null;
   bio?: string;
-  personalInfo?: PersonalInfo;
-  birthDate?: string;
+  personal_info?: PersonalInfo;
+  birth_date?: string;
   followers?: number;
   following?: number;
-  postsCount?: number;
-  createdAt?: string;
-  updatedAt?: string;
-  storageQuotaMb?: number;
+  posts_count?: number;
+  created_at?: string;
+  updated_at?: string;
+  storage_quota_mb?: number;
   privacy?: ProfileVisibilityResponse;
   isFriend?: boolean;
   isOwner?: boolean;
@@ -77,22 +77,22 @@ export type { MediaAssetSummary };
 
 /**
  * Frontend Post Model - extends PostSummary with sharedPost field
- * Align với TypeSpec contract: có mediaUrls + media?: MediaAssetSummary[]
+ * Align với TypeSpec contract: có media_urls + media?: MediaAssetSummary[]
  */
 export interface FeedPost {
   id: string;
   author: Author;
   content: string;
-  mediaUrls: string[];
+  media_urls: string[];
   media?: MediaAssetSummary[];
   stats: PostStats;
-  userReaction: ReactionType | null;
+  user_reaction: ReactionType | null;
   sharedPost: PostSummary | null;
   visibility: string;
-  postType?: string;
-  fieldId?: string;
-  createdAt: string;
-  updatedAt: string;
+  post_type?: string;
+  field_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 /**

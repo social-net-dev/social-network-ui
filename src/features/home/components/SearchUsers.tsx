@@ -90,9 +90,9 @@ export const SearchUsers: React.FC = () => {
       // Fetch current user info using Orval-generated usersGetMe
       const meResponse = await usersGetMe();
       const me = meResponse.data;
-      const myDisplay = me.displayName || null;
+      const myDisplay = me.display_name || null;
       const myUsername = me.username || me.email || null;
-      const otherDisplay = targetUser.displayName || null;
+      const otherDisplay = targetUser.display_name || null;
       const otherUsername = targetUser.username || null;
 
       if (!myDisplay || !otherDisplay) {
@@ -173,12 +173,12 @@ export const SearchUsers: React.FC = () => {
               <div key={user.id} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 {/* Avatar */}
                 <Avatar className="w-14 h-14 flex-shrink-0">
-                  {user.avatar ? <img src={user.avatar} alt={user.displayName} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-primary text-white flex items-center justify-center text-lg font-semibold">{user.displayName.charAt(0).toUpperCase()}</div>}
+                  {user.avatar ? <img src={user.avatar} alt={user.display_name} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-primary text-white flex items-center justify-center text-lg font-semibold">{user.display_name.charAt(0).toUpperCase()}</div>}
                 </Avatar>
 
                 {/* User Info */}
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-base">{user.displayName}</h4>
+                  <h4 className="font-semibold text-base">{user.display_name}</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">@{user.username}</p>
                   {user.bio && <p className="text-sm mt-1 text-gray-700 dark:text-gray-300 line-clamp-2">{user.bio}</p>}
                 </div>

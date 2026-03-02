@@ -5,7 +5,6 @@
 import type {
   Author,
   Comment,
-  Field,
   Friend,
   FriendRequest,
   Notification,
@@ -13,6 +12,18 @@ import type {
   UserMe,
   UserPublic,
 } from '@/lib/api/generated/model';
+
+// Local type for Field (not in generated model)
+interface Field {
+  id: string;
+  name: string;
+  hashtag?: string;
+  description?: string;
+  banner_url?: string;
+  avatar_url?: string;
+  stats?: { posts_count: number; followers_count: number };
+  is_following?: boolean;
+}
 import { NotificationType, PostType, Visibility } from '@/lib/api/generated/model';
 import { makeFriend, makeFriendRequest, makeNotification } from '../factories';
 
@@ -106,7 +117,6 @@ const STUDENT_USER: UserMe = {
   display_name: AUTHORS.hiru.display_name,
   email: 'hiru@example.com',
   avatar: AUTHORS.hiru.avatar,
-  avatar_path: null,
   background: null,
   bio: 'Full-stack developer passionate về TypeScript, React và system design. Đang học AI/ML.',
   birth_date: '2000-05-15',
@@ -120,7 +130,7 @@ const STUDENT_USER: UserMe = {
     education_level: 'university',
     school: 'Đại học Bách Khoa Hà Nội',
     major: 'Khoa học máy tính',
-    class_name: 'K65-CS1',
+    class: 'K65-CS1',
     academic_year: '2023-2024',
     graduation_year: '2024',
     favorite_subjects: ['Software Engineering', 'AI & Machine Learning', 'Cloud & DevOps'],
@@ -155,7 +165,6 @@ const ADMIN_USER: UserMe = {
   display_name: AUTHORS.admin.display_name,
   email: 'admin@etechs.vn',
   avatar: AUTHORS.admin.avatar,
-  avatar_path: null,
   background: null,
   bio: 'Platform administrator. Hỗ trợ cộng đồng và quản lý hệ thống.',
   birth_date: '1995-03-20',
@@ -281,7 +290,6 @@ const SEED_PROFILES: Record<string, UserPublic> = {
     display_name: AUTHORS.linh.display_name,
     bio: 'Product designer tập trung vào trải nghiệm học tập và cộng đồng. Mê design systems.',
     avatar: AUTHORS.linh.avatar,
-    avatar_path: null,
     background: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200',
     account_status: 'ACTIVE',
     role: 'USER',
@@ -321,7 +329,6 @@ const SEED_PROFILES: Record<string, UserPublic> = {
     display_name: AUTHORS.duy.display_name,
     bio: 'Backend engineer. Nghĩ nhiều về caching, observability và resiliency.',
     avatar: AUTHORS.duy.avatar,
-    avatar_path: null,
     background: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200',
     account_status: 'ACTIVE',
     role: 'USER',
@@ -343,7 +350,6 @@ const SEED_PROFILES: Record<string, UserPublic> = {
     display_name: AUTHORS.phuc.display_name,
     bio: 'AI/ML engineer. Đang research về RAG và LLM deployment.',
     avatar: AUTHORS.phuc.avatar,
-    avatar_path: null,
     background: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200',
     account_status: 'ACTIVE',
     role: 'USER',
@@ -362,7 +368,6 @@ const SEED_PROFILES: Record<string, UserPublic> = {
     display_name: AUTHORS.hoang.display_name,
     bio: 'Senior developer & mentor. 10+ năm kinh nghiệm. Passionate về education tech.',
     avatar: AUTHORS.hoang.avatar,
-    avatar_path: null,
     background: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=1200',
     account_status: 'ACTIVE',
     role: 'TEACHER',
@@ -642,40 +647,40 @@ export const db = {
 
   // ── comments ──────────────────────────────────────────────────────────────
   comments: new Map(SEED_COMMENTS) as Map<string, Comment[]>,
-  getComments(postId: string): Comment[] {
-    return this.comments.get(postId) ?? [];
+  getComments(post_id: string): Comment[] {
+    return this.comments.get(post_id) ?? [];
   },
-  setComments(postId: string, comments: Comment[]) {
-    this.comments.set(postId, comments);
+  setComments(post_id: string, comments: Comment[]) {
+    this.comments.set(post_id, comments);
   },
   addComment(comment: Comment) {
     const list = this.getComments(comment.post_id);
     this.setComments(comment.post_id, [comment, ...list]);
     return comment;
   },
-  findComment(commentId: string): { postId: string; comment: Comment } | null {
+  findComment(commentId: string): { post_id: string; comment: Comment } | null {
     for (const [postId, list] of this.comments) {
       const comment = list.find((c) => c.id === commentId);
-      if (comment) return { postId, comment };
+      if (comment) return { post_id: postId, comment };
     }
     return null;
   },
   updateComment(commentId: string, patch: Partial<Comment>) {
     const loc = this.findComment(commentId);
     if (!loc) return null;
-    const updated = this.getComments(loc.postId).map((c) =>
+    const updated = this.getComments(loc.post_id).map((c) =>
       c.id === commentId ? { ...c, ...patch, updated_at: new Date().toISOString() } : c,
     );
-    this.setComments(loc.postId, updated);
+    this.setComments(loc.post_id, updated);
     return updated.find((c) => c.id === commentId) ?? null;
   },
   deleteComment(commentId: string) {
     const loc = this.findComment(commentId);
     if (!loc) return false;
-    const filtered = this.getComments(loc.postId).filter(
+    const filtered = this.getComments(loc.post_id).filter(
       (c) => c.id !== commentId && c.parent_comment_id !== commentId,
     );
-    this.setComments(loc.postId, filtered);
+    this.setComments(loc.post_id, filtered);
     return true;
   },
 
@@ -696,7 +701,6 @@ export const db = {
       display_name: u.display_name,
       bio: u.bio,
       avatar: u.avatar,
-      avatar_path: u.avatar_path,
       background: u.background,
       account_status: u.account_status,
       role: u.role,
@@ -763,7 +767,7 @@ export const db = {
     const f = this.fields.find((x) => x.id === id);
     if (!f) return null;
     f.is_following = follow;
-    f.stats.followers_count += follow ? 1 : -1;
+    if (f.stats) f.stats.followers_count += follow ? 1 : -1;
     return f;
   },
 };

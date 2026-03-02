@@ -13,7 +13,7 @@ import type { FriendRequest } from "@/lib/api/generated/model";
 
 function userLabel(fr: FriendRequest, side: 'requester' | 'addressee') {
   const u = side === 'requester' ? fr.requester : fr.addressee;
-  return u?.displayName || u?.username || "Người dùng";
+  return u?.display_name || u?.username || "Người dùng";
 }
 
 export function FriendRequestsPage() {

@@ -161,7 +161,7 @@ export function FriendsListPage() {
                   <Avatar user={friend.user as Parameters<typeof Avatar>[0]['user']} size="lg" />
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground truncate">
-                      {friend.user.displayName || friend.user.username}
+                      {friend.user.display_name || friend.user.username}
                     </p>
                     <p className="text-sm text-muted-foreground truncate">
                       @{friend.user.username}
@@ -182,7 +182,7 @@ export function FriendsListPage() {
                     variant="ghost"
                     size="sm"
                     className="rounded-full text-destructive hover:bg-destructive/10"
-                    onClick={() => handleRemoveFriend(friend.id, friend.user.displayName || friend.user.username)}
+                    onClick={() => handleRemoveFriend(friend.id, friend.user.display_name || friend.user.username)}
                     disabled={removeFriendMutation.isPending}
                   >
                     <UserMinus className="h-4 w-4" />

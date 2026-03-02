@@ -37,8 +37,8 @@ export type Suggestion = {
     avatar?: string;
     avatar_path?: string;
     background_url?: string;
-    friendshipStatus: "NONE" | "REQUEST_SENT" | "REQUEST_RECEIVED" | "FRIENDS";
-    friendRequestId?: string | null;
+    friendship_status: "NONE" | "REQUEST_SENT" | "REQUEST_RECEIVED" | "FRIENDS";
+    friend_request_id?: string | null;
 };
 
 function mapApiToSuggestion(r: ApiSuggestion): Suggestion {
@@ -71,8 +71,8 @@ function mapApiToSuggestion(r: ApiSuggestion): Suggestion {
         tags: tags.length ? tags : ["SCHOOL"],
         avatar_path: r.avatar_path || undefined,
         background_url: r.background_path || undefined,
-        friendshipStatus: (r.friend_status as Suggestion["friendshipStatus"]) || "NONE",
-        friendRequestId: r.friend_request_id,
+        friendship_status: (r.friend_status as Suggestion["friendship_status"]) || "NONE",
+        friend_request_id: r.friend_request_id,
     };
 }
 
@@ -95,7 +95,7 @@ export function RecommendationPage() {
     const sendRequestMutation = useFriendsSendRequest();
     const acceptRequestMutation = useFriendsAcceptRequest();
 
-    const updateSuggestionStatus = (userId: string, newStatus: Suggestion["friendshipStatus"], requestId?: string | null) => {
+    const updateSuggestionStatus = (userId: string, newStatus: Suggestion["friendship_status"], requestId?: string | null) => {
         for (const tab of TAB_OPTIONS) {
             queryClient.setQueryData<Suggestion[]>(
                 ["recommendations", "suggestions", tab.value],
@@ -103,7 +103,7 @@ export function RecommendationPage() {
                     if (!old) return old;
                     return old.map((s) =>
                         s.id === userId
-                            ? { ...s, friendshipStatus: newStatus, friendRequestId: requestId ?? s.friendRequestId }
+                            ? { ...s, friendship_status: newStatus, friend_request_id: requestId ?? s.friend_request_id }
                             : s
                     );
                 }
@@ -267,21 +267,21 @@ export function RecommendationPage() {
                                                     )}
 
                                                     <div className="grid grid-cols-1 gap-2">
-                                                        {user.friendshipStatus === "FRIENDS" ? (
+                                                        {user.friendship_status === "FRIENDS" ? (
                                                             <Button className="rounded-full" variant="secondary" disabled>
                                                                 <UserCheck className="h-4 w-4 mr-1" /> Bạn bè
                                                             </Button>
-                                                        ) : user.friendshipStatus === "REQUEST_SENT" ? (
+                                                        ) : user.friendship_status === "REQUEST_SENT" ? (
                                                             <Button className="rounded-full" variant="outline" disabled>
                                                                 <Clock className="h-4 w-4 mr-1" /> Đã gửi lời mời
                                                             </Button>
-                                                        ) : user.friendshipStatus === "REQUEST_RECEIVED" ? (
+                                                        ) : user.friendship_status === "REQUEST_RECEIVED" ? (
                                                             <Button
                                                                 className="rounded-full"
                                                                 disabled={processingIds.has(user.id)}
                                                                 onClick={() => {
-                                                                    if (user.friendRequestId) {
-                                                                        handleAccept(user.id, user.friendRequestId);
+                                                                    if (user.friend_request_id) {
+                                                                        handleAccept(user.id, user.friend_request_id);
                                                                     }
                                                                 }}
                                                             >

@@ -157,23 +157,23 @@ export function usePostActions(options?: UsePostActionsOptions) {
           id: `temp-${Date.now()}`,
           author: {
             id: currentUser.id,
-            displayName: currentUser.displayName || currentUser.username || 'Anonymous',
+            display_name: currentUser.display_name || currentUser.username || 'Anonymous',
             avatar: currentUser.avatar || null,
             username: currentUser.username,
           },
           content: message || '',
           sharedPost: originalPost,
           visibility: 'PUBLIC',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           stats: {
             reactions: 0,
             comments: 0,
             shares: 0,
           },
-          userReaction: null as ReactionType | null,
-          mediaUrls: [],
-          postType: 'SOCIAL',
+          user_reaction: null as ReactionType | null,
+          media_urls: [],
+          post_type: 'SOCIAL',
         };
 
         updateCache(posts => [optimisticSharedPost as PostSummary, ...posts]);
