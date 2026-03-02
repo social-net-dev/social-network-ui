@@ -1,19 +1,33 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, Loader2 } from 'lucide-react';
+import { Users, Loader2, Lock } from 'lucide-react';
 import { useFriendsListFriends } from '@/lib/api/generated/friends/friends';
 import { getDefaultAvatar } from '@/lib/utils/api';
 
 interface ProfileFriendsTabProps {
   userId: string | null;
+  isCurrentUser?: boolean;
 }
 
-export function ProfileFriendsTab({ userId }: ProfileFriendsTabProps) {
+export function ProfileFriendsTab({ userId, isCurrentUser = false }: ProfileFriendsTabProps) {
   const { data, isLoading } = useFriendsListFriends(
     { page: 1, page_size: 24 },
-    { query: { enabled: !!userId } }
+    { query: { enabled: !!userId && isCurrentUser } }
   );
+
+  // For other users' profiles, the API doesn't support fetching their friend list
+  if (!isCurrentUser) {
+    return (
+      <Card className="rounded-xl border-2 border-dashed border-border bg-muted/20">
+        <CardContent className="p-12 text-center">
+          <Lock className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
+          <h3 className="text-sm font-semibold text-muted-foreground mb-1">Danh sách bạn bè</h3>
+          <p className="text-xs text-muted-foreground/60">Danh sách bạn bè của người dùng này không được công khai.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const friends = (data as any)?.data?.items ?? [];
 

@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { useFeed, FeedList, ShareDialog, usePostActions } from '@/features/posts';
+import { CreatePostFAB } from '@/features/posts/components/CreatePostFAB';
+import { PostComposerCard } from '@/features/posts/components/PostComposerCard';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,10 +11,16 @@ import { ACADEMIC_FIELDS } from '@/features/posts/constants/fields';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
+const CreatePostModal = lazy(() =>
+  import('@/features/posts/components/CreatePostModal').then(module => ({
+    default: module.CreatePostModal,
+  }))
+);
+
 export function ExplorePage() {
   const [selectedField, setSelectedField] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
-  const { posts, queryKey, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, error, refresh } = useFeed({
+  const { posts, queryKey, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, error, refresh, createPost } = useFeed({
     fieldId: selectedField,
   });
   const { deletePost, updatePost, sharePost, likePost } = usePostActions({
@@ -30,8 +38,23 @@ export function ExplorePage() {
     }
   }, [isVisible, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  const [isCreating, setIsCreating] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [initialPostType, setInitialPostType] = useState("SOCIAL");
+
   const [openCommentPostIds, setOpenCommentPostIds] = useState<string[]>([]);
   const [sharePostId, setSharePostId] = useState<string | null>(null);
+
+  const handleCreatePost = async (content: string, files: File[], _hashtags: string[], postType?: string, fieldId?: string) => {
+    try {
+      setIsCreating(true);
+      await createPost(content, files, postType, fieldId);
+    } catch (err) {
+      console.error('Failed to create post:', err);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const handleLike = async (postId: string, liked: boolean) => {
     await likePost(postId, liked);
@@ -149,6 +172,27 @@ export function ExplorePage() {
 
       {/* Main Feed */}
       <div className="space-y-6">
+        <Suspense fallback={null}>
+          {showCreateModal && (
+            <CreatePostModal
+              open={showCreateModal}
+              onOpenChange={setShowCreateModal}
+              onSubmit={handleCreatePost}
+              isLoading={isCreating}
+              initialPostType={initialPostType}
+            />
+          )}
+        </Suspense>
+
+        <CreatePostFAB onClick={() => setShowCreateModal(true)} />
+
+        <PostComposerCard
+          onOpen={(type) => {
+            setInitialPostType(type ?? "SOCIAL");
+            setShowCreateModal(true);
+          }}
+        />
+
         {/* Current Filter Badge */}
         {selectedField && (
           <div className="flex items-center gap-2 flex-wrap">

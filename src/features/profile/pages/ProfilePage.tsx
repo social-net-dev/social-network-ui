@@ -1,19 +1,62 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useProfilePageModel } from '../hooks/useProfilePageModel';
 import { ProfileHeader } from '../components/ProfileHeader';
-import { PersonalInfoSidebar } from '../components/PersonalInfoSidebar';
+import { ProfileIntroCard } from '../components/ProfileIntroCard';
+import { ProfileCompletenessCard } from '../components/ProfileCompletenessCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Info, Users } from 'lucide-react';
+import { FileText, Info, Users, Images } from 'lucide-react';
 import { StorageQuotaCard } from '../components/StorageQuotaCard';
 import { ProfilePostsTab } from '../components/ProfilePostsTab';
 import { ProfileAboutTab } from '../components/ProfileAboutTab';
 import { ProfileFriendsTab } from '../components/ProfileFriendsTab';
+import { ProfilePhotosTab } from '../components/ProfilePhotosTab';
 import { EditProfileSheet } from '../components/EditProfileSheet';
+import { PostComposerCard } from '@/features/posts/components/PostComposerCard';
+import { CreatePostFAB } from '@/features/posts/components/CreatePostFAB';
+import { usePostsCreatePost } from '@/lib/api/generated/posts/posts';
+import { uploadMediaAsset } from '@/features/posts/lib/uploadMediaAsset';
+import { useQueryClient } from '@tanstack/react-query';
+import { getPostsGetMyPostsQueryKey } from '@/lib/api/generated/posts/posts';
+import type { PostType } from '@/lib/api/generated/model';
+import type { User } from '@/lib/api/generated/model';
+
+const CreatePostModal = lazy(() =>
+  import('@/features/posts/components/CreatePostModal').then(module => ({
+    default: module.CreatePostModal,
+  }))
+);
 
 function ProfilePage() {
   const { mode, profile, isLoading: isProfileLoading, error, canEdit, subjectUserId, currentUserId } = useProfilePageModel();
   const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [initialPostType, setInitialPostType] = useState("SOCIAL");
+  const createPostMutation = usePostsCreatePost();
+  const queryClient = useQueryClient();
+
+  const handleCreatePost = async (content: string, files: File[], _hashtags: string[], postType?: string, fieldId?: string) => {
+    try {
+      setIsCreating(true);
+      const media_asset_ids = files?.length
+        ? await Promise.all(files.map((f) => uploadMediaAsset(f, 'post')))
+        : undefined;
+      await createPostMutation.mutateAsync({
+        data: {
+          content_text: content,
+          post_type: (postType as PostType) || 'SOCIAL',
+          field_id: fieldId || undefined,
+          media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
+        },
+      });
+      queryClient.invalidateQueries({ queryKey: getPostsGetMyPostsQueryKey(undefined) });
+    } catch (err) {
+      console.error('Failed to create post:', err);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   if (isProfileLoading) {
     return (
@@ -58,6 +101,13 @@ function ProfilePage() {
                 Bài viết
               </TabsTrigger>
               <TabsTrigger
+                value="photos"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 gap-2 font-medium"
+              >
+                <Images className="w-4 h-4" />
+                Ảnh
+              </TabsTrigger>
+              <TabsTrigger
                 value="about"
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 gap-2 font-medium"
               >
@@ -74,6 +124,16 @@ function ProfilePage() {
             </TabsList>
 
             <TabsContent value="posts" className="outline-none">
+              {canEdit && (
+                <div className="mb-6">
+                  <PostComposerCard
+                    onOpen={(type) => {
+                      setInitialPostType(type ?? "SOCIAL");
+                      setShowCreateModal(true);
+                    }}
+                  />
+                </div>
+              )}
               <ProfilePostsTab
                 mode={mode}
                 subjectUserId={subjectUserId}
@@ -82,12 +142,16 @@ function ProfilePage() {
               />
             </TabsContent>
 
+            <TabsContent value="photos" className="outline-none">
+              <ProfilePhotosTab mode={mode} subjectUserId={subjectUserId} />
+            </TabsContent>
+
             <TabsContent value="about" className="outline-none">
-              <ProfileAboutTab profile={profile} isCurrentUser={canEdit} />
+              <ProfileAboutTab profile={profile as User} isCurrentUser={canEdit} />
             </TabsContent>
 
             <TabsContent value="friends" className="outline-none">
-              <ProfileFriendsTab userId={subjectUserId} />
+              <ProfileFriendsTab userId={subjectUserId} isCurrentUser={canEdit} />
             </TabsContent>
           </Tabs>
         </div>
@@ -97,13 +161,35 @@ function ProfilePage() {
           {mode === 'me' && profile.storageQuotaMb && (
             <StorageQuotaCard quotaMb={profile.storageQuotaMb} />
           )}
-          <PersonalInfoSidebar />
+          {canEdit && (
+            <ProfileCompletenessCard
+              profile={profile as User}
+              onEdit={() => setEditSheetOpen(true)}
+            />
+          )}
+          <ProfileIntroCard profile={profile as User} isCurrentUser={canEdit} />
         </div>
       </div>
 
       {canEdit && (
         <EditProfileSheet open={editSheetOpen} onOpenChange={setEditSheetOpen} />
       )}
+
+      {canEdit && (
+        <CreatePostFAB onClick={() => setShowCreateModal(true)} scrollThreshold={100} />
+      )}
+
+      <Suspense fallback={null}>
+        {showCreateModal && (
+          <CreatePostModal
+            open={showCreateModal}
+            onOpenChange={setShowCreateModal}
+            onSubmit={handleCreatePost}
+            isLoading={isCreating}
+            initialPostType={initialPostType}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }

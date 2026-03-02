@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Calendar, Edit2, MoreHorizontal, Camera, Loader2, UserPlus, UserCheck, MapPin, FileText, Users, Settings } from "lucide-react"
+import { Calendar, Edit2, MoreHorizontal, Camera, Loader2, UserPlus, UserCheck, MapPin, FileText, Users, Settings, MessageCircle } from "lucide-react"
 import { useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useProfile } from "../hooks/useProfile"
@@ -210,10 +210,21 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
                     </Button>
                   </>
                 ) : hasViewerContext(profile) && profile.viewer_context.is_friend ? (
-                  <Button variant="secondary" size="sm" className="h-9 px-4 rounded-lg font-medium text-sm bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 gap-1.5" disabled>
-                    <UserCheck className="w-3.5 h-3.5" />
-                    Bạn bè
-                  </Button>
+                  <>
+                    <Button variant="secondary" size="sm" className="h-9 px-4 rounded-lg font-medium text-sm bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 gap-1.5" disabled>
+                      <UserCheck className="w-3.5 h-3.5" />
+                      Bạn bè
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 px-4 rounded-lg font-medium text-sm gap-1.5"
+                      onClick={() => navigate(`/messages/${profile.id}`)}
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      Nhắn tin
+                    </Button>
+                  </>
                 ) : (
                   <Button
                     size="sm"

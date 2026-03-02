@@ -4,8 +4,7 @@ export { CommentSection } from './components/CommentSection';
 export { ShareDialog } from './components/ShareDialog';
 export { SharedPostCard } from './components/SharedPostCard';
 export { CreatePostModal } from './components/CreatePostModal';
-export { CreatePostTrigger } from './components/CreatePostTrigger';
-export { CreatePostForm } from './components/CreatePostForm';
+export { CreatePostFAB } from './components/CreatePostFAB';
 export { LikeButton } from './components/LikeButton';
 
 export { usePostActions } from './hooks/usePostActions';

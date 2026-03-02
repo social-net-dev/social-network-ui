@@ -4,6 +4,6 @@ export { CommentSection } from './CommentSection';
 export { ShareDialog } from './ShareDialog';
 export { SharedPostCard } from './SharedPostCard';
 export { CreatePostModal } from './CreatePostModal';
-export { CreatePostTrigger } from './CreatePostTrigger';
-export { CreatePostForm } from './CreatePostForm';
+export { CreatePostFAB } from './CreatePostFAB';
 export { LikeButton } from './LikeButton';
+export { PostComposerCard } from './PostComposerCard';

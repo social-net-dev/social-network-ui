@@ -32,7 +32,6 @@ const bootstrap = async () => {
               <App />
             </ThemeProvider>
           </BrowserRouter>
-          <ReactQueryDevtools initialIsOpen={false} />
           {import.meta.env.MODE === 'development' && <Agentation />}
         </QueryClientProvider>
       </ErrorBoundary>

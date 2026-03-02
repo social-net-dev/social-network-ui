@@ -19,7 +19,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { useE2EEStore } from '@/stores/e2eeStore';
 import { AppLayout } from '@/features/shared/layouts/AppLayout';
 import { GlobalLoading } from '@/components/ui/global-loading';
-import { Toaster } from '@/components/ui/sonner';
 import { ProtectedRoute, PublicRoute, AdminRoute } from '@/components/auth';
 
 function App() {
@@ -86,7 +85,6 @@ function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <Toaster position="top-right" richColors />
     </>
   );
 }

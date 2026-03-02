@@ -119,9 +119,9 @@ export function CommentSection({ postId, currentUserId, postAuthorId }: CommentS
 
       <form onSubmit={handleSubmit} className="flex items-center gap-3 mb-6">
         <div className="flex-1">
-          <div className="relative">
+          <div>
             {replyToId && (
-              <div className="absolute -top-6 left-0 flex items-center gap-1 text-[10px] text-primary animate-fadeIn">
+              <div className="flex items-center gap-1 text-[10px] text-primary mb-1 animate-fadeIn">
                 <span>Đang trả lời...</span>
                 <button
                   onClick={() => {

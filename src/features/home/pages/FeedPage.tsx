@@ -1,12 +1,14 @@
 import { useState, lazy, Suspense, useRef, useEffect } from 'react';
-import { useFeed, CreatePostTrigger, FeedList, ShareDialog, usePostActions } from '@/features/posts';
+import { useFeed, FeedList, ShareDialog, usePostActions } from '@/features/posts';
+import { CreatePostFAB } from '@/features/posts/components/CreatePostFAB';
+import { PostComposerCard } from '@/features/posts/components/PostComposerCard';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/authStore';
-import { AlertCircle, CheckCircle, GraduationCap, HardDrive, MessageSquareText, Users, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle, GraduationCap, HardDrive, MessageSquareText, Users, Loader2, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
 // Lazy load CreatePostModal để giảm bundle size
@@ -22,6 +24,8 @@ export function FeedPage() {
     affectedQueryKeys: [queryKey],
   });
   const { user: currentUser } = useAuthStore();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const entry = useIntersectionObserver(loadMoreRef, { threshold: 0.1 });
@@ -35,8 +39,20 @@ export function FeedPage() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [initialPostType, setInitialPostType] = useState("SOCIAL");
   const [openCommentPostIds, setOpenCommentPostIds] = useState<string[]>([]);
   const [sharePostId, setSharePostId] = useState<string | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(() =>
+    localStorage.getItem('etechs_unverified_banner_dismissed') === 'true'
+  );
+
+  // Auto-open composer when navigated with ?compose=true (e.g. from mobile bottom nav)
+  useEffect(() => {
+    if (searchParams.get('compose') === 'true') {
+      setShowCreateModal(true);
+      navigate('/', { replace: true });
+    }
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreatePost = async (content: string, files: File[], _hashtags: string[], postType?: string, fieldId?: string) => {
     try {
@@ -74,6 +90,11 @@ export function FeedPage() {
       console.error('Failed to share post:', err);
       throw err;
     }
+  };
+
+  const handleDismissBanner = () => {
+    setBannerDismissed(true);
+    localStorage.setItem('etechs_unverified_banner_dismissed', 'true');
   };
 
   const handleDeletePost = async (postId: string) => {
@@ -135,7 +156,7 @@ export function FeedPage() {
     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
       <div className="space-y-6">
         {/* Account Status Banner */}
-        {currentUser?.accountStatus === 'UNVERIFIED' && (
+        {currentUser?.accountStatus === 'UNVERIFIED' && !bannerDismissed && (
           <div className="bg-muted/50 border border-border rounded-lg p-4 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
             <div className="flex-1">
@@ -144,6 +165,13 @@ export function FeedPage() {
                 Dung lượng hiện tại: <span className="font-semibold text-foreground">{currentUser?.storageQuotaMb || 100}MB</span>. Khi admin phê duyệt, bạn sẽ nhận được 5GB dung lượng.
               </p>
             </div>
+            <button
+              onClick={handleDismissBanner}
+              className="text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-0.5"
+              aria-label="Đóng thông báo"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         )}
 
@@ -160,10 +188,17 @@ export function FeedPage() {
           </div>
         )}
 
-        <CreatePostTrigger onClick={() => setShowCreateModal(true)} />
+        <CreatePostFAB onClick={() => setShowCreateModal(true)} scrollThreshold={100} />
+
+        <PostComposerCard
+          onOpen={(type) => {
+            setInitialPostType(type ?? "SOCIAL");
+            setShowCreateModal(true);
+          }}
+        />
 
         <Suspense fallback={<div className="text-center py-4 text-muted-foreground">Đang tải...</div>}>
-          <CreatePostModal open={showCreateModal} onOpenChange={setShowCreateModal} onSubmit={handleCreatePost} isLoading={isCreating} />
+          <CreatePostModal open={showCreateModal} onOpenChange={setShowCreateModal} onSubmit={handleCreatePost} isLoading={isCreating} initialPostType={initialPostType} />
         </Suspense>
 
         {error && (

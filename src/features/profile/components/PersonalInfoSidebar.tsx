@@ -2,12 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { School, Heart, MapPin, Calendar } from 'lucide-react';
-import { useProfile } from '../hooks/useProfile';
 import type { User } from '@/lib/api/generated/model';
 
-export function PersonalInfoSidebar() {
-  const { profile: rawProfile } = useProfile();
-  const profile = rawProfile as User | undefined;
+interface PersonalInfoSidebarProps {
+  profile?: User | null;
+}
+
+export function PersonalInfoSidebar({ profile }: PersonalInfoSidebarProps) {
 
   const personalInfo = profile?.personalInfo;
   const hasContent =
