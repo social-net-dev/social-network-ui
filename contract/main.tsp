@@ -32,11 +32,39 @@ model ApiErrorResponse {
   request_id?: string;
 }
 
+@doc("Mã lỗi tiêu chuẩn cho toàn hệ thống.")
+enum ErrorCode {
+  VALIDATION_ERROR: "VALIDATION_ERROR",
+  UNAUTHORIZED: "UNAUTHORIZED",
+  FORBIDDEN: "FORBIDDEN",
+  NOT_FOUND: "NOT_FOUND",
+  USER_LOCKED: "USER_LOCKED",
+  INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
+  INTERNAL_ERROR: "INTERNAL_ERROR",
+}
+
+@doc("Chi tiết lỗi validation, bám sát cấu trúc của FastAPI (pydantic).")
+model ValidationErrorItem {
+  @doc("Vị trí trường lỗi, ví dụ: ['body', 'email']")
+  loc: string[];
+
+  @doc("Câu thông báo lỗi chi tiết từ server")
+  msg: string;
+
+  @doc("Loại lỗi, ví dụ: 'value_error.email'")
+  type: string;
+}
+
 @doc("Error payload chuẩn cho UI.")
 model ApiError {
-  code: string;
-  message?: string;
-  details?: unknown;
+  @doc("Mã lỗi dạng Enum để frontend switch-case")
+  code: ErrorCode;
+
+  @doc("Câu thông báo lỗi chung")
+  message: string;
+
+  @doc("Chi tiết lỗi validation (chỉ có khi code = VALIDATION_ERROR)")
+  details?: ValidationErrorItem[];
 }
 
 model OkEnvelopeResponse<T> {
@@ -77,9 +105,6 @@ model InternalServerErrorEnvelopeResponse {
 model AuthHeaders {
   @header("Authorization")
   authorization: string;
-
-  @header("X-Tenant-Slug")
-  tenant_slug: string;
 }
 
 @doc("Pagination query params.")
@@ -115,6 +140,35 @@ model PaginatedResponse<T> {
 
   @doc("Pagination metadata.")
   pagination: PaginationMeta;
+}
+
+@doc("Query parameters cho Cursor Pagination.")
+model CursorPaginationQuery {
+  @query
+  @doc("Con trỏ để lấy trang tiếp theo (thường là ID hoặc timestamp của item cuối cùng). Để trống nếu lấy trang đầu.")
+  cursor?: string;
+
+  @query
+  @doc("Số lượng item tối đa trả về trong một request.")
+  limit?: int32 = 20;
+}
+
+@doc("Metadata cho Cursor Pagination.")
+model CursorPaginationMeta {
+  @doc("Con trỏ cho lần gọi API tiếp theo. Bằng null nếu đã hết dữ liệu.")
+  next_cursor: string | null;
+
+  @doc("Cờ báo hiệu còn trang tiếp theo hay không.")
+  has_next_page: boolean;
+}
+
+@doc("Generic response cho danh sách dùng Cursor Pagination.")
+model CursorPaginatedResponse<T> {
+  @doc("Danh sách dữ liệu.")
+  items: T[];
+
+  @doc("Thông tin phân trang.")
+  pagination: CursorPaginationMeta;
 }
 
 @doc("Visibility setting.")
@@ -271,17 +325,10 @@ model PersonalInfo {
   projects?: Project[];
 }
 
-@doc("Full user model with all fields (internal use).")
-model User {
+@doc("Thông tin cơ bản nhất của User, dùng chung ở mọi nơi.")
+model UserBase {
   @doc("User ID.")
   id: string;
-
-  @doc("User email address.")
-  @format("email")
-  email: string;
-
-  @doc("User phone number.")
-  phone?: string | null;
 
   @doc("Unique username.")
   username: string;
@@ -289,21 +336,8 @@ model User {
   @doc("Display name.")
   display_name: string;
 
-  @doc("User bio/description.")
-  bio?: string;
-
-  @doc("Personal information.")
-  personal_info?: PersonalInfo;
-
-  @doc("Birth date (ISO 8601 date).")
-  @format("date")
-  birth_date?: string | null;
-
   @doc("Avatar URL.")
   avatar?: string | null;
-
-  @doc("Background image URL.")
-  background?: string | null;
 
   @doc("Account status.")
   account_status: string;
@@ -311,43 +345,15 @@ model User {
   @doc("User role.")
   role: string;
 
-  @doc("Storage quota in MB.")
-  @minValue(0)
-  storage_quota_mb?: int32;
-
   @doc("Account creation timestamp.")
   created_at: string;
 
   @doc("Last update timestamp.")
   updated_at?: string;
-
-  @doc("Privacy settings.")
-  privacy?: UserPrivacy;
-
-  @doc("Number of followers.")
-  @minValue(0)
-  followers?: int32;
-
-  @doc("Number of following.")
-  @minValue(0)
-  following?: int32;
-
-  @doc("Number of posts.")
-  @minValue(0)
-  posts_count?: int32;
 }
 
 @doc("Public user profile (respects privacy settings).")
-model UserPublic {
-  @doc("User ID.")
-  id: string;
-
-  @doc("Unique username.")
-  username: string;
-
-  @doc("Display name.")
-  display_name: string;
-
+model UserPublic extends UserBase {
   @doc("User bio/description.")
   bio?: string;
 
@@ -358,23 +364,8 @@ model UserPublic {
   @format("date")
   birth_date?: string | null;
 
-  @doc("Avatar URL.")
-  avatar?: string | null;
-
   @doc("Background image URL.")
   background?: string | null;
-
-  @doc("Account status.")
-  account_status: string;
-
-  @doc("User role.")
-  role: string;
-
-  @doc("Account creation timestamp.")
-  created_at: string;
-
-  @doc("Last update timestamp.")
-  updated_at?: string;
 
   @doc("Number of followers.")
   @minValue(0)
@@ -401,10 +392,7 @@ model UserPublic {
 }
 
 @doc("Current user profile (includes private fields).")
-model UserMe {
-  @doc("User ID.")
-  id: string;
-
+model UserMe extends UserPublic {
   @doc("User email address.")
   @format("email")
   email: string;
@@ -412,59 +400,16 @@ model UserMe {
   @doc("User phone number.")
   phone?: string | null;
 
-  @doc("Unique username.")
-  username: string;
-
-  @doc("Display name.")
-  display_name: string;
-
-  @doc("User bio/description.")
-  bio?: string;
-
-  @doc("Personal information.")
-  personal_info?: PersonalInfo;
-
-  @doc("Birth date (ISO 8601 date).")
-  @format("date")
-  birth_date?: string | null;
-
-  @doc("Avatar URL.")
-  avatar?: string | null;
-
-  @doc("Background image URL.")
-  background?: string | null;
-
-  @doc("Account status.")
-  account_status: string;
-
-  @doc("User role.")
-  role: string;
-
   @doc("Storage quota in MB.")
   @minValue(0)
   storage_quota_mb?: int32;
 
-  @doc("Account creation timestamp.")
-  created_at: string;
-
-  @doc("Last update timestamp.")
-  updated_at?: string;
-
   @doc("Privacy settings.")
   privacy?: UserPrivacy;
-
-  @doc("Number of followers.")
-  @minValue(0)
-  followers?: int32;
-
-  @doc("Number of following.")
-  @minValue(0)
-  following?: int32;
-
-  @doc("Number of posts.")
-  @minValue(0)
-  posts_count?: int32;
 }
+
+@doc("Full user model with all fields (internal use).")
+model User extends UserMe {}
 
 @doc("Login request payload.")
 model LoginRequest {
@@ -715,7 +660,7 @@ model Post {
 }
 
 @doc("Feed response with paginated posts.")
-model FeedResponse extends PaginatedResponse<PostSummary> {}
+model FeedResponse extends CursorPaginatedResponse<PostSummary> {}
 
 model UpdatePostRequest {
   content_text?: string;
@@ -790,7 +735,7 @@ model Comment {
 }
 
 @doc("Comment response with paginated comments.")
-model CommentResponse extends PaginatedResponse<Comment> {}
+model CommentResponse extends CursorPaginatedResponse<Comment> {}
 
 model UpdateCommentRequest {
   content_text: string;
@@ -972,7 +917,7 @@ model UnreadCountResponse {
 }
 
 @doc("Notification list response with pagination and unread count.")
-model NotificationListResponse extends PaginatedResponse<Notification> {
+model NotificationListResponse extends CursorPaginatedResponse<Notification> {
   @doc("Number of unread notifications.")
   @minValue(0)
   unread_count: int32;
@@ -1143,8 +1088,7 @@ namespace Feed {
   @doc("Hỗ trợ phân trang và filter field_id/post_type.")
   op getFeed(
     ...AuthHeaders,
-    @query page?: int32,
-    @query("page_size") page_size?: int32,
+    ...CursorPaginationQuery,
     @query field_id?: string,
     @query post_type?: string
   ): OkEnvelopeResponse<FeedResponse> | UnauthorizedEnvelopeResponse;
@@ -1158,7 +1102,7 @@ namespace Posts {
   @get
   @route("/")
   @summary("Danh sách bài viết")
-  op listPosts(...AuthHeaders, ...PaginationQuery): OkEnvelopeResponse<FeedResponse> | UnauthorizedEnvelopeResponse;
+  op listPosts(...AuthHeaders, ...CursorPaginationQuery): OkEnvelopeResponse<FeedResponse> | UnauthorizedEnvelopeResponse;
 
   @useAuth(BearerAuth)
   @get
@@ -1193,19 +1137,19 @@ namespace Posts {
   @get
   @route("/me")
   @summary("Danh sách bài viết của tôi")
-  op getMyPosts(...AuthHeaders, ...PaginationQuery): OkEnvelopeResponse<FeedResponse> | UnauthorizedEnvelopeResponse;
+  op getMyPosts(...AuthHeaders, ...CursorPaginationQuery): OkEnvelopeResponse<FeedResponse> | UnauthorizedEnvelopeResponse;
 
   @useAuth(BearerAuth)
   @get
   @route("/users/{userId}")
   @summary("Danh sách bài viết theo user")
-  op getPostsByUser(...AuthHeaders, @path userId: string, ...PaginationQuery): OkEnvelopeResponse<FeedResponse> | UnauthorizedEnvelopeResponse;
+  op getPostsByUser(...AuthHeaders, @path userId: string, ...CursorPaginationQuery): OkEnvelopeResponse<FeedResponse> | UnauthorizedEnvelopeResponse;
 
   @useAuth(BearerAuth)
   @get
   @route("/{postId}/comments")
   @summary("Danh sách comment của bài viết")
-  op getPostComments(...AuthHeaders, @path postId: string, ...PaginationQuery): OkEnvelopeResponse<CommentResponse> | UnauthorizedEnvelopeResponse | NotFoundEnvelopeResponse;
+  op getPostComments(...AuthHeaders, @path postId: string, ...CursorPaginationQuery): OkEnvelopeResponse<CommentResponse> | UnauthorizedEnvelopeResponse | NotFoundEnvelopeResponse;
 }
 
 @doc("Nhóm API bình luận (comments) và replies.")
@@ -1246,11 +1190,34 @@ namespace Comments {
     @header contentType: "application/json",
     @body body: ReplyRequest
   ): CreatedEnvelopeResponse<Comment> | BadRequestEnvelopeResponse | UnauthorizedEnvelopeResponse | NotFoundEnvelopeResponse;
+
+  @useAuth(BearerAuth)
+  @get
+  @route("/{commentId}/replies")
+  @summary("Danh sách replies")
+  @doc("Lấy danh sách các câu trả lời (replies) của một bình luận cha.")
+  op getReplies(
+    ...AuthHeaders,
+    @path commentId: string,
+    ...CursorPaginationQuery
+  ): OkEnvelopeResponse<CursorPaginatedResponse<Comment>> | UnauthorizedEnvelopeResponse | NotFoundEnvelopeResponse;
 }
 
 @doc("Nhóm API reactions (like/love/...).")
 @tag("Reactions")
 namespace Reactions {
+  @useAuth(BearerAuth)
+  @get
+  @route("/posts/{postId}/reactions")
+  @summary("Danh sách users đã react bài viết")
+  @doc("Lấy danh sách user đã react, hỗ trợ filter theo loại reaction.")
+  op getPostReactions(
+    ...AuthHeaders,
+    @path postId: string,
+    @query reaction_type?: ReactionType,
+    ...CursorPaginationQuery
+  ): OkEnvelopeResponse<CursorPaginatedResponse<PostReaction>> | UnauthorizedEnvelopeResponse | NotFoundEnvelopeResponse;
+
   @useAuth(BearerAuth)
   @post
   @route("/posts/{postId}/reactions")
@@ -1351,6 +1318,52 @@ namespace Friends {
   op removeFriend(...AuthHeaders, @path friendId: string): OkEnvelopeResponse<{ message: string }> | UnauthorizedEnvelopeResponse | NotFoundEnvelopeResponse;
 }
 
+@doc("Nhóm API quản lý trạng thái theo dõi người dùng.")
+@route("/users")
+@tag("Follows")
+namespace Follows {
+  @useAuth(BearerAuth)
+  @post
+  @route("/{userId}/follow")
+  @summary("Theo dõi người dùng")
+  @doc("Tạo quan hệ theo dõi 1 chiều từ user hiện tại đến user đích.")
+  op followUser(
+    ...AuthHeaders,
+    @path userId: string
+  ): OkEnvelopeResponse<{ message: string }> | BadRequestEnvelopeResponse | UnauthorizedEnvelopeResponse | NotFoundEnvelopeResponse;
+
+  @useAuth(BearerAuth)
+  @delete
+  @route("/{userId}/follow")
+  @summary("Bỏ theo dõi")
+  op unfollowUser(
+    ...AuthHeaders,
+    @path userId: string
+  ): OkEnvelopeResponse<{ message: string }> | UnauthorizedEnvelopeResponse | NotFoundEnvelopeResponse;
+
+  @useAuth(BearerAuth)
+  @get
+  @route("/{userId}/followers")
+  @summary("Danh sách người theo dõi (Followers)")
+  @doc("Ai đang theo dõi user này?")
+  op getFollowers(
+    ...AuthHeaders,
+    @path userId: string,
+    ...CursorPaginationQuery
+  ): OkEnvelopeResponse<CursorPaginatedResponse<UserPublic>> | UnauthorizedEnvelopeResponse | NotFoundEnvelopeResponse;
+
+  @useAuth(BearerAuth)
+  @get
+  @route("/{userId}/following")
+  @summary("Danh sách đang theo dõi (Following)")
+  @doc("User này đang theo dõi ai?")
+  op getFollowing(
+    ...AuthHeaders,
+    @path userId: string,
+    ...CursorPaginationQuery
+  ): OkEnvelopeResponse<CursorPaginatedResponse<UserPublic>> | UnauthorizedEnvelopeResponse | NotFoundEnvelopeResponse;
+}
+
 @doc("Nhóm API thông báo (notifications).")
 @route("/notifications")
 @tag("Notifications")
@@ -1359,7 +1372,7 @@ namespace Notifications {
   @get
   @route("/")
   @summary("Danh sách thông báo")
-  op listNotifications(...AuthHeaders, ...PaginationQuery): OkEnvelopeResponse<NotificationListResponse> | UnauthorizedEnvelopeResponse;
+  op listNotifications(...AuthHeaders, ...CursorPaginationQuery): OkEnvelopeResponse<NotificationListResponse> | UnauthorizedEnvelopeResponse;
 
   @useAuth(BearerAuth)
   @post

@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useFriendsSendRequest } from "@/lib/api/generated/friends/friends"
 import { toast } from "sonner"
 import { getDefaultAvatar } from "@/lib/utils/api"
-import type { UserPublic, UserMe, UserPublicViewerContext } from "@/lib/api/generated/model"
+import type { UserPublic, UserMe, UserPublicViewerContext, ApiErrorResponse } from "@/lib/api/generated/model"
 
 type ProfileUser = UserPublic | UserMe
 
@@ -18,15 +18,6 @@ interface ProfileHeaderProps {
   profile: ProfileUser
   isCurrentUser?: boolean
   onEdit?: () => void
-}
-
-interface ApiError {
-  response?: {
-    data?: {
-      error?: string
-      detail?: string
-    }
-  }
 }
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
@@ -73,9 +64,9 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
       queryClient.invalidateQueries({ queryKey: ['profiles', profile.username] })
       queryClient.invalidateQueries({ queryKey: ["friends"] })
     } catch (err: unknown) {
-      const apiError = err as ApiError
-      const msg = apiError?.response?.data?.error || apiError?.response?.data?.detail || "Lỗi khi gửi lời mời"
-      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg))
+      const apiErr = (err as { response?: { data?: ApiErrorResponse } })?.response?.data
+      const msg = apiErr?.error?.message || "Lỗi khi gửi lời mời"
+      toast.error(msg)
     }
   }
 

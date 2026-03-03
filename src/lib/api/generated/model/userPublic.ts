@@ -7,36 +7,21 @@
  */
 import type { PersonalInfo } from './personalInfo';
 import type { PrivacyField } from './privacyField';
+import type { UserBase } from './userBase';
 import type { UserPublicViewerContext } from './userPublicViewerContext';
 
 /**
  * Public user profile (respects privacy settings).
  */
-export interface UserPublic {
-  /** User ID. */
-  id: string;
-  /** Unique username. */
-  username: string;
-  /** Display name. */
-  display_name: string;
+export type UserPublic = UserBase & ({
   /** User bio/description. */
   bio?: string;
   /** Personal information. */
   personal_info?: PersonalInfo;
   /** Birth date (ISO 8601 date). */
   birth_date?: string | null;
-  /** Avatar URL. */
-  avatar?: string | null;
   /** Background image URL. */
   background?: string | null;
-  /** Account status. */
-  account_status: string;
-  /** User role. */
-  role: string;
-  /** Account creation timestamp. */
-  created_at: string;
-  /** Last update timestamp. */
-  updated_at?: string;
   /**
    * Number of followers.
    * @minimum 0
@@ -56,4 +41,4 @@ export interface UserPublic {
   viewer_context?: UserPublicViewerContext;
   /** Fields redacted due to privacy settings. */
   redacted_fields?: PrivacyField[];
-}
+});

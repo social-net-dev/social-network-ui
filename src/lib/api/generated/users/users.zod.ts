@@ -12,21 +12,20 @@ import * as zod from 'zod';
  * @summary Lấy profile của tôi
  */
 export const UsersGetMeHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
-export const usersGetMeResponseDataPersonalInfoOneProjectsItemTitleMax = 200;
+export const usersGetMeResponseDataOneTwoPersonalInfoOneProjectsItemTitleMax = 200;
 
-export const usersGetMeResponseDataPersonalInfoOneProjectsItemDescriptionMax = 2000;
+export const usersGetMeResponseDataOneTwoPersonalInfoOneProjectsItemDescriptionMax = 2000;
 
-export const usersGetMeResponseDataStorageQuotaMbMin = 0;
+export const usersGetMeResponseDataOneTwoFollowersMin = 0;
 
-export const usersGetMeResponseDataFollowersMin = 0;
+export const usersGetMeResponseDataOneTwoFollowingMin = 0;
 
-export const usersGetMeResponseDataFollowingMin = 0;
+export const usersGetMeResponseDataOneTwoPostsCountMin = 0;
 
-export const usersGetMeResponseDataPostsCountMin = 0;
+export const usersGetMeResponseDataTwoStorageQuotaMbMin = 0;
 
 
 
@@ -34,10 +33,14 @@ export const UsersGetMeResponse = zod.object({
   "success": zod.literal(true),
   "data": zod.object({
   "id": zod.string().describe('User ID.'),
-  "email": zod.email().describe('User email address.'),
-  "phone": zod.union([zod.string(),zod.null()]).optional().describe('User phone number.'),
   "username": zod.string().describe('Unique username.'),
   "display_name": zod.string().describe('Display name.'),
+  "avatar": zod.union([zod.string(),zod.null()]).optional().describe('Avatar URL.'),
+  "account_status": zod.string().describe('Account status.'),
+  "role": zod.string().describe('User role.'),
+  "created_at": zod.string().describe('Account creation timestamp.'),
+  "updated_at": zod.string().optional().describe('Last update timestamp.')
+}).describe('Thông tin cơ bản nhất của User, dùng chung ở mọi nơi.').and(zod.object({
   "bio": zod.string().optional().describe('User bio\/description.'),
   "personal_info": zod.object({
   "education_level": zod.string().optional().describe('Education level.'),
@@ -53,32 +56,37 @@ export const UsersGetMeResponse = zod.object({
   "location": zod.string().optional().describe('Location\/address.'),
   "projects": zod.array(zod.object({
   "id": zod.string().describe('Project ID.'),
-  "title": zod.string().min(1).max(usersGetMeResponseDataPersonalInfoOneProjectsItemTitleMax).describe('Project title.'),
+  "title": zod.string().min(1).max(usersGetMeResponseDataOneTwoPersonalInfoOneProjectsItemTitleMax).describe('Project title.'),
   "category": zod.string().describe('Project category.'),
-  "description": zod.string().max(usersGetMeResponseDataPersonalInfoOneProjectsItemDescriptionMax).describe('Project description.'),
+  "description": zod.string().max(usersGetMeResponseDataOneTwoPersonalInfoOneProjectsItemDescriptionMax).describe('Project description.'),
   "image_url": zod.string().describe('Project image URL.'),
   "source_link": zod.url().optional().describe('Optional source code link.')
 }).describe('User project information.')).optional().describe('User projects.')
 }).describe('Personal information for user profile.').optional().describe('Personal information.'),
   "birth_date": zod.union([zod.string(),zod.null()]).optional().describe('Birth date (ISO 8601 date).'),
-  "avatar": zod.union([zod.string(),zod.null()]).optional().describe('Avatar URL.'),
   "background": zod.union([zod.string(),zod.null()]).optional().describe('Background image URL.'),
-  "account_status": zod.string().describe('Account status.'),
-  "role": zod.string().describe('User role.'),
-  "storage_quota_mb": zod.number().min(usersGetMeResponseDataStorageQuotaMbMin).optional().describe('Storage quota in MB.'),
-  "created_at": zod.string().describe('Account creation timestamp.'),
-  "updated_at": zod.string().optional().describe('Last update timestamp.'),
+  "followers": zod.number().min(usersGetMeResponseDataOneTwoFollowersMin).optional().describe('Number of followers.'),
+  "following": zod.number().min(usersGetMeResponseDataOneTwoFollowingMin).optional().describe('Number of following.'),
+  "posts_count": zod.number().min(usersGetMeResponseDataOneTwoPostsCountMin).optional().describe('Number of posts.'),
+  "viewer_context": zod.object({
+  "is_owner": zod.boolean(),
+  "is_friend": zod.boolean(),
+  "friendship_status": zod.string().optional(),
+  "friend_request_id": zod.union([zod.string(),zod.null()]).optional()
+}).optional().describe('Viewer context including ownership, friendship status and request ID.'),
+  "redacted_fields": zod.array(zod.enum(['display_name', 'birth_date', 'bio', 'avatar', 'background', 'personal_info'])).optional().describe('Fields redacted due to privacy settings.')
+})).describe('Public user profile (respects privacy settings).').and(zod.object({
+  "email": zod.email().describe('User email address.'),
+  "phone": zod.union([zod.string(),zod.null()]).optional().describe('User phone number.'),
+  "storage_quota_mb": zod.number().min(usersGetMeResponseDataTwoStorageQuotaMbMin).optional().describe('Storage quota in MB.'),
   "privacy": zod.object({
   "default_visibility": zod.enum(['PUBLIC', 'FRIENDS', 'PRIVATE']).describe('Visibility setting.'),
   "overrides": zod.array(zod.object({
   "field": zod.enum(['display_name', 'birth_date', 'bio', 'avatar', 'background', 'personal_info']),
   "visibility": zod.enum(['PUBLIC', 'FRIENDS', 'PRIVATE']).describe('Visibility setting.')
 })).optional()
-}).optional().describe('Privacy settings.'),
-  "followers": zod.number().min(usersGetMeResponseDataFollowersMin).optional().describe('Number of followers.'),
-  "following": zod.number().min(usersGetMeResponseDataFollowingMin).optional().describe('Number of following.'),
-  "posts_count": zod.number().min(usersGetMeResponseDataPostsCountMin).optional().describe('Number of posts.')
-}).describe('Current user profile (includes private fields).'),
+}).optional().describe('Privacy settings.')
+})).describe('Current user profile (includes private fields).'),
   "request_id": zod.string().optional()
 }).describe('Envelope response chuẩn như middleware\/UI: success + data + request_id.')
 
@@ -86,8 +94,7 @@ export const UsersGetMeResponse = zod.object({
  * @summary Cập nhật avatar từ media asset
  */
 export const UsersUploadAvatarHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const UsersUploadAvatarBody = zod.object({
@@ -106,8 +113,7 @@ export const UsersUploadAvatarResponse = zod.object({
  * @summary Cập nhật ảnh nền từ media asset
  */
 export const UsersUploadBackgroundHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const UsersUploadBackgroundBody = zod.object({
@@ -126,8 +132,7 @@ export const UsersUploadBackgroundResponse = zod.object({
  * @summary Vô hiệu hoá tài khoản
  */
 export const UsersDeactivateHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const UsersDeactivateBody = zod.object({
@@ -146,8 +151,7 @@ export const UsersDeactivateResponse = zod.object({
  * @summary Cập nhật quyền riêng tư
  */
 export const UsersUpdatePrivacyHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const UsersUpdatePrivacyBody = zod.object({
@@ -174,8 +178,7 @@ export const UsersUpdatePrivacyResponse = zod.object({
  * @summary Lấy cấu hình quyền riêng tư
  */
 export const UsersGetPrivacyHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const UsersGetPrivacyResponse = zod.object({
@@ -194,8 +197,7 @@ export const UsersGetPrivacyResponse = zod.object({
  * @summary Cập nhật profile
  */
 export const UsersUpdateProfileHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const usersUpdateProfileBodyDisplayNameMax = 100;
@@ -241,17 +243,17 @@ export const UsersUpdateProfileBody = zod.object({
 }).describe('Personal information for user profile.').optional().describe('Updated personal information (education, location, etc).')
 }).describe('Profile update request payload.')
 
-export const usersUpdateProfileResponseDataPersonalInfoOneProjectsItemTitleMax = 200;
+export const usersUpdateProfileResponseDataOneTwoPersonalInfoOneProjectsItemTitleMax = 200;
 
-export const usersUpdateProfileResponseDataPersonalInfoOneProjectsItemDescriptionMax = 2000;
+export const usersUpdateProfileResponseDataOneTwoPersonalInfoOneProjectsItemDescriptionMax = 2000;
 
-export const usersUpdateProfileResponseDataStorageQuotaMbMin = 0;
+export const usersUpdateProfileResponseDataOneTwoFollowersMin = 0;
 
-export const usersUpdateProfileResponseDataFollowersMin = 0;
+export const usersUpdateProfileResponseDataOneTwoFollowingMin = 0;
 
-export const usersUpdateProfileResponseDataFollowingMin = 0;
+export const usersUpdateProfileResponseDataOneTwoPostsCountMin = 0;
 
-export const usersUpdateProfileResponseDataPostsCountMin = 0;
+export const usersUpdateProfileResponseDataTwoStorageQuotaMbMin = 0;
 
 
 
@@ -259,10 +261,14 @@ export const UsersUpdateProfileResponse = zod.object({
   "success": zod.literal(true),
   "data": zod.object({
   "id": zod.string().describe('User ID.'),
-  "email": zod.email().describe('User email address.'),
-  "phone": zod.union([zod.string(),zod.null()]).optional().describe('User phone number.'),
   "username": zod.string().describe('Unique username.'),
   "display_name": zod.string().describe('Display name.'),
+  "avatar": zod.union([zod.string(),zod.null()]).optional().describe('Avatar URL.'),
+  "account_status": zod.string().describe('Account status.'),
+  "role": zod.string().describe('User role.'),
+  "created_at": zod.string().describe('Account creation timestamp.'),
+  "updated_at": zod.string().optional().describe('Last update timestamp.')
+}).describe('Thông tin cơ bản nhất của User, dùng chung ở mọi nơi.').and(zod.object({
   "bio": zod.string().optional().describe('User bio\/description.'),
   "personal_info": zod.object({
   "education_level": zod.string().optional().describe('Education level.'),
@@ -278,32 +284,37 @@ export const UsersUpdateProfileResponse = zod.object({
   "location": zod.string().optional().describe('Location\/address.'),
   "projects": zod.array(zod.object({
   "id": zod.string().describe('Project ID.'),
-  "title": zod.string().min(1).max(usersUpdateProfileResponseDataPersonalInfoOneProjectsItemTitleMax).describe('Project title.'),
+  "title": zod.string().min(1).max(usersUpdateProfileResponseDataOneTwoPersonalInfoOneProjectsItemTitleMax).describe('Project title.'),
   "category": zod.string().describe('Project category.'),
-  "description": zod.string().max(usersUpdateProfileResponseDataPersonalInfoOneProjectsItemDescriptionMax).describe('Project description.'),
+  "description": zod.string().max(usersUpdateProfileResponseDataOneTwoPersonalInfoOneProjectsItemDescriptionMax).describe('Project description.'),
   "image_url": zod.string().describe('Project image URL.'),
   "source_link": zod.url().optional().describe('Optional source code link.')
 }).describe('User project information.')).optional().describe('User projects.')
 }).describe('Personal information for user profile.').optional().describe('Personal information.'),
   "birth_date": zod.union([zod.string(),zod.null()]).optional().describe('Birth date (ISO 8601 date).'),
-  "avatar": zod.union([zod.string(),zod.null()]).optional().describe('Avatar URL.'),
   "background": zod.union([zod.string(),zod.null()]).optional().describe('Background image URL.'),
-  "account_status": zod.string().describe('Account status.'),
-  "role": zod.string().describe('User role.'),
-  "storage_quota_mb": zod.number().min(usersUpdateProfileResponseDataStorageQuotaMbMin).optional().describe('Storage quota in MB.'),
-  "created_at": zod.string().describe('Account creation timestamp.'),
-  "updated_at": zod.string().optional().describe('Last update timestamp.'),
+  "followers": zod.number().min(usersUpdateProfileResponseDataOneTwoFollowersMin).optional().describe('Number of followers.'),
+  "following": zod.number().min(usersUpdateProfileResponseDataOneTwoFollowingMin).optional().describe('Number of following.'),
+  "posts_count": zod.number().min(usersUpdateProfileResponseDataOneTwoPostsCountMin).optional().describe('Number of posts.'),
+  "viewer_context": zod.object({
+  "is_owner": zod.boolean(),
+  "is_friend": zod.boolean(),
+  "friendship_status": zod.string().optional(),
+  "friend_request_id": zod.union([zod.string(),zod.null()]).optional()
+}).optional().describe('Viewer context including ownership, friendship status and request ID.'),
+  "redacted_fields": zod.array(zod.enum(['display_name', 'birth_date', 'bio', 'avatar', 'background', 'personal_info'])).optional().describe('Fields redacted due to privacy settings.')
+})).describe('Public user profile (respects privacy settings).').and(zod.object({
+  "email": zod.email().describe('User email address.'),
+  "phone": zod.union([zod.string(),zod.null()]).optional().describe('User phone number.'),
+  "storage_quota_mb": zod.number().min(usersUpdateProfileResponseDataTwoStorageQuotaMbMin).optional().describe('Storage quota in MB.'),
   "privacy": zod.object({
   "default_visibility": zod.enum(['PUBLIC', 'FRIENDS', 'PRIVATE']).describe('Visibility setting.'),
   "overrides": zod.array(zod.object({
   "field": zod.enum(['display_name', 'birth_date', 'bio', 'avatar', 'background', 'personal_info']),
   "visibility": zod.enum(['PUBLIC', 'FRIENDS', 'PRIVATE']).describe('Visibility setting.')
 })).optional()
-}).optional().describe('Privacy settings.'),
-  "followers": zod.number().min(usersUpdateProfileResponseDataFollowersMin).optional().describe('Number of followers.'),
-  "following": zod.number().min(usersUpdateProfileResponseDataFollowingMin).optional().describe('Number of following.'),
-  "posts_count": zod.number().min(usersUpdateProfileResponseDataPostsCountMin).optional().describe('Number of posts.')
-}).describe('Current user profile (includes private fields).'),
+}).optional().describe('Privacy settings.')
+})).describe('Current user profile (includes private fields).'),
   "request_id": zod.string().optional()
 }).describe('Envelope response chuẩn như middleware\/UI: success + data + request_id.')
 

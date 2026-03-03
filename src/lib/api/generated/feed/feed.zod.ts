@@ -12,16 +12,17 @@ import * as zod from 'zod';
  * Hỗ trợ phân trang và filter field_id/post_type.
  * @summary Lấy feed
  */
+export const feedGetFeedQueryLimitDefault = 20;
+
 export const FeedGetFeedQueryParams = zod.object({
-  "page": zod.number().optional(),
-  "page_size": zod.number().optional(),
+  "cursor": zod.string().optional().describe('Con trỏ để lấy trang tiếp theo (thường là ID hoặc timestamp của item cuối cùng). Để trống nếu lấy trang đầu.'),
+  "limit": zod.number().default(feedGetFeedQueryLimitDefault).describe('Số lượng item tối đa trả về trong một request.'),
   "field_id": zod.string().optional(),
   "post_type": zod.string().optional()
 })
 
 export const FeedGetFeedHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const feedGetFeedResponseDataOneItemsItemMediaItemWidthMin = 0;
@@ -76,14 +77,12 @@ export const FeedGetFeedResponse = zod.object({
   "field_id": zod.string().optional().describe('Field\/category ID.'),
   "created_at": zod.string().describe('Post creation timestamp.'),
   "updated_at": zod.string().describe('Last update timestamp.')
-}).describe('Post summary for feed and lists.')).describe('Array of items for current page.'),
+}).describe('Post summary for feed and lists.')).describe('Danh sách dữ liệu.'),
   "pagination": zod.object({
-  "page": zod.number().describe('Current page number.'),
-  "page_size": zod.number().describe('Number of items per page.'),
-  "total": zod.number().describe('Total number of items.'),
-  "total_pages": zod.number().describe('Total number of pages.')
-}).describe('Pagination metadata for paginated responses.').describe('Pagination metadata.')
-}).describe('Generic paginated response wrapper.').describe('Feed response with paginated posts.'),
+  "next_cursor": zod.union([zod.string(),zod.null()]).describe('Con trỏ cho lần gọi API tiếp theo. Bằng null nếu đã hết dữ liệu.'),
+  "has_next_page": zod.boolean().describe('Cờ báo hiệu còn trang tiếp theo hay không.')
+}).describe('Metadata cho Cursor Pagination.').describe('Thông tin phân trang.')
+}).describe('Generic response cho danh sách dùng Cursor Pagination.').describe('Feed response with paginated posts.'),
   "request_id": zod.string().optional()
 }).describe('Envelope response chuẩn như middleware\/UI: success + data + request_id.')
 

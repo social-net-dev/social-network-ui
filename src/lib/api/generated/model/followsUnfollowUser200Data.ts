@@ -6,4 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export type AuthHeadersAuthorizationParameter = string;
+export type FollowsUnfollowUser200Data = {
+  message: string;
+};

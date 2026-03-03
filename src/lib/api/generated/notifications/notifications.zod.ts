@@ -11,14 +11,15 @@ import * as zod from 'zod';
 /**
  * @summary Danh sách thông báo
  */
+export const notificationsListNotificationsQueryLimitDefault = 20;
+
 export const NotificationsListNotificationsQueryParams = zod.object({
-  "page": zod.number().optional().describe('Page number (1-indexed).'),
-  "page_size": zod.number().optional().describe('Number of items per page.')
+  "cursor": zod.string().optional().describe('Con trỏ để lấy trang tiếp theo (thường là ID hoặc timestamp của item cuối cùng). Để trống nếu lấy trang đầu.'),
+  "limit": zod.number().default(notificationsListNotificationsQueryLimitDefault).describe('Số lượng item tối đa trả về trong một request.')
 })
 
 export const NotificationsListNotificationsHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const notificationsListNotificationsResponseDataTwoUnreadCountMin = 0;
@@ -44,14 +45,12 @@ export const NotificationsListNotificationsResponse = zod.object({
   "message": zod.string(),
   "is_read": zod.boolean(),
   "created_at": zod.string()
-})).describe('Array of items for current page.'),
+})).describe('Danh sách dữ liệu.'),
   "pagination": zod.object({
-  "page": zod.number().describe('Current page number.'),
-  "page_size": zod.number().describe('Number of items per page.'),
-  "total": zod.number().describe('Total number of items.'),
-  "total_pages": zod.number().describe('Total number of pages.')
-}).describe('Pagination metadata for paginated responses.').describe('Pagination metadata.')
-}).describe('Generic paginated response wrapper.').and(zod.object({
+  "next_cursor": zod.union([zod.string(),zod.null()]).describe('Con trỏ cho lần gọi API tiếp theo. Bằng null nếu đã hết dữ liệu.'),
+  "has_next_page": zod.boolean().describe('Cờ báo hiệu còn trang tiếp theo hay không.')
+}).describe('Metadata cho Cursor Pagination.').describe('Thông tin phân trang.')
+}).describe('Generic response cho danh sách dùng Cursor Pagination.').and(zod.object({
   "unread_count": zod.number().min(notificationsListNotificationsResponseDataTwoUnreadCountMin).describe('Number of unread notifications.')
 })).describe('Notification list response with pagination and unread count.'),
   "request_id": zod.string().optional()
@@ -61,8 +60,7 @@ export const NotificationsListNotificationsResponse = zod.object({
  * @summary Đánh dấu tất cả đã đọc
  */
 export const NotificationsMarkAllAsReadHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const NotificationsMarkAllAsReadResponse = zod.object({
@@ -77,8 +75,7 @@ export const NotificationsMarkAllAsReadResponse = zod.object({
  * @summary Đếm thông báo chưa đọc
  */
 export const NotificationsUnreadCountHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const notificationsUnreadCountResponseDataUnreadCountMin = 0;
@@ -101,8 +98,7 @@ export const NotificationsDeleteNotificationParams = zod.object({
 })
 
 export const NotificationsDeleteNotificationHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const NotificationsDeleteNotificationResponse = zod.object({
@@ -121,8 +117,7 @@ export const NotificationsMarkAsReadParams = zod.object({
 })
 
 export const NotificationsMarkAsReadHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const NotificationsMarkAsReadResponse = zod.object({

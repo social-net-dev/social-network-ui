@@ -6,19 +6,30 @@
  * OpenAPI spec version: 1.0
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
   ApiErrorResponse,
   CommentsCreateComment201,
   CommentsDeleteComment200,
+  CommentsGetReplies200,
+  CommentsGetRepliesParams,
   CommentsReplyToComment201,
   CommentsUpdateComment200,
   CreateCommentRequest,
@@ -287,4 +298,102 @@ export const useCommentsReplyToComment = <TError = ApiErrorResponse,
       > => {
       return useMutation(getCommentsReplyToCommentMutationOptions(options), queryClient);
     }
+    /**
+ * Lấy danh sách các câu trả lời (replies) của một bình luận cha.
+ * @summary Danh sách replies
+ */
+export const commentsGetReplies = (
+    commentId: string,
+    params?: CommentsGetRepliesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CommentsGetReplies200>(
+      {url: `/comments/${commentId}/replies`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getCommentsGetRepliesQueryKey = (commentId: string,
+    params?: CommentsGetRepliesParams,) => {
+    return [
+    `/comments/${commentId}/replies`, ...(params ? [params] : [])
+    ] as const;
+    }
+
     
+export const getCommentsGetRepliesQueryOptions = <TData = Awaited<ReturnType<typeof commentsGetReplies>>, TError = ApiErrorResponse>(commentId: string,
+    params?: CommentsGetRepliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsGetReplies>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCommentsGetRepliesQueryKey(commentId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof commentsGetReplies>>> = ({ signal }) => commentsGetReplies(commentId,params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(commentId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof commentsGetReplies>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CommentsGetRepliesQueryResult = NonNullable<Awaited<ReturnType<typeof commentsGetReplies>>>
+export type CommentsGetRepliesQueryError = ApiErrorResponse
+
+
+export function useCommentsGetReplies<TData = Awaited<ReturnType<typeof commentsGetReplies>>, TError = ApiErrorResponse>(
+ commentId: string,
+    params: undefined |  CommentsGetRepliesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsGetReplies>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof commentsGetReplies>>,
+          TError,
+          Awaited<ReturnType<typeof commentsGetReplies>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCommentsGetReplies<TData = Awaited<ReturnType<typeof commentsGetReplies>>, TError = ApiErrorResponse>(
+ commentId: string,
+    params?: CommentsGetRepliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsGetReplies>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof commentsGetReplies>>,
+          TError,
+          Awaited<ReturnType<typeof commentsGetReplies>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCommentsGetReplies<TData = Awaited<ReturnType<typeof commentsGetReplies>>, TError = ApiErrorResponse>(
+ commentId: string,
+    params?: CommentsGetRepliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsGetReplies>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Danh sách replies
+ */
+
+export function useCommentsGetReplies<TData = Awaited<ReturnType<typeof commentsGetReplies>>, TError = ApiErrorResponse>(
+ commentId: string,
+    params?: CommentsGetRepliesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsGetReplies>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCommentsGetRepliesQueryOptions(commentId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+

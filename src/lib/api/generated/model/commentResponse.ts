@@ -6,14 +6,14 @@
  * OpenAPI spec version: 1.0
  */
 import type { Comment } from './comment';
-import type { PaginationMeta } from './paginationMeta';
+import type { CursorPaginationMeta } from './cursorPaginationMeta';
 
 /**
  * Comment response with paginated comments.
  */
 export type CommentResponse = {
-  /** Array of items for current page. */
+  /** Danh sách dữ liệu. */
   items: Comment[];
-  /** Pagination metadata. */
-  pagination: PaginationMeta;
+  /** Thông tin phân trang. */
+  pagination: CursorPaginationMeta;
 };

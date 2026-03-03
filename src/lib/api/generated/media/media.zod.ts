@@ -16,8 +16,7 @@ export const MediaGetAssetParams = zod.object({
 })
 
 export const MediaGetAssetHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const mediaGetAssetResponseDataOneWidthMin = 0;
@@ -57,8 +56,7 @@ export const MediaGetSignedDownloadUrlParams = zod.object({
 })
 
 export const MediaGetSignedDownloadUrlHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const MediaGetSignedDownloadUrlBody = zod.object({
@@ -79,8 +77,7 @@ export const MediaGetSignedDownloadUrlResponse = zod.object({
  * @summary Khởi tạo presigned upload
  */
 export const MediaInitUploadHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const MediaInitUploadBody = zod.object({
@@ -155,8 +152,7 @@ export const MediaCompleteUploadParams = zod.object({
 })
 
 export const MediaCompleteUploadHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const MediaCompleteUploadBody = zod.object({

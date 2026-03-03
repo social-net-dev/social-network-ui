@@ -16,8 +16,7 @@ export const SharesSharePostParams = zod.object({
 })
 
 export const SharesSharePostHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const SharesSharePostBody = zod.object({
@@ -44,8 +43,7 @@ export const SharesUnsharePostParams = zod.object({
 })
 
 export const SharesUnsharePostHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const SharesUnsharePostResponse = zod.object({

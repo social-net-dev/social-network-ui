@@ -16,8 +16,7 @@ export const ReactionsReactToCommentParams = zod.object({
 })
 
 export const ReactionsReactToCommentHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const ReactionsReactToCommentBody = zod.object({
@@ -44,8 +43,7 @@ export const ReactionsUnreactCommentParams = zod.object({
 })
 
 export const ReactionsUnreactCommentHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const ReactionsUnreactCommentResponse = zod.object({
@@ -57,6 +55,44 @@ export const ReactionsUnreactCommentResponse = zod.object({
 }).describe('Envelope response chuẩn như middleware\/UI: success + data + request_id.')
 
 /**
+ * Lấy danh sách user đã react, hỗ trợ filter theo loại reaction.
+ * @summary Danh sách users đã react bài viết
+ */
+export const ReactionsGetPostReactionsParams = zod.object({
+  "postId": zod.string()
+})
+
+export const reactionsGetPostReactionsQueryLimitDefault = 20;
+
+export const ReactionsGetPostReactionsQueryParams = zod.object({
+  "reaction_type": zod.enum(['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY']).optional(),
+  "cursor": zod.string().optional().describe('Con trỏ để lấy trang tiếp theo (thường là ID hoặc timestamp của item cuối cùng). Để trống nếu lấy trang đầu.'),
+  "limit": zod.number().default(reactionsGetPostReactionsQueryLimitDefault).describe('Số lượng item tối đa trả về trong một request.')
+})
+
+export const ReactionsGetPostReactionsHeader = zod.object({
+  "Authorization": zod.string()
+})
+
+export const ReactionsGetPostReactionsResponse = zod.object({
+  "success": zod.literal(true),
+  "data": zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string(),
+  "post_id": zod.string(),
+  "user_id": zod.string(),
+  "reaction": zod.enum(['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY']).describe('Reaction type.'),
+  "created_at": zod.string()
+})).describe('Danh sách dữ liệu.'),
+  "pagination": zod.object({
+  "next_cursor": zod.union([zod.string(),zod.null()]).describe('Con trỏ cho lần gọi API tiếp theo. Bằng null nếu đã hết dữ liệu.'),
+  "has_next_page": zod.boolean().describe('Cờ báo hiệu còn trang tiếp theo hay không.')
+}).describe('Metadata cho Cursor Pagination.').describe('Thông tin phân trang.')
+}).describe('Generic response cho danh sách dùng Cursor Pagination.'),
+  "request_id": zod.string().optional()
+}).describe('Envelope response chuẩn như middleware\/UI: success + data + request_id.')
+
+/**
  * @summary React bài viết
  */
 export const ReactionsReactToPostParams = zod.object({
@@ -64,8 +100,7 @@ export const ReactionsReactToPostParams = zod.object({
 })
 
 export const ReactionsReactToPostHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const ReactionsReactToPostBody = zod.object({
@@ -92,8 +127,7 @@ export const ReactionsUnreactPostParams = zod.object({
 })
 
 export const ReactionsUnreactPostHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const ReactionsUnreactPostResponse = zod.object({

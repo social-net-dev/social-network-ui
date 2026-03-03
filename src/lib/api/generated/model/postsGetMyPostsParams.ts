@@ -5,16 +5,16 @@
  * API contract cho social-network-ui (main API + message service).
  * OpenAPI spec version: 1.0
  */
-import type { PaginationQueryPageParameter } from './paginationQueryPageParameter';
-import type { PaginationQueryPageSizeParameter } from './paginationQueryPageSizeParameter';
+import type { CursorPaginationQueryCursorParameter } from './cursorPaginationQueryCursorParameter';
+import type { CursorPaginationQueryLimitParameter } from './cursorPaginationQueryLimitParameter';
 
 export type PostsGetMyPostsParams = {
 /**
- * Page number (1-indexed).
+ * Con trỏ để lấy trang tiếp theo (thường là ID hoặc timestamp của item cuối cùng). Để trống nếu lấy trang đầu.
  */
-page?: PaginationQueryPageParameter;
+cursor?: CursorPaginationQueryCursorParameter;
 /**
- * Number of items per page.
+ * Số lượng item tối đa trả về trong một request.
  */
-page_size?: PaginationQueryPageSizeParameter;
+limit?: CursorPaginationQueryLimitParameter;
 };

@@ -5,17 +5,17 @@
  * API contract cho social-network-ui (main API + message service).
  * OpenAPI spec version: 1.0
  */
+import type { CursorPaginationMeta } from './cursorPaginationMeta';
 import type { Notification } from './notification';
-import type { PaginationMeta } from './paginationMeta';
 
 /**
  * Notification list response with pagination and unread count.
  */
 export type NotificationListResponse = {
-  /** Array of items for current page. */
+  /** Danh sách dữ liệu. */
   items: Notification[];
-  /** Pagination metadata. */
-  pagination: PaginationMeta;
+  /** Thông tin phân trang. */
+  pagination: CursorPaginationMeta;
 } & {
   /**
    * Number of unread notifications.

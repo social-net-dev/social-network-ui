@@ -5,15 +5,15 @@
  * API contract cho social-network-ui (main API + message service).
  * OpenAPI spec version: 1.0
  */
-import type { PaginationMeta } from './paginationMeta';
+import type { CursorPaginationMeta } from './cursorPaginationMeta';
 import type { PostSummary } from './postSummary';
 
 /**
  * Feed response with paginated posts.
  */
 export type FeedResponse = {
-  /** Array of items for current page. */
+  /** Danh sách dữ liệu. */
   items: PostSummary[];
-  /** Pagination metadata. */
-  pagination: PaginationMeta;
+  /** Thông tin phân trang. */
+  pagination: CursorPaginationMeta;
 };

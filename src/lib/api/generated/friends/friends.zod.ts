@@ -17,8 +17,7 @@ export const FriendsListFriendsQueryParams = zod.object({
 })
 
 export const FriendsListFriendsHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const FriendsListFriendsResponse = zod.object({
@@ -54,8 +53,7 @@ export const FriendsCheckFriendshipParams = zod.object({
 })
 
 export const FriendsCheckFriendshipHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const FriendsCheckFriendshipResponse = zod.object({
@@ -72,8 +70,7 @@ export const FriendsCheckFriendshipResponse = zod.object({
  * @summary Gửi lời mời kết bạn
  */
 export const FriendsSendRequestHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const FriendsSendRequestBody = zod.object({
@@ -116,8 +113,7 @@ export const FriendsListIncomingRequestsQueryParams = zod.object({
 })
 
 export const FriendsListIncomingRequestsHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const FriendsListIncomingRequestsResponse = zod.object({
@@ -155,8 +151,7 @@ export const FriendsListOutgoingRequestsQueryParams = zod.object({
 })
 
 export const FriendsListOutgoingRequestsHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const FriendsListOutgoingRequestsResponse = zod.object({
@@ -193,8 +188,7 @@ export const FriendsAcceptRequestParams = zod.object({
 })
 
 export const FriendsAcceptRequestHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const FriendsAcceptRequestResponse = zod.object({
@@ -231,8 +225,7 @@ export const FriendsCancelRequestParams = zod.object({
 })
 
 export const FriendsCancelRequestHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const FriendsCancelRequestResponse = zod.object({
@@ -269,8 +262,7 @@ export const FriendsRejectRequestParams = zod.object({
 })
 
 export const FriendsRejectRequestHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const FriendsRejectRequestResponse = zod.object({
@@ -307,8 +299,7 @@ export const FriendsRemoveFriendParams = zod.object({
 })
 
 export const FriendsRemoveFriendHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const FriendsRemoveFriendResponse = zod.object({

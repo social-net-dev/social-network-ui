@@ -7,34 +7,32 @@ import type { PostSummary } from '@/lib/api/generated/model';
  * Uses generated Orval fns: postsGetMyPosts (self) or postsGetPostsByUser (other).
  */
 export function useUserPosts(userId?: string) {
-  const pageSize = 10;
   const isMe = userId === 'me' || !userId;
 
   const query = useInfiniteQuery({
     queryKey: isMe
       ? [...getPostsGetMyPostsQueryKey(), 'infinite']
       : [...getPostsGetPostsByUserQueryKey(userId!), 'infinite'],
-    queryFn: async ({ pageParam = 1, signal }) => {
+    queryFn: async ({ pageParam, signal }) => {
+      const cursor = pageParam as string | undefined;
       if (isMe) {
-        return postsGetMyPosts({ page: pageParam as number, page_size: pageSize }, undefined, signal);
+        return postsGetMyPosts({ cursor }, undefined, signal);
       }
-      return postsGetPostsByUser(userId!, { page: pageParam as number, page_size: pageSize }, undefined, signal);
+      return postsGetPostsByUser(userId!, { cursor }, undefined, signal);
     },
-    initialPageParam: 1,
+    initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       const { pagination } = lastPage.data;
-      return pagination.page < pagination.total_pages ? pagination.page + 1 : undefined;
+      return pagination.has_next_page ? pagination.next_cursor : undefined;
     },
     enabled: !!userId || isMe,
     staleTime: 30_000,
   });
 
   const posts: PostSummary[] = query.data?.pages.flatMap((page) => page.data.items ?? []) ?? [];
-  const total = query.data?.pages[0]?.data.pagination?.total ?? 0;
 
   return {
     posts,
-    total,
     isLoading: query.isPending,
     isFetchingNextPage: query.isFetchingNextPage,
     hasNextPage: query.hasNextPage,

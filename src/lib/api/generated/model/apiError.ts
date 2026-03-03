@@ -5,12 +5,17 @@
  * API contract cho social-network-ui (main API + message service).
  * OpenAPI spec version: 1.0
  */
+import type { ErrorCode } from './errorCode';
+import type { ValidationErrorItem } from './validationErrorItem';
 
 /**
  * Error payload chuẩn cho UI.
  */
 export interface ApiError {
-  code: string;
-  message?: string;
-  details?: unknown;
+  /** Mã lỗi dạng Enum để frontend switch-case */
+  code: ErrorCode;
+  /** Câu thông báo lỗi chung */
+  message: string;
+  /** Chi tiết lỗi validation (chỉ có khi code = VALIDATION_ERROR) */
+  details?: ValidationErrorItem[];
 }

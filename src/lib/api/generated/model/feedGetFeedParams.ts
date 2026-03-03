@@ -5,10 +5,18 @@
  * API contract cho social-network-ui (main API + message service).
  * OpenAPI spec version: 1.0
  */
+import type { CursorPaginationQueryCursorParameter } from './cursorPaginationQueryCursorParameter';
+import type { CursorPaginationQueryLimitParameter } from './cursorPaginationQueryLimitParameter';
 
 export type FeedGetFeedParams = {
-page?: number;
-page_size?: number;
+/**
+ * Con trỏ để lấy trang tiếp theo (thường là ID hoặc timestamp của item cuối cùng). Để trống nếu lấy trang đầu.
+ */
+cursor?: CursorPaginationQueryCursorParameter;
+/**
+ * Số lượng item tối đa trả về trong một request.
+ */
+limit?: CursorPaginationQueryLimitParameter;
 field_id?: string;
 post_type?: string;
 };

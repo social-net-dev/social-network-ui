@@ -13,8 +13,7 @@ import * as zod from 'zod';
  * @summary Đổi mật khẩu
  */
 export const AuthChangePasswordHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const AuthChangePasswordBody = zod.object({
@@ -73,8 +72,7 @@ export const AuthLoginResponse = zod.object({
  * @summary Đăng xuất
  */
 export const AuthLogoutHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const AuthLogoutResponse = zod.object({

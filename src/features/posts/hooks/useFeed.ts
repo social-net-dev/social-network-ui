@@ -19,8 +19,6 @@ export function useFeed(options?: UseFeedOptions) {
     () => ({
       field_id: fieldId || undefined,
       post_type: postType || undefined,
-      page: undefined,
-      page_size: undefined,
     }),
     [fieldId, postType],
   );
@@ -32,16 +30,15 @@ export function useFeed(options?: UseFeedOptions) {
 
   const query = useInfiniteQuery({
     queryKey,
-    queryFn: ({ pageParam = 1, signal }) =>
+    queryFn: ({ pageParam, signal }) =>
       feedGetFeed({
         ...params,
-        page: pageParam,
+        cursor: pageParam as string | undefined,
       }, undefined, signal),
-    initialPageParam: 1,
+    initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       const { pagination } = lastPage.data;
-      if (pagination.page < pagination.total_pages) return pagination.page + 1;
-      return undefined;
+      return pagination.has_next_page ? pagination.next_cursor : undefined;
     },
   });
 

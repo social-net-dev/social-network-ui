@@ -6,18 +6,29 @@
  * OpenAPI spec version: 1.0
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
   ApiErrorResponse,
   ReactRequest,
+  ReactionsGetPostReactions200,
+  ReactionsGetPostReactionsParams,
   ReactionsReactToComment200,
   ReactionsReactToPost200,
   ReactionsUnreactComment200,
@@ -157,6 +168,105 @@ export const useReactionsUnreactComment = <TError = ApiErrorResponse,
       return useMutation(getReactionsUnreactCommentMutationOptions(options), queryClient);
     }
     /**
+ * Lấy danh sách user đã react, hỗ trợ filter theo loại reaction.
+ * @summary Danh sách users đã react bài viết
+ */
+export const reactionsGetPostReactions = (
+    postId: string,
+    params?: ReactionsGetPostReactionsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ReactionsGetPostReactions200>(
+      {url: `/posts/${postId}/reactions`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getReactionsGetPostReactionsQueryKey = (postId: string,
+    params?: ReactionsGetPostReactionsParams,) => {
+    return [
+    `/posts/${postId}/reactions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+    
+export const getReactionsGetPostReactionsQueryOptions = <TData = Awaited<ReturnType<typeof reactionsGetPostReactions>>, TError = ApiErrorResponse>(postId: string,
+    params?: ReactionsGetPostReactionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsGetPostReactions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getReactionsGetPostReactionsQueryKey(postId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof reactionsGetPostReactions>>> = ({ signal }) => reactionsGetPostReactions(postId,params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(postId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof reactionsGetPostReactions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReactionsGetPostReactionsQueryResult = NonNullable<Awaited<ReturnType<typeof reactionsGetPostReactions>>>
+export type ReactionsGetPostReactionsQueryError = ApiErrorResponse
+
+
+export function useReactionsGetPostReactions<TData = Awaited<ReturnType<typeof reactionsGetPostReactions>>, TError = ApiErrorResponse>(
+ postId: string,
+    params: undefined |  ReactionsGetPostReactionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsGetPostReactions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof reactionsGetPostReactions>>,
+          TError,
+          Awaited<ReturnType<typeof reactionsGetPostReactions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReactionsGetPostReactions<TData = Awaited<ReturnType<typeof reactionsGetPostReactions>>, TError = ApiErrorResponse>(
+ postId: string,
+    params?: ReactionsGetPostReactionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsGetPostReactions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof reactionsGetPostReactions>>,
+          TError,
+          Awaited<ReturnType<typeof reactionsGetPostReactions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReactionsGetPostReactions<TData = Awaited<ReturnType<typeof reactionsGetPostReactions>>, TError = ApiErrorResponse>(
+ postId: string,
+    params?: ReactionsGetPostReactionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsGetPostReactions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Danh sách users đã react bài viết
+ */
+
+export function useReactionsGetPostReactions<TData = Awaited<ReturnType<typeof reactionsGetPostReactions>>, TError = ApiErrorResponse>(
+ postId: string,
+    params?: ReactionsGetPostReactionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsGetPostReactions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getReactionsGetPostReactionsQueryOptions(postId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+/**
  * @summary React bài viết
  */
 export const reactionsReactToPost = (

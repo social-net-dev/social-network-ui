@@ -13,8 +13,7 @@ import * as zod from 'zod';
  * @summary Tạo comment
  */
 export const CommentsCreateCommentHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const commentsCreateCommentBodyContentTextMax = 5000;
@@ -35,8 +34,7 @@ export const CommentsUpdateCommentParams = zod.object({
 })
 
 export const CommentsUpdateCommentHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const CommentsUpdateCommentBody = zod.object({
@@ -84,8 +82,7 @@ export const CommentsDeleteCommentParams = zod.object({
 })
 
 export const CommentsDeleteCommentHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const CommentsDeleteCommentResponse = zod.object({
@@ -105,8 +102,7 @@ export const CommentsReplyToCommentParams = zod.object({
 })
 
 export const CommentsReplyToCommentHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const CommentsReplyToCommentBody = zod.object({
@@ -114,4 +110,62 @@ export const CommentsReplyToCommentBody = zod.object({
   "content_text": zod.string(),
   "media_asset_ids": zod.array(zod.string()).optional()
 })
+
+/**
+ * Lấy danh sách các câu trả lời (replies) của một bình luận cha.
+ * @summary Danh sách replies
+ */
+export const CommentsGetRepliesParams = zod.object({
+  "commentId": zod.string()
+})
+
+export const commentsGetRepliesQueryLimitDefault = 20;
+
+export const CommentsGetRepliesQueryParams = zod.object({
+  "cursor": zod.string().optional().describe('Con trỏ để lấy trang tiếp theo (thường là ID hoặc timestamp của item cuối cùng). Để trống nếu lấy trang đầu.'),
+  "limit": zod.number().default(commentsGetRepliesQueryLimitDefault).describe('Số lượng item tối đa trả về trong một request.')
+})
+
+export const CommentsGetRepliesHeader = zod.object({
+  "Authorization": zod.string()
+})
+
+export const commentsGetRepliesResponseDataItemsItemStatsOneReactionsMin = 0;
+
+export const commentsGetRepliesResponseDataItemsItemStatsOneRepliesMin = 0;
+
+
+
+export const CommentsGetRepliesResponse = zod.object({
+  "success": zod.literal(true),
+  "data": zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string().describe('Comment ID.'),
+  "post_id": zod.string().describe('ID of the post this comment belongs to.'),
+  "author": zod.object({
+  "id": zod.string().describe('User ID.'),
+  "display_name": zod.string().describe('Display name.'),
+  "username": zod.string().describe('Username.'),
+  "avatar": zod.union([zod.string(),zod.null()]).describe('Avatar URL or null if not set.'),
+  "role": zod.string().optional().describe('User role.'),
+  "account_status": zod.string().optional().describe('Account status.')
+}).describe('Author information for posts and comments.').describe('Comment author information.'),
+  "parent_comment_id": zod.union([zod.string(),zod.null()]).describe('Parent comment ID for replies.'),
+  "content": zod.string().describe('Comment content text.'),
+  "media_urls": zod.array(zod.string()).describe('Array of media URLs.'),
+  "stats": zod.object({
+  "reactions": zod.number().min(commentsGetRepliesResponseDataItemsItemStatsOneReactionsMin).describe('Total number of reactions.'),
+  "replies": zod.number().min(commentsGetRepliesResponseDataItemsItemStatsOneRepliesMin).describe('Total number of replies.')
+}).describe('Comment statistics.').describe('Comment statistics.'),
+  "user_reaction": zod.union([zod.enum(['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY']).describe('Reaction type.'),zod.null()]).describe('Current user\'s reaction to this comment.'),
+  "created_at": zod.string().describe('Comment creation timestamp.'),
+  "updated_at": zod.string().describe('Last update timestamp.')
+}).describe('Comment model.')).describe('Danh sách dữ liệu.'),
+  "pagination": zod.object({
+  "next_cursor": zod.union([zod.string(),zod.null()]).describe('Con trỏ cho lần gọi API tiếp theo. Bằng null nếu đã hết dữ liệu.'),
+  "has_next_page": zod.boolean().describe('Cờ báo hiệu còn trang tiếp theo hay không.')
+}).describe('Metadata cho Cursor Pagination.').describe('Thông tin phân trang.')
+}).describe('Generic response cho danh sách dùng Cursor Pagination.'),
+  "request_id": zod.string().optional()
+}).describe('Envelope response chuẩn như middleware\/UI: success + data + request_id.')
 

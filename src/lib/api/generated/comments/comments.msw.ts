@@ -23,6 +23,7 @@ import {
 import type {
   CommentsCreateComment201,
   CommentsDeleteComment200,
+  CommentsGetReplies200,
   CommentsReplyToComment201,
   CommentsUpdateComment200
 } from '.././model';
@@ -35,6 +36,8 @@ export const getCommentsUpdateCommentResponseMock = (overrideResponse: Partial<E
 export const getCommentsDeleteCommentResponseMock = (overrideResponse: Partial<Extract<CommentsDeleteComment200, object>> = {}): CommentsDeleteComment200 => ({success: faker.datatype.boolean(), data: {message: faker.string.alpha({length: {min: 10, max: 20}})}, request_id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
 export const getCommentsReplyToCommentResponseMock = (overrideResponse: Partial<Extract<CommentsReplyToComment201, object>> = {}): CommentsReplyToComment201 => ({success: faker.datatype.boolean(), data: {id: faker.string.alpha({length: {min: 10, max: 20}}), post_id: faker.string.alpha({length: {min: 10, max: 20}}), author: {...{id: faker.string.alpha({length: {min: 10, max: 20}}), display_name: faker.string.alpha({length: {min: 10, max: 20}}), username: faker.string.alpha({length: {min: 10, max: 20}}), avatar: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), role: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), account_status: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])},}, parent_comment_id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), content: faker.string.alpha({length: {min: 10, max: 20}}), media_urls: Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), stats: {...{reactions: faker.number.int({min: 0}), replies: faker.number.int({min: 0})},}, user_reaction: faker.helpers.arrayElement([faker.helpers.arrayElement(Object.values(ReactionType)),null,]), created_at: faker.string.alpha({length: {min: 10, max: 20}}), updated_at: faker.string.alpha({length: {min: 10, max: 20}})}, request_id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
+
+export const getCommentsGetRepliesResponseMock = (overrideResponse: Partial<Extract<CommentsGetReplies200, object>> = {}): CommentsGetReplies200 => ({success: faker.datatype.boolean(), data: {items: Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.string.alpha({length: {min: 10, max: 20}}), post_id: faker.string.alpha({length: {min: 10, max: 20}}), author: {...{id: faker.string.alpha({length: {min: 10, max: 20}}), display_name: faker.string.alpha({length: {min: 10, max: 20}}), username: faker.string.alpha({length: {min: 10, max: 20}}), avatar: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), role: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), account_status: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])},}, parent_comment_id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), content: faker.string.alpha({length: {min: 10, max: 20}}), media_urls: Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), stats: {...{reactions: faker.number.int({min: 0}), replies: faker.number.int({min: 0})},}, user_reaction: faker.helpers.arrayElement([faker.helpers.arrayElement(Object.values(ReactionType)),null,]), created_at: faker.string.alpha({length: {min: 10, max: 20}}), updated_at: faker.string.alpha({length: {min: 10, max: 20}})})), pagination: {...{next_cursor: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), has_next_page: faker.datatype.boolean()},}}, request_id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
 
 export const getCommentsCreateCommentMockHandler = (overrideResponse?: CommentsCreateComment201 | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<CommentsCreateComment201> | CommentsCreateComment201), options?: RequestHandlerOptions) => {
@@ -84,9 +87,22 @@ export const getCommentsReplyToCommentMockHandler = (overrideResponse?: Comments
       })
   }, options)
 }
+
+export const getCommentsGetRepliesMockHandler = (overrideResponse?: CommentsGetReplies200 | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<CommentsGetReplies200> | CommentsGetReplies200), options?: RequestHandlerOptions) => {
+  return http.get('*/comments/:commentId/replies', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+  
+  
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getCommentsGetRepliesResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 export const getCommentsMock = () => [
   getCommentsCreateCommentMockHandler(),
   getCommentsUpdateCommentMockHandler(),
   getCommentsDeleteCommentMockHandler(),
-  getCommentsReplyToCommentMockHandler()
+  getCommentsReplyToCommentMockHandler(),
+  getCommentsGetRepliesMockHandler()
 ]

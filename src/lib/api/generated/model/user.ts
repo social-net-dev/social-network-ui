@@ -5,61 +5,9 @@
  * API contract cho social-network-ui (main API + message service).
  * OpenAPI spec version: 1.0
  */
-import type { PersonalInfo } from './personalInfo';
-import type { UserPrivacy } from './userPrivacy';
+import type { UserMe } from './userMe';
 
 /**
  * Full user model with all fields (internal use).
  */
-export interface User {
-  /** User ID. */
-  id: string;
-  /** User email address. */
-  email: string;
-  /** User phone number. */
-  phone?: string | null;
-  /** Unique username. */
-  username: string;
-  /** Display name. */
-  display_name: string;
-  /** User bio/description. */
-  bio?: string;
-  /** Personal information. */
-  personal_info?: PersonalInfo;
-  /** Birth date (ISO 8601 date). */
-  birth_date?: string | null;
-  /** Avatar URL. */
-  avatar?: string | null;
-  /** Background image URL. */
-  background?: string | null;
-  /** Account status. */
-  account_status: string;
-  /** User role. */
-  role: string;
-  /**
-   * Storage quota in MB.
-   * @minimum 0
-   */
-  storage_quota_mb?: number;
-  /** Account creation timestamp. */
-  created_at: string;
-  /** Last update timestamp. */
-  updated_at?: string;
-  /** Privacy settings. */
-  privacy?: UserPrivacy;
-  /**
-   * Number of followers.
-   * @minimum 0
-   */
-  followers?: number;
-  /**
-   * Number of following.
-   * @minimum 0
-   */
-  following?: number;
-  /**
-   * Number of posts.
-   * @minimum 0
-   */
-  posts_count?: number;
-}
+export type User = UserMe;

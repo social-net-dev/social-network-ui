@@ -11,14 +11,15 @@ import * as zod from 'zod';
 /**
  * @summary Danh sách bài viết
  */
+export const postsListPostsQueryLimitDefault = 20;
+
 export const PostsListPostsQueryParams = zod.object({
-  "page": zod.number().optional().describe('Page number (1-indexed).'),
-  "page_size": zod.number().optional().describe('Number of items per page.')
+  "cursor": zod.string().optional().describe('Con trỏ để lấy trang tiếp theo (thường là ID hoặc timestamp của item cuối cùng). Để trống nếu lấy trang đầu.'),
+  "limit": zod.number().default(postsListPostsQueryLimitDefault).describe('Số lượng item tối đa trả về trong một request.')
 })
 
 export const PostsListPostsHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const postsListPostsResponseDataOneItemsItemMediaItemWidthMin = 0;
@@ -73,14 +74,12 @@ export const PostsListPostsResponse = zod.object({
   "field_id": zod.string().optional().describe('Field\/category ID.'),
   "created_at": zod.string().describe('Post creation timestamp.'),
   "updated_at": zod.string().describe('Last update timestamp.')
-}).describe('Post summary for feed and lists.')).describe('Array of items for current page.'),
+}).describe('Post summary for feed and lists.')).describe('Danh sách dữ liệu.'),
   "pagination": zod.object({
-  "page": zod.number().describe('Current page number.'),
-  "page_size": zod.number().describe('Number of items per page.'),
-  "total": zod.number().describe('Total number of items.'),
-  "total_pages": zod.number().describe('Total number of pages.')
-}).describe('Pagination metadata for paginated responses.').describe('Pagination metadata.')
-}).describe('Generic paginated response wrapper.').describe('Feed response with paginated posts.'),
+  "next_cursor": zod.union([zod.string(),zod.null()]).describe('Con trỏ cho lần gọi API tiếp theo. Bằng null nếu đã hết dữ liệu.'),
+  "has_next_page": zod.boolean().describe('Cờ báo hiệu còn trang tiếp theo hay không.')
+}).describe('Metadata cho Cursor Pagination.').describe('Thông tin phân trang.')
+}).describe('Generic response cho danh sách dùng Cursor Pagination.').describe('Feed response with paginated posts.'),
   "request_id": zod.string().optional()
 }).describe('Envelope response chuẩn như middleware\/UI: success + data + request_id.')
 
@@ -89,8 +88,7 @@ export const PostsListPostsResponse = zod.object({
  * @summary Tạo bài viết
  */
 export const PostsCreatePostHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const postsCreatePostBodyContentTextMax = 10000;
@@ -108,14 +106,15 @@ export const PostsCreatePostBody = zod.object({
 /**
  * @summary Danh sách bài viết của tôi
  */
+export const postsGetMyPostsQueryLimitDefault = 20;
+
 export const PostsGetMyPostsQueryParams = zod.object({
-  "page": zod.number().optional().describe('Page number (1-indexed).'),
-  "page_size": zod.number().optional().describe('Number of items per page.')
+  "cursor": zod.string().optional().describe('Con trỏ để lấy trang tiếp theo (thường là ID hoặc timestamp của item cuối cùng). Để trống nếu lấy trang đầu.'),
+  "limit": zod.number().default(postsGetMyPostsQueryLimitDefault).describe('Số lượng item tối đa trả về trong một request.')
 })
 
 export const PostsGetMyPostsHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const postsGetMyPostsResponseDataOneItemsItemMediaItemWidthMin = 0;
@@ -170,14 +169,12 @@ export const PostsGetMyPostsResponse = zod.object({
   "field_id": zod.string().optional().describe('Field\/category ID.'),
   "created_at": zod.string().describe('Post creation timestamp.'),
   "updated_at": zod.string().describe('Last update timestamp.')
-}).describe('Post summary for feed and lists.')).describe('Array of items for current page.'),
+}).describe('Post summary for feed and lists.')).describe('Danh sách dữ liệu.'),
   "pagination": zod.object({
-  "page": zod.number().describe('Current page number.'),
-  "page_size": zod.number().describe('Number of items per page.'),
-  "total": zod.number().describe('Total number of items.'),
-  "total_pages": zod.number().describe('Total number of pages.')
-}).describe('Pagination metadata for paginated responses.').describe('Pagination metadata.')
-}).describe('Generic paginated response wrapper.').describe('Feed response with paginated posts.'),
+  "next_cursor": zod.union([zod.string(),zod.null()]).describe('Con trỏ cho lần gọi API tiếp theo. Bằng null nếu đã hết dữ liệu.'),
+  "has_next_page": zod.boolean().describe('Cờ báo hiệu còn trang tiếp theo hay không.')
+}).describe('Metadata cho Cursor Pagination.').describe('Thông tin phân trang.')
+}).describe('Generic response cho danh sách dùng Cursor Pagination.').describe('Feed response with paginated posts.'),
   "request_id": zod.string().optional()
 }).describe('Envelope response chuẩn như middleware\/UI: success + data + request_id.')
 
@@ -188,14 +185,15 @@ export const PostsGetPostsByUserParams = zod.object({
   "userId": zod.string()
 })
 
+export const postsGetPostsByUserQueryLimitDefault = 20;
+
 export const PostsGetPostsByUserQueryParams = zod.object({
-  "page": zod.number().optional().describe('Page number (1-indexed).'),
-  "page_size": zod.number().optional().describe('Number of items per page.')
+  "cursor": zod.string().optional().describe('Con trỏ để lấy trang tiếp theo (thường là ID hoặc timestamp của item cuối cùng). Để trống nếu lấy trang đầu.'),
+  "limit": zod.number().default(postsGetPostsByUserQueryLimitDefault).describe('Số lượng item tối đa trả về trong một request.')
 })
 
 export const PostsGetPostsByUserHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const postsGetPostsByUserResponseDataOneItemsItemMediaItemWidthMin = 0;
@@ -250,14 +248,12 @@ export const PostsGetPostsByUserResponse = zod.object({
   "field_id": zod.string().optional().describe('Field\/category ID.'),
   "created_at": zod.string().describe('Post creation timestamp.'),
   "updated_at": zod.string().describe('Last update timestamp.')
-}).describe('Post summary for feed and lists.')).describe('Array of items for current page.'),
+}).describe('Post summary for feed and lists.')).describe('Danh sách dữ liệu.'),
   "pagination": zod.object({
-  "page": zod.number().describe('Current page number.'),
-  "page_size": zod.number().describe('Number of items per page.'),
-  "total": zod.number().describe('Total number of items.'),
-  "total_pages": zod.number().describe('Total number of pages.')
-}).describe('Pagination metadata for paginated responses.').describe('Pagination metadata.')
-}).describe('Generic paginated response wrapper.').describe('Feed response with paginated posts.'),
+  "next_cursor": zod.union([zod.string(),zod.null()]).describe('Con trỏ cho lần gọi API tiếp theo. Bằng null nếu đã hết dữ liệu.'),
+  "has_next_page": zod.boolean().describe('Cờ báo hiệu còn trang tiếp theo hay không.')
+}).describe('Metadata cho Cursor Pagination.').describe('Thông tin phân trang.')
+}).describe('Generic response cho danh sách dùng Cursor Pagination.').describe('Feed response with paginated posts.'),
   "request_id": zod.string().optional()
 }).describe('Envelope response chuẩn như middleware\/UI: success + data + request_id.')
 
@@ -269,8 +265,7 @@ export const PostsGetPostParams = zod.object({
 })
 
 export const PostsGetPostHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const postsGetPostResponseDataMediaItemWidthMin = 0;
@@ -384,8 +379,7 @@ export const PostsUpdatePostParams = zod.object({
 })
 
 export const PostsUpdatePostHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const PostsUpdatePostBody = zod.object({
@@ -505,8 +499,7 @@ export const PostsDeletePostParams = zod.object({
 })
 
 export const PostsDeletePostHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const PostsDeletePostResponse = zod.object({
@@ -524,14 +517,15 @@ export const PostsGetPostCommentsParams = zod.object({
   "postId": zod.string()
 })
 
+export const postsGetPostCommentsQueryLimitDefault = 20;
+
 export const PostsGetPostCommentsQueryParams = zod.object({
-  "page": zod.number().optional().describe('Page number (1-indexed).'),
-  "page_size": zod.number().optional().describe('Number of items per page.')
+  "cursor": zod.string().optional().describe('Con trỏ để lấy trang tiếp theo (thường là ID hoặc timestamp của item cuối cùng). Để trống nếu lấy trang đầu.'),
+  "limit": zod.number().default(postsGetPostCommentsQueryLimitDefault).describe('Số lượng item tối đa trả về trong một request.')
 })
 
 export const PostsGetPostCommentsHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const postsGetPostCommentsResponseDataOneItemsItemStatsOneReactionsMin = 0;
@@ -564,14 +558,12 @@ export const PostsGetPostCommentsResponse = zod.object({
   "user_reaction": zod.union([zod.enum(['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY']).describe('Reaction type.'),zod.null()]).describe('Current user\'s reaction to this comment.'),
   "created_at": zod.string().describe('Comment creation timestamp.'),
   "updated_at": zod.string().describe('Last update timestamp.')
-}).describe('Comment model.')).describe('Array of items for current page.'),
+}).describe('Comment model.')).describe('Danh sách dữ liệu.'),
   "pagination": zod.object({
-  "page": zod.number().describe('Current page number.'),
-  "page_size": zod.number().describe('Number of items per page.'),
-  "total": zod.number().describe('Total number of items.'),
-  "total_pages": zod.number().describe('Total number of pages.')
-}).describe('Pagination metadata for paginated responses.').describe('Pagination metadata.')
-}).describe('Generic paginated response wrapper.').describe('Comment response with paginated comments.'),
+  "next_cursor": zod.union([zod.string(),zod.null()]).describe('Con trỏ cho lần gọi API tiếp theo. Bằng null nếu đã hết dữ liệu.'),
+  "has_next_page": zod.boolean().describe('Cờ báo hiệu còn trang tiếp theo hay không.')
+}).describe('Metadata cho Cursor Pagination.').describe('Thông tin phân trang.')
+}).describe('Generic response cho danh sách dùng Cursor Pagination.').describe('Comment response with paginated comments.'),
   "request_id": zod.string().optional()
 }).describe('Envelope response chuẩn như middleware\/UI: success + data + request_id.')
 

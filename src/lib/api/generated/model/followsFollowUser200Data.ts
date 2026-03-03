@@ -6,4 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export type AuthHeadersTenantSlugParameter = string;
+export type FollowsFollowUser200Data = {
+  message: string;
+};

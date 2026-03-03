@@ -16,19 +16,18 @@ export const ProfilesGetProfileParams = zod.object({
 })
 
 export const ProfilesGetProfileHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
-export const profilesGetProfileResponseDataPersonalInfoOneProjectsItemTitleMax = 200;
+export const profilesGetProfileResponseDataTwoPersonalInfoOneProjectsItemTitleMax = 200;
 
-export const profilesGetProfileResponseDataPersonalInfoOneProjectsItemDescriptionMax = 2000;
+export const profilesGetProfileResponseDataTwoPersonalInfoOneProjectsItemDescriptionMax = 2000;
 
-export const profilesGetProfileResponseDataFollowersMin = 0;
+export const profilesGetProfileResponseDataTwoFollowersMin = 0;
 
-export const profilesGetProfileResponseDataFollowingMin = 0;
+export const profilesGetProfileResponseDataTwoFollowingMin = 0;
 
-export const profilesGetProfileResponseDataPostsCountMin = 0;
+export const profilesGetProfileResponseDataTwoPostsCountMin = 0;
 
 
 
@@ -38,6 +37,12 @@ export const ProfilesGetProfileResponse = zod.object({
   "id": zod.string().describe('User ID.'),
   "username": zod.string().describe('Unique username.'),
   "display_name": zod.string().describe('Display name.'),
+  "avatar": zod.union([zod.string(),zod.null()]).optional().describe('Avatar URL.'),
+  "account_status": zod.string().describe('Account status.'),
+  "role": zod.string().describe('User role.'),
+  "created_at": zod.string().describe('Account creation timestamp.'),
+  "updated_at": zod.string().optional().describe('Last update timestamp.')
+}).describe('Thông tin cơ bản nhất của User, dùng chung ở mọi nơi.').and(zod.object({
   "bio": zod.string().optional().describe('User bio\/description.'),
   "personal_info": zod.object({
   "education_level": zod.string().optional().describe('Education level.'),
@@ -53,23 +58,18 @@ export const ProfilesGetProfileResponse = zod.object({
   "location": zod.string().optional().describe('Location\/address.'),
   "projects": zod.array(zod.object({
   "id": zod.string().describe('Project ID.'),
-  "title": zod.string().min(1).max(profilesGetProfileResponseDataPersonalInfoOneProjectsItemTitleMax).describe('Project title.'),
+  "title": zod.string().min(1).max(profilesGetProfileResponseDataTwoPersonalInfoOneProjectsItemTitleMax).describe('Project title.'),
   "category": zod.string().describe('Project category.'),
-  "description": zod.string().max(profilesGetProfileResponseDataPersonalInfoOneProjectsItemDescriptionMax).describe('Project description.'),
+  "description": zod.string().max(profilesGetProfileResponseDataTwoPersonalInfoOneProjectsItemDescriptionMax).describe('Project description.'),
   "image_url": zod.string().describe('Project image URL.'),
   "source_link": zod.url().optional().describe('Optional source code link.')
 }).describe('User project information.')).optional().describe('User projects.')
 }).describe('Personal information for user profile.').optional().describe('Personal information.'),
   "birth_date": zod.union([zod.string(),zod.null()]).optional().describe('Birth date (ISO 8601 date).'),
-  "avatar": zod.union([zod.string(),zod.null()]).optional().describe('Avatar URL.'),
   "background": zod.union([zod.string(),zod.null()]).optional().describe('Background image URL.'),
-  "account_status": zod.string().describe('Account status.'),
-  "role": zod.string().describe('User role.'),
-  "created_at": zod.string().describe('Account creation timestamp.'),
-  "updated_at": zod.string().optional().describe('Last update timestamp.'),
-  "followers": zod.number().min(profilesGetProfileResponseDataFollowersMin).optional().describe('Number of followers.'),
-  "following": zod.number().min(profilesGetProfileResponseDataFollowingMin).optional().describe('Number of following.'),
-  "posts_count": zod.number().min(profilesGetProfileResponseDataPostsCountMin).optional().describe('Number of posts.'),
+  "followers": zod.number().min(profilesGetProfileResponseDataTwoFollowersMin).optional().describe('Number of followers.'),
+  "following": zod.number().min(profilesGetProfileResponseDataTwoFollowingMin).optional().describe('Number of following.'),
+  "posts_count": zod.number().min(profilesGetProfileResponseDataTwoPostsCountMin).optional().describe('Number of posts.'),
   "viewer_context": zod.object({
   "is_owner": zod.boolean(),
   "is_friend": zod.boolean(),
@@ -77,7 +77,7 @@ export const ProfilesGetProfileResponse = zod.object({
   "friend_request_id": zod.union([zod.string(),zod.null()]).optional()
 }).optional().describe('Viewer context including ownership, friendship status and request ID.'),
   "redacted_fields": zod.array(zod.enum(['display_name', 'birth_date', 'bio', 'avatar', 'background', 'personal_info'])).optional().describe('Fields redacted due to privacy settings.')
-}).describe('Public user profile (respects privacy settings).'),
+})).describe('Public user profile (respects privacy settings).'),
   "request_id": zod.string().optional()
 }).describe('Envelope response chuẩn như middleware\/UI: success + data + request_id.')
 

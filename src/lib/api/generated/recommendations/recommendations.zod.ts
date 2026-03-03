@@ -16,8 +16,7 @@ export const RecommendationsSuggestionsQueryParams = zod.object({
 })
 
 export const RecommendationsSuggestionsHeader = zod.object({
-  "Authorization": zod.string(),
-  "X-Tenant-Slug": zod.string()
+  "Authorization": zod.string()
 })
 
 export const RecommendationsSuggestionsResponse = zod.object({
