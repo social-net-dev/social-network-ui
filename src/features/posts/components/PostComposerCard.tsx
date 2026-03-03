@@ -20,7 +20,7 @@ export function PostComposerCard({ onOpen }: PostComposerCardProps) {
   const firstName = user?.displayName?.split(" ").at(-1) || user?.email?.split("@")[0] || "bạn";
 
   return (
-    <Card className="border border-border/60 shadow-sm bg-card">
+    <Card className="composer-card border border-border/60 shadow-sm bg-card">
       {/* Main trigger row */}
       <div className="flex items-center gap-3 p-3 pb-2.5">
         <div className="shrink-0">
@@ -31,9 +31,11 @@ export function PostComposerCard({ onOpen }: PostComposerCardProps) {
           onClick={() => onOpen("SOCIAL")}
           className={cn(
             "flex-1 text-left px-4 py-2.5 rounded-full",
-            "bg-muted/60 hover:bg-muted border border-border/40 hover:border-border/70",
-            "text-muted-foreground text-sm transition-all duration-150",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            "bg-muted/60 hover:bg-muted/90 border border-border/40 hover:border-primary/30",
+            "text-muted-foreground hover:text-foreground text-sm",
+            "transition-all duration-200",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+            "active:scale-[0.98]"
           )}
         >
           {firstName.charAt(0).toUpperCase() + firstName.slice(1)} đang nghĩ gì?
@@ -51,9 +53,10 @@ export function PostComposerCard({ onOpen }: PostComposerCardProps) {
             onClick={() => onOpen(action.type)}
             className={cn(
               "flex flex-1 items-center justify-center gap-2 py-2 rounded-lg",
-              "text-muted-foreground text-xs font-medium",
-              "hover:bg-muted/60 transition-colors duration-150",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              "text-muted-foreground hover:text-foreground text-xs font-medium",
+              "hover:bg-muted/70 active:bg-muted active:scale-95",
+              "transition-all duration-150",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             )}
           >
             {action.icon}

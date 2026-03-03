@@ -1,4 +1,5 @@
 import { PostCard, usePostActions } from '@/features/posts'
+import { PostDetailModal } from '@/features/posts/components/PostDetailModal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { FileText, Loader2 } from 'lucide-react'
@@ -21,6 +22,7 @@ export function ProfilePostsTab({
   const { posts, query, queryKey } = useProfilePosts({ mode, subjectUserId })
   const { deletePost, updatePost, likePost } = usePostActions({ affectedQueryKeys: [queryKey] })
   const [openCommentPostIds, setOpenCommentPostIds] = useState<string[]>([])
+  const [detailPostId, setDetailPostId] = useState<string | null>(null)
 
   const handleComment = (postId: string) => {
     setOpenCommentPostIds((prev) =>
@@ -36,39 +38,52 @@ export function ProfilePostsTab({
     )
   }
 
-  return posts.length > 0 ? (
-    <div className="space-y-6">
-      {posts.map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          currentUserId={currentUserId ?? undefined}
-          onLike={(id, liked) => likePost?.(id, liked)}
-          onComment={handleComment}
-          showComments={openCommentPostIds.includes(post.id)}
-          onShare={() => {}}
-          onDelete={(id) => deletePost?.(id)}
-          onEdit={(id, content) => updatePost?.(id, content)}
-        />
-      ))}
-      <Button
-        variant="ghost"
-        className="w-full rounded-xl py-5 border-2 border-dashed border-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all-300 hover-lift"
-      >
-        Xem tất cả bài viết
-      </Button>
-    </div>
-  ) : (
-    <Card className="border-border/50 shadow-sm bg-card rounded-xl overflow-hidden animate-fadeIn">
-      <CardContent className="p-12 text-center">
-        <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-4">
-          <FileText className="w-10 h-10 text-muted-foreground/50" />
+  return (
+    <>
+      {posts.length > 0 ? (
+        <div className="space-y-6">
+          {posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              currentUserId={currentUserId ?? undefined}
+              onLike={(id, liked) => likePost?.(id, liked)}
+              onComment={handleComment}
+              showComments={openCommentPostIds.includes(post.id)}
+              onShare={() => {}}
+              onDelete={(id) => deletePost?.(id)}
+              onEdit={(id, content) => updatePost?.(id, content)}
+              onOpenDetail={setDetailPostId}
+            />
+          ))}
+          <Button
+            variant="ghost"
+            className="w-full rounded-xl py-5 border-2 border-dashed border-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all-300 hover-lift"
+          >
+            Xem tất cả bài viết
+          </Button>
         </div>
-        <h3 className="text-xl font-bold text-foreground mb-2">Chưa có bài viết nào</h3>
-        <p className="text-muted-foreground max-w-sm mx-auto text-sm leading-relaxed">
-          Khi {profileDisplayName} chia sẻ bài viết, chúng sẽ xuất hiện ở đây.
-        </p>
-      </CardContent>
-    </Card>
+      ) : (
+        <Card className="border-border/50 shadow-sm bg-card rounded-xl overflow-hidden animate-fadeIn">
+          <CardContent className="p-12 text-center">
+            <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-10 h-10 text-muted-foreground/50" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">Chưa có bài viết nào</h3>
+            <p className="text-muted-foreground max-w-sm mx-auto text-sm leading-relaxed">
+              Khi {profileDisplayName} chia sẻ bài viết, chúng sẽ xuất hiện ở đây.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+      <PostDetailModal
+        post={detailPostId ? (posts.find(p => p.id === detailPostId) ?? null) : null}
+        open={detailPostId !== null}
+        onClose={() => setDetailPostId(null)}
+        onLike={(id, liked) => likePost?.(id, liked)}
+        onShare={() => {}}
+        currentUserId={currentUserId ?? undefined}
+      />
+    </>
   )
 }

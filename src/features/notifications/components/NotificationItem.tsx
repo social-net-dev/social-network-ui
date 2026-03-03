@@ -2,10 +2,12 @@ import { Heart, MessageCircle, UserPlus, AtSign, Bell } from "lucide-react";
 import type { Notification, NotificationType } from "@/types/notification";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useNavigate } from "react-router-dom";
 
 interface NotificationItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
+  onClose?: () => void;
 }
 
 const ICON_MAP: Record<NotificationType, React.ComponentType<{ className?: string }>> = {
@@ -34,22 +36,29 @@ function formatTimeAgo(date: Date): string {
   return `${Math.floor(seconds / 604800)} tuần trước`;
 }
 
-export function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps) {
+export function NotificationItem({ notification, onMarkAsRead, onClose }: NotificationItemProps) {
   const Icon = ICON_MAP[notification.type];
   const iconColor = ICON_COLORS[notification.type];
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    if (!notification.isRead) {
+      onMarkAsRead(notification.id);
+    }
+    if (notification.actionUrl) {
+      onClose?.();
+      navigate(notification.actionUrl);
+    }
+  };
 
   return (
     <div
       className={cn(
         "flex gap-3 p-3 rounded-lg transition-colors cursor-pointer hover:bg-accent",
-        !notification.isRead && "bg-primary/5"
+        !notification.isRead && "bg-primary/5",
+        notification.actionUrl && "hover:bg-accent"
       )}
-      onClick={() => {
-        if (!notification.isRead) {
-          onMarkAsRead(notification.id);
-        }
-        // TODO: Navigate to actionUrl or related content
-      }}
+      onClick={handleClick}
     >
       <div className="relative flex-shrink-0">
         <Avatar className="h-10 w-10">

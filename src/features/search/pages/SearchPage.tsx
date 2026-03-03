@@ -12,7 +12,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { callGetDMRoom } from '@/features/message/services/messageApi';
 import { useRoomManager } from '@/features/message/hooks/useRoomManager';
-import { useFriendsSendRequest, useFriendsAcceptRequest, useFriendsCancelRequest } from '@/lib/api/generated/friends/friends';
+import { useFriendsSendRequest, useFriendsAcceptRequest, useFriendsCancelRequest, getFriendsListFriendsQueryKey, getFriendsListIncomingRequestsQueryKey, getFriendsListOutgoingRequestsQueryKey } from '@/lib/api/generated/friends/friends';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
@@ -144,6 +144,8 @@ export function SearchPage() {
       const requestId = res.data?.id || null;
       updateUserStatus(userId, 'request_sent', requestId ? String(requestId) : null);
       qc.invalidateQueries({ queryKey: ['/friends/'] });
+      qc.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
+      qc.invalidateQueries({ queryKey: getFriendsListOutgoingRequestsQueryKey() });
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } }; message?: string };
       toast.error(e?.response?.data?.message || e?.message || 'Lỗi khi gửi lời mời');
@@ -159,6 +161,8 @@ export function SearchPage() {
       toast.success('Đã chấp nhận lời mời kết bạn');
       updateUserStatus(userId, 'friends');
       qc.invalidateQueries({ queryKey: ['/friends/'] });
+      qc.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
+      qc.invalidateQueries({ queryKey: getFriendsListIncomingRequestsQueryKey() });
     } catch (_err) {
       toast.error('Lỗi khi chấp nhận lời mời');
     } finally {
@@ -173,6 +177,8 @@ export function SearchPage() {
       toast.success('Đã hủy lời mời kết bạn');
       updateUserStatus(userId, 'none', null);
       qc.invalidateQueries({ queryKey: ['/friends/'] });
+      qc.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
+      qc.invalidateQueries({ queryKey: getFriendsListOutgoingRequestsQueryKey() });
     } catch (_err) {
       toast.error('Lỗi khi hủy lời mời');
     } finally {

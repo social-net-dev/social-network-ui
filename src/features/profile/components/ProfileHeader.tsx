@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Calendar, Edit2, MoreHorizontal, Camera, Loader2, UserPlus, UserCheck, MapPin, FileText, Users, Settings, MessageCircle } from "lucide-react"
+import { VerificationBadge } from "@/features/shared/components/VerificationBadge"
 import { useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useProfile } from "../hooks/useProfile"
 import { useQueryClient } from "@tanstack/react-query"
-import { useFriendsSendRequest } from "@/lib/api/generated/friends/friends"
+import { useFriendsSendRequest, getFriendsListFriendsQueryKey, getFriendsListOutgoingRequestsQueryKey } from "@/lib/api/generated/friends/friends"
+import { getProfilesGetProfileQueryKey } from "@/lib/api/generated/profiles/profiles"
 import { toast } from "sonner"
 import { getDefaultAvatar } from "@/lib/utils/api"
 import type { UserPublic, UserMe, UserPublicViewerContext, ApiErrorResponse } from "@/lib/api/generated/model"
@@ -21,8 +23,8 @@ interface ProfileHeaderProps {
 }
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  ACTIVE: { label: "Hoạt động", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-  VERIFIED: { label: "Đã xác minh", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  ACTIVE: { label: "Chưa được xác minh", className: "bg-muted text-muted-foreground dark:bg-muted/50" },
+  VERIFIED: { label: "Đã được cộng đồng xác minh", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
   UNVERIFIED: { label: "Chưa xác minh", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
   LOCKED: { label: "Bị khóa", className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
   DISABLED: { label: "Vô hiệu hóa", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400" },
@@ -61,8 +63,9 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
     try {
       await sendRequestMutation.mutateAsync({ data: { addressee_username: profile.username || '' } })
       toast.success("Đã gửi lời mời kết bạn")
-      queryClient.invalidateQueries({ queryKey: ['profiles', profile.username] })
-      queryClient.invalidateQueries({ queryKey: ["friends"] })
+      queryClient.invalidateQueries({ queryKey: getProfilesGetProfileQueryKey(profile.username || '') })
+      queryClient.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() })
+      queryClient.invalidateQueries({ queryKey: getFriendsListOutgoingRequestsQueryKey() })
     } catch (err: unknown) {
       const apiErr = (err as { response?: { data?: ApiErrorResponse } })?.response?.data
       const msg = apiErr?.error?.message || "Lỗi khi gửi lời mời"
@@ -157,9 +160,12 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mb-1.5">
-                  <h1 className="text-2xl font-bold text-foreground leading-tight tracking-tight">
-                    {profile.display_name}
-                  </h1>
+                  <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                    <h1 className="text-2xl font-bold text-foreground leading-tight tracking-tight">
+                      {profile.display_name}
+                    </h1>
+                    <VerificationBadge accountStatus={profile.account_status} size="md" />
+                  </div>
                   {profile.username && (
                     <span className="text-muted-foreground text-sm font-medium">@{profile.username}</span>
                   )}
@@ -170,7 +176,7 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
                       {roleConfig.label}
                     </Badge>
                   )}
-                  {statusConfig && (
+                  {statusConfig && !['ACTIVE', 'VERIFIED'].includes(profile.account_status ?? '') && (
                     <Badge variant="secondary" className={`${statusConfig.className} border-0 h-5 px-2.5 text-[11px] font-semibold`}>
                       {statusConfig.label}
                     </Badge>

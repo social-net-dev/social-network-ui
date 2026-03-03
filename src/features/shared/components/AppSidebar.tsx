@@ -9,6 +9,7 @@ import { useNotifications } from '@/features/notifications/hooks/useNotification
 import { useMessageStore } from '@/stores/messageStore';
 import logoEtechs from '@/assets/logo-etechs-ETS.svg';
 
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { unreadCount } = useNotifications();
   const unreadMessagesCount = useMessageStore(state => state.totalUnread);
@@ -31,24 +32,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="sidebar-lime-accent pb-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lg">
+            <SidebarMenuButton asChild size="lg" className="hover:bg-white/5 transition-colors">
               <Link to="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <img src={logoEtechs} alt="ETECHS" className="h-9 w-auto" />
+                <div className="flex size-8 items-center justify-center">
+                  <img src={logoEtechs} alt="Etechs Logo" className="h-8 w-8 text-[#e2f046]" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">ETECHS</span>
-                  <span className="truncate text-xs text-muted-foreground">Mạng xã hội</span>
+                <div className="grid flex-1 text-left leading-tight">
+                  <span className="truncate font-bold text-[#e2f046] tracking-tight text-sm">ETS</span>
+                  <span className="truncate text-[10px] text-white/40 font-medium uppercase tracking-widest">Giáo dục</span>
                 </div>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="sidebar-dot-grid">
         <NavMain items={mainItems} groupLabel="Chính" />
         <NavMain items={socialItems} groupLabel="Kết nối" />
         <NavAdmin />

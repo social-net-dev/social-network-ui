@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Mail, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useLogin } from '../use-cases/useLogin';
+import { toast } from 'sonner';
 
 interface LoginFormProps {
   initialEmail?: string;
@@ -15,31 +16,22 @@ export function LoginForm({ initialEmail }: LoginFormProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(location.state?.message || null);
-  const { form, onSubmit, error, isLoading } = useLogin();
+  const { form, onSubmit, isLoading } = useLogin();
 
   useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(null), 10000);
-      return () => clearTimeout(timer);
+    const message = location.state?.message;
+    if (message) {
+      toast.success(message);
+      navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [successMessage]);
+  }, []);
 
   useEffect(() => {
-    if (initialEmail) {
-      form.setValue('email', initialEmail);
-    }
+    if (initialEmail) form.setValue('email', initialEmail);
   }, [initialEmail, form]);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-      {successMessage && (
-        <div className="p-4 text-sm text-green-700 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-start gap-2">
-          <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-          <p>{successMessage}</p>
-        </div>
-      )}
-
       <div>
         <Label htmlFor="email" className="block text-sm font-medium mb-2">
           Địa chỉ email
@@ -57,7 +49,12 @@ export function LoginForm({ initialEmail }: LoginFormProps) {
             disabled={isLoading}
           />
         </div>
-        {form.formState.errors.email && <p className="mt-1 text-sm text-red-500">{form.formState.errors.email.message}</p>}
+        {form.formState.errors.email && (
+          <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+            <AlertCircle className="h-3 w-3 flex-shrink-0" />
+            {form.formState.errors.email.message}
+          </p>
+        )}
       </div>
 
       <div>
@@ -84,7 +81,12 @@ export function LoginForm({ initialEmail }: LoginFormProps) {
             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
         </div>
-        {form.formState.errors.password && <p className="mt-1 text-sm text-red-500">{form.formState.errors.password.message}</p>}
+        {form.formState.errors.password && (
+          <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+            <AlertCircle className="h-3 w-3 flex-shrink-0" />
+            {form.formState.errors.password.message}
+          </p>
+        )}
       </div>
 
       <div className="flex items-center justify-between">
@@ -110,8 +112,6 @@ export function LoginForm({ initialEmail }: LoginFormProps) {
           </button>
         </div>
       </div>
-
-      {error && <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg">{error}</div>}
 
       <Button
         type="submit"

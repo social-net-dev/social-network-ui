@@ -65,7 +65,7 @@ export function ProfileFriendsTab({ userId, isCurrentUser = false }: ProfileFrie
           return (
             <Link
               key={user.id ?? friend.id}
-              to={`/profile/${user.id}`}
+              to={`/profile/${user.username ?? user.id}`}
               className="group"
             >
               <Card className="rounded-xl border border-border shadow-sm hover:shadow-md hover:border-primary/30 transition-all overflow-hidden">

@@ -237,8 +237,39 @@ export function useComments(postId: string) {
 
   const comments: FeedComment[] = (query.data as FeedComment[]) || [];
 
+  // Build a tree of comments with nested replies grouped under their top-level parent
+  const organizedComments = useMemo(() => {
+    const topLevel = comments.filter(c => !c.parent_comment_id);
+    const replies = comments.filter(c => !!c.parent_comment_id);
+    const topLevelIds = new Set(topLevel.map(c => c.id));
+    const replyMap = new Map<string, FeedComment[]>();
+
+    for (const reply of replies) {
+      let parentId = reply.parent_comment_id!;
+      const visited = new Set<string>();
+      while (parentId && !topLevelIds.has(parentId) && !visited.has(parentId)) {
+        visited.add(parentId);
+        const parentReply = replies.find(r => r.id === parentId);
+        if (parentReply?.parent_comment_id) {
+          parentId = parentReply.parent_comment_id;
+        } else {
+          break;
+        }
+      }
+      const arr = replyMap.get(parentId) || [];
+      arr.push(reply);
+      replyMap.set(parentId, arr);
+    }
+
+    return topLevel.map(comment => ({
+      ...comment,
+      replies: (replyMap.get(comment.id) || []).slice().reverse(),
+    }));
+  }, [comments]);
+
   return {
     comments,
+    organizedComments,
     isLoading: query.isPending,
     isFetchingNextPage: false,
     hasNextPage: false,

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,11 +13,12 @@ import { NotificationItem } from "./NotificationItem";
 import { Link } from "react-router-dom";
 
 export function NotificationsDropdown() {
+  const [open, setOpen] = useState(false);
   const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading, refetch } =
     useNotifications();
 
   return (
-    <Popover onOpenChange={(open) => { if (open) refetch(); }}>
+    <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) refetch(); }}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
@@ -68,6 +70,7 @@ export function NotificationsDropdown() {
                     key={notification.id}
                     notification={notification}
                     onMarkAsRead={markAsRead}
+                    onClose={() => setOpen(false)}
                   />
                 ))}
               </div>

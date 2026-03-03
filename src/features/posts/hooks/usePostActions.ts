@@ -210,7 +210,7 @@ export function usePostActions(options?: UsePostActionsOptions) {
           const delta = liked ? 1 : -1;
           return {
             ...post,
-            userReaction: reaction,
+            user_reaction: reaction,
             stats: {
               ...post.stats,
               reactions: Math.max(0, currentLikes + delta),

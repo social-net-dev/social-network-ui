@@ -20,16 +20,13 @@ export function PersonalProfilePage() {
   // --- Handlers for Backend Sync ---
   const saveToBackend = async (updates: any) => {
     try {
-      const currentPersonalInfo = profile?.personal_info || {};
-      const bioPayload = JSON.stringify({
-        bioText: profile?.bio || '',
-        ...currentPersonalInfo,
-        ...updates,
-      });
-
       await updateProfile({
         displayName: profile?.display_name || '',
-        bio: bioPayload,
+        bio: profile?.bio || '',
+        personal_info: {
+          ...(profile?.personal_info || {}),
+          ...updates,
+        },
       });
     } catch (error) {
       console.error('Failed to sync profile:', error);

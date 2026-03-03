@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,79 +11,63 @@ import {
   MessageCircle,
   Loader2,
 } from "lucide-react";
-import { customInstance } from "@/lib/api";
+import {
+  useFriendsListFriends,
+  useFriendsRemoveFriend,
+  getFriendsListFriendsQueryKey,
+} from "@/lib/api/generated/friends/friends";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
-import type { Friend } from "@/lib/api/generated/model";
-
-interface FriendsResponse {
-  friends: Friend[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
-
-function useFriendsList(query: string, page: number) {
-  return useQuery({
-    queryKey: ["friends", "list", query, page],
-    queryFn: async () => {
-      const params: Record<string, any> = { page, page_size: 20 };
-      if (query) params.q = query;
-      const res = await customInstance<FriendsResponse>({
-        url: `/friends/`,
-        method: "GET",
-        params,
-      });
-      return res;
-    },
-    staleTime: 1000 * 30,
-  });
-}
 
 export function FriendsListPage() {
   const [searchInput, setSearchInput] = useState("");
-  const [query, setQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const { data, isLoading, isError } = useFriendsList(query, currentPage);
+  const { data, isLoading, isError } = useFriendsListFriends(
+    { limit: 100 } as any,
+    { query: { staleTime: 1000 * 30, select: (r) => r.data } }
+  );
 
-  const friends = useMemo(() => data?.friends || [], [data?.friends]);
+  const friends = useMemo(() => {
+    const items = data?.items ?? [];
+    if (!searchQuery) return items;
+    const q = searchQuery.toLowerCase();
+    return items.filter(
+      (f) =>
+        f.user.display_name?.toLowerCase().includes(q) ||
+        f.user.username?.toLowerCase().includes(q)
+    );
+  }, [data?.items, searchQuery]);
 
-  const removeFriendMutation = useMutation({
-    mutationFn: (friendId: string) =>
-      customInstance({
-        url: `/friends/${friendId}/`,
-        method: "DELETE",
-      }),
-    onSuccess: () => {
-      toast.success("Đã hủy kết bạn");
-      qc.invalidateQueries({ queryKey: ["friends"] });
-    },
-    onError: () => {
-      toast.error("Lỗi khi hủy kết bạn");
+  const removeFriendMutation = useFriendsRemoveFriend({
+    mutation: {
+      onSuccess: () => {
+        toast.success("Đã hủy kết bạn");
+        qc.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
+      },
+      onError: () => {
+        toast.error("Lỗi khi hủy kết bạn");
+      },
     },
   });
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      setQuery(searchInput.trim());
-      setCurrentPage(1);
+      setSearchQuery(searchInput.trim());
     },
     [searchInput]
   );
 
   const handleRemoveFriend = (friendId: string, name: string) => {
     if (confirm(`Bạn có chắc muốn hủy kết bạn với ${name}?`)) {
-      removeFriendMutation.mutate(friendId);
+      removeFriendMutation.mutate({ friendId });
     }
   };
 
-  const total = data?.total || 0;
-  const totalPages = data?.total_pages || 1;
+  const total = data?.items?.length ?? 0;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -135,12 +119,12 @@ export function FriendsListPage() {
           <CardContent className="p-8 text-center text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="text-lg font-medium">
-              {query ? "Không tìm thấy bạn bè" : "Chưa có bạn bè nào"}
+              {searchQuery ? "Không tìm thấy bạn bè" : "Chưa có bạn bè nào"}
             </p>
             <p className="text-sm mt-1">
-              {query ? "Thử tìm kiếm với từ khóa khác." : "Hãy kết bạn với mọi người!"}
+              {searchQuery ? "Thử tìm kiếm với từ khóa khác." : "Hãy kết bạn với mọi người!"}
             </p>
-            {!query && (
+            {!searchQuery && (
               <Button className="mt-4" onClick={() => navigate("/search")}>
                 Tìm kiếm người dùng
               </Button>
@@ -191,31 +175,6 @@ export function FriendsListPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-4 pt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage <= 1}
-            onClick={() => setCurrentPage((p) => p - 1)}
-          >
-            Trang trước
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Trang {currentPage} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage >= totalPages}
-            onClick={() => setCurrentPage((p) => p + 1)}
-          >
-            Trang sau
-          </Button>
         </div>
       )}
     </div>

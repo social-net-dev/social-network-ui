@@ -2,11 +2,10 @@ import { useState, lazy, Suspense, useRef, useEffect } from 'react';
 import { useFeed, FeedList, ShareDialog, usePostActions } from '@/features/posts';
 import { CreatePostFAB } from '@/features/posts/components/CreatePostFAB';
 import { PostComposerCard } from '@/features/posts/components/PostComposerCard';
+import { PostDetailModal } from '@/features/posts/components/PostDetailModal';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/authStore';
 import { AlertCircle, CheckCircle, GraduationCap, HardDrive, MessageSquareText, Users, Loader2, X } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
@@ -42,6 +41,7 @@ export function FeedPage() {
   const [initialPostType, setInitialPostType] = useState("SOCIAL");
   const [openCommentPostIds, setOpenCommentPostIds] = useState<string[]>([]);
   const [sharePostId, setSharePostId] = useState<string | null>(null);
+  const [detailPostId, setDetailPostId] = useState<string | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(() =>
     localStorage.getItem('etechs_unverified_banner_dismissed') === 'true'
   );
@@ -157,32 +157,28 @@ export function FeedPage() {
       <div className="space-y-6">
         {/* Account Status Banner */}
         {currentUser?.account_status === 'UNVERIFIED' && !bannerDismissed && (
-          <div className="bg-muted/50 border border-border rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="font-medium text-foreground">Tài khoản chưa xác minh</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Dung lượng hiện tại: <span className="font-semibold text-foreground">{currentUser?.storage_quota_mb || 100}MB</span>. Khi admin phê duyệt, bạn sẽ nhận được 5GB dung lượng.
+          <div className="rounded-xl border border-amber-200/60 dark:border-amber-700/30 bg-amber-50/80 dark:bg-amber-900/10 p-4 flex items-start gap-3 animate-fadeInDown">
+            <AlertCircle className="h-4.5 w-4.5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-amber-800 dark:text-amber-300 text-sm">Tài khoản chưa xác minh</p>
+              <p className="text-xs text-amber-700/80 dark:text-amber-400/70 mt-0.5">
+                Dung lượng: <span className="font-bold">{currentUser?.storage_quota_mb || 100}MB</span>. Sau khi admin phê duyệt, bạn nhận được <span className="font-bold">5GB</span>.
               </p>
             </div>
-            <button
-              onClick={handleDismissBanner}
-              className="text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-0.5"
-              aria-label="Đóng thông báo"
-            >
+            <button onClick={handleDismissBanner} className="text-amber-500 hover:text-amber-700 transition-colors shrink-0" aria-label="Đóng">
               <X className="h-4 w-4" />
             </button>
           </div>
         )}
 
         {currentUser?.account_status === 'VERIFIED' && (
-          <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4 flex items-start gap-3">
-            <CheckCircle className="h-5 w-5 text-secondary mt-0.5 flex-shrink-0" />
+          <div className="rounded-xl border border-emerald-200/60 dark:border-emerald-700/30 bg-emerald-50/80 dark:bg-emerald-900/10 p-4 flex items-start gap-3 animate-fadeInDown">
+            <CheckCircle className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="font-medium text-secondary">Tài khoản đã xác minh</p>
-              <p className="text-sm text-secondary/80 mt-1">
-                <HardDrive className="inline h-4 w-4 mr-1" />
-                Dung lượng sử dụng: <span className="font-semibold">{currentUser?.storage_quota_mb || 5120}MB (5GB)</span>
+              <p className="font-semibold text-emerald-800 dark:text-emerald-300 text-sm">Tài khoản đã xác minh</p>
+              <p className="text-xs text-emerald-700/80 dark:text-emerald-400/70 mt-0.5">
+                <HardDrive className="inline h-3.5 w-3.5 mr-1" />
+                Dung lượng: <span className="font-bold">{currentUser?.storage_quota_mb || 5120}MB (5GB)</span>
               </p>
             </div>
           </div>
@@ -212,7 +208,7 @@ export function FeedPage() {
           </div>
         )}
 
-        <FeedList posts={posts} isLoading={isLoading} onLike={handleLike} onComment={handleComment} onShare={handleShare} onDelete={handleDeletePost} onEdit={handleEditPost} openCommentPostIds={openCommentPostIds} currentUserId={currentUser?.id} />
+        <FeedList posts={posts} isLoading={isLoading} onLike={handleLike} onComment={handleComment} onShare={handleShare} onDelete={handleDeletePost} onEdit={handleEditPost} openCommentPostIds={openCommentPostIds} currentUserId={currentUser?.id} onOpenDetail={setDetailPostId} />
 
         {/* Sentinel for Infinite Scroll */}
         <div ref={loadMoreRef} className="flex justify-center pt-4 pb-8 min-h-16">
@@ -227,81 +223,102 @@ export function FeedPage() {
       </div>
 
       <div className="lg:sticky lg:top-20 h-[calc(100vh-6rem)] overflow-y-auto pr-1 space-y-4 sidebar-scroll">
-        <Card className="border border-border/50 shadow-sm bg-card overflow-hidden">
-          <CardHeader className="pb-2 pt-4 px-4">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
+        {/* Communities Widget */}
+        <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+          <div className="px-4 pt-4 pb-2 border-b border-border/40 flex items-center justify-between">
+            <div className="flex items-center gap-2">
               <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Users className="h-3.5 w-3.5 text-primary" />
               </div>
-              Cộng đồng đang tham gia
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-0.5 pb-3 px-2">
-            {communities.map(community => (
-              <Link key={community.id} to={`/groups/${community.id}`} className="flex items-center justify-between rounded-lg px-2 py-2 transition-all hover:bg-primary/5 group">
+              <span className="text-xs font-semibold text-foreground tracking-tight">Cộng đồng</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">đang tham gia</span>
+          </div>
+          <div className="p-2 space-y-0.5">
+            {communities.map((community, i) => (
+              <Link key={community.id} to={`/groups/${community.id}`}
+                className="flex items-center justify-between rounded-xl px-2.5 py-2 transition-all hover:bg-primary/5 group"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <Avatar className="size-8 shrink-0">
+                  <Avatar className="size-8 shrink-0 ring-1 ring-border">
                     <AvatarImage src={community.avatar} alt={community.name} />
-                    <AvatarFallback className="text-xs">{community.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">{community.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate group-hover:text-primary transition-colors">{community.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{community.tag}</p>
+                    <p className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors">{community.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">{community.tag}</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="rounded-full text-[10px] px-1.5 py-0 h-4 shrink-0 ml-1">
+                <span className="text-[10px] font-bold text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded-full shrink-0 ml-1 tabular-nums">
                   {(community.members / 1000).toFixed(1)}k
-                </Badge>
+                </span>
               </Link>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="border border-border/50 shadow-sm bg-card overflow-hidden">
-          <CardHeader className="pb-2 pt-4 px-4">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
+        {/* Active Friends Widget */}
+        <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+          <div className="px-4 pt-4 pb-2 border-b border-border/40 flex items-center justify-between">
+            <div className="flex items-center gap-2">
               <div className="h-6 w-6 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                 <MessageSquareText className="h-3.5 w-3.5 text-emerald-500" />
               </div>
-              Bạn bè đang hoạt động
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-0.5 pb-3 px-2">
+              <span className="text-xs font-semibold text-foreground tracking-tight">Bạn bè</span>
+            </div>
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              đang hoạt động
+            </span>
+          </div>
+          <div className="p-2 space-y-0.5">
             {activeFriends.map(friend => (
-              <Link key={friend.id} to={`/messages?user=${friend.username}`} className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition-all hover:bg-emerald-500/8 group">
+              <Link key={friend.id} to={`/messages?user=${friend.username}`}
+                className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all hover:bg-emerald-500/5 group"
+              >
                 <div className="relative shrink-0">
-                  <Avatar className="size-8">
+                  <Avatar className="size-8 ring-1 ring-border">
                     <AvatarImage src={friend.avatar} alt={friend.name} />
-                    <AvatarFallback className="text-xs">{friend.name.slice(0, 2)}</AvatarFallback>
+                    <AvatarFallback className="text-xs font-semibold">{friend.name.slice(0, 2)}</AvatarFallback>
                   </Avatar>
-                  <span className="online-dot" />
+                  <span className="online-dot-glow" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-foreground truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{friend.name}</p>
+                  <p className="text-xs font-semibold text-foreground truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{friend.name}</p>
                   <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">{friend.status}</p>
                 </div>
               </Link>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="border border-primary/15 shadow-sm bg-gradient-to-br from-primary/5 via-card to-secondary/5 overflow-hidden">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+        {/* CTA Card */}
+        <div className="rounded-2xl border border-[#e2f046]/25 dark:border-[#e2f046]/15 bg-gradient-to-br from-[#e2f046]/8 via-card to-primary/5 p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-xl bg-[#e2f046]/15 text-amber-600 dark:text-[#e2f046] flex items-center justify-center shrink-0 mt-0.5">
               <GraduationCap className="h-5 w-5" />
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">Tăng điểm uy tín</p>
-              <p className="text-xs text-muted-foreground">Hoàn thiện hồ sơ để tăng uy tín.</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground tracking-tight">Tăng điểm uy tín</p>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Hoàn thiện hồ sơ để nhận thêm tính năng & kết nối.</p>
+              <Button size="sm" className="btn-lime-glow mt-3 rounded-lg h-7 px-4 text-[11px]">
+                Hoàn thiện ngay
+              </Button>
             </div>
-            <Button size="sm" className="ml-auto rounded-full h-7 text-xs shrink-0">
-              Thực hiện
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <ShareDialog isOpen={sharePostId !== null} onClose={() => setSharePostId(null)} onShare={handleShareSubmit} />
+      <PostDetailModal
+        post={detailPostId ? (posts.find(p => p.id === detailPostId) ?? null) : null}
+        open={detailPostId !== null}
+        onClose={() => setDetailPostId(null)}
+        onLike={handleLike}
+        onShare={handleShare}
+        currentUserId={currentUser?.id}
+      />
     </div>
   );
 }

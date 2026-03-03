@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { queryClient } from './lib/react-query';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Toaster } from './components/ui/sonner';
 import './index.css';
 import App from './App.tsx';
 import { Agentation } from 'agentation';
@@ -29,6 +30,18 @@ const bootstrap = async () => {
           <BrowserRouter>
             <ThemeProvider>
               <App />
+              <Toaster
+                position="top-right"
+                richColors
+                closeButton
+                toastOptions={{
+                  classNames: {
+                    toast: 'glass-effect rounded-xl',
+                    title: 'font-semibold',
+                    description: 'text-sm',
+                  },
+                }}
+              />
             </ThemeProvider>
           </BrowserRouter>
           {import.meta.env.MODE === 'development' && <Agentation />}

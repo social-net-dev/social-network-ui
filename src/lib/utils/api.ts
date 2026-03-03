@@ -59,7 +59,10 @@ export const getErrorMessage = (error: unknown): string => {
   const detail = e?.response?.data?.detail;
   if (detail) {
     if (Array.isArray(detail)) return detail.map((d: unknown) => (d as { msg?: string; message?: string })?.msg || (d as { msg?: string; message?: string })?.message || String(d)).join(', ');
-    if (typeof detail === 'object') return (detail as { msg?: string; message?: string })?.msg || (detail as { msg?: string; message?: string })?.message || JSON.stringify(detail);
+    if (typeof detail === 'object') {
+      const d = detail as { msg?: string; message?: string; error?: { message?: string } };
+      return d?.error?.message || d?.msg || d?.message || JSON.stringify(detail);
+    }
     return String(detail);
   }
   return e?.response?.data?.message || e?.message || 'Đã có lỗi xảy ra';

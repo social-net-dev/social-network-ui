@@ -2,7 +2,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { getErrorMessage } from '@/lib/utils/api';
 import { LoginFormDataSchema, type LoginFormData } from '../types/auth.types';
 import apiClient from '@/lib/api';
 import { useE2EEStore } from '@/stores/e2eeStore';
@@ -25,12 +24,14 @@ export function useLogin() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    const response = await loginMutation.mutateAsync({
-      data: {
-        email: data.email,
-        password: data.password,
-      },
-    });
+    let response;
+    try {
+      response = await loginMutation.mutateAsync({
+        data: { email: data.email, password: data.password },
+      });
+    } catch {
+      return; // error toast handled globally by MutationCache
+    }
 
     const payload = response.data;
     setAuth(payload);
@@ -47,16 +48,12 @@ export function useLogin() {
         if (userId) {
           try {
             await useE2EEStore.getState().initialize(userId);
-          } catch {
-            // ignore
-          }
+          } catch { /* ignore */ }
         }
       }
 
       redirectPath = userData?.role === 'ADMIN' ? '/admin/accounts' : '/';
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
 
     navigate(redirectPath);
   };
@@ -64,7 +61,6 @@ export function useLogin() {
   return {
     form,
     onSubmit,
-    error: getErrorMessage(loginMutation.error),
     isSuccess: loginMutation.isSuccess,
     isLoading: loginMutation.isPending,
   };

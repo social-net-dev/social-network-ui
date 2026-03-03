@@ -46,69 +46,78 @@
   --color-etechs-secondary: #0e4e5a;
   --color-etechs-bg-dark: #02182b;
   --color-etechs-surface-dark: #0a2737;
+  --font-sans: 'Sora', system-ui, sans-serif;
+  --font-serif: 'Lora', Georgia, serif;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.145 0 0);
+  --radius: 0.75rem;
+  --background: oklch(0.985 0.003 240);
+  --foreground: oklch(0.12 0.025 235);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.12 0.025 235);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.12 0.025 235);
 
-  --primary: oklch(0.32 0.08 185);
-  --primary-foreground: oklch(0.95 0.12 110);
-  --secondary: oklch(0.85 0.12 110);
-  --secondary-foreground: oklch(0.32 0.08 185);
-  --muted: oklch(0.97 0.005 185);
-  --muted-foreground: oklch(0.55 0.02 185);
-  --accent: oklch(0.92 0.08 110);
-  --accent-foreground: oklch(0.32 0.08 185);
+  /* Teal primary */
+  --primary: oklch(0.33 0.085 192);
+  --primary-foreground: oklch(0.94 0.13 104);
+  /* Lime secondary */
+  --secondary: oklch(0.87 0.15 104);
+  --secondary-foreground: oklch(0.22 0.06 192);
+  --muted: oklch(0.96 0.006 235);
+  --muted-foreground: oklch(0.52 0.025 235);
+  --accent: oklch(0.93 0.10 104);
+  --accent-foreground: oklch(0.28 0.07 192);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.01 185);
-  --input: oklch(0.92 0.01 185);
-  --ring: oklch(0.32 0.08 185);
+  --border: oklch(0.88 0.012 235);
+  --input: oklch(0.91 0.010 235);
+  --ring: oklch(0.33 0.085 192);
 
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0.005 185);
-  --sidebar-foreground: oklch(0.145 0 0);
 
-  --sidebar-primary: oklch(0.32 0.08 185);
-  --sidebar-primary-foreground: oklch(0.95 0.12 110);
-  --sidebar-accent: oklch(0.92 0.06 110);
-  --sidebar-accent-foreground: oklch(0.32 0.08 185);
-  --sidebar-border: oklch(0.9 0.01 185);
-  --sidebar-ring: oklch(0.32 0.08 185);
+  /* Sidebar uses deep navy in light mode too (brand identity) */
+  --sidebar: oklch(0.17 0.045 225);
+  --sidebar-foreground: oklch(0.92 0.01 225);
+  --sidebar-primary: oklch(0.87 0.15 104);
+  --sidebar-primary-foreground: oklch(0.17 0.045 225);
+  --sidebar-accent: oklch(0.26 0.055 220);
+  --sidebar-accent-foreground: oklch(0.92 0.01 225);
+  --sidebar-border: oklch(1 0 0 / 7%);
+  --sidebar-ring: oklch(0.87 0.15 104);
 
-  /* Skeleton shimmer base */
-  --skeleton-base: oklch(0.93 0.005 185);
-  --skeleton-highlight: oklch(0.97 0.003 185);
+  --skeleton-base: oklch(0.93 0.005 235);
+  --skeleton-highlight: oklch(0.97 0.003 235);
+  
+  /* Etechs brand tokens */
+  --lime: #e2f046;
+  --navy: #02182b;
+  --teal: #0e4e5a;
 }
 
 .dark {
-  --background: oklch(0.12 0.02 210);
-  --foreground: oklch(0.95 0.01 210);
-  --card: oklch(0.18 0.03 210);
-  --card-foreground: oklch(0.95 0.01 210);
-  --popover: oklch(0.18 0.03 210);
-  --popover-foreground: oklch(0.95 0.01 210);
-  --primary: oklch(0.85 0.12 110);
-  --primary-foreground: oklch(0.25 0.04 185);
-  --secondary: oklch(0.32 0.06 185);
-  --secondary-foreground: oklch(0.95 0.12 110);
-  --muted: oklch(0.25 0.03 210);
-  --muted-foreground: oklch(0.65 0.02 210);
-  --accent: oklch(0.85 0.12 110);
-  --accent-foreground: oklch(0.25 0.04 185);
+  --background: oklch(0.11 0.025 228);
+  --foreground: oklch(0.94 0.008 225);
+  --card: oklch(0.15 0.032 225);
+  --card-foreground: oklch(0.94 0.008 225);
+  --popover: oklch(0.15 0.032 225);
+  --popover-foreground: oklch(0.94 0.008 225);
+  --primary: oklch(0.87 0.15 104);
+  --primary-foreground: oklch(0.18 0.04 225);
+  --secondary: oklch(0.28 0.065 215);
+  --secondary-foreground: oklch(0.87 0.15 104);
+  --muted: oklch(0.22 0.035 225);
+  --muted-foreground: oklch(0.62 0.022 225);
+  --accent: oklch(0.87 0.15 104);
+  --accent-foreground: oklch(0.18 0.04 225);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.85 0.12 110);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 13%);
+  --ring: oklch(0.87 0.15 104);
 
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -116,18 +125,17 @@
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
 
-  --sidebar: oklch(0.18 0.03 210);
-  --sidebar-foreground: oklch(0.95 0.01 210);
-  --sidebar-primary: oklch(0.85 0.12 110);
-  --sidebar-primary-foreground: oklch(0.25 0.04 185);
-  --sidebar-accent: oklch(0.32 0.06 185);
-  --sidebar-accent-foreground: oklch(0.95 0.12 110);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.85 0.12 110);
+  --sidebar: oklch(0.11 0.025 228);
+  --sidebar-foreground: oklch(0.94 0.008 225);
+  --sidebar-primary: oklch(0.87 0.15 104);
+  --sidebar-primary-foreground: oklch(0.14 0.035 228);
+  --sidebar-accent: oklch(0.20 0.042 222);
+  --sidebar-accent-foreground: oklch(0.94 0.008 225);
+  --sidebar-border: oklch(1 0 0 / 7%);
+  --sidebar-ring: oklch(0.87 0.15 104);
 
-  /* Skeleton shimmer dark */
-  --skeleton-base: oklch(0.22 0.025 210);
-  --skeleton-highlight: oklch(0.28 0.03 210);
+  --skeleton-base: oklch(0.20 0.030 225);
+  --skeleton-highlight: oklch(0.26 0.035 225);
 }
 
 @layer base {
@@ -136,7 +144,13 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Sora', system-ui, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -435,4 +449,388 @@ body,
 
 .dark .card-elevated:hover {
   box-shadow: 0 4px 16px 0 rgb(0 0 0 / 0.4), 0 2px 8px -2px rgb(0 0 0 / 0.3);
+}
+
+/* ============================================
+   ETECHS ACADEMIC NOIR — Extended Design System
+   ============================================ */
+
+/* Sidebar dot-grid pattern */
+.sidebar-dot-grid {
+  background-image: radial-gradient(circle, rgba(226, 240, 70, 0.12) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Lime accent line at top of sidebar */
+.sidebar-lime-accent {
+  position: relative;
+}
+.sidebar-lime-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #e2f046 0%, rgba(226, 240, 70, 0.3) 100%);
+}
+
+/* Sidebar nav item — active state with lime left bar */
+.sidebar-nav-active {
+  background: rgba(226, 240, 70, 0.10) !important;
+  color: #e2f046 !important;
+  position: relative;
+}
+.sidebar-nav-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 65%;
+  width: 3px;
+  background: #e2f046;
+  border-radius: 0 2px 2px 0;
+}
+
+/* Post card left accent bar */
+.post-card-accent {
+  position: relative;
+}
+.post-card-accent::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #e2f046 0%, rgba(14, 78, 90, 0.6) 100%);
+  border-radius: 3px 0 0 3px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.post-card-accent:hover::before {
+  opacity: 1;
+}
+
+/* Lora serif for post content */
+.font-serif-content {
+  font-family: 'Lora', Georgia, serif;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: inherit;
+}
+
+/* Header lime top border */
+.header-lime-border {
+  border-top: 2px solid #e2f046;
+}
+
+/* Glowing lime button */
+.btn-lime-glow {
+  background: #e2f046;
+  color: #02182b;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 0 0 rgba(226, 240, 70, 0.4);
+}
+.btn-lime-glow:hover {
+  background: #d4e03c;
+  box-shadow: 0 0 16px 4px rgba(226, 240, 70, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Stat badge for sidebar widget */
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(226, 240, 70, 0.12);
+  color: #e2f046;
+  border: 1px solid rgba(226, 240, 70, 0.25);
+}
+
+/* Glow animation for online dot */
+@keyframes online-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+  50%       { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); }
+}
+.online-dot-glow {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+  background: #22c55e;
+  border-radius: 50%;
+  border: 2px solid var(--color-card);
+  animation: online-pulse 2s ease infinite;
+}
+
+/* Section header with lime underline */
+.widget-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(226, 240, 70, 0.85);
+}
+
+/* Sidebar in light mode uses navy */
+[data-sidebar="sidebar"] {
+  background: #0e1e2d !important;
+}
+
+/* Post type chip */
+.post-type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(14, 78, 90, 0.08);
+  color: #0e4e5a;
+  border: 1px solid rgba(14, 78, 90, 0.15);
+}
+.dark .post-type-chip {
+  background: rgba(226, 240, 70, 0.08);
+  color: rgba(226, 240, 70, 0.85);
+  border-color: rgba(226, 240, 70, 0.18);
+}
+
+/* Staggered reveal for feed items */
+@keyframes stagger-reveal {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stagger-item {
+  animation: stagger-reveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 60ms; }
+.stagger-item:nth-child(3) { animation-delay: 120ms; }
+.stagger-item:nth-child(4) { animation-delay: 180ms; }
+.stagger-item:nth-child(5) { animation-delay: 240ms; }
+
+/* Hover glow on action buttons */
+.action-btn-like:hover {
+  background: rgba(239, 68, 68, 0.10) !important;
+  color: rgb(239, 68, 68) !important;
+}
+.action-btn-comment:hover {
+  background: rgba(14, 78, 90, 0.10) !important;
+  color: #0e4e5a !important;
+}
+.dark .action-btn-comment:hover {
+  background: rgba(226, 240, 70, 0.08) !important;
+  color: #e2f046 !important;
+}
+.action-btn-share:hover {
+  background: rgba(34, 197, 94, 0.10) !important;
+  color: rgb(34, 197, 94) !important;
+}
+
+/* ============================================
+   UNIFIED ANIMATION SYSTEM
+   Single source of truth for all motion
+   ============================================ */
+
+/* --- Timing tokens --- */
+:root {
+  --ease-spring:  cubic-bezier(0.22, 1, 0.36, 1);   /* entrances */
+  --ease-out:     cubic-bezier(0, 0, 0.2, 1);        /* exits / transitions */
+  --ease-in-out:  cubic-bezier(0.4, 0, 0.2, 1);      /* layout shifts */
+  --dur-micro:    120ms;
+  --dur-fast:     200ms;
+  --dur-base:     300ms;
+  --dur-slow:     450ms;
+}
+
+/* --- Reduced motion: collapse all durations --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- Page transition ---- */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-transition {
+  animation: page-in var(--dur-base) var(--ease-spring) both;
+}
+
+/* ---- Scroll-reveal ---- */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity var(--dur-slow) var(--ease-spring),
+    transform var(--dur-slow) var(--ease-spring);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Delay variants for staggering sibling reveals */
+.reveal-d1 { transition-delay: 60ms; }
+.reveal-d2 { transition-delay: 120ms; }
+.reveal-d3 { transition-delay: 180ms; }
+.reveal-d4 { transition-delay: 240ms; }
+.reveal-d5 { transition-delay: 300ms; }
+
+/* ---- Staggered feed list ---- */
+@keyframes feed-item-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.feed-item-enter {
+  animation: feed-item-in var(--dur-slow) var(--ease-spring) both;
+}
+/* Stagger delays for first 8 items */
+.feed-item-enter:nth-child(1) { animation-delay: 0ms; }
+.feed-item-enter:nth-child(2) { animation-delay: 55ms; }
+.feed-item-enter:nth-child(3) { animation-delay: 110ms; }
+.feed-item-enter:nth-child(4) { animation-delay: 165ms; }
+.feed-item-enter:nth-child(5) { animation-delay: 220ms; }
+.feed-item-enter:nth-child(6) { animation-delay: 275ms; }
+.feed-item-enter:nth-child(7) { animation-delay: 330ms; }
+.feed-item-enter:nth-child(8) { animation-delay: 385ms; }
+
+/* ---- Button press / tap feedback ---- */
+.press-feedback {
+  transition:
+    transform var(--dur-micro) var(--ease-out),
+    box-shadow var(--dur-micro) var(--ease-out);
+}
+.press-feedback:active {
+  transform: scale(0.96);
+}
+
+/* Global interactive tap feedback for buttons */
+button:not([disabled]):active,
+[role="button"]:not([disabled]):active {
+  transform: scale(0.97);
+  transition: transform var(--dur-micro) var(--ease-out);
+}
+
+/* ---- Composer card glow on focus-within ---- */
+@keyframes composer-glow {
+  from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 20%, transparent); }
+  to   { box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 20%, transparent); }
+}
+.composer-card {
+  transition:
+    box-shadow var(--dur-base) var(--ease-spring),
+    border-color var(--dur-base) var(--ease-spring),
+    transform var(--dur-fast) var(--ease-spring);
+}
+.composer-card:focus-within {
+  border-color: color-mix(in srgb, var(--color-primary) 50%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  transform: translateY(-1px);
+}
+
+/* ---- Mobile nav active pill ---- */
+.mobile-nav-item {
+  position: relative;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.mobile-nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 24px;
+  height: 2.5px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+.mobile-nav-item.active::after {
+  transform: translateX(-50%) scaleX(1);
+}
+/* Icon bounce on active */
+@keyframes nav-icon-pop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.22) translateY(-2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+.mobile-nav-item.active .nav-icon {
+  animation: nav-icon-pop var(--dur-base) var(--ease-spring);
+}
+
+/* ---- Sidebar nav item transition ---- */
+[data-sidebar="menu-button"] {
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out) !important;
+}
+
+/* ---- Card lift on hover ---- */
+.card-hover {
+  transition:
+    box-shadow var(--dur-fast) var(--ease-spring),
+    border-color var(--dur-fast) var(--ease-spring),
+    transform var(--dur-fast) var(--ease-spring);
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgb(0 0 0 / 0.10);
+}
+.dark .card-hover:hover {
+  box-shadow: 0 8px 24px -4px rgb(0 0 0 / 0.35);
+}
+
+/* ---- Popover / dropdown reveal ---- */
+@keyframes popover-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+[data-radix-popper-content-wrapper] > * {
+  animation: popover-in var(--dur-fast) var(--ease-spring);
+}
+
+/* ---- Skeleton shimmer upgrade (uses new easing) ---- */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s var(--ease-in-out) infinite;
+}
+
+/* ---- Notification badge entrance ---- */
+@keyframes badge-pop {
+  0%   { transform: scale(0); }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.badge-enter {
+  animation: badge-pop var(--dur-base) var(--ease-spring);
+}
+
+/* ---- Smooth scroll for the whole app ---- */
+html {
+  scroll-behavior: smooth;
 }

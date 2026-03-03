@@ -132,6 +132,8 @@ export function useProfile(userIdParam?: string) {
       },
     })
 
+    // Immediately update cache from mutation response to avoid staleTime delay
+    queryClient.setQueryData(getUsersGetMeQueryKey(), res)
     queryClient.invalidateQueries({ queryKey: getUsersGetMeQueryKey() })
     if (!isMe && identifier) {
       queryClient.invalidateQueries({ queryKey: getProfilesGetProfileQueryKey(String(identifier)) })

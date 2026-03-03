@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useFriendsListIncomingRequests, useFriendsListOutgoingRequests, useFriendsAcceptRequest, useFriendsRejectRequest, useFriendsCancelRequest } from "@/lib/api/generated/friends/friends";
+import { useFriendsListIncomingRequests, useFriendsListOutgoingRequests, useFriendsAcceptRequest, useFriendsRejectRequest, useFriendsCancelRequest, getFriendsListIncomingRequestsQueryKey, getFriendsListOutgoingRequestsQueryKey } from "@/lib/api/generated/friends/friends";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,6 +49,8 @@ export function FriendRequestsPage() {
       await acceptMutation.mutateAsync({ requestId });
       toast.success("Đã chấp nhận lời mời kết bạn");
       qc.invalidateQueries({ queryKey: ["/friends/"] });
+      qc.invalidateQueries({ queryKey: ["friends"] });
+      qc.invalidateQueries({ queryKey: getFriendsListIncomingRequestsQueryKey() });
     } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Lỗi khi chấp nhận lời mời");
     } finally {
@@ -62,6 +64,7 @@ export function FriendRequestsPage() {
       await rejectMutation.mutateAsync({ requestId });
       toast.success("Đã từ chối lời mời kết bạn");
       qc.invalidateQueries({ queryKey: ["/friends/"] });
+      qc.invalidateQueries({ queryKey: getFriendsListIncomingRequestsQueryKey() });
     } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Lỗi khi từ chối lời mời");
     } finally {
@@ -75,6 +78,7 @@ export function FriendRequestsPage() {
       await cancelMutation.mutateAsync({ requestId });
       toast.success("Đã hủy lời mời kết bạn");
       qc.invalidateQueries({ queryKey: ["/friends/"] });
+      qc.invalidateQueries({ queryKey: getFriendsListOutgoingRequestsQueryKey() });
     } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Lỗi khi hủy lời mời");
     } finally {

@@ -9,10 +9,10 @@ import { Avatar } from "@/features/shared/components/Avatar";
 import { GraduationCap, Search, Sparkles, Users, UserCheck, Clock, Loader2, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useRecommendationsSuggestions } from "@/lib/api/generated/recommendations/recommendations";
-import { useFriendsSendRequest, useFriendsAcceptRequest } from "@/lib/api/generated/friends/friends";
+import { useFriendsSendRequest, useFriendsAcceptRequest, useFriendsCancelRequest, getFriendsListFriendsQueryKey, getFriendsListIncomingRequestsQueryKey, getFriendsListOutgoingRequestsQueryKey } from "@/lib/api/generated/friends/friends";
 import { getErrorMessage } from "@/lib/utils/api";
 import { toast } from "sonner";
-import type { ApiSuggestion } from "@/lib/api/generated/model";
+import type { ApiSuggestion, RecommendationsSuggestions200 } from "@/lib/api/generated/model";
 
 const TAB_OPTIONS = [
     { value: "ALL", label: "Tất cả" },
@@ -94,18 +94,25 @@ export function RecommendationPage() {
 
     const sendRequestMutation = useFriendsSendRequest();
     const acceptRequestMutation = useFriendsAcceptRequest();
+    const cancelRequestMutation = useFriendsCancelRequest();
 
     const updateSuggestionStatus = (userId: string, newStatus: Suggestion["friendship_status"], requestId?: string | null) => {
         for (const tab of TAB_OPTIONS) {
-            queryClient.setQueryData<Suggestion[]>(
+            queryClient.setQueryData<RecommendationsSuggestions200>(
                 ["recommendations", "suggestions", tab.value],
                 (old) => {
-                    if (!old) return old;
-                    return old.map((s) =>
-                        s.id === userId
-                            ? { ...s, friendship_status: newStatus, friend_request_id: requestId ?? s.friend_request_id }
-                            : s
-                    );
+                    if (!old?.data?.suggestions) return old;
+                    return {
+                        ...old,
+                        data: {
+                            ...old.data,
+                            suggestions: old.data.suggestions.map((s: ApiSuggestion) =>
+                                s.id === userId
+                                    ? { ...s, friend_status: newStatus, friend_request_id: requestId ?? s.friend_request_id }
+                                    : s
+                            ),
+                        },
+                    };
                 }
             );
         }
@@ -119,6 +126,8 @@ export function RecommendationPage() {
             const requestId = res.data?.id || null;
             updateSuggestionStatus(userId, "REQUEST_SENT", requestId ? String(requestId) : null);
             queryClient.invalidateQueries({ queryKey: ["/friends/"] });
+            queryClient.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
+            queryClient.invalidateQueries({ queryKey: getFriendsListOutgoingRequestsQueryKey() });
         } catch (err) {
             toast.error(getErrorMessage(err));
         } finally {
@@ -133,8 +142,24 @@ export function RecommendationPage() {
             toast.success("Đã chấp nhận lời mời kết bạn");
             updateSuggestionStatus(userId, "FRIENDS");
             queryClient.invalidateQueries({ queryKey: ["/friends/"] });
+            queryClient.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
+            queryClient.invalidateQueries({ queryKey: getFriendsListIncomingRequestsQueryKey() });
         } catch (_err) {
             toast.error("Lỗi khi chấp nhận lời mời");
+        } finally {
+            removeProcessing(userId);
+        }
+    };
+
+    const handleCancel = async (userId: string, requestId: string) => {
+        addProcessing(userId);
+        try {
+            await cancelRequestMutation.mutateAsync({ requestId });
+            toast.success("Đã hủy lời mời kết bạn");
+            updateSuggestionStatus(userId, "NONE", null);
+            queryClient.invalidateQueries({ queryKey: getFriendsListOutgoingRequestsQueryKey() });
+        } catch (_err) {
+            toast.error("Lỗi khi hủy lời mời");
         } finally {
             removeProcessing(userId);
         }
@@ -272,8 +297,19 @@ export function RecommendationPage() {
                                                                 <UserCheck className="h-4 w-4 mr-1" /> Bạn bè
                                                             </Button>
                                                         ) : user.friendship_status === "REQUEST_SENT" ? (
-                                                            <Button className="rounded-full" variant="outline" disabled>
-                                                                <Clock className="h-4 w-4 mr-1" /> Đã gửi lời mời
+                                                            <Button
+                                                                className="rounded-full"
+                                                                variant="outline"
+                                                                disabled={processingIds.has(user.id)}
+                                                                onClick={() => {
+                                                                    if (user.friend_request_id) handleCancel(user.id, user.friend_request_id);
+                                                                }}
+                                                            >
+                                                                {processingIds.has(user.id) ? (
+                                                                    <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Đang hủy...</>
+                                                                ) : (
+                                                                    <><Clock className="h-4 w-4 mr-1" /> Đã gửi · Hủy</>
+                                                                )}
                                                             </Button>
                                                         ) : user.friendship_status === "REQUEST_RECEIVED" ? (
                                                             <Button

@@ -3,13 +3,12 @@ import type { User, Project } from '@/lib/api/generated/model';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Edit2, School, PlusCircle, BookOpen, Heart, Terminal, Wrench } from 'lucide-react';
+import { Edit2, School, PlusCircle, BookOpen, Heart, Terminal } from 'lucide-react';
 import {
   EditAcademicBackgroundDialog,
   EditInterestsDialog,
   EditProjectDialog,
 } from './EditProfileDialogs';
-import { SkillsSection } from './SkillsSection';
 
 interface ProfileAboutTabProps {
   profile: User;
@@ -300,18 +299,6 @@ export function ProfileAboutTab({ profile, isCurrentUser }: ProfileAboutTabProps
             </CardContent>
           </Card>
         )}
-      </div>
-
-      {/* Skills Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-1 bg-purple-500 rounded-full" />
-          <h2 className="text-base font-bold tracking-tight flex items-center gap-2">
-            <Wrench className="w-4 h-4 text-purple-500" />
-            Kỹ năng
-          </h2>
-        </div>
-        <SkillsSection />
       </div>
     </div>
   );

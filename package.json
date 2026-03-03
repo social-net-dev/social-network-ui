@@ -13,6 +13,7 @@
     "gen:api": "orval --config ./orval.config.ts",
     "gen": "pnpm gen:spec && pnpm gen:api",
     "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",

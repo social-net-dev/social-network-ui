@@ -1,6 +1,7 @@
 import { FileText, Loader2 } from "lucide-react";
 import { PostCard } from "./PostCard";
 import type { PostSummary } from "@/lib/api/generated/model";
+import { useRef } from "react";
 
 type PostWithShared = PostSummary & { sharedPost?: PostSummary | null };
 
@@ -14,11 +15,12 @@ interface FeedListProps {
   onDelete?: (postId: string) => void;
   onEdit?: (postId: string, content: string) => void;
   currentUserId?: string;
+  onOpenDetail?: (postId: string) => void;
 }
 
 function PostSkeleton() {
   return (
-    <div className="bg-card rounded-xl border border-border/50 p-5">
+    <div className="bg-card rounded-xl border border-border/50 p-5 animate-fadeIn">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-full skeleton-shimmer flex-shrink-0" />
         <div className="flex-1 space-y-2">
@@ -50,7 +52,16 @@ export function FeedList({
   onDelete,
   onEdit,
   currentUserId,
+  onOpenDetail,
 }: FeedListProps) {
+  // Track the post IDs seen on initial load to apply entrance animation only once
+  const seenIdsRef = useRef<Set<string>>(new Set());
+  const isInitialRender = seenIdsRef.current.size === 0 && posts.length > 0;
+
+  if (isInitialRender) {
+    posts.forEach((p) => seenIdsRef.current.add(p.id));
+  }
+
   if (isLoading && posts.length === 0) {
     return (
       <div className="space-y-4">
@@ -79,19 +90,28 @@ export function FeedList({
 
   return (
     <div className="space-y-4">
-      {posts.filter(post => post != null).map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onLike={onLike}
-          onComment={onComment}
-          onShare={onShare}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          currentUserId={currentUserId}
-          showComments={openCommentPostIds.includes(post.id)}
-        />
-      ))}
+      {posts.filter(post => post != null).map((post) => {
+        // Apply entrance animation only for posts seen on initial render
+        const isNew = !seenIdsRef.current.has(post.id);
+        if (isNew) seenIdsRef.current.add(post.id);
+        const enterClass = isInitialRender ? "feed-item-enter" : isNew ? "animate-fadeInUp" : "";
+
+        return (
+          <div key={post.id} className={enterClass}>
+            <PostCard
+              post={post}
+              onLike={onLike}
+              onComment={onOpenDetail ?? onComment}
+              onShare={onShare}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              currentUserId={currentUserId}
+              showComments={openCommentPostIds.includes(post.id)}
+              onOpenDetail={onOpenDetail}
+            />
+          </div>
+        );
+      })}
       {isLoading && (
         <div className="flex justify-center py-4">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />

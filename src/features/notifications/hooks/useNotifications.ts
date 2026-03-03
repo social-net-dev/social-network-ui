@@ -1,86 +1,97 @@
 import { useState, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Notification } from "@/types/notification";
-import api from "@/lib/api";
+import {
+  useNotificationsListNotifications,
+  useNotificationsMarkAllAsRead,
+  useNotificationsMarkAsRead,
+  getNotificationsListNotificationsQueryKey,
+} from "@/lib/api/generated/notifications/notifications";
 import { useNotificationSocket } from "./useNotificationSocket";
-import { mapBackendNotificationToUi, type BackendNotificationRaw } from "../utils/mapBackendNotification";
-
-const NOTIFICATIONS_QUERY_KEY = ["notifications"];
-
-interface NotificationsListResponse {
-  notifications: BackendNotificationRaw[];
-  page: number;
-  page_size: number;
-  total: number;
-  total_pages: number;
-  unread_count: number;
-}
-
-async function fetchNotifications(): Promise<NotificationsListResponse> {
-  const res = await api.get<NotificationsListResponse>("notifications/", {
-    params: { page: 1, page_size: 50 },
-  });
-  return res.data;
-}
+import { mapApiNotificationToUi, type BackendNotificationRaw } from "../utils/mapBackendNotification";
 
 export function useNotifications() {
   const queryClient = useQueryClient();
   const [unreadCountFromWs, setUnreadCountFromWs] = useState<number | null>(null);
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: NOTIFICATIONS_QUERY_KEY,
-    queryFn: fetchNotifications,
-    staleTime: 10 * 1000,
-    refetchOnWindowFocus: true,
-  });
+  const queryKey = getNotificationsListNotificationsQueryKey({ limit: 50 });
 
-  const notifications: Notification[] = (data?.notifications ?? []).map(mapBackendNotificationToUi);
+  const { data, isLoading, isError } = useNotificationsListNotifications(
+    { limit: 50 },
+    {
+      query: {
+        staleTime: 10 * 1000,
+        refetchOnWindowFocus: true,
+        select: (resp) => resp.data,
+      },
+    }
+  );
+
+  const markAllAsReadMutation = useNotificationsMarkAllAsRead();
+  const markAsReadMutation = useNotificationsMarkAsRead();
+
+  const notifications: Notification[] = (data?.items ?? []).map(mapApiNotificationToUi);
   const unreadCount = unreadCountFromWs ?? data?.unread_count ?? notifications.filter((n) => !n.isRead).length;
 
   const markAsRead = useCallback(
     async (notificationId: string) => {
       try {
-        await api.post(`notifications/${notificationId}/read/`);
-        await queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+        await markAsReadMutation.mutateAsync({ notificationId });
+        queryClient.invalidateQueries({ queryKey });
       } catch {
         // ignore
       }
     },
-    [queryClient]
+    [markAsReadMutation, queryClient, queryKey]
   );
 
   const markAllAsRead = useCallback(async () => {
     try {
-      await api.post("notifications/read-all/");
-      await queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+      await markAllAsReadMutation.mutateAsync();
+      queryClient.invalidateQueries({ queryKey });
       setUnreadCountFromWs(0);
     } catch {
       // ignore
     }
-  }, [queryClient]);
+  }, [markAllAsReadMutation, queryClient, queryKey]);
 
   useNotificationSocket({
     enabled: true,
     onNotification: useCallback(
       (payload: BackendNotificationRaw) => {
-        // Optimistically add to cache if data exists
-        const updated = queryClient.setQueryData<NotificationsListResponse>(NOTIFICATIONS_QUERY_KEY, (prev) => {
-          if (!prev) return prev;
-          const exists = prev.notifications.some((n) => n.id === payload.id);
-          if (exists) return prev;
-          return {
-            ...prev,
-            notifications: [payload, ...prev.notifications],
-            unread_count: prev.unread_count + 1,
-          };
-        });
-        // If cache was empty (query not yet fetched), trigger a refetch
+        // Optimistically add WS notification to the Orval query cache
+        const updated = queryClient.setQueryData<{ items: any[]; pagination: any; unread_count: number }>(
+          queryKey,
+          (prev) => {
+            if (!prev) return prev;
+            const exists = prev.items.some((n: any) => n.id === payload.id);
+            if (exists) return prev;
+            // Convert raw WS payload to contract Notification shape for cache
+            const newItem = {
+              id: payload.id,
+              type: payload.notification_type,
+              actor: payload.actor
+                ? { id: payload.actor.id, display_name: payload.actor.display_name, username: payload.actor.username ?? "", avatar: payload.actor.avatar_path }
+                : { id: payload.actor_id, display_name: "", username: "", avatar: null },
+              target_id: payload.post_id ?? payload.comment_id ?? undefined,
+              target_type: payload.post_id ? "post" : payload.comment_id ? "comment" : undefined,
+              message: payload.message || payload.preview_text || "",
+              is_read: false,
+              created_at: payload.created_at,
+            };
+            return {
+              ...prev,
+              items: [newItem, ...prev.items],
+              unread_count: prev.unread_count + 1,
+            };
+          }
+        );
         if (!updated) {
-          queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+          queryClient.invalidateQueries({ queryKey });
         }
-        setUnreadCountFromWs((c) => (c !== null ? c + 1 : (updated?.unread_count ?? 1)));
+        setUnreadCountFromWs((c) => (c !== null ? c + 1 : 1));
       },
-      [queryClient]
+      [queryClient, queryKey]
     ),
     onUnreadCount: useCallback((count: number) => {
       setUnreadCountFromWs(count);
@@ -88,8 +99,8 @@ export function useNotifications() {
   });
 
   const refetch = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
-  }, [queryClient]);
+    queryClient.invalidateQueries({ queryKey });
+  }, [queryClient, queryKey]);
 
   return {
     notifications,
