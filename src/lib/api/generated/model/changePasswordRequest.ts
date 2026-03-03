@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface DeactivateMultipart {
-  password: string;
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
 }

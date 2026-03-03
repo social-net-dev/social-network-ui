@@ -22,7 +22,7 @@ import type { UserPublic } from '@/lib/api/generated/model';
 interface SearchUser extends UserPublic {
 }
 
-function FriendshipStatusBadge({ status }: { status: SearchUser['friendship_status'] }) {
+function FriendshipStatusBadge({ status }: { status: string | undefined }) {
   switch (status) {
     case 'friends':
       return (
@@ -113,12 +113,25 @@ export function SearchPage() {
   const { createRoom } = useRoomManager({ userId: currentUserId || '' });
 
   // Optimistically update a user's status in the search results cache
-  const updateUserStatus = (userId: string, newStatus: SearchUser['friendship_status'], requestId?: string | null) => {
+  const updateUserStatus = (userId: string, newStatus: string | undefined, requestId?: string | null) => {
     qc.setQueryData(['search', 'users', { q: query }], (old: { users: SearchUser[]; total: number } | undefined) => {
       if (!old) return old;
       return {
         ...old,
-        users: old.users.map(u => (u.id === userId ? { ...u, friendship_status: newStatus, friend_request_id: requestId ?? u.friend_request_id } : u)),
+        users: old.users.map(u =>
+          u.id === userId
+            ? {
+                ...u,
+                viewer_context: {
+                  ...u.viewer_context,
+                  is_owner: u.viewer_context?.is_owner ?? false,
+                  is_friend: newStatus === 'friends',
+                  friendship_status: newStatus,
+                  friend_request_id: requestId ?? u.viewer_context?.friend_request_id,
+                },
+              }
+            : u
+        ),
       };
     });
   };
@@ -247,7 +260,7 @@ export function SearchPage() {
       </Button>
     );
 
-    switch (user.friendship_status) {
+    switch (user.viewer_context?.friendship_status) {
       case 'friends':
         return (
           <div className="flex items-center gap-2">
@@ -266,8 +279,8 @@ export function SearchPage() {
               variant="outline"
               size="sm"
               className="flex-shrink-0 rounded-full text-yellow-600 border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
-              onClick={() => user.friend_request_id && handleCancelRequest(user.id, user.friend_request_id)}
-              disabled={isProcessing || !user.friend_request_id}
+              onClick={() => user.viewer_context?.friend_request_id && handleCancelRequest(user.id, user.viewer_context.friend_request_id)}
+              disabled={isProcessing || !user.viewer_context?.friend_request_id}
             >
               {isProcessing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserX className="h-4 w-4 mr-1" />}
               Hủy lời mời
@@ -278,7 +291,7 @@ export function SearchPage() {
         return (
           <div className="flex items-center gap-2">
             {messageButton}
-            <Button size="sm" className="flex-shrink-0 rounded-full" onClick={() => user.friend_request_id && handleAcceptRequest(user.id, user.friend_request_id)} disabled={isProcessing || !user.friend_request_id}>
+            <Button size="sm" className="flex-shrink-0 rounded-full" onClick={() => user.viewer_context?.friend_request_id && handleAcceptRequest(user.id, user.viewer_context.friend_request_id)} disabled={isProcessing || !user.viewer_context?.friend_request_id}>
               {isProcessing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserCheck className="h-4 w-4 mr-1" />}
               Chấp nhận
             </Button>
@@ -352,7 +365,7 @@ export function SearchPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-foreground truncate">{user.display_name || user.username}</p>
-                      <FriendshipStatusBadge status={user.friendship_status} />
+                      <FriendshipStatusBadge status={user.viewer_context?.friendship_status} />
                     </div>
                     <p className="text-sm text-muted-foreground truncate">@{user.username}</p>
                     {user.bio && <p className="text-xs text-muted-foreground truncate mt-0.5">{user.bio}</p>}

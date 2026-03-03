@@ -7,9 +7,11 @@
  */
 
 /**
- * Viewer context information.
+ * Viewer context including ownership, friendship status and request ID.
  */
 export type UserPublicViewerContext = {
   is_owner: boolean;
   is_friend: boolean;
+  friendship_status?: string;
+  friend_request_id?: string | null;
 };

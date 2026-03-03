@@ -178,10 +178,8 @@ export function makeUserPublic(overrides: Partial<UserPublic> = {}): UserPublic 
     followers: faker.number.int({ min: 0, max: 1000 }),
     following: faker.number.int({ min: 0, max: 500 }),
     posts_count: faker.number.int({ min: 0, max: 150 }),
-    viewer_context: { is_owner: false, is_friend: false },
+    viewer_context: { is_owner: false, is_friend: false, friendship_status: 'NONE', friend_request_id: null },
     redacted_fields: [],
-    friendship_status: 'NONE',
-    friend_request_id: null,
     ...overrides,
   };
 }

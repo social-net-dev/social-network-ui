@@ -17,16 +17,11 @@ import type {
   RequestHandlerOptions
 } from 'msw';
 
-import {
-  PrivacyField,
-  Visibility
-} from '.././model';
 import type {
   AuthChangePassword200,
   AuthForgotPassword200,
   AuthLogin200,
   AuthLogout200,
-  AuthMe200,
   AuthRefresh200,
   AuthRegister200,
   AuthResendOtp200,
@@ -42,8 +37,6 @@ export const getAuthForgotPasswordResponseMock = (overrideResponse: Partial<Extr
 export const getAuthLoginResponseMock = (overrideResponse: Partial<Extract<AuthLogin200, object>> = {}): AuthLogin200 => ({success: faker.datatype.boolean(), data: {access: faker.string.alpha({length: {min: 10, max: 20}}), refresh: faker.string.alpha({length: {min: 10, max: 20}}), tenant_slug: faker.string.alpha({length: {min: 10, max: 20}})}, request_id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
 export const getAuthLogoutResponseMock = (overrideResponse: Partial<Extract<AuthLogout200, object>> = {}): AuthLogout200 => ({success: faker.datatype.boolean(), data: {message: faker.string.alpha({length: {min: 10, max: 20}})}, request_id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
-
-export const getAuthMeResponseMock = (overrideResponse: Partial<Extract<AuthMe200, object>> = {}): AuthMe200 => ({success: faker.datatype.boolean(), data: {id: faker.string.alpha({length: {min: 10, max: 20}}), email: faker.internet.email(), phone: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), undefined]), username: faker.string.alpha({length: {min: 10, max: 20}}), display_name: faker.string.alpha({length: {min: 10, max: 20}}), bio: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), personal_info: faker.helpers.arrayElement([{...{education_level: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), school: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), class: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), degree: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), major: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), graduation_year: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), academic_year: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), school_year: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), favorite_subjects: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), hobbies: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => (faker.string.alpha({length: {min: 10, max: 20}}))), undefined]), location: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), projects: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({id: faker.string.alpha({length: {min: 10, max: 20}}), title: faker.string.alpha({length: {min: 1, max: 200}}), category: faker.string.alpha({length: {min: 10, max: 20}}), description: faker.string.alpha({length: {min: 10, max: 2000}}), image_url: faker.string.alpha({length: {min: 10, max: 20}}), source_link: faker.helpers.arrayElement([faker.internet.url(), undefined])})), undefined])},}, undefined]), birth_date: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), undefined]), avatar: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), undefined]), background: faker.helpers.arrayElement([faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}),null,]), undefined]), account_status: faker.string.alpha({length: {min: 10, max: 20}}), role: faker.string.alpha({length: {min: 10, max: 20}}), storage_quota_mb: faker.helpers.arrayElement([faker.number.int({min: 0}), undefined]), created_at: faker.string.alpha({length: {min: 10, max: 20}}), updated_at: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), privacy: faker.helpers.arrayElement([{...{default_visibility: faker.helpers.arrayElement(Object.values(Visibility)), overrides: faker.helpers.arrayElement([Array.from({ length: faker.number.int({min: 1, max: 10}) }, (_, i) => i + 1).map(() => ({field: faker.helpers.arrayElement(Object.values(PrivacyField)), visibility: faker.helpers.arrayElement(Object.values(Visibility))})), undefined])},}, undefined]), followers: faker.helpers.arrayElement([faker.number.int({min: 0}), undefined]), following: faker.helpers.arrayElement([faker.number.int({min: 0}), undefined]), posts_count: faker.helpers.arrayElement([faker.number.int({min: 0}), undefined])}, request_id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
 export const getAuthRefreshResponseMock = (overrideResponse: Partial<Extract<AuthRefresh200, object>> = {}): AuthRefresh200 => ({success: faker.datatype.boolean(), data: {access: faker.string.alpha({length: {min: 10, max: 20}}), refresh: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined])}, request_id: faker.helpers.arrayElement([faker.string.alpha({length: {min: 10, max: 20}}), undefined]), ...overrideResponse})
 
@@ -99,18 +92,6 @@ export const getAuthLogoutMockHandler = (overrideResponse?: AuthLogout200 | ((in
     return HttpResponse.json(overrideResponse !== undefined
     ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
     : getAuthLogoutResponseMock(),
-      { status: 200
-      })
-  }, options)
-}
-
-export const getAuthMeMockHandler = (overrideResponse?: AuthMe200 | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Promise<AuthMe200> | AuthMe200), options?: RequestHandlerOptions) => {
-  return http.get('*/auth/me', async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-  
-  
-    return HttpResponse.json(overrideResponse !== undefined
-    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
-    : getAuthMeResponseMock(),
       { status: 200
       })
   }, options)
@@ -180,7 +161,6 @@ export const getAuthMock = () => [
   getAuthForgotPasswordMockHandler(),
   getAuthLoginMockHandler(),
   getAuthLogoutMockHandler(),
-  getAuthMeMockHandler(),
   getAuthRefreshMockHandler(),
   getAuthRegisterMockHandler(),
   getAuthResendOtpMockHandler(),

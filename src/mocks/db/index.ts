@@ -331,10 +331,8 @@ const SEED_PROFILES: Record<string, UserPublic> = {
         },
       ],
     },
-    viewer_context: { is_owner: false, is_friend: true },
+    viewer_context: { is_owner: false, is_friend: true, friendship_status: 'FRIENDS', friend_request_id: null },
     redacted_fields: [],
-    friendship_status: 'FRIENDS',
-    friend_request_id: null,
   },
   'duy.backend': {
     id: AUTHORS.duy.id,
@@ -352,10 +350,8 @@ const SEED_PROFILES: Record<string, UserPublic> = {
     posts_count: 54,
     birth_date: null,
     personal_info: undefined,
-    viewer_context: { is_owner: false, is_friend: false },
+    viewer_context: { is_owner: false, is_friend: false, friendship_status: 'NONE', friend_request_id: null },
     redacted_fields: [],
-    friendship_status: 'NONE',
-    friend_request_id: null,
   },
   'phucle.ai': {
     id: AUTHORS.phuc.id,
@@ -370,10 +366,8 @@ const SEED_PROFILES: Record<string, UserPublic> = {
     followers: 567,
     following: 145,
     posts_count: 38,
-    viewer_context: { is_owner: false, is_friend: true },
+    viewer_context: { is_owner: false, is_friend: true, friendship_status: 'FRIENDS', friend_request_id: null },
     redacted_fields: [],
-    friendship_status: 'FRIENDS',
-    friend_request_id: null,
   },
   'mentor.hoang': {
     id: AUTHORS.hoang.id,
@@ -388,10 +382,8 @@ const SEED_PROFILES: Record<string, UserPublic> = {
     followers: 3200,
     following: 98,
     posts_count: 156,
-    viewer_context: { is_owner: false, is_friend: true },
+    viewer_context: { is_owner: false, is_friend: true, friendship_status: 'FRIENDS', friend_request_id: null },
     redacted_fields: [],
-    friendship_status: 'FRIENDS',
-    friend_request_id: null,
   },
 };
 
@@ -730,10 +722,8 @@ export const db = {
       posts_count: this.posts.filter((p) => p.author.id === author.id).length,
       birth_date: null,
       personal_info: undefined,
-      viewer_context: { is_owner: false, is_friend: this.isFriend(author.id) },
+      viewer_context: { is_owner: false, is_friend: this.isFriend(author.id), friendship_status: this.isFriend(author.id) ? 'FRIENDS' : 'NONE', friend_request_id: null },
       redacted_fields: [],
-      friendship_status: this.isFriend(author.id) ? 'FRIENDS' : 'NONE',
-      friend_request_id: null,
     };
   },
   _selfAsPublic(): UserPublic {
@@ -754,10 +744,8 @@ export const db = {
       posts_count: u.posts_count,
       birth_date: u.birth_date,
       personal_info: u.personal_info,
-      viewer_context: { is_owner: true, is_friend: true },
+      viewer_context: { is_owner: true, is_friend: true, friendship_status: 'SELF', friend_request_id: null },
       redacted_fields: [],
-      friendship_status: 'SELF',
-      friend_request_id: null,
     };
   },
 

@@ -26,7 +26,7 @@ export interface UserMe {
   bio?: string;
   /** Personal information. */
   personal_info?: PersonalInfo;
-  /** Birth date. */
+  /** Birth date (ISO 8601 date). */
   birth_date?: string | null;
   /** Avatar URL. */
   avatar?: string | null;

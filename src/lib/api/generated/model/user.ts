@@ -26,7 +26,7 @@ export interface User {
   bio?: string;
   /** Personal information. */
   personal_info?: PersonalInfo;
-  /** Birth date. */
+  /** Birth date (ISO 8601 date). */
   birth_date?: string | null;
   /** Avatar URL. */
   avatar?: string | null;
@@ -62,8 +62,4 @@ export interface User {
    * @minimum 0
    */
   posts_count?: number;
-  /** Friendship status with viewer. */
-  friendship_status?: string;
-  /** Friend request ID if applicable. */
-  friend_request_id?: string | null;
 }

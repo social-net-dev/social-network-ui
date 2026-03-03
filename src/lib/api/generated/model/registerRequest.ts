@@ -26,7 +26,7 @@ export interface RegisterRequest {
    */
   display_name: string;
   /** User gender. */
-  gender: Gender | string;
+  gender: Gender;
   /** User role in the system. */
   role: Role;
   /**

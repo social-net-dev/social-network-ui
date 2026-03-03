@@ -6,22 +6,13 @@
  * OpenAPI spec version: 1.0
  */
 import {
-  useMutation,
-  useQuery
+  useMutation
 } from '@tanstack/react-query';
 import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult
+  UseMutationResult
 } from '@tanstack/react-query';
 
 import type {
@@ -30,13 +21,12 @@ import type {
   AuthForgotPassword200,
   AuthLogin200,
   AuthLogout200,
-  AuthMe200,
   AuthRefresh200,
   AuthRegister200,
   AuthResendOtp200,
   AuthResetPassword200,
   AuthVerifyOtp200,
-  ChangePasswordMultipart,
+  ChangePasswordRequest,
   ForgotPasswordRequest,
   LoginRequest,
   RefreshTokenRequest,
@@ -54,21 +44,19 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Yêu cầu Bearer token + X-Tenant-Slug. Body dạng multipart.
+ * Yêu cầu Bearer token + X-Tenant-Slug.
  * @summary Đổi mật khẩu
  */
 export const authChangePassword = (
-    changePasswordMultipart: ChangePasswordMultipart,
+    changePasswordRequest: ChangePasswordRequest,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
-      const formData = new FormData();
-formData.append(`current_password`, changePasswordMultipart.current_password);
-formData.append(`new_password`, changePasswordMultipart.new_password);
-
+      
       return customInstance<AuthChangePassword200>(
       {url: `/auth/change-password`, method: 'POST',
-       data: formData, signal
+      headers: {'Content-Type': 'application/json', },
+      data: changePasswordRequest, signal
     },
       options);
     }
@@ -76,8 +64,8 @@ formData.append(`new_password`, changePasswordMultipart.new_password);
 
 
 export const getAuthChangePasswordMutationOptions = <TError = ApiErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authChangePassword>>, TError,{data: ChangePasswordMultipart}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof authChangePassword>>, TError,{data: ChangePasswordMultipart}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authChangePassword>>, TError,{data: ChangePasswordRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authChangePassword>>, TError,{data: ChangePasswordRequest}, TContext> => {
 
 const mutationKey = ['authChangePassword'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -89,7 +77,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authChangePassword>>, {data: ChangePasswordMultipart}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authChangePassword>>, {data: ChangePasswordRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  authChangePassword(data,requestOptions)
@@ -103,18 +91,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type AuthChangePasswordMutationResult = NonNullable<Awaited<ReturnType<typeof authChangePassword>>>
-    export type AuthChangePasswordMutationBody = ChangePasswordMultipart
+    export type AuthChangePasswordMutationBody = ChangePasswordRequest
     export type AuthChangePasswordMutationError = ApiErrorResponse
 
     /**
  * @summary Đổi mật khẩu
  */
 export const useAuthChangePassword = <TError = ApiErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authChangePassword>>, TError,{data: ChangePasswordMultipart}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authChangePassword>>, TError,{data: ChangePasswordRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof authChangePassword>>,
         TError,
-        {data: ChangePasswordMultipart},
+        {data: ChangePasswordRequest},
         TContext
       > => {
       return useMutation(getAuthChangePasswordMutationOptions(options), queryClient);
@@ -308,96 +296,6 @@ export const useAuthLogout = <TError = ApiErrorResponse,
       return useMutation(getAuthLogoutMutationOptions(options), queryClient);
     }
     /**
- * @summary Lấy thông tin user hiện tại
- */
-export const authMe = (
-    
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<AuthMe200>(
-      {url: `/auth/me`, method: 'GET', signal
-    },
-      options);
-    }
-  
-
-
-
-export const getAuthMeQueryKey = () => {
-    return [
-    `/auth/me`
-    ] as const;
-    }
-
-    
-export const getAuthMeQueryOptions = <TData = Awaited<ReturnType<typeof authMe>>, TError = ApiErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getAuthMeQueryKey();
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof authMe>>> = ({ signal }) => authMe(requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof authMe>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type AuthMeQueryResult = NonNullable<Awaited<ReturnType<typeof authMe>>>
-export type AuthMeQueryError = ApiErrorResponse
-
-
-export function useAuthMe<TData = Awaited<ReturnType<typeof authMe>>, TError = ApiErrorResponse>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authMe>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof authMe>>,
-          TError,
-          Awaited<ReturnType<typeof authMe>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAuthMe<TData = Awaited<ReturnType<typeof authMe>>, TError = ApiErrorResponse>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authMe>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof authMe>>,
-          TError,
-          Awaited<ReturnType<typeof authMe>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAuthMe<TData = Awaited<ReturnType<typeof authMe>>, TError = ApiErrorResponse>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Lấy thông tin user hiện tại
- */
-
-export function useAuthMe<TData = Awaited<ReturnType<typeof authMe>>, TError = ApiErrorResponse>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getAuthMeQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-/**
  * Đổi refresh token lấy access token mới.
  * @summary Làm mới access token
  */

@@ -23,7 +23,7 @@ export interface UserPublic {
   bio?: string;
   /** Personal information. */
   personal_info?: PersonalInfo;
-  /** Birth date. */
+  /** Birth date (ISO 8601 date). */
   birth_date?: string | null;
   /** Avatar URL. */
   avatar?: string | null;
@@ -52,12 +52,8 @@ export interface UserPublic {
    * @minimum 0
    */
   posts_count?: number;
-  /** Viewer context information. */
+  /** Viewer context including ownership, friendship status and request ID. */
   viewer_context?: UserPublicViewerContext;
   /** Fields redacted due to privacy settings. */
   redacted_fields?: PrivacyField[];
-  /** Friendship status with viewer. */
-  friendship_status?: string;
-  /** Friend request ID if applicable. */
-  friend_request_id?: string | null;
 }

@@ -26,7 +26,7 @@ import type {
 
 import type {
   ApiErrorResponse,
-  DeactivateMultipart,
+  DeactivateRequest,
   ReactivationRequest,
   SetAvatarRequest,
   SetBackgroundRequest,
@@ -270,16 +270,15 @@ export const useUsersUploadBackground = <TError = ApiErrorResponse,
  * @summary Vô hiệu hoá tài khoản
  */
 export const usersDeactivate = (
-    deactivateMultipart: DeactivateMultipart,
+    deactivateRequest: DeactivateRequest,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
-      const formData = new FormData();
-formData.append(`password`, deactivateMultipart.password);
-
+      
       return customInstance<UsersDeactivate200>(
       {url: `/users/me/deactivate`, method: 'POST',
-       data: formData, signal
+      headers: {'Content-Type': 'application/json', },
+      data: deactivateRequest, signal
     },
       options);
     }
@@ -287,8 +286,8 @@ formData.append(`password`, deactivateMultipart.password);
 
 
 export const getUsersDeactivateMutationOptions = <TError = ApiErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersDeactivate>>, TError,{data: DeactivateMultipart}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof usersDeactivate>>, TError,{data: DeactivateMultipart}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersDeactivate>>, TError,{data: DeactivateRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersDeactivate>>, TError,{data: DeactivateRequest}, TContext> => {
 
 const mutationKey = ['usersDeactivate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -300,7 +299,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersDeactivate>>, {data: DeactivateMultipart}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersDeactivate>>, {data: DeactivateRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  usersDeactivate(data,requestOptions)
@@ -314,18 +313,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UsersDeactivateMutationResult = NonNullable<Awaited<ReturnType<typeof usersDeactivate>>>
-    export type UsersDeactivateMutationBody = DeactivateMultipart
+    export type UsersDeactivateMutationBody = DeactivateRequest
     export type UsersDeactivateMutationError = ApiErrorResponse
 
     /**
  * @summary Vô hiệu hoá tài khoản
  */
 export const useUsersDeactivate = <TError = ApiErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersDeactivate>>, TError,{data: DeactivateMultipart}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersDeactivate>>, TError,{data: DeactivateRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof usersDeactivate>>,
         TError,
-        {data: DeactivateMultipart},
+        {data: DeactivateRequest},
         TContext
       > => {
       return useMutation(getUsersDeactivateMutationOptions(options), queryClient);
