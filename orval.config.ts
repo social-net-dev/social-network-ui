@@ -18,4 +18,13 @@ export default defineConfig({
       },
     },
   },
+  apiZod: {
+    input: './tsp-output/schema/openapi.json',
+    output: {
+      client: 'zod',
+      mode: 'tags-split',
+      target: './src/lib/api/generated/index.ts',
+      fileExtension: '.zod.ts',
+    },
+  },
 });

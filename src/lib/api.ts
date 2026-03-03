@@ -1,26 +1,41 @@
 import type { AxiosRequestConfig } from 'axios';
+import type { ZodType } from 'zod';
 import { getApiBaseUrl } from '@/lib/config';
 import { createApiClient } from '@/lib/api/createApiClient';
 import { attachRequestInterceptor } from '@/lib/api/attachRequestInterceptor';
 import { attachResponseInterceptor } from '@/lib/api/attachResponseInterceptor';
+import { safeParseResponse } from '@/lib/api/zodValidation';
 
 const baseURL = getApiBaseUrl();
 
 const apiClient = createApiClient(baseURL);
 attachRequestInterceptor(apiClient);
 attachResponseInterceptor(apiClient, baseURL);
+
+type CustomInstanceOptions<T> = AxiosRequestConfig & {
+  /** Optional Zod schema for dev-mode response validation (non-throwing). */
+  zodSchema?: ZodType<T>;
+};
+
 /**
  * Custom instance wrapper for React Query compatibility.
- * Unwraps response data automatically.
+ * Passes skipUnwrap to keep full envelope response for generated hooks.
+ * Optionally validates responses against a Zod schema in development mode.
  */
 export const customInstance = <T,>(
   config: AxiosRequestConfig,
-  options?: AxiosRequestConfig,
+  options?: CustomInstanceOptions<T>,
 ): Promise<T> => {
+  const { zodSchema, ...axiosOptions } = options ?? {};
   return apiClient({
     ...config,
-    ...options,
+    ...axiosOptions,
     skipUnwrap: true,
-  }).then(({ data }) => data as T);
+  }).then(({ data }) => {
+    if (zodSchema) {
+      return safeParseResponse(zodSchema, data);
+    }
+    return data as T;
+  });
 };
 export default apiClient;
