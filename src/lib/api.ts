@@ -12,9 +12,11 @@ const apiClient = createApiClient(baseURL);
 attachRequestInterceptor(apiClient);
 attachResponseInterceptor(apiClient, baseURL);
 
-type CustomInstanceOptions<T> = AxiosRequestConfig & {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CustomInstanceOptions = AxiosRequestConfig & {
   /** Optional Zod schema for dev-mode response validation (non-throwing). */
-  zodSchema?: ZodType<T>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  zodSchema?: ZodType<any>;
 };
 
 /**
@@ -24,7 +26,7 @@ type CustomInstanceOptions<T> = AxiosRequestConfig & {
  */
 export const customInstance = <T,>(
   config: AxiosRequestConfig,
-  options?: CustomInstanceOptions<T>,
+  options?: CustomInstanceOptions,
 ): Promise<T> => {
   const { zodSchema, ...axiosOptions } = options ?? {};
   return apiClient({
