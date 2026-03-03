@@ -13,8 +13,8 @@ export const getApiBaseUrl = (): string => {
   }
 
   if (import.meta.env.DEV) {
-    // Dev: gọi thẳng etechs-middleware (Django API dưới /api/)
-    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api';
+    // Dev: ưu tiên same-origin /api để dùng Vite proxy, tránh CORS
+    return import.meta.env.VITE_API_BASE_URL || '/api';
   }
 
   return import.meta.env.VITE_API_BASE_URL || '/api';

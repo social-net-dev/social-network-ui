@@ -6,42 +6,42 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Mail, RefreshCw } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { resendRegisterOtp, verifyRegisterOtp } from '@/lib/api/manual-apis';
+import { authApi } from '@/lib/api/services/auth';
 
 const OTP_STORAGE_EMAIL = 'otp_verify_email';
-const OTP_STORAGE_USER_ID = 'otp_verify_user_id';
+const OTP_STORAGE_PASSWORD = 'otp_verify_password';
 
 function getStoredEmail(): string {
   if (typeof sessionStorage === 'undefined') return '';
   return sessionStorage.getItem(OTP_STORAGE_EMAIL) ?? '';
 }
 
-function getStoredUserId(): string {
+function getStoredPassword(): string {
   if (typeof sessionStorage === 'undefined') return '';
-  return sessionStorage.getItem(OTP_STORAGE_USER_ID) ?? '';
+  return sessionStorage.getItem(OTP_STORAGE_PASSWORD) ?? '';
 }
 
 export function OTPVerifyPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const state = location.state as { email?: string; user_id?: string } | null;
+  const state = location.state as { email?: string } | null;
 
   // Derive values directly instead of using state + effect
   const email = state?.email ?? getStoredEmail();
-  const user_id = state?.user_id ?? getStoredUserId();
+  const password = getStoredPassword();
 
   const [otpCode, setOtpCode] = useState('');
   const [error, setError] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
 
   const verifyMutation = useMutation({
-    mutationFn: async () => {
-      return verifyRegisterOtp(user_id, otpCode);
+    mutationFn: () => {
+      return authApi.verifyOtp({ email, otp: otpCode });
     },
     onSuccess: async () => {
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.removeItem(OTP_STORAGE_EMAIL);
-        sessionStorage.removeItem(OTP_STORAGE_USER_ID);
+        sessionStorage.removeItem(OTP_STORAGE_PASSWORD);
       }
       navigate('/login', {
         state: {
@@ -56,8 +56,8 @@ export function OTPVerifyPage() {
   });
 
   const resendMutation = useMutation({
-    mutationFn: async () => {
-      return resendRegisterOtp(user_id);
+    mutationFn: () => {
+      return authApi.resendOtp({ email, password });
     },
     onSuccess: () => {
       setResendSuccess(true);
@@ -92,7 +92,7 @@ export function OTPVerifyPage() {
     resendMutation.mutate();
   };
 
-  if (!user_id || !email) {
+  if (!email || !password) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg">

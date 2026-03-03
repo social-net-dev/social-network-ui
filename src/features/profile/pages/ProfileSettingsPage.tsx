@@ -20,7 +20,7 @@ import type { Author } from '@/features/home/types/feed.types';
 export function ProfileSettingsPage() {
   const { profile: rawProfile, isLoading, updateProfile, updatePrivacy, isUpdating } = useProfile();
   const profile = rawProfile as Author;
-  const [activeTab, setActiveTab] = useState('basic');
+  const [activeTab, setActiveTab] = useState('privacy');
   const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
   const [deactivatePassword, setDeactivatePassword] = useState('');
   const [showDeactivatePassword, setShowDeactivatePassword] = useState(false);
@@ -155,11 +155,8 @@ export function ProfileSettingsPage() {
         <p className="text-gray-500 dark:text-gray-400">Quản lý chi tiết cá nhân và quyền riêng tư của bạn.</p>
       </div>
 
-      <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs defaultValue="privacy" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-white dark:bg-card p-1 rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 w-full justify-start mb-8 overflow-x-auto no-scrollbar">
-          <TabsTrigger value="basic" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
-            <User className="w-4 h-4 mr-2" /> Thông tin cơ bản
-          </TabsTrigger>
           <TabsTrigger value="privacy" className="rounded-xl data-[state=active]:bg-etechs-primary data-[state=active]:text-etechs-secondary px-6 py-2.5">
             <Shield className="w-4 h-4 mr-2" /> Quyền riêng tư
           </TabsTrigger>
@@ -167,35 +164,6 @@ export function ProfileSettingsPage() {
             <Lock className="w-4 h-4 mr-2" /> Bảo mật
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="basic" className="outline-none">
-          <Card className="border-none shadow-xl bg-white dark:bg-card rounded-3xl overflow-hidden">
-            <CardHeader>
-              <CardTitle>Thông tin cá nhân</CardTitle>
-              <CardDescription>Cập nhật định danh và thông tin hiển thị của bạn.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input id="username" value={formData.username} onChange={handleInputChange} className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">Tên hiển thị</Label>
-                  <Input id="displayName" value={formData.displayName} onChange={handleInputChange} className="rounded-xl" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="birthDate">Ngày sinh</Label>
-                <Input id="birthDate" type="date" value={formData.birthDate} onChange={handleInputChange} className="rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bio">Giới thiệu bản thân</Label>
-                <textarea id="bio" value={formData.bio} onChange={handleInputChange} rows={4} className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-transparent px-3 py-2 text-sm focus:ring-2 focus:ring-etechs-primary outline-none resize-none" />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="privacy" className="outline-none space-y-6">
           <Card className="border-none shadow-xl bg-white dark:bg-card rounded-3xl overflow-hidden">
@@ -271,16 +239,18 @@ export function ProfileSettingsPage() {
         </TabsContent>
       </Tabs>
 
-      <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-card/80 backdrop-blur-xl border-t p-4 z-40 shadow-lg">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Button variant="ghost" onClick={handleReset} disabled={isUpdating} className="flex items-center gap-2 text-gray-500 hover:text-red-500">
-            <Trash2 className="w-4 h-4" /> Hủy thay đổi
-          </Button>
-          <Button onClick={activeTab === 'basic' ? handleSaveBasic : handleSavePrivacy} disabled={isUpdating} className="bg-etechs-primary text-etechs-secondary px-8 rounded-xl shadow-lg flex items-center gap-2">
-            {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Lưu thay đổi
-          </Button>
+      {activeTab === 'privacy' && (
+        <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-card/80 backdrop-blur-xl border-t p-4 z-40 shadow-lg">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <Button variant="ghost" onClick={handleReset} disabled={isUpdating} className="flex items-center gap-2 text-gray-500 hover:text-red-500">
+              <Trash2 className="w-4 h-4" /> Hủy thay đổi
+            </Button>
+            <Button onClick={handleSavePrivacy} disabled={isUpdating} className="bg-etechs-primary text-etechs-secondary px-8 rounded-xl shadow-lg flex items-center gap-2">
+              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Lưu thay đổi
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {isDeactivateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">

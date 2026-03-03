@@ -31,22 +31,22 @@ export type VerifyRegisterOtpResponse = {
   status: string;
 };
 
-export const verifyRegisterOtp = (user_id: string, otp: string) => {
+export const verifyRegisterOtp = (email: string, otp: string) => {
   return customInstance<VerifyRegisterOtpResponse>({
-    url: '/auth/verify-otp/',
+    url: '/register/email/confirm/',
     method: 'POST',
-    data: { user_id, otp },
+    data: { email, otp },
     headers: {
       'Content-Type': 'application/json',
     },
   });
 };
 
-export const resendRegisterOtp = (user_id: string) => {
+export const resendRegisterOtp = (email: string, password: string) => {
   return customInstance<{ message: string }>({
-    url: '/auth/resend-otp/',
+    url: '/register/email/request/',
     method: 'POST',
-    data: { user_id },
+    data: { email, password },
     headers: {
       'Content-Type': 'application/json',
     },

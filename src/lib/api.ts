@@ -48,7 +48,7 @@ const processQueue = (error: AxiosError | null) => {
 // ============================================
 // PUBLIC AUTH PATHS (No token sent)
 // ============================================
-const PUBLIC_AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/verify-otp', '/auth/resend-otp', '/auth/forgot-password', '/auth/reset-password'];
+const PUBLIC_AUTH_PATHS = ['/auth/login', '/auth/me', '/register/email/request', '/register/email/confirm', '/auth/forgot-password', '/auth/reset-password'];
 
 function isPublicAuthRequest(url: string | undefined): boolean {
   if (!url) return false;
