@@ -9,7 +9,9 @@ import type {
   FriendRequest,
   Notification,
   PostSummary,
+  ReactionType,
   UserMe,
+  UserPrivacy,
   UserPublic,
 } from '@/lib/api/generated/model';
 
@@ -24,7 +26,18 @@ interface Field {
   stats?: { posts_count: number; followers_count: number };
   is_following?: boolean;
 }
+
+// Local type for Share
+interface PostShare {
+  id: string;
+  post_id: string;
+  user_id: string;
+  message?: string;
+  created_at: string;
+}
+
 import { NotificationType, PostType, Visibility } from '@/lib/api/generated/model';
+import { makeId } from '../factories';
 import { makeFriend, makeFriendRequest, makeNotification } from '../factories';
 
 // ─── seed authors ────────────────────────────────────────────────────────────
@@ -691,7 +704,37 @@ export const db = {
     if (key === this.currentUser.username.toLowerCase()) {
       return this._selfAsPublic();
     }
-    return this.profiles[key] ?? null;
+    if (this.profiles[key]) return this.profiles[key];
+
+    // Fallback: build a minimal public profile from AUTHORS seed data
+    const author = Object.values(AUTHORS).find((a) => a.username.toLowerCase() === key);
+    if (author) return this._authorAsPublic(author);
+
+    return null;
+  },
+  _authorAsPublic(author: Author): UserPublic {
+    const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
+    return {
+      id: author.id,
+      username: author.username,
+      display_name: author.display_name,
+      bio: undefined,
+      avatar: author.avatar ?? null,
+      background: null,
+      account_status: author.account_status ?? 'ACTIVE',
+      role: author.role ?? 'USER',
+      created_at: daysAgo(200),
+      updated_at: daysAgo(1),
+      followers: 0,
+      following: 0,
+      posts_count: this.posts.filter((p) => p.author.id === author.id).length,
+      birth_date: null,
+      personal_info: undefined,
+      viewer_context: { is_owner: false, is_friend: this.isFriend(author.id) },
+      redacted_fields: [],
+      friendship_status: this.isFriend(author.id) ? 'FRIENDS' : 'NONE',
+      friend_request_id: null,
+    };
   },
   _selfAsPublic(): UserPublic {
     const u = this.currentUser;
@@ -769,5 +812,90 @@ export const db = {
     f.is_following = follow;
     if (f.stats) f.stats.followers_count += follow ? 1 : -1;
     return f;
+  },
+
+  // ── privacy ───────────────────────────────────────────────────────────────
+  privacy: { default_visibility: 'PUBLIC', overrides: [] } as UserPrivacy,
+  updatePrivacy(patch: Partial<UserPrivacy>) {
+    this.privacy = { ...this.privacy, ...patch };
+    return this.privacy;
+  },
+
+  // ── shares ────────────────────────────────────────────────────────────────
+  postShares: [] as PostShare[],
+  addShare(postId: string, userId: string, message?: string): PostShare {
+    const share: PostShare = {
+      id: makeId('share'),
+      post_id: postId,
+      user_id: userId,
+      message,
+      created_at: new Date().toISOString(),
+    };
+    this.postShares.push(share);
+    const post = this.getPost(postId);
+    if (post) this.updatePost(postId, { stats: { ...post.stats, shares: post.stats.shares + 1 } });
+    return share;
+  },
+  removeShare(postId: string, userId: string): boolean {
+    const idx = this.postShares.findIndex((s) => s.post_id === postId && s.user_id === userId);
+    if (idx === -1) return false;
+    this.postShares.splice(idx, 1);
+    const post = this.getPost(postId);
+    if (post) this.updatePost(postId, { stats: { ...post.stats, shares: Math.max(0, post.stats.shares - 1) } });
+    return true;
+  },
+
+  // ── reactions ─────────────────────────────────────────────────────────────
+  reactToPost(postId: string, reaction: ReactionType): PostSummary | null {
+    const post = this.getPost(postId);
+    if (!post) return null;
+    const delta = post.user_reaction ? 0 : 1;
+    return this.updatePost(postId, {
+      user_reaction: reaction,
+      stats: { ...post.stats, reactions: post.stats.reactions + delta },
+    });
+  },
+  unreactPost(postId: string): PostSummary | null {
+    const post = this.getPost(postId);
+    if (!post || !post.user_reaction) return null;
+    return this.updatePost(postId, {
+      user_reaction: null,
+      stats: { ...post.stats, reactions: Math.max(0, post.stats.reactions - 1) },
+    });
+  },
+  reactToComment(commentId: string, reaction: ReactionType): Comment | null {
+    const loc = this.findComment(commentId);
+    if (!loc) return null;
+    const { comment } = loc;
+    const delta = comment.user_reaction ? 0 : 1;
+    return this.updateComment(commentId, {
+      user_reaction: reaction,
+      stats: { ...comment.stats, reactions: comment.stats.reactions + delta },
+    });
+  },
+  unreactComment(commentId: string): Comment | null {
+    const loc = this.findComment(commentId);
+    if (!loc || !loc.comment.user_reaction) return null;
+    const { comment } = loc;
+    return this.updateComment(commentId, {
+      user_reaction: null,
+      stats: { ...comment.stats, reactions: Math.max(0, comment.stats.reactions - 1) },
+    });
+  },
+
+  // ── media uploads (transient) ─────────────────────────────────────────────
+  pendingUploads: new Map<string, { asset_id: string; expires_at: string }>(),
+  initUpload(): { upload_id: string; asset_id: string; upload_url: string; expires_at: string } {
+    const upload_id = makeId('upload');
+    const asset_id = makeId('asset');
+    const expires_at = new Date(Date.now() + 15 * 60_000).toISOString();
+    this.pendingUploads.set(upload_id, { asset_id, expires_at });
+    return { upload_id, asset_id, upload_url: `https://mock-r2.example.com/upload/${upload_id}`, expires_at };
+  },
+  completeUpload(upload_id: string): string | null {
+    const entry = this.pendingUploads.get(upload_id);
+    if (!entry) return null;
+    this.pendingUploads.delete(upload_id);
+    return entry.asset_id;
   },
 };

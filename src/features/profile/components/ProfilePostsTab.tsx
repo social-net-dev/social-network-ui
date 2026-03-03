@@ -2,6 +2,7 @@ import { PostCard, usePostActions } from '@/features/posts'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { FileText, Loader2 } from 'lucide-react'
+import { useState } from 'react'
 import { useProfilePosts } from '../hooks/useProfilePosts'
 
 export type ProfilePostsTabProps = {
@@ -19,6 +20,13 @@ export function ProfilePostsTab({
 }: ProfilePostsTabProps) {
   const { posts, query, queryKey } = useProfilePosts({ mode, subjectUserId })
   const { deletePost, updatePost, likePost } = usePostActions({ affectedQueryKeys: [queryKey] })
+  const [openCommentPostIds, setOpenCommentPostIds] = useState<string[]>([])
+
+  const handleComment = (postId: string) => {
+    setOpenCommentPostIds((prev) =>
+      prev.includes(postId) ? prev.filter((id) => id !== postId) : [...prev, postId],
+    )
+  }
 
   if (query.isLoading) {
     return (
@@ -36,7 +44,8 @@ export function ProfilePostsTab({
           post={post}
           currentUserId={currentUserId ?? undefined}
           onLike={(id, liked) => likePost?.(id, liked)}
-          onComment={() => {}}
+          onComment={handleComment}
+          showComments={openCommentPostIds.includes(post.id)}
           onShare={() => {}}
           onDelete={(id) => deletePost?.(id)}
           onEdit={(id, content) => updatePost?.(id, content)}
