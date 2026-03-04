@@ -9,7 +9,7 @@ import type {
   PresignedUploadInitRequest,
   RegisterRequest,
 } from "@/lib/api/types";
-import type { Role } from "@/lib/api/types";
+import type { Role, Gender } from "@/lib/api/types";
 
 export function useRegister() {
   const navigate = useNavigate();
@@ -93,7 +93,7 @@ export function useRegister() {
         password: data.password,
         display_name: data.displayName,
         role: data.role as Role,
-        gender: data.gender || "",
+        gender: (data.gender || "MALE") as Gender,
         consent: data.consent,
         phone: data.phone,
         ...(verification_media_asset_ids.length > 0 ? { verification_media_asset_ids } : {}),

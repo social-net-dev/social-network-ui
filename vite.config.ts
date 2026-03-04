@@ -19,6 +19,12 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8001',
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     cssCodeSplit: false,
@@ -28,6 +34,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: id => {
+
           if (id.includes('node_modules')) {
             if (id.includes('react/') || id.includes('react-dom') || id.includes('scheduler')) return 'react';
             if (id.includes('@radix-ui')) return 'radix';
