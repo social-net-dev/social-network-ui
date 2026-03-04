@@ -97,7 +97,7 @@ export function usePostActions(options?: UsePostActionsOptions) {
       }));
       // Optimistically remove the post
       for (const key of affectedQueryKeys) {
-        queryClient.setQueryData<unknown>(key, (old) =>
+        queryClient.setQueryData<unknown>(key, (old: unknown) =>
           updatePostsInUnknown(old, (posts) => posts.filter((p) => p.id !== postId))
         );
       }
@@ -105,7 +105,8 @@ export function usePostActions(options?: UsePostActionsOptions) {
     },
     onError: (_err, _vars, context) => {
       // Rollback on error
-      for (const { key, data } of context?.snapshots ?? []) {
+      const ctx = context as { snapshots?: Array<{ key: QueryKey; data: unknown }> } | undefined;
+      for (const { key, data } of ctx?.snapshots ?? []) {
         queryClient.setQueryData(key, data);
       }
       toast.error('Lỗi khi xóa bài viết');
@@ -126,7 +127,7 @@ export function usePostActions(options?: UsePostActionsOptions) {
         data: queryClient.getQueryData(key),
       }));
       for (const key of affectedQueryKeys) {
-        queryClient.setQueryData<unknown>(key, (old) =>
+        queryClient.setQueryData<unknown>(key, (old: unknown) =>
           updatePostsInUnknown(old, (posts) =>
             posts.map((p) => (p.id === postId ? { ...p, content: data.content_text ?? p.content } : p))
           )
@@ -135,7 +136,8 @@ export function usePostActions(options?: UsePostActionsOptions) {
       return { snapshots };
     },
     onError: (_err, _vars, context) => {
-      for (const { key, data } of context?.snapshots ?? []) {
+      const ctx = context as { snapshots?: Array<{ key: QueryKey; data: unknown }> } | undefined;
+      for (const { key, data } of ctx?.snapshots ?? []) {
         queryClient.setQueryData(key, data);
       }
       toast.error('Lỗi khi cập nhật bài viết');
@@ -195,7 +197,7 @@ export function usePostActions(options?: UsePostActionsOptions) {
         };
 
         for (const key of affectedQueryKeys) {
-          queryClient.setQueryData<unknown>(key, (old) =>
+          queryClient.setQueryData<unknown>(key, (old: unknown) =>
             updatePostsInUnknown(old, (posts) => [optimisticSharedPost as PostSummary, ...posts])
           );
         }
@@ -221,7 +223,7 @@ export function usePostActions(options?: UsePostActionsOptions) {
 
       // Optimistic update
       for (const key of affectedQueryKeys) {
-        queryClient.setQueryData<unknown>(key, (old) =>
+        queryClient.setQueryData<unknown>(key, (old: unknown) =>
           updatePostsInUnknown(old, (posts) =>
             posts.map((post) => {
               if (post.id !== postId) return post;

@@ -44,12 +44,20 @@ export const usersPrivacyOptions = () =>
 export const useUsersGetMe = <TData = UserMe>(
   options?: Omit<UseQueryOptions<UserMe, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ ...usersMeOptions(), ...options });
+  useQuery({
+    queryKey: getUsersGetMeQueryKey(),
+    queryFn: ({ signal }) => usersGetMe(signal),
+    ...options,
+  });
 
 export const useUsersGetPrivacy = <TData = UserPrivacy>(
   options?: Omit<UseQueryOptions<UserPrivacy, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ ...usersPrivacyOptions(), ...options });
+  useQuery({
+    queryKey: getUsersGetPrivacyQueryKey(),
+    queryFn: ({ signal }) => usersGetPrivacy(signal),
+    ...options,
+  });
 
 export const useUsersUpdateProfile = (
   options?: UseMutationOptions<UserMe, ApiError, UpdateProfileRequest>

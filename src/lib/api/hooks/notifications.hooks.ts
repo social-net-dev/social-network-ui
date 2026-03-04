@@ -30,12 +30,20 @@ export const useNotificationsListNotifications = <TData = NotificationListRespon
   params?: CursorParams,
   options?: Omit<UseQueryOptions<NotificationListResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ ...notificationsListOptions(params), ...options });
+  useQuery({
+    queryKey: getNotificationsListNotificationsQueryKey(params),
+    queryFn: ({ signal }) => notificationsListNotifications(params, signal),
+    ...options,
+  });
 
 export const useNotificationsUnreadCount = <TData = UnreadCountResponse>(
   options?: Omit<UseQueryOptions<UnreadCountResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ ...notificationsUnreadCountOptions(), ...options });
+  useQuery({
+    queryKey: getNotificationsUnreadCountQueryKey(),
+    queryFn: ({ signal }) => notificationsUnreadCount(signal),
+    ...options,
+  });
 
 export const useNotificationsMarkAsRead = (
   options?: UseMutationOptions<{ message: string }, ApiError, { notificationId: string }>

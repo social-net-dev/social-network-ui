@@ -68,13 +68,21 @@ export const usePostsListPosts = <TData = FeedResponse>(
   params?: CursorParams,
   options?: Omit<UseQueryOptions<FeedResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ ...postListOptions(params), ...options });
+  useQuery({
+    queryKey: getPostsListPostsQueryKey(params),
+    queryFn: ({ signal }) => postsListPosts(params, signal),
+    ...options,
+  });
 
 export const usePostsGetPost = <TData = Post>(
   postId: string,
   options?: Omit<UseQueryOptions<Post, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ ...postDetailOptions(postId), ...options });
+  useQuery({
+    queryKey: getPostsGetPostQueryKey(postId),
+    queryFn: ({ signal }) => postsGetPost(postId, signal),
+    ...options,
+  });
 
 export const usePostsCreatePost = (
   options?: UseMutationOptions<Post, ApiError, CreatePostRequest>
@@ -95,21 +103,33 @@ export const usePostsGetMyPosts = <TData = FeedResponse>(
   params?: CursorParams,
   options?: Omit<UseQueryOptions<FeedResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ ...myPostsOptions(params), ...options });
+  useQuery({
+    queryKey: getPostsGetMyPostsQueryKey(params),
+    queryFn: ({ signal }) => postsGetMyPosts(params, signal),
+    ...options,
+  });
 
 export const usePostsGetPostsByUser = <TData = FeedResponse>(
   userId: string,
   params?: CursorParams,
   options?: Omit<UseQueryOptions<FeedResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ ...postsByUserOptions(userId, params), ...options });
+  useQuery({
+    queryKey: getPostsGetPostsByUserQueryKey(userId, params),
+    queryFn: ({ signal }) => postsGetPostsByUser(userId, params, signal),
+    ...options,
+  });
 
 export const usePostsGetPostComments = <TData = CommentResponse>(
   postId: string,
   params?: CursorParams,
   options?: Omit<UseQueryOptions<CommentResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ ...postCommentsOptions(postId, params), ...options });
+  useQuery({
+    queryKey: getPostsGetPostCommentsQueryKey(postId, params),
+    queryFn: ({ signal }) => postsGetPostComments(postId, params, signal),
+    ...options,
+  });
 
 // Infinite query variants for feed-like pagination
 export const usePostsListPostsInfinite = (

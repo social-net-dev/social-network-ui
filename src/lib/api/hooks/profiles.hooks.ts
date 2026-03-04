@@ -15,4 +15,8 @@ export const useProfilesGetProfile = <TData = UserPublic>(
   username: string,
   options?: Omit<UseQueryOptions<UserPublic, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ ...profileDetailOptions(username), ...options });
+  useQuery({
+    queryKey: getProfilesGetProfileQueryKey(username),
+    queryFn: ({ signal }) => profilesGetProfile(username, signal),
+    ...options,
+  });
