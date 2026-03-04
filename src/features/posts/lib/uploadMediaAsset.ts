@@ -48,9 +48,13 @@ async function uploadFileToPresignedUrl(
     for (const [name, value] of serverHeaders) {
       if (name !== 'host') headers.set(name, value)
     }
-    if (!headers.has('content-type')) {
-      headers.set('content-type', init.content_type)
-    }
+  }
+
+  // Always send Content-Type so R2 stores the correct MIME type for the object,
+  // regardless of whether it appears in X-Amz-SignedHeaders.
+  if (!headers.has('content-type')) {
+    const ct = serverHeaders.get('content-type') || init.content_type
+    if (ct) headers.set('content-type', ct)
   }
 
   const resp = await fetch(init.upload_url, {

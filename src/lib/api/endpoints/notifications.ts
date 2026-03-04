@@ -1,4 +1,5 @@
 import { customInstance } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import type { Notification, UnreadCountResponse, NotificationListResponse } from '../types';
 
 interface CursorParams {
@@ -22,10 +23,10 @@ export const notificationsDeleteNotification = (notificationId: string, signal?:
   customInstance({ url: `/notifications/${notificationId}`, method: 'DELETE', signal });
 
 export const getNotificationsListNotificationsQueryKey = (params?: CursorParams) =>
-  ['/notifications/', ...(params ? [params] : [])] as const;
+  queryKeys.notifications.list(params);
 
 export const getNotificationsUnreadCountQueryKey = () =>
-  ['/notifications/unread-count'] as const;
+  queryKeys.notifications.unreadCount();
 
 // Re-export for convenience
 export type { Notification };

@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, queryOptions } from '@tanstack/react-query';
 import type { UseInfiniteQueryOptions } from '@tanstack/react-query';
 import type { FeedResponse, ApiError } from '../types';
 import { feedGetFeed, getFeedGetFeedQueryKey } from '../endpoints/feed';
@@ -6,6 +6,12 @@ import type { FeedGetFeedParams } from '../endpoints/feed';
 
 export { getFeedGetFeedQueryKey } from '../endpoints/feed';
 export type { FeedGetFeedParams } from '../endpoints/feed';
+
+export const feedInfiniteOptions = (params?: FeedGetFeedParams) =>
+  queryOptions({
+    queryKey: getFeedGetFeedQueryKey(params),
+    queryFn: ({ signal }) => feedGetFeed(params, signal),
+  });
 
 export const useFeedGetFeed = (
   params?: FeedGetFeedParams,

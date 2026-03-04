@@ -1,4 +1,5 @@
 import { customInstance } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import type { PostReaction, CommentReaction, ReactRequest, CursorPaginatedResponse, ReactionType } from '../types';
 
 export interface GetPostReactionsParams {
@@ -23,4 +24,4 @@ export const reactionsUnreactComment = (commentId: string, signal?: AbortSignal)
   customInstance({ url: `/comments/${commentId}/reactions`, method: 'DELETE', signal });
 
 export const getReactionsGetPostReactionsQueryKey = (postId: string, params?: GetPostReactionsParams) =>
-  [`/posts/${postId}/reactions`, ...(params ? [params] : [])] as const;
+  queryKeys.posts.reactions(postId, params);

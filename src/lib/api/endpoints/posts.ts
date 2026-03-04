@@ -1,4 +1,5 @@
 import { customInstance } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import type { FeedResponse, Post, CommentResponse, CreatePostRequest, UpdatePostRequest } from '../types';
 
 export interface CursorParams {
@@ -31,16 +32,16 @@ export const postsGetPostComments = (postId: string, params?: CursorParams, sign
   customInstance({ url: `/posts/${postId}/comments`, method: 'GET', params, signal });
 
 export const getPostsListPostsQueryKey = (params?: CursorParams) =>
-  ['/posts/', ...(params ? [params] : [])] as const;
+  queryKeys.posts.list(params);
 
 export const getPostsGetPostQueryKey = (postId: string) =>
-  [`/posts/${postId}`] as const;
+  queryKeys.posts.detail(postId);
 
 export const getPostsGetMyPostsQueryKey = (params?: CursorParams) =>
-  ['/posts/me', ...(params ? [params] : [])] as const;
+  queryKeys.posts.me(params);
 
 export const getPostsGetPostsByUserQueryKey = (userId: string, params?: CursorParams) =>
-  [`/posts/users/${userId}`, ...(params ? [params] : [])] as const;
+  queryKeys.posts.byUser(userId, params);
 
 export const getPostsGetPostCommentsQueryKey = (postId: string, params?: CursorParams) =>
-  [`/posts/${postId}/comments`, ...(params ? [params] : [])] as const;
+  queryKeys.posts.comments(postId, params);

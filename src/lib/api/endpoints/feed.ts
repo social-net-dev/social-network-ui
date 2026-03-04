@@ -1,4 +1,5 @@
 import { customInstance } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import type { FeedResponse } from '../types';
 
 export interface FeedGetFeedParams {
@@ -12,4 +13,4 @@ export const feedGetFeed = (params?: FeedGetFeedParams, signal?: AbortSignal): P
   customInstance({ url: '/feed', method: 'GET', params, signal });
 
 export const getFeedGetFeedQueryKey = (params?: FeedGetFeedParams) =>
-  ['/feed', ...(params ? [params] : [])] as const;
+  queryKeys.feed.infinite(params);

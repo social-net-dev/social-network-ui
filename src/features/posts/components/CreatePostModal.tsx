@@ -53,6 +53,7 @@ export function CreatePostModal({
   const [content, setContent] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [postType, setPostType] = useState(initialPostType);
   const [fieldId, setFieldId] = useState("");
   const [privacy, setPrivacy] = useState<PrivacyValue>("PUBLIC");
@@ -92,12 +93,18 @@ export function CreatePostModal({
   const handleSubmit = async () => {
     if (!content.trim() && files.length === 0) return;
     try {
+      setSubmitError(null);
       setIsSubmitting(true);
       await onSubmit(content, files, [], postType, fieldId);
       handleReset();
       onOpenChange(false);
     } catch (err) {
       console.error("Failed to create post:", err);
+      setSubmitError(
+        files.length > 0
+          ? "Đăng bài thất bại: không thể tải lên ảnh/video. Vui lòng thử lại."
+          : "Đăng bài thất bại. Vui lòng thử lại."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -116,6 +123,7 @@ export function CreatePostModal({
     setPostType("SOCIAL");
     setFieldId("");
     setPrivacy("PUBLIC");
+    setSubmitError(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -271,7 +279,11 @@ export function CreatePostModal({
         <Separator />
 
         {/* Actions footer */}
-        <div className="px-4 py-3 shrink-0 flex items-center gap-2">
+        <div className="px-4 py-3 shrink-0 flex flex-col gap-2">
+          {submitError && (
+            <p className="text-xs text-destructive text-center">{submitError}</p>
+          )}
+          <div className="flex items-center gap-2">
           {/* Media buttons */}
           <div className="flex items-center gap-0.5">
             <Button
@@ -319,6 +331,7 @@ export function CreatePostModal({
               "Đăng bài"
             )}
           </Button>
+          </div>
         </div>
 
         <input

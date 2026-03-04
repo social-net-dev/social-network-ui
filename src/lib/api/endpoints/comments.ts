@@ -1,4 +1,5 @@
 import { customInstance } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import type { Comment, CommentResponse, CreateCommentRequest, UpdateCommentRequest, ReplyRequest, CursorPaginatedResponse } from '../types';
 
 interface CursorParams {
@@ -22,7 +23,7 @@ export const commentsGetReplies = (commentId: string, params?: CursorParams, sig
   customInstance({ url: `/comments/${commentId}/replies`, method: 'GET', params, signal });
 
 export const getCommentsGetRepliesQueryKey = (commentId: string, params?: CursorParams) =>
-  [`/comments/${commentId}/replies`, ...(params ? [params] : [])] as const;
+  queryKeys.comments.replies(commentId, params);
 
 // Re-export CommentResponse type for convenience
 export type { CommentResponse };

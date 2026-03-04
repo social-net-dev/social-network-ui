@@ -1,4 +1,5 @@
 import { customInstance } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import type { UserPublic, CursorPaginatedResponse } from '../types';
 
 interface CursorParams {
@@ -19,7 +20,7 @@ export const followsGetFollowing = (userId: string, params?: CursorParams, signa
   customInstance({ url: `/users/${userId}/following`, method: 'GET', params, signal });
 
 export const getFollowsGetFollowersQueryKey = (userId: string, params?: CursorParams) =>
-  [`/users/${userId}/followers`, ...(params ? [params] : [])] as const;
+  queryKeys.users.followers(userId, params);
 
 export const getFollowsGetFollowingQueryKey = (userId: string, params?: CursorParams) =>
-  [`/users/${userId}/following`, ...(params ? [params] : [])] as const;
+  queryKeys.users.following(userId, params);

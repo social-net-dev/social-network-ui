@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, queryOptions } from '@tanstack/react-query';
 import type { UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import type {
   UserMe,
@@ -24,19 +24,32 @@ import {
   usersReactivate,
   usersCreateReactivationRequest,
 } from '../endpoints/users';
+import { queryKeys } from '@/lib/queryKeys';
 
-export const getUsersGetMeQueryKey = () => ['/users/me'] as const;
-export const getUsersGetPrivacyQueryKey = () => ['/users/me/privacy'] as const;
+export const getUsersGetMeQueryKey = () => queryKeys.users.me();
+export const getUsersGetPrivacyQueryKey = () => queryKeys.users.privacy();
+
+export const usersMeOptions = () =>
+  queryOptions({
+    queryKey: getUsersGetMeQueryKey(),
+    queryFn: ({ signal }) => usersGetMe(signal),
+  });
+
+export const usersPrivacyOptions = () =>
+  queryOptions({
+    queryKey: getUsersGetPrivacyQueryKey(),
+    queryFn: ({ signal }) => usersGetPrivacy(signal),
+  });
 
 export const useUsersGetMe = <TData = UserMe>(
   options?: Omit<UseQueryOptions<UserMe, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ queryKey: getUsersGetMeQueryKey(), queryFn: ({ signal }) => usersGetMe(signal), ...options });
+  useQuery({ ...usersMeOptions(), ...options });
 
 export const useUsersGetPrivacy = <TData = UserPrivacy>(
   options?: Omit<UseQueryOptions<UserPrivacy, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ queryKey: getUsersGetPrivacyQueryKey(), queryFn: ({ signal }) => usersGetPrivacy(signal), ...options });
+  useQuery({ ...usersPrivacyOptions(), ...options });
 
 export const useUsersUpdateProfile = (
   options?: UseMutationOptions<UserMe, ApiError, UpdateProfileRequest>

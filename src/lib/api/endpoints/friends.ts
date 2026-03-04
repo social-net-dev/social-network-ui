@@ -1,4 +1,5 @@
 import { customInstance } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import type { Friend, FriendRequest, FriendshipStatus, CreateFriendRequestRequest, PaginatedResponse } from '../types';
 
 export interface PaginationParams {
@@ -34,13 +35,13 @@ export const friendsRemoveFriend = (friendId: string, signal?: AbortSignal): Pro
   customInstance({ url: `/friends/${friendId}`, method: 'DELETE', signal });
 
 export const getFriendsListFriendsQueryKey = (params?: PaginationParams) =>
-  ['/friends/', ...(params ? [params] : [])] as const;
+  queryKeys.friends.list(params);
 
 export const getFriendsListIncomingRequestsQueryKey = (params?: PaginationParams) =>
-  ['/friends/requests/incoming', ...(params ? [params] : [])] as const;
+  queryKeys.friends.incoming(params);
 
 export const getFriendsListOutgoingRequestsQueryKey = (params?: PaginationParams) =>
-  ['/friends/requests/outgoing', ...(params ? [params] : [])] as const;
+  queryKeys.friends.outgoing(params);
 
 export const getFriendsCheckFriendshipQueryKey = (userId: string) =>
-  [`/friends/check/${userId}`] as const;
+  queryKeys.friends.status(userId);

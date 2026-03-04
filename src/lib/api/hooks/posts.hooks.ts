@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useInfiniteQuery, queryOptions } from '@tanstack/react-query';
 import type { UseQueryOptions, UseMutationOptions, UseInfiniteQueryOptions } from '@tanstack/react-query';
 import type { FeedResponse, Post, CommentResponse, CreatePostRequest, UpdatePostRequest, ApiError } from '../types';
 import {
@@ -27,17 +27,54 @@ export {
 } from '../endpoints/posts';
 export type { CursorParams } from '../endpoints/posts';
 
+// ── queryOptions helpers (v5 best practice) ─────────────────────────────────
+// Use these for prefetching, type-safe getQueryData, and sharing config:
+//   queryClient.prefetchQuery(postDetailOptions('123'))
+//   queryClient.getQueryData(postDetailOptions('123').queryKey) // → Post | undefined
+
+export const postListOptions = (params?: CursorParams) =>
+  queryOptions({
+    queryKey: getPostsListPostsQueryKey(params),
+    queryFn: ({ signal }) => postsListPosts(params, signal),
+  });
+
+export const postDetailOptions = (postId: string) =>
+  queryOptions({
+    queryKey: getPostsGetPostQueryKey(postId),
+    queryFn: ({ signal }) => postsGetPost(postId, signal),
+  });
+
+export const myPostsOptions = (params?: CursorParams) =>
+  queryOptions({
+    queryKey: getPostsGetMyPostsQueryKey(params),
+    queryFn: ({ signal }) => postsGetMyPosts(params, signal),
+  });
+
+export const postsByUserOptions = (userId: string, params?: CursorParams) =>
+  queryOptions({
+    queryKey: getPostsGetPostsByUserQueryKey(userId, params),
+    queryFn: ({ signal }) => postsGetPostsByUser(userId, params, signal),
+  });
+
+export const postCommentsOptions = (postId: string, params?: CursorParams) =>
+  queryOptions({
+    queryKey: getPostsGetPostCommentsQueryKey(postId, params),
+    queryFn: ({ signal }) => postsGetPostComments(postId, params, signal),
+  });
+
+// ── Hooks ────────────────────────────────────────────────────────────────────
+
 export const usePostsListPosts = <TData = FeedResponse>(
   params?: CursorParams,
   options?: Omit<UseQueryOptions<FeedResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ queryKey: getPostsListPostsQueryKey(params), queryFn: ({ signal }) => postsListPosts(params, signal), ...options });
+  useQuery({ ...postListOptions(params), ...options });
 
 export const usePostsGetPost = <TData = Post>(
   postId: string,
   options?: Omit<UseQueryOptions<Post, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ queryKey: getPostsGetPostQueryKey(postId), queryFn: ({ signal }) => postsGetPost(postId, signal), ...options });
+  useQuery({ ...postDetailOptions(postId), ...options });
 
 export const usePostsCreatePost = (
   options?: UseMutationOptions<Post, ApiError, CreatePostRequest>
@@ -58,21 +95,21 @@ export const usePostsGetMyPosts = <TData = FeedResponse>(
   params?: CursorParams,
   options?: Omit<UseQueryOptions<FeedResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ queryKey: getPostsGetMyPostsQueryKey(params), queryFn: ({ signal }) => postsGetMyPosts(params, signal), ...options });
+  useQuery({ ...myPostsOptions(params), ...options });
 
 export const usePostsGetPostsByUser = <TData = FeedResponse>(
   userId: string,
   params?: CursorParams,
   options?: Omit<UseQueryOptions<FeedResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ queryKey: getPostsGetPostsByUserQueryKey(userId, params), queryFn: ({ signal }) => postsGetPostsByUser(userId, params, signal), ...options });
+  useQuery({ ...postsByUserOptions(userId, params), ...options });
 
 export const usePostsGetPostComments = <TData = CommentResponse>(
   postId: string,
   params?: CursorParams,
   options?: Omit<UseQueryOptions<CommentResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ queryKey: getPostsGetPostCommentsQueryKey(postId, params), queryFn: ({ signal }) => postsGetPostComments(postId, params, signal), ...options });
+  useQuery({ ...postCommentsOptions(postId, params), ...options });
 
 // Infinite query variants for feed-like pagination
 export const usePostsListPostsInfinite = (

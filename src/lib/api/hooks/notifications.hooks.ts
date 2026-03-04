@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, queryOptions } from '@tanstack/react-query';
 import type { UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import type { UnreadCountResponse, NotificationListResponse, ApiError } from '../types';
 import {
@@ -14,16 +14,28 @@ import type { CursorParams } from '../endpoints/posts';
 
 export { getNotificationsListNotificationsQueryKey, getNotificationsUnreadCountQueryKey } from '../endpoints/notifications';
 
+export const notificationsListOptions = (params?: CursorParams) =>
+  queryOptions({
+    queryKey: getNotificationsListNotificationsQueryKey(params),
+    queryFn: ({ signal }) => notificationsListNotifications(params, signal),
+  });
+
+export const notificationsUnreadCountOptions = () =>
+  queryOptions({
+    queryKey: getNotificationsUnreadCountQueryKey(),
+    queryFn: ({ signal }) => notificationsUnreadCount(signal),
+  });
+
 export const useNotificationsListNotifications = <TData = NotificationListResponse>(
   params?: CursorParams,
   options?: Omit<UseQueryOptions<NotificationListResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ queryKey: getNotificationsListNotificationsQueryKey(params), queryFn: ({ signal }) => notificationsListNotifications(params, signal), ...options });
+  useQuery({ ...notificationsListOptions(params), ...options });
 
 export const useNotificationsUnreadCount = <TData = UnreadCountResponse>(
   options?: Omit<UseQueryOptions<UnreadCountResponse, ApiError, TData>, 'queryKey' | 'queryFn'>
 ) =>
-  useQuery({ queryKey: getNotificationsUnreadCountQueryKey(), queryFn: ({ signal }) => notificationsUnreadCount(signal), ...options });
+  useQuery({ ...notificationsUnreadCountOptions(), ...options });
 
 export const useNotificationsMarkAsRead = (
   options?: UseMutationOptions<{ message: string }, ApiError, { notificationId: string }>

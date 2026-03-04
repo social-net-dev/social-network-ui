@@ -1,4 +1,5 @@
 import { customInstance } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import type { SearchUsersResponse } from '../types';
 
 export interface SearchUsersParams {
@@ -11,4 +12,4 @@ export const searchSearchUsers = (params: SearchUsersParams, signal?: AbortSigna
   customInstance({ url: '/search/users', method: 'GET', params, signal });
 
 export const getSearchSearchUsersQueryKey = (params: SearchUsersParams) =>
-  ['/search/users', params] as const;
+  queryKeys.search.users(params);
