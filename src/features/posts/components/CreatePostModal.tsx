@@ -182,7 +182,7 @@ export function CreatePostModal({
           <div className="flex items-center gap-3 px-4 pt-3 pb-2">
             <Avatar user={user as any} size="md" />
             <div className="flex flex-col gap-0.5">
-              <span className="font-semibold text-sm leading-tight">{user?.displayName || user?.email}</span>
+              <span className="font-semibold text-sm leading-tight">{user?.display_name || user?.email}</span>
               <PrivacySelector value={privacy} onChange={setPrivacy} />
             </div>
           </div>

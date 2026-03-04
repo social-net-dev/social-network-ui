@@ -22,7 +22,7 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
   // Global WS client to listen for messages across rooms (so unread badges update immediately)
   useEffect(() => {
     if (!userId) return;
-    const ws = new ChatClient({ wsUrl: import.meta.env.DEV ? 'ws://localhost:8001/ws' : import.meta.env.VITE_WS_URL || '', restBase: import.meta.env.DEV ? 'http://localhost:8001' : import.meta.env.VITE_API_URL_MESSAGE || '', room: '', userId });
+    const ws = new ChatClient({ wsUrl: import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'ws://localhost:8002/ws' : ''), restBase: import.meta.env.VITE_API_URL_MESSAGE || (import.meta.env.DEV ? 'http://localhost:8002' : ''), room: '', userId });
     ws.onMessage = (m: any) => {
       try {
         if (m && m.room_id) {

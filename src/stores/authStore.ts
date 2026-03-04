@@ -4,18 +4,31 @@ import { authLogout } from '@/lib/api/endpoints/auth';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { useE2EEStore } from './e2eeStore';
 import { callSetPublicKey } from '@/features/message/services/messageApi';
+import type { User } from '@/lib/api/types';
 // import { clearAllE2EEKeys } from '@/features/message/lib/e2ee'; // NOT USED - keys must persist
 
+/** Flexible auth payload — handles both backend snake_case and internal camelCase formats. */
+interface AuthPayload {
+  user?: User | null;
+  token?: string;
+  refreshToken?: string;
+  tenantSlug?: string;
+  /** Backend format */
+  access?: string;
+  refresh?: string;
+  tenant_slug?: string;
+}
+
 interface AuthState {
-  user: any | null; // Keep flexible until types are fully consolidated
+  user: User | null;
   token: string | null;
   refreshToken: string | null;
   tenantSlug?: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   getUserId: () => string | null;
-  setAuth: (authResponse: any) => void;
-  setUser: (user: any | null) => void;
+  setAuth: (authResponse: AuthPayload) => void;
+  setUser: (user: User | null) => void;
   logout: () => Promise<void>;
   setLoading: (loading: boolean) => void;
 }
@@ -34,14 +47,10 @@ export const useAuthStore = create<AuthState>()(
         return tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
       },
       setAuth: authResponse => {
-        console.log('[authStore] setAuth received:', authResponse);
-
         // Handle both formats: backend (access/refresh/tenant_slug) and app (token/refreshToken/tenantSlug)
         const token = authResponse.token || authResponse.access;
         const refreshToken = authResponse.refreshToken || authResponse.refresh;
         const tenantSlug = authResponse.tenantSlug || authResponse.tenant_slug;
-
-        console.log('[authStore] Extracted values:', { token: token?.substring(0, 20) + '...', refreshToken: '...', tenantSlug });
 
         if (token) {
           localStorage.setItem('auth_token', token);
@@ -51,7 +60,6 @@ export const useAuthStore = create<AuthState>()(
         }
         if (tenantSlug) {
           localStorage.setItem('tenant_slug', tenantSlug);
-          console.log('[authStore] ✅ Saved tenant_slug to localStorage:', tenantSlug);
         }
 
         set({
@@ -71,7 +79,6 @@ export const useAuthStore = create<AuthState>()(
             const publicKey = useE2EEStore.getState().publicKeyString;
             if (publicKey) {
               await callSetPublicKey({ user_id: uid, public_key: publicKey });
-              console.log('[authStore] Uploaded public key to messaging backend for user', uid);
             }
           } catch (err) {
             console.warn('[authStore] Failed to upload public key after login:', err);

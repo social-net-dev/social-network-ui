@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Calendar, Edit2, MoreHorizontal, Camera, Loader2, UserPlus, UserCheck, MapPin, FileText, Users, Settings, MessageCircle } from "lucide-react"
 import { VerificationBadge } from "@/features/shared/components/VerificationBadge"
-import { useRef } from "react"
+import { useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { useProfile } from "../hooks/useProfile"
 import { useQueryClient } from "@tanstack/react-query"
@@ -13,6 +13,8 @@ import { getProfilesGetProfileQueryKey } from "@/lib/api/hooks/profiles.hooks"
 import { toast } from "sonner"
 import { getDefaultAvatar } from "@/lib/utils/api"
 import type { UserPublic, UserMe, ApiErrorResponse } from "@/lib/api/types"
+import { useAuthStore } from "@/stores/authStore"
+import { callGetDMRoom } from "@/features/message/services/messageApi"
 
 type UserPublicViewerContext = NonNullable<UserPublic['viewer_context']>
 
@@ -55,6 +57,17 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
   const queryClient = useQueryClient()
   const sendRequestMutation = useFriendsSendRequest()
   const isFriendActionPending = sendRequestMutation.isPending
+  const currentUserId = useAuthStore(state => state.user?.id)
+
+  const handleOpenDM = useCallback(async () => {
+    try {
+      const resp = await callGetDMRoom(currentUserId ?? null, profile.id ?? null)
+      const roomId = (resp.data as any)?.id ?? (resp.data as any)?.room_id
+      navigate(roomId ? `/messages/${roomId}` : '/messages')
+    } catch {
+      navigate('/messages')
+    }
+  }, [currentUserId, profile.id, navigate])
 
   // Type guard to check if profile has viewer_context (UserPublic)
   const hasViewerContext = (profile: ProfileUser): profile is UserPublic & { viewer_context: UserPublicViewerContext } => {
@@ -218,7 +231,7 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
                       size="sm"
                       variant="outline"
                       className="h-9 px-4 rounded-lg font-medium text-sm gap-1.5"
-                      onClick={() => navigate(`/messages/${profile.id}`)}
+                      onClick={handleOpenDM}
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
                       Nhắn tin

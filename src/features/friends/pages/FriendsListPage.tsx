@@ -18,12 +18,29 @@ import {
 } from "@/lib/api/hooks/friends.hooks";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/stores/authStore";
+import { callGetDMRoom } from "@/features/message/services/messageApi";
 
 export function FriendsListPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const currentUserId = useAuthStore(state => state.user?.id);
+
+  const handleOpenDM = useCallback(async (friendUserId: string) => {
+    try {
+      const resp = await callGetDMRoom(currentUserId ?? null, friendUserId);
+      const roomId = (resp.data as any)?.id ?? (resp.data as any)?.room_id;
+      if (roomId) {
+        navigate(`/messages/${roomId}`);
+      } else {
+        navigate('/messages');
+      }
+    } catch {
+      navigate('/messages');
+    }
+  }, [currentUserId, navigate]);
 
   const { data, isLoading, isError } = useFriendsListFriends(
     { limit: 100 } as any,
@@ -155,7 +172,7 @@ export function FriendsListPage() {
                     variant="outline"
                     size="sm"
                     className="rounded-full"
-                    onClick={() => navigate(`/messages?user=${friend.user.username}`)}
+                    onClick={() => handleOpenDM(friend.user.id)}
                   >
                     <MessageCircle className="h-4 w-4 mr-1" />
                     Nhắn tin

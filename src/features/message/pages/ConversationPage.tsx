@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useConversations } from '../hooks/useConversations';
 import { useChat } from '../hooks/useChat';
 import type { MessageOut } from '../types/message.types';
 import { useRoomManager } from '../hooks/useRoomManager';
@@ -23,9 +22,9 @@ import { E2EEOverlay } from '../components/E2EEOverlay';
 const ConversationPage: React.FC = () => {
   const params = useParams<{ conversationId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { conversations } = useConversations();
   const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
+  const getUserId = useAuthStore(state => state.getUserId);
   const endRef = useRef<HTMLDivElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const prevMessageCountRef = useRef<number>(0);
@@ -43,9 +42,10 @@ const ConversationPage: React.FC = () => {
   const resetUnread = useMessageStore(state => state.resetUnread);
   const incrementUnread = useMessageStore(state => state.incrementUnread);
 
-  // Resolve userId and room: prefer URL query params
-  const resolvedUserId = searchParams.get('user_id') ?? user?.id ?? 'anonymous';
-  const resolvedRoom = overrideRoomId ?? searchParams.get('room_id') ?? selectedConversationId ?? 'default';
+  // Prefer getUserId() (UUID from tenantSlug) over user.id which may be non-UUID
+  const resolvedUserId = searchParams.get('user_id') ?? getUserId() ?? user?.id ?? '';
+  // resolvedRoom is empty string (not 'default') when no room selected to avoid invalid UUID calls
+  const resolvedRoom = overrideRoomId ?? searchParams.get('room_id') ?? selectedConversationId ?? '';
 
   // Dùng useCallback để tránh stale closure
   const handleReactionEvent = React.useCallback((data: any) => {
@@ -109,8 +109,8 @@ const ConversationPage: React.FC = () => {
     room: resolvedRoom,
     userId: resolvedUserId,
 
-    wsUrl: import.meta.env.DEV ? 'ws://localhost:8001/ws' : '',
-    restBase: import.meta.env.DEV ? 'http://localhost:8001' : '',
+    wsUrl: import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'ws://localhost:8002/ws' : ''),
+    restBase: import.meta.env.VITE_API_URL_MESSAGE || (import.meta.env.DEV ? 'http://localhost:8002' : ''),
     onReactionEvent: handleReactionEvent,
     onExternalMessage: (msg: MessageOut) => {
       if (msg.room_id && msg.room_id !== resolvedRoom) {
@@ -159,7 +159,7 @@ const ConversationPage: React.FC = () => {
   });
 
   // Room manager hook
-  const { rooms, loadRooms } = useRoomManager({ userId: resolvedUserId });
+  const { rooms, loadRooms, createRoom } = useRoomManager({ userId: resolvedUserId });
 
   // Message manager hook
   const { setFetchedMessages, combinedMessages, pinnedMessages, regularMessages, loadMessages } = useMessageManager({
@@ -398,13 +398,13 @@ const ConversationPage: React.FC = () => {
     }
   }, [params.conversationId, selectedConversationId]);
 
-  // When conversations load and nothing is selected, pick the first
+  // When rooms load and nothing is selected, pick the first
   useEffect(() => {
-    if (!selectedConversationId && conversations.length > 0) {
-      setSelectedConversationId(conversations[0].id);
-      navigate(`/messages/${conversations[0].id}`, { replace: true });
+    if (!selectedConversationId && rooms.length > 0) {
+      setSelectedConversationId(rooms[0].room_id);
+      navigate(`/messages/${rooms[0].room_id}`, { replace: true });
     }
-  }, [conversations, selectedConversationId, navigate]);
+  }, [rooms, selectedConversationId, navigate]);
 
   // Keep local overrideRoomId in sync with selectedConversationId
   useEffect(() => {
@@ -630,7 +630,10 @@ const ConversationPage: React.FC = () => {
     // Use dynamic left offset (style) so we respect the main sidebar open/collapse state
     <div style={{ left: leftOffset }} className="fixed top-16 right-0 bottom-0 flex gap-4 overflow-hidden p-0">
       {/* Left: Room sidebar */}
-      <RoomSidebar rooms={rooms} selectedRoomId={selectedConversationId} userId={resolvedUserId} onRoomSelect={handleRoomSelect} />
+      <RoomSidebar rooms={rooms} selectedRoomId={selectedConversationId} userId={resolvedUserId} onRoomSelect={handleRoomSelect} onCreateRoom={async (name, memberIds) => {
+        const roomId = await createRoom(name, memberIds);
+        if (roomId) handleRoomSelect(roomId);
+      }} />
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Sync notice disabled per user request */}
@@ -646,8 +649,8 @@ const ConversationPage: React.FC = () => {
             chatStatus={chatStatus}
             lastError={lastError}
             conversationTitle={
-              // Prefer server-provided room name, then conversations placeholder
-              rooms.find(r => r.room_id === selectedConversationId)?.name || conversations.find(c => c.id === selectedConversationId)?.title
+              // Use server-provided room name
+              rooms.find(r => r.room_id === selectedConversationId)?.name
             }
             sendReaction={sendReaction}
             onRefresh={refreshRoomMembers}

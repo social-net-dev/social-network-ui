@@ -4,8 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Calendar, School, Heart, MessageCircle, Share2, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 import type { User, UserPublic } from '@/lib/api/types';
+import { useAuthStore } from '@/stores/authStore';
+import { callGetDMRoom } from '@/features/message/services/messageApi';
 
 interface ProfileIntroCardProps {
   profile: User | UserPublic | null | undefined;
@@ -15,6 +18,17 @@ interface ProfileIntroCardProps {
 export function ProfileIntroCard({ profile, isCurrentUser = false }: ProfileIntroCardProps) {
   const navigate = useNavigate();
   const personalInfo = profile?.personal_info;
+  const currentUserId = useAuthStore(state => state.user?.id);
+
+  const handleOpenDM = useCallback(async () => {
+    try {
+      const resp = await callGetDMRoom(currentUserId ?? null, profile?.id ?? null);
+      const roomId = (resp.data as any)?.id ?? (resp.data as any)?.room_id;
+      navigate(roomId ? `/messages/${roomId}` : '/messages');
+    } catch {
+      navigate('/messages');
+    }
+  }, [currentUserId, profile?.id, navigate]);
 
   const handleShare = () => {
     const url = window.location.href;
@@ -137,7 +151,7 @@ export function ProfileIntroCard({ profile, isCurrentUser = false }: ProfileIntr
             <div className="grid grid-cols-2 gap-2">
               <Button
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-9 text-sm gap-1.5"
-                onClick={() => navigate(`/messages/${profile.id}`)}
+                onClick={handleOpenDM}
               >
                 <MessageCircle className="w-3.5 h-3.5" />
                 Nhắn tin

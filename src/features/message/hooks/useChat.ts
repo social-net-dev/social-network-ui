@@ -29,11 +29,16 @@ export function useChat({
   const clientRef = useRef<ChatClient | null>(null);
 
   useEffect(() => {
+    // Don't connect if room or userId is not yet resolved
+    if (!room || !userId) {
+      setMessages([]);
+      return;
+    }
     // clear previous room messages when room/user changes to avoid cross-room leakage
     setMessages([]);
-    const resolvedWs = wsUrl || import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'ws://localhost:8001/ws' : 'wss://api.example.com/ws');
+    const resolvedWs = wsUrl || import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'ws://localhost:8002/ws' : 'wss://api.example.com/ws');
 
-    const resolvedRest = restBase || import.meta.env.VITE_API_URL_MESSAGE || (import.meta.env.DEV ? 'http://localhost:8001' : 'https://api.example.com');
+    const resolvedRest = restBase || import.meta.env.VITE_API_URL_MESSAGE || (import.meta.env.DEV ? 'http://localhost:8002' : 'https://api.example.com');
 
     console.log('\n🔄 ==================== useChat EFFECT ====================');
     console.log('[useChat] 🔌 Setting up WebSocket for:', {

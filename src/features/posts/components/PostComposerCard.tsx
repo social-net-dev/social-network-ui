@@ -17,7 +17,7 @@ const quickActions = [
 
 export function PostComposerCard({ onOpen }: PostComposerCardProps) {
   const { user } = useAuthStore();
-  const firstName = user?.displayName?.split(" ").at(-1) || user?.email?.split("@")[0] || "bạn";
+  const firstName = user?.display_name?.split(" ").at(-1) || user?.email?.split("@")[0] || "bạn";
 
   return (
     <Card className="composer-card border border-border/60 shadow-sm bg-card">
