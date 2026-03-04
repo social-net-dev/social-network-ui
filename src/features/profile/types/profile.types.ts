@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { User } from '@/lib/api/generated/model'
+import type { User } from '@/lib/api/types'
 
 /**
  * Unified Profile View (Frontend-specific)

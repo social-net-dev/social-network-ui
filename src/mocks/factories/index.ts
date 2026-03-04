@@ -8,8 +8,12 @@ import type {
   PostSummary,
   UserMe,
   UserPublic,
-} from '@/lib/api/generated/model';
-import { NotificationType, PostType, ReactionType, Visibility } from '@/lib/api/generated/model';
+} from '@/lib/api/types';
+
+const REACTION_TYPES = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'] as const;
+const POST_TYPES = ['SOCIAL', 'JOB', 'QUESTION'] as const;
+const NOTIFICATION_TYPES = ['FRIEND_REQUEST', 'FRIEND_ACCEPT', 'POST_LIKE', 'POST_COMMENT', 'COMMENT_REPLY', 'MENTION', 'SYSTEM'] as const;
+type NotificationTypeKey = typeof NOTIFICATION_TYPES[number];
 
 // Local type for Field (not in generated model)
 interface Field {
@@ -102,13 +106,13 @@ export function makePostSummary(overrides: Partial<PostSummary> = {}): PostSumma
       shares: faker.number.int({ min: 0, max: 20 }),
     },
     user_reaction: faker.helpers.arrayElement([
-      ...Object.values(ReactionType),
+      ...REACTION_TYPES,
       null,
       null,
       null,
     ]),
-    visibility: Visibility.PUBLIC,
-    post_type: faker.helpers.arrayElement(Object.values(PostType)),
+    visibility: 'PUBLIC',
+    post_type: faker.helpers.arrayElement(POST_TYPES),
     created_at: baseDate.toISOString(),
     updated_at: new Date(baseDate.getTime() + faker.number.int({ min: 0, max: 3_600_000 })).toISOString(),
     ...overrides,
@@ -188,15 +192,15 @@ export function makeNotification(
   actor: Author,
   overrides: Partial<Notification> = {},
 ): Notification {
-  const type = faker.helpers.arrayElement(Object.values(NotificationType));
-  const messages: Record<NotificationType, string> = {
-    [NotificationType.FRIEND_REQUEST]: `${actor.display_name} đã gửi lời mời kết bạn cho bạn`,
-    [NotificationType.FRIEND_ACCEPT]: `${actor.display_name} đã chấp nhận lời mời kết bạn`,
-    [NotificationType.POST_LIKE]: `${actor.display_name} đã thích bài viết của bạn`,
-    [NotificationType.POST_COMMENT]: `${actor.display_name} đã bình luận về bài viết của bạn`,
-    [NotificationType.COMMENT_REPLY]: `${actor.display_name} đã trả lời bình luận của bạn`,
-    [NotificationType.MENTION]: `${actor.display_name} đã đề cập đến bạn`,
-    [NotificationType.SYSTEM]: 'Thông báo hệ thống: Hoàn thiện profile để kết nối dễ hơn',
+  const type = faker.helpers.arrayElement(NOTIFICATION_TYPES);
+  const messages: Record<NotificationTypeKey, string> = {
+    FRIEND_REQUEST: `${actor.display_name} đã gửi lời mời kết bạn cho bạn`,
+    FRIEND_ACCEPT: `${actor.display_name} đã chấp nhận lời mời kết bạn`,
+    POST_LIKE: `${actor.display_name} đã thích bài viết của bạn`,
+    POST_COMMENT: `${actor.display_name} đã bình luận về bài viết của bạn`,
+    COMMENT_REPLY: `${actor.display_name} đã trả lời bình luận của bạn`,
+    MENTION: `${actor.display_name} đã đề cập đến bạn`,
+    SYSTEM: 'Thông báo hệ thống: Hoàn thiện profile để kết nối dễ hơn',
   };
   return {
     id: makeId('notif'),

@@ -8,11 +8,13 @@ import { useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useProfile } from "../hooks/useProfile"
 import { useQueryClient } from "@tanstack/react-query"
-import { useFriendsSendRequest, getFriendsListFriendsQueryKey, getFriendsListOutgoingRequestsQueryKey } from "@/lib/api/generated/friends/friends"
-import { getProfilesGetProfileQueryKey } from "@/lib/api/generated/profiles/profiles"
+import { useFriendsSendRequest, getFriendsListFriendsQueryKey, getFriendsListOutgoingRequestsQueryKey } from "@/lib/api/hooks/friends.hooks"
+import { getProfilesGetProfileQueryKey } from "@/lib/api/hooks/profiles.hooks"
 import { toast } from "sonner"
 import { getDefaultAvatar } from "@/lib/utils/api"
-import type { UserPublic, UserMe, UserPublicViewerContext, ApiErrorResponse } from "@/lib/api/generated/model"
+import type { UserPublic, UserMe, ApiErrorResponse } from "@/lib/api/types"
+
+type UserPublicViewerContext = NonNullable<UserPublic['viewer_context']>
 
 type ProfileUser = UserPublic | UserMe
 
@@ -61,7 +63,7 @@ export function ProfileHeader({ profile, isCurrentUser = false, onEdit }: Profil
 
   const handleSendFriendRequest = async () => {
     try {
-      await sendRequestMutation.mutateAsync({ data: { addressee_username: profile.username || '' } })
+      await sendRequestMutation.mutateAsync({ addressee_username: profile.username || '' })
       toast.success("Đã gửi lời mời kết bạn")
       queryClient.invalidateQueries({ queryKey: getProfilesGetProfileQueryKey(profile.username || '') })
       queryClient.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() })

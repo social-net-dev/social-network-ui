@@ -9,7 +9,7 @@ import type {
   Comment as GeneratedComment,
   CommentStats as GeneratedCommentStats,
   PostStats as GeneratedPostStats
-} from '@/lib/api/generated/model';
+} from '@/lib/api/types';
 
 export type ProfileVisibilityResponse = {
   visibility: string;

@@ -1,44 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, Shield, Trash2, Lock, AlertTriangle, Eye, EyeOff, Loader2, Info, Calendar, Edit2, User as UserIcon, Globe, Users as UsersIcon, LockKeyhole } from 'lucide-react';
+import { Save, Shield, Trash2, Lock, Info, Calendar, Edit2, User as UserIcon, Globe, Users as UsersIcon, LockKeyhole, Loader2 } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { useE2EEStore } from '@/stores/e2eeStore';
 import { exportPrivateKey, importPrivateKey, encryptPrivateKeyWithPassphrase, decryptPrivateKeyWithPassphrase, saveKeyPair } from '@/features/message/lib/e2ee';
 import { callBackupPrivateKey, callGetPrivateKeyBackup, callGetUserPublicKey } from '@/features/message/services/messageApi';
 import { PassphraseModal } from '@/features/message/components/PassphraseModal';
 import { ChangePasswordForm } from '../components/ChangePasswordForm';
-import { useUsersDeactivate } from '@/lib/api/generated/users/users';
+import { useUsersDeactivate } from '@/lib/api/hooks/users.hooks';
 import { useAuthStore } from '@/stores/authStore';
-import type { User, UserPrivacy } from '@/lib/api/generated/model';
-
-function privacyToFlatSettings(privacy: UserPrivacy): Record<string, string> {
-  const defaults: Record<string, string> = {
-    display_name_visibility: privacy.default_visibility,
-    birth_date_visibility: privacy.default_visibility,
-    bio_visibility: privacy.default_visibility,
-    avatar_visibility: privacy.default_visibility,
-  };
-  for (const override of privacy.overrides ?? []) {
-    defaults[`${override.field}_visibility`] = override.visibility;
-  }
-  return defaults;
-}
+import type { User } from '@/lib/api/types';
+import { privacyToFlatSettings } from '../lib/privacy';
+import { DeactivateAccountDialog } from '../components/settings/DeactivateAccountDialog';
 
 export function ProfileSettingsPage() {
   const { profile: rawProfile, isLoading, updatePrivacy, isUpdating } = useProfile();
   const profile = rawProfile as User;
   const [activeTab, setActiveTab] = useState('privacy');
   const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
-  const [deactivatePassword, setDeactivatePassword] = useState('');
-  const [showDeactivatePassword, setShowDeactivatePassword] = useState(false);
-  const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
   const { logout } = useAuthStore();
   const navigate = useNavigate();
@@ -96,15 +80,13 @@ export function ProfileSettingsPage() {
   };
 
   const deactivateMutation = useUsersDeactivate({
-    mutation: {
-      onSuccess: async () => {
-        await logout();
-        navigate('/login', { replace: true });
-      },
-      onError: (error: unknown) => {
-        const e = error as { response?: { data?: { detail?: string; message?: string }; }; message?: string };
-        setDeactivateError(e?.response?.data?.detail || e?.response?.data?.message || e?.message || 'Đã có lỗi xảy ra');
-      },
+    onSuccess: async () => {
+      await logout();
+      navigate('/login', { replace: true });
+    },
+    onError: (error: unknown) => {
+      const e = error as { response?: { data?: { detail?: string; message?: string }; }; message?: string };
+      setDeactivateError(e?.response?.data?.detail || e?.response?.data?.message || e?.message || 'Đã có lỗi xảy ra');
     },
   });
 
@@ -369,44 +351,13 @@ export function ProfileSettingsPage() {
         </div>
       </div>
 
-      {isDeactivateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="bg-card p-6 rounded-xl max-w-md w-full shadow-2xl space-y-4 border border-border">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-                <AlertTriangle className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">Xác nhận vô hiệu hóa</h3>
-                <p className="text-sm text-muted-foreground mt-1">Bạn sẽ bị đăng xuất ngay lập tức. Vui lòng nhập mật khẩu để xác nhận.</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Mật khẩu xác nhận</Label>
-              <div className="relative">
-                <Input type={showDeactivatePassword ? 'text' : 'password'} value={deactivatePassword} onChange={e => setDeactivatePassword(e.target.value)} placeholder="Nhập mật khẩu..." className="pr-10 rounded-lg h-10" />
-                <button type="button" onClick={() => setShowDeactivatePassword(!showDeactivatePassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  {showDeactivatePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            <label className="flex items-start gap-2 text-sm cursor-pointer select-none">
-              <input type="checkbox" checked={confirmDeactivate} onChange={e => setConfirmDeactivate(e.target.checked)} className="mt-1" />
-              <span className="text-muted-foreground">Tôi xác nhận và hiểu rằng dữ liệu sẽ bị ẩn.</span>
-            </label>
-            {deactivateError && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-900/40">{deactivateError}</p>}
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setIsDeactivateOpen(false)} className="rounded-lg">
-                Hủy
-              </Button>
-              <Button variant="destructive" onClick={() => deactivateMutation.mutate({ data: { password: deactivatePassword } })} disabled={!deactivatePassword || !confirmDeactivate || deactivateMutation.isPending} className="rounded-lg">
-                {deactivateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Xác nhận vô hiệu hóa
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeactivateAccountDialog
+        isOpen={isDeactivateOpen}
+        onClose={() => setIsDeactivateOpen(false)}
+        onConfirm={(password) => deactivateMutation.mutate({ password })}
+        isPending={deactivateMutation.isPending}
+        error={deactivateError}
+      />
       <PassphraseModal open={showPassModal} mode={passMode} onClose={() => setShowPassModal(false)} onSubmit={handlePassphraseSubmit} />
     </div>
   );

@@ -2,7 +2,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import { customInstance } from '@/lib/api';
 import { toast } from 'sonner';
 import type { Field } from '../types/field.types';
-import type { Post } from '@/lib/api/generated/model';
+import type { Post } from '@/lib/api/types';
 
 export function useField(fieldId: string) {
   const queryClient = useQueryClient();

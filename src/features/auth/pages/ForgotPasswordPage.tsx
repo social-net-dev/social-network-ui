@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, Loader, ArrowLeft } from "lucide-react";
-import { useAuthForgotPassword, useAuthResetPassword } from "@/lib/api/generated/auth/auth";
+import { useAuthForgotPassword, useAuthResetPassword } from "@/lib/api/hooks/auth.hooks";
 
 type Step = "email" | "otp" | "password";
 
@@ -23,36 +23,32 @@ export function ForgotPasswordPage() {
     const [successMessage, setSuccessMessage] = useState("");
 
     const sendOtpMutation = useAuthForgotPassword({
-        mutation: {
-            onSuccess: (res) => {
-                const uid = res.data.user_id || "";
+        onSuccess: (res) => {
+                const uid = res.user_id || "";
                 if (uid) setUserId(uid);
                 setStep("otp");
                 setSuccessMessage("Mã OTP đã được gửi tới email của bạn");
                 setError("");
             },
-            onError: (err) => {
+        onError: (err) => {
                 setError(getErrorMessage(err));
             },
-        },
     });
 
     const resetPasswordMutation = useAuthResetPassword({
-        mutation: {
-            onSuccess: () => {
+        onSuccess: () => {
                 setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
                 setTimeout(() => {
                     navigate("/login", { state: { message: "Mật khẩu đã thay đổi. Vui lòng đăng nhập lại." } });
                 }, 1500);
             },
-            onError: (err) => {
+        onError: (err) => {
                 const detail = getErrorMessage(err);
                 setError(detail);
                 if (typeof detail === "string" && detail.toLowerCase().includes("otp")) {
                     setStep("otp");
                 }
             },
-        },
     });
 
     const handleSendOtp = () => {
@@ -62,9 +58,7 @@ export function ForgotPasswordPage() {
             return;
         }
         sendOtpMutation.mutate({
-            data: {
-                email: email.trim(),
-            },
+            email: email.trim(),
         });
     };
 
@@ -97,11 +91,9 @@ export function ForgotPasswordPage() {
         }
 
         resetPasswordMutation.mutate({
-            data: {
-                user_id: userId,
-                otp,
-                new_password: password,
-            },
+            user_id: userId,
+            otp,
+            new_password: password,
         });
     };
 

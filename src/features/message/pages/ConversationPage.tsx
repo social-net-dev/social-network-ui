@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useConversations } from '../hooks/useConversations';
@@ -17,6 +17,8 @@ import { MessageInput } from '../components/MessageInput';
 import { filterOptimisticMessage } from '../utils/messageDedupe';
 import { callMarkRoomRead, callGetRoomMemberPublicKeys } from '../services/messageApi';
 import { useMessageStore } from '@/stores/messageStore';
+import { useSidebarOffset } from '../hooks/useSidebarOffset';
+import { E2EEOverlay } from '../components/E2EEOverlay';
 
 const ConversationPage: React.FC = () => {
   const params = useParams<{ conversationId?: string }>();
@@ -47,45 +49,20 @@ const ConversationPage: React.FC = () => {
 
   // Dùng useCallback để tránh stale closure
   const handleReactionEvent = React.useCallback((data: any) => {
-    console.log('[ConversationPage] ====== REACTION EVENT START ======');
-    console.log('[ConversationPage] Reaction event received:', {
-      type: data.type,
-      action: data.action,
-      message_id: data.message_id,
-      user_id: data.user_id?.slice(0, 8),
-      emoji: data.emoji,
-      reaction_id: data.reaction_id,
-    });
 
     // Cập nhật fetchedMessages khi nhận reaction broadcast
     setFetchedMessages(prev => {
       return prev.map(msg => {
         if (msg.id !== data.message_id) return msg;
         const reactions = (msg as any).reactions || [];
-        console.log(`[ConversationPage] Current reactions for message ${msg.id}:`, reactions);
-
         if (data.type === 'reaction') {
           const existingById = reactions.find((r: any) => r.id === data.reaction_id);
-
-          console.log(`[ConversationPage] Checking reaction:`, {
-            message_id: data.message_id,
-            user_id: data.user_id?.slice(0, 8),
-            emoji: data.emoji,
-            reaction_id: data.reaction_id,
-            existingById: !!existingById,
-            totalReactions: reactions.length,
-          });
-
-          if (existingById) {
-            console.log(`[ConversationPage] Reaction ID already exists, skipping`);
-            return msg;
+          if (existingById) {            return msg;
           }
 
           const tempIndex = reactions.findIndex((r: any) => String(r.id).startsWith('temp-') && r.user_id === data.user_id && r.emoji === data.emoji);
 
-          if (tempIndex !== -1) {
-            console.log(`[ConversationPage] Replacing temp reaction with real ID`);
-            const newReactions = reactions.map((r: any, idx: number) =>
+          if (tempIndex !== -1) {            const newReactions = reactions.map((r: any, idx: number) =>
               idx === tempIndex
                 ? {
                     ...r,
@@ -98,10 +75,7 @@ const ConversationPage: React.FC = () => {
               ...msg,
               reactions: newReactions,
             };
-          }
-
-          console.log(`[ConversationPage] Adding new reaction (count will increase)`);
-          const newReactions = [
+          }          const newReactions = [
             ...reactions,
             {
               id: data.reaction_id || `temp-${Date.now()}`,
@@ -114,9 +88,7 @@ const ConversationPage: React.FC = () => {
             ...msg,
             reactions: newReactions,
           };
-        } else if (data.type === 'reaction_removed') {
-          console.log(`[ConversationPage] Removing reaction from fetchedMessages`);
-          return {
+        } else if (data.type === 'reaction_removed') {          return {
             ...msg,
             reactions: reactions.filter((r: any) => !(r.user_id === data.user_id && r.emoji === data.emoji)),
           };
@@ -124,7 +96,6 @@ const ConversationPage: React.FC = () => {
         return msg;
       });
     });
-    console.log('[ConversationPage] ====== REACTION EVENT END ======');
   }, []);
 
   // WebSocket chat hook
@@ -157,7 +128,6 @@ const ConversationPage: React.FC = () => {
         if (data?.room_id === resolvedRoom && data?.user_id && recipientId && data.user_id === recipientId) {
           const key = `greeting_sent_${resolvedRoom}_${recipientId}`;
           localStorage.removeItem(key);
-          console.log('[ConversationPage] Recipient opened room — cleared greeting flag for', key);
         }
       } catch (e) {
         // ignore
@@ -180,7 +150,6 @@ const ConversationPage: React.FC = () => {
     },
     onDelete: (id: string) => {
       try {
-        console.log('[ConversationPage] WS message_deleted received:', id);
         // Dispatch a CustomEvent so the existing messageDeleted listener removes it from fetchedMessages
         window.dispatchEvent(new CustomEvent('messageDeleted', { detail: { id } } as any));
       } catch (e) {
@@ -281,42 +250,7 @@ const ConversationPage: React.FC = () => {
   const [e2eeOverlayMessage, setE2eeOverlayMessage] = useState<string | null>(null);
 
   // Dynamic left offset to avoid overlapping global sidebar which can open/collapse
-  const [leftOffset, setLeftOffset] = useState<string>('0px');
-  const sidebarGapRef = useRef<HTMLElement | null>(null);
-
-  useLayoutEffect(() => {
-    const findGap = () => document.querySelector<HTMLElement>('[data-slot="sidebar-gap"]');
-    let gap = findGap();
-    if (gap) sidebarGapRef.current = gap;
-
-    const update = () => {
-      try {
-        const w = sidebarGapRef.current ? Math.ceil(sidebarGapRef.current.getBoundingClientRect().width) : 0;
-        // Add a small safety margin
-        setLeftOffset(`${w + 8}px`);
-      } catch (e) {
-        setLeftOffset('0px');
-      }
-    };
-
-    update();
-
-    // Observe size changes of the gap element
-    let ro: ResizeObserver | null = null;
-    if (sidebarGapRef.current && typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(() => update());
-      ro.observe(sidebarGapRef.current);
-    }
-
-    // Fallback: listen to window resize
-    window.addEventListener('resize', update);
-
-    return () => {
-      window.removeEventListener('resize', update);
-      if (ro && sidebarGapRef.current) ro.unobserve(sidebarGapRef.current);
-      ro = null;
-    };
-  }, []);
+  const leftOffset = useSidebarOffset();
 
   // Fetch recipient ID when room changes (for E2EE encryption)
   useEffect(() => {
@@ -327,20 +261,9 @@ const ConversationPage: React.FC = () => {
 
     const fetchRecipient = async () => {
       try {
-        console.log('[ConversationPage] 🎯 Fetching recipient for encryption');
-        console.log('[ConversationPage] Current state:', {
-          room: resolvedRoom,
-          current_user: resolvedUserId.substring(0, 8) + '...',
-          e2ee_ready: e2eeReady,
-        });
 
         const response = await callGetRoomMemberPublicKeys(resolvedRoom);
         const members = response.data?.members || [];
-
-        console.log('[ConversationPage] 📊 Room members:');
-        members.forEach((m, idx) => {
-          console.log(`  [${idx}] user_id: ${m.user_id.substring(0, 8)}..., is_me: ${m.user_id === resolvedUserId}, has_public_key: ${!!m.public_key}`);
-        });
 
         // Find first member who is not current user (for 1-1 direct chat)
         const recipient = members.find(m => m.user_id !== resolvedUserId);
@@ -348,11 +271,6 @@ const ConversationPage: React.FC = () => {
         if (recipient) {
           setRecipientId(recipient.user_id);
           setRecipientDisplayName(recipient.display_name ?? undefined);
-          console.log('[ConversationPage] ✅ RECIPIENT SET:', {
-            recipient_id: recipient.user_id.substring(0, 8) + '...',
-            has_public_key: !!recipient.public_key,
-            public_key_preview: recipient.public_key?.substring(0, 40) + '...',
-          });
         } else {
           setRecipientId(null);
           setRecipientDisplayName(undefined);
@@ -439,14 +357,10 @@ const ConversationPage: React.FC = () => {
   // Decrypt messages when they arrive
   useEffect(() => {
     if (!e2eeReady) {
-      console.log('[ConversationPage] ⏸️ E2EE not ready, skipping decrypt');
       return;
     }
 
     const decrypt = async () => {
-      console.log('\n🔐 ==================== DECRYPTING MESSAGES ====================');
-      console.log('[ConversationPage] Total messages to process:', combinedMessages.length);
-      console.log('[ConversationPage] Already decrypted:', Object.keys(decryptedMessages).length);
 
       const decrypted: Record<string, string> = {};
       let skipped = 0;
@@ -462,32 +376,14 @@ const ConversationPage: React.FC = () => {
         }
 
         attempted++;
-        console.log(`\n[ConversationPage] Processing message ${attempted}/${combinedMessages.length - skipped}:`, {
-          id: msg.id?.substring(0, 8) + '...',
-          sender: msg.sender_id?.substring(0, 8) + '...',
-          has_encrypted_key: !!msg.encrypted_key,
-          has_iv: !!msg.iv,
-        });
 
         // Try to decrypt
         const text = await decryptIncoming(msg);
         if (text) {
           decrypted[msg.id] = text;
-          succeeded++;
-          console.log(`[ConversationPage] ✅ Decrypted successfully`);
-        } else {
-          console.log(`[ConversationPage] ⚠️ No text returned`);
-        }
+          succeeded++;        } else {        }
       }
 
-      console.log('\n[ConversationPage] 📊 Decrypt Summary:', {
-        total: combinedMessages.length,
-        skipped,
-        attempted,
-        succeeded,
-        failed: attempted - succeeded,
-      });
-      console.log('================================================================\n');
 
       setDecryptedMessages(decrypted);
     };
@@ -631,12 +527,6 @@ const ConversationPage: React.FC = () => {
         // Send text only via WebSocket with E2EE if ready
         let encrypted = null;
 
-        console.log('[ConversationPage] 📤 SENDING MESSAGE:', {
-          text_preview: text.substring(0, 20) + '...',
-          e2ee_ready: e2eeReady,
-          recipient_id: recipientId?.substring(0, 8) + '...',
-          current_user: resolvedUserId.substring(0, 8) + '...',
-        });
 
         // If E2EE not ready but we have a recipient, attempt on-demand initialization
         let readyNow = e2eeReady;
@@ -644,7 +534,6 @@ const ConversationPage: React.FC = () => {
           try {
             const ensured = await ensureReady?.();
             readyNow = !!ensured;
-            console.log('[ConversationPage] ensureReady returned:', ensured);
           } catch (e) {
             console.warn('[ConversationPage] ensureReady failed:', e);
           }
@@ -658,17 +547,10 @@ const ConversationPage: React.FC = () => {
         }
 
         if (readyNow && recipientId) {
-          console.log('[ConversationPage] 🔐 E2EE enabled, encrypting...');
 
           // Encrypt message for the recipient (Double Encryption Model)
           encrypted = await encryptForRecipient(text.trim(), recipientId);
 
-          console.log('[ConversationPage] 🔐 Encryption result:', {
-            has_ciphertext: !!encrypted?.ciphertext,
-            has_key_recipient: !!(encrypted as any)?.encrypted_key_recipient,
-            has_key_sender: !!(encrypted as any)?.encrypted_key_sender,
-            iv_length: (encrypted as any)?.iv?.length,
-          });
 
           // Defensive: do not send ciphertext without both encrypted keys
           if (!encrypted || !(encrypted as any).encrypted_key_recipient || !(encrypted as any).encrypted_key_sender) {
@@ -677,15 +559,6 @@ const ConversationPage: React.FC = () => {
             return;
           }
           if (encrypted) {
-            console.log('[ConversationPage] ✅ Encrypted payload:', {
-              ciphertext_length: encrypted.ciphertext.length,
-              has_encrypted_key_recipient: !!(encrypted as any).encrypted_key_recipient,
-              has_encrypted_key_sender: !!(encrypted as any).encrypted_key_sender,
-              encrypted_key_recipient_length: (encrypted as any).encrypted_key_recipient?.length,
-              encrypted_key_sender_length: (encrypted as any).encrypted_key_sender?.length,
-              iv_length: encrypted.iv.length,
-              ciphertext_preview: encrypted.ciphertext.substring(0, 40) + '...',
-            });
 
             // Send encrypted message via WebSocket (Double Encryption Model)
             // Pass BOTH encrypted keys so backend stores both
@@ -716,7 +589,6 @@ const ConversationPage: React.FC = () => {
 
             // If we don't know recipient, fall back to existing behavior (allow plaintext)
             if (!recipientId) {
-              console.log('[ConversationPage] No recipientId - sending plaintext fallback');
               await send(`⚠️ [E2EE Failed - Sent as plaintext]: ${textTrim}`);
               alert('Không thể mã hóa tin nhắn vì không xác định được người nhận. Tin đã gửi dưới dạng plaintext.');
             } else if (!greetingSent) {
@@ -740,10 +612,8 @@ const ConversationPage: React.FC = () => {
         } else {
           // E2EE not ready or no recipient, send plaintext
           if (!e2eeReady) {
-            console.log('[ConversationPage] 📢 E2EE not ready, sending plaintext');
           }
           if (!recipientId) {
-            console.log('[ConversationPage] 📢 No recipient ID, sending plaintext');
           }
           await send(text.trim());
         }
@@ -813,41 +683,17 @@ const ConversationPage: React.FC = () => {
           )}
 
           {e2eeOverlayRequired && (
-            // Limit overlay bottom so message input stays visible and usable
-            <div className="absolute left-0 right-0 top-0 bottom-16 bg-white/80 z-50 flex items-center justify-center p-6">
-              <div className="max-w-xl text-center">
-                <h3 className="text-lg font-semibold mb-2">Bảo mật đầu cuối yêu cầu khoá</h3>
-                <p className="mb-4">{e2eeOverlayMessage || 'Phòng này yêu cầu E2EE. Vui lòng khôi phục khoá hoặc tạo khoá mới để tiếp tục.'}</p>
-                <div className="flex gap-3 justify-center">
-                  <button
-                    className="px-4 py-2 bg-etechs-primary text-white rounded"
-                    onClick={() => {
-                      try {
-                        setPassphraseMode && setPassphraseMode('restore');
-                      } catch (e) {}
-                      try {
-                        setShowPassphraseModal(true);
-                      } catch (e) {}
-                    }}
-                  >
-                    Khôi phục từ backup
-                  </button>
-                  <button
-                    className="px-4 py-2 border rounded"
-                    onClick={() => {
-                      try {
-                        setPassphraseMode && setPassphraseMode('create');
-                      } catch (e) {}
-                      try {
-                        setShowPassphraseModal(true);
-                      } catch (e) {}
-                    }}
-                  >
-                    Tạo & Backup khoá
-                  </button>
-                </div>
-              </div>
-            </div>
+            <E2EEOverlay
+              message={e2eeOverlayMessage}
+              onRestore={() => {
+                try { setPassphraseMode && setPassphraseMode('restore'); } catch {}
+                try { setShowPassphraseModal(true); } catch {}
+              }}
+              onCreate={() => {
+                try { setPassphraseMode && setPassphraseMode('create'); } catch {}
+                try { setShowPassphraseModal(true); } catch {}
+              }}
+            />
           )}
         </div>
       </div>

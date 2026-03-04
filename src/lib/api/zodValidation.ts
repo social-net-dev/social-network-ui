@@ -28,7 +28,7 @@ export function safeParseResponse<T>(schema: ZodType<T>, data: unknown): T {
  * Validates the response schema in development mode (non-throwing).
  *
  * @example
- * import { FeedGetFeedResponse } from '@/lib/api/generated/feed/feed.zod';
+ * import { feedResponseSchema } from '@/lib/api/schemas/feed';
  * import { createZodSelect } from '@/lib/api/zodValidation';
  *
  * const { data } = useFeedGetFeed(params, {

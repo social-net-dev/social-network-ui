@@ -8,11 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/features/shared/components/Avatar";
 import { GraduationCap, Search, Sparkles, Users, UserCheck, Clock, Loader2, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useRecommendationsSuggestions } from "@/lib/api/generated/recommendations/recommendations";
-import { useFriendsSendRequest, useFriendsAcceptRequest, useFriendsCancelRequest, getFriendsListFriendsQueryKey, getFriendsListIncomingRequestsQueryKey, getFriendsListOutgoingRequestsQueryKey } from "@/lib/api/generated/friends/friends";
+import { useRecommendationsSuggestions } from "@/lib/api/hooks/search.hooks";
+import { useFriendsSendRequest, useFriendsAcceptRequest, useFriendsCancelRequest, getFriendsListFriendsQueryKey, getFriendsListIncomingRequestsQueryKey, getFriendsListOutgoingRequestsQueryKey } from "@/lib/api/hooks/friends.hooks";
 import { getErrorMessage } from "@/lib/utils/api";
 import { toast } from "sonner";
-import type { ApiSuggestion, RecommendationsSuggestions200 } from "@/lib/api/generated/model";
+import type { ApiSuggestion, RecommendationResponse } from "@/lib/api/types";
 
 const TAB_OPTIONS = [
     { value: "ALL", label: "Tất cả" },
@@ -98,20 +98,17 @@ export function RecommendationPage() {
 
     const updateSuggestionStatus = (userId: string, newStatus: Suggestion["friendship_status"], requestId?: string | null) => {
         for (const tab of TAB_OPTIONS) {
-            queryClient.setQueryData<RecommendationsSuggestions200>(
+            queryClient.setQueryData<RecommendationResponse>(
                 ["recommendations", "suggestions", tab.value],
                 (old) => {
-                    if (!old?.data?.suggestions) return old;
+                    if (!old?.suggestions) return old;
                     return {
                         ...old,
-                        data: {
-                            ...old.data,
-                            suggestions: old.data.suggestions.map((s: ApiSuggestion) =>
+                        suggestions: old.suggestions.map((s: ApiSuggestion) =>
                                 s.id === userId
                                     ? { ...s, friend_status: newStatus, friend_request_id: requestId ?? s.friend_request_id }
                                     : s
                             ),
-                        },
                     };
                 }
             );
@@ -121,9 +118,9 @@ export function RecommendationPage() {
     const handleConnect = async (userId: string, username: string) => {
         addProcessing(userId);
         try {
-            const res = await sendRequestMutation.mutateAsync({ data: { addressee_username: username } });
+            const res = await sendRequestMutation.mutateAsync({ addressee_username: username });
             toast.success("Đã gửi lời mời kết bạn");
-            const requestId = res.data?.id || null;
+            const requestId = res?.id || null;
             updateSuggestionStatus(userId, "REQUEST_SENT", requestId ? String(requestId) : null);
             queryClient.invalidateQueries({ queryKey: ["/friends/"] });
             queryClient.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
@@ -166,10 +163,10 @@ export function RecommendationPage() {
     };
 
     const { data: suggestionsResp, isLoading } = useRecommendationsSuggestions(
-        { filter: activeTab },
-        { query: { queryKey: ["recommendations", "suggestions", activeTab], staleTime: 60 * 1000 } }
+        activeTab,
+        { staleTime: 60 * 1000 }
     );
-    const rawSuggestions = (suggestionsResp?.data?.suggestions || []) as ApiSuggestion[];
+    const rawSuggestions = (suggestionsResp?.suggestions || []) as ApiSuggestion[];
 
     const apiSuggestions = useMemo(() => rawSuggestions.map(mapApiToSuggestion), [rawSuggestions]);
 

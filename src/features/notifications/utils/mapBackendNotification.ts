@@ -1,5 +1,5 @@
 import type { Notification, NotificationType } from "@/types/notification";
-import type { Notification as ApiNotification, NotificationType as ApiNotificationType } from "@/lib/api/generated/model";
+import type { Notification as ApiNotification, NotificationType as ApiNotificationType } from "@/lib/api/types";
 import { buildMediaUrl } from "@/lib/utils/api";
 
 /** Backend notification item (API list + WS payload) */

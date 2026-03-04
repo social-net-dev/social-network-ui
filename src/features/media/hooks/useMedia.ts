@@ -2,12 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   mediaGetAsset,
   getMediaGetAssetQueryKey,
-  getMediaGetSignedDownloadUrlMutationOptions,
-} from '@/lib/api/generated/media/media';
+  mediaGetSignedDownloadUrl,
+} from '@/lib/api/endpoints/media';
 import type {
   MediaAssetSummary,
-  MediaGetSignedDownloadUrlBody,
-} from '@/lib/api/generated/model';
+} from '@/lib/api/types';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
 // ===========================
@@ -60,7 +59,7 @@ export function useMediaAsset(assetId: string | null | undefined) {
     queryFn: async () => {
       if (!assetId) return null;
       const response = await mediaGetAsset(assetId);
-      return response.data;
+      return response;
     },
     enabled: !!assetId,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -75,7 +74,8 @@ export function useMediaSignedUrl() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    ...getMediaGetSignedDownloadUrlMutationOptions(),
+    mutationFn: ({ assetId, expires_in_seconds }: { assetId: string; expires_in_seconds?: number }) =>
+      mediaGetSignedDownloadUrl(assetId, { expires_in_seconds }),
     onSuccess: () => {
       // Invalidate related queries if needed
       queryClient.invalidateQueries({ queryKey: ['/media'] });
@@ -85,11 +85,8 @@ export function useMediaSignedUrl() {
   const getSignedUrl = useCallback(
     async (assetId: string, expiresInSeconds?: number): Promise<string | null> => {
       try {
-        const body: MediaGetSignedDownloadUrlBody = expiresInSeconds
-          ? { expires_in_seconds: expiresInSeconds }
-          : {};
-        const result = await mutation.mutateAsync({ assetId, data: body });
-        return result.data.url;
+        const result = await mutation.mutateAsync({ assetId, expires_in_seconds: expiresInSeconds });
+        return result.url;
       } catch (error) {
         console.error('Failed to get signed URL:', error);
         return null;

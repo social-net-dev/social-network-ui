@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { User, Post, Comment } from "@/lib/api/generated/model";
+import type { User, PostSummary as Post, Comment } from "@/lib/api/types";
 
 /**
  * Single Source of Truth for Types

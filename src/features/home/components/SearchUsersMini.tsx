@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { profilesGetProfile } from '@/lib/api/generated/profiles/profiles';
-import { usersGetMe } from '@/lib/api/generated/users/users';
+import { profilesGetProfile } from '@/lib/api/endpoints/profiles';
+import { usersGetMe } from '@/lib/api/endpoints/users';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { callGetDMRoom } from '@/features/message/services/messageApi';
 import { useRoomManager } from '@/features/message/hooks/useRoomManager';
-import type { UserPublic } from '@/lib/api/generated/model';
+import type { UserPublic } from '@/lib/api/types';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,39 +23,24 @@ export const SearchUsersMini: React.FC = () => {
 
   const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
 
-  // Debug: Log component state
-  console.log('[SearchUsersMini] Component state:', {
-    tenantSlug,
-    currentUserId,
-    searchQuery,
-    resultsCount: searchResults.length,
-    loading,
-  });
-
   const handleSearch = async () => {
-    console.log('[SearchUsersMini] handleSearch called!');
-    console.log('[SearchUsersMini] searchQuery:', searchQuery);
-    console.log('[SearchUsersMini] tenantSlug:', tenantSlug);
 
     if (!searchQuery.trim()) {
-      console.log('[SearchUsersMini] Empty search query');
       return;
     }
 
     if (!tenantSlug) {
-      console.log('[SearchUsersMini] No tenantSlug found!');
       alert('Không tìm thấy tenant slug. Vui lòng đăng nhập lại.');
       return;
     }
 
-    console.log('[SearchUsersMini] Starting search:', { query: searchQuery, tenantSlug });
     setLoading(true);
     setSearchResults([]);
 
     try {
       // Use Orval-generated profilesGetProfile for type-safe API call
       const response = await profilesGetProfile(searchQuery.trim());
-      const p = response.data;
+      const p = response;
       if (p) {
         setSearchResults([p]);
       } else {
@@ -81,7 +66,7 @@ export const SearchUsersMini: React.FC = () => {
     try {
       // Fetch current user info using Orval-generated usersGetMe
       const meResponse = await usersGetMe();
-      const me = meResponse.data;
+      const me = meResponse;
       const myDisplay = me.display_name || null;
       const myUsername = me.username || me.email || null;
       const otherDisplay = targetUser.display_name || null;
@@ -111,12 +96,10 @@ export const SearchUsersMini: React.FC = () => {
             setCreatingRoomFor(null);
             return;
           }
-          console.log('[SearchUsersMini] callGetDMRoom returned no room (200 but empty)', dmResp);
         }
       } catch (err: any) {
         const status = err?.response?.status;
         if (status === 404) {
-          console.log('[SearchUsersMini] callGetDMRoom returned 404 — will create room');
         } else {
           console.warn('[SearchUsersMini] callGetDMRoom failed (lookup by UUID)', err);
         }
@@ -128,10 +111,6 @@ export const SearchUsersMini: React.FC = () => {
         const roomId = await createRoom(roomDisplay, [myUsername, otherUsername]);
 
         if (roomId) {
-          console.log('[SearchUsersMini] ✅ Room created, navigating to:', {
-            roomId,
-            currentUserId,
-          });
           navigate(`/messages/${roomId}?user_id=${currentUserId}`);
 
           // Reset search state

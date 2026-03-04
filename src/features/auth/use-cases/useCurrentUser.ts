@@ -1,4 +1,4 @@
-import { useUsersGetMe } from '@/lib/api/generated/users/users'
+import { useUsersGetMe } from '@/lib/api/hooks/users.hooks'
 
 export function useCurrentUser() {
   const { data, isLoading, isError, error, refetch } = useUsersGetMe()

@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePostsDeletePost, usePostsUpdatePost } from '@/lib/api/generated/posts/posts';
-import { useReactionsReactToPost, useReactionsUnreactPost } from '@/lib/api/generated/reactions/reactions';
-import { useSharesSharePost } from '@/lib/api/generated/shares/shares';
+import { usePostsDeletePost, usePostsUpdatePost } from '@/lib/api/hooks/posts.hooks';
+import { useReactionsReactToPost, useReactionsUnreactPost } from '@/lib/api/hooks/reactions.hooks';
+import { useSharesSharePost } from '@/lib/api/hooks/shares.hooks';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
-import type { PostSummary, ReactionType } from '@/lib/api/generated/model';
+import type { PostSummary, ReactionType } from '@/lib/api/types';
 
 type QueryKey = readonly unknown[];
 type UnknownRecord = Record<string, unknown>;

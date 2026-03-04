@@ -15,9 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar } from "@/features/shared/components/Avatar";
 import { useAuthStore } from "@/stores/authStore";
-import { Image, Video, X, Globe, Users, Lock, ChevronDown } from "lucide-react";
+import { Image, Video, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { POST_TYPES, ACADEMIC_FIELDS } from "../constants/fields";
+import { CharRing } from "./create-post/CharRing";
+import { MediaGrid } from "./create-post/MediaGrid";
+import { PrivacySelector } from "./create-post/PrivacySelector";
+import type { PrivacyValue } from "./create-post/PrivacySelector";
 
 interface CreatePostModalProps {
   open: boolean;
@@ -27,12 +31,6 @@ interface CreatePostModalProps {
   initialPostType?: string;
 }
 
-const PRIVACY_OPTIONS = [
-  { value: "PUBLIC", label: "Mọi người", icon: Globe, className: "text-green-600" },
-  { value: "FRIENDS", label: "Bạn bè", icon: Users, className: "text-blue-600" },
-  { value: "PRIVATE", label: "Chỉ mình tôi", icon: Lock, className: "text-muted-foreground" },
-] as const;
-
 const PLACEHOLDERS: Record<string, string> = {
   SOCIAL: "Bạn đang nghĩ gì?",
   ACADEMIC: "Chia sẻ kiến thức hoặc tài liệu học thuật...",
@@ -41,127 +39,8 @@ const PLACEHOLDERS: Record<string, string> = {
 };
 
 const MAX_CHARS = 5000;
-const WARN_THRESHOLD = 0.8;
-const DANGER_THRESHOLD = 0.95;
 
-// Circular SVG ring for character count
-function CharRing({ count, max }: { count: number; max: number }) {
-  const ratio = count / max;
-  const size = 28;
-  const stroke = 2.5;
-  const r = (size - stroke) / 2;
-  const circ = 2 * Math.PI * r;
-  const dash = circ * Math.min(ratio, 1);
-
-  const color =
-    ratio >= DANGER_THRESHOLD
-      ? "#ef4444"
-      : ratio >= WARN_THRESHOLD
-      ? "#f59e0b"
-      : "hsl(var(--primary))";
-
-  if (count === 0) return null;
-
-  return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth={stroke} />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth={stroke}
-          strokeDasharray={`${dash} ${circ}`}
-          strokeLinecap="round"
-          style={{ transition: "stroke-dasharray 0.15s ease, stroke 0.3s ease" }}
-        />
-      </svg>
-      {ratio >= WARN_THRESHOLD && (
-        <span
-          className="absolute text-[9px] font-semibold tabular-nums"
-          style={{ color, lineHeight: 1 }}
-        >
-          {max - count}
-        </span>
-      )}
-    </div>
-  );
-}
-
-// Smart media grid
-function MediaGrid({ files, onRemove }: { files: File[]; onRemove: (i: number) => void }) {
-  if (files.length === 0) return null;
-
-  const getUrl = (f: File) => URL.createObjectURL(f);
-  const isVideo = (f: File) => f.type.startsWith("video/");
-  const isImage = (f: File) => f.type.startsWith("image/");
-
-  const renderItem = (file: File, index: number, className: string, overlay?: React.ReactNode) => (
-    <div key={index} className={cn("relative group overflow-hidden rounded-lg bg-muted", className)}>
-      {isImage(file) ? (
-        <img src={getUrl(file)} alt={`Preview ${index}`} className="w-full h-full object-cover" />
-      ) : isVideo(file) ? (
-        <video src={getUrl(file)} className="w-full h-full object-cover" controls />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center p-2">
-          <p className="text-xs text-center text-muted-foreground break-all">{file.name}</p>
-        </div>
-      )}
-      {overlay}
-      <button
-        type="button"
-        onClick={() => onRemove(index)}
-        className="absolute top-1.5 right-1.5 p-1.5 bg-black/60 hover:bg-black/80 rounded-full text-white shadow transition-opacity opacity-0 group-hover:opacity-100"
-      >
-        <X className="w-3 h-3" />
-      </button>
-    </div>
-  );
-
-  const shown = files.slice(0, 4);
-  const extra = files.length - 4;
-
-  if (files.length === 1) {
-    return <div className="rounded-lg overflow-hidden max-h-80">{renderItem(files[0], 0, "h-72 w-full")}</div>;
-  }
-  if (files.length === 2) {
-    return (
-      <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden h-60">
-        {shown.map((f, i) => renderItem(f, i, "h-full"))}
-      </div>
-    );
-  }
-  if (files.length === 3) {
-    return (
-      <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden h-60">
-        {renderItem(files[0], 0, "row-span-2 h-full")}
-        <div className="grid grid-rows-2 gap-1 h-full">
-          {renderItem(files[1], 1, "h-full")}
-          {renderItem(files[2], 2, "h-full")}
-        </div>
-      </div>
-    );
-  }
-  // 4+
-  return (
-    <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden h-60">
-      {shown.map((f, i) =>
-        renderItem(
-          f,
-          i,
-          "h-full",
-          i === 3 && extra > 0 ? (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-              <span className="text-white font-bold text-2xl">+{extra}</span>
-            </div>
-          ) : undefined
-        )
-      )}
-    </div>
-  );
-}
+// CharRing, MediaGrid, and PrivacySelector are extracted to ./create-post/ subfolder
 
 export function CreatePostModal({
   open,
@@ -176,7 +55,7 @@ export function CreatePostModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [postType, setPostType] = useState(initialPostType);
   const [fieldId, setFieldId] = useState("");
-  const [privacy, setPrivacy] = useState<"PUBLIC" | "FRIENDS" | "PRIVATE">("PUBLIC");
+  const [privacy, setPrivacy] = useState<PrivacyValue>("PUBLIC");
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -261,8 +140,6 @@ export function CreatePostModal({
     }
   };
 
-  const selectedPrivacy = PRIVACY_OPTIONS.find((p) => p.value === privacy)!;
-  const PrivacyIcon = selectedPrivacy.icon;
   const canSubmit = (content.trim().length > 0 || files.length > 0) && !isSubmitting && !isLoading && content.length <= MAX_CHARS;
 
   return (
@@ -298,37 +175,7 @@ export function CreatePostModal({
             <Avatar user={user as any} size="md" />
             <div className="flex flex-col gap-0.5">
               <span className="font-semibold text-sm leading-tight">{user?.displayName || user?.email}</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className={cn(
-                      "flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium",
-                      "bg-muted hover:bg-muted/80 transition-colors border border-border/50",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                    )}
-                  >
-                    <PrivacyIcon className={cn("h-3 w-3", selectedPrivacy.className)} />
-                    <span>{selectedPrivacy.label}</span>
-                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-44">
-                  {PRIVACY_OPTIONS.map((opt) => {
-                    const Icon = opt.icon;
-                    return (
-                      <DropdownMenuItem
-                        key={opt.value}
-                        onClick={() => setPrivacy(opt.value)}
-                        className={cn("gap-2 text-sm", privacy === opt.value && "bg-muted font-medium")}
-                      >
-                        <Icon className={cn("h-4 w-4", opt.className)} />
-                        {opt.label}
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <PrivacySelector value={privacy} onChange={setPrivacy} />
             </div>
           </div>
 

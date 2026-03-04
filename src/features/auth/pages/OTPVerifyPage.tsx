@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Mail, RefreshCw } from 'lucide-react';
-import { useAuthResendOtp, useAuthVerifyOtp } from '@/lib/api/generated/auth/auth';
+import { useAuthResendOtp, useAuthVerifyOtp } from '@/lib/api/hooks/auth.hooks';
 
 const OTP_STORAGE_EMAIL = 'otp_verify_email';
 const OTP_STORAGE_USER_ID = 'otp_verify_user_id';
@@ -33,35 +33,31 @@ export function OTPVerifyPage() {
   const [resendSuccess, setResendSuccess] = useState(false);
 
   const verifyMutation = useAuthVerifyOtp({
-    mutation: {
-      onSuccess: async () => {
-        if (typeof sessionStorage !== 'undefined') {
-          sessionStorage.removeItem(OTP_STORAGE_EMAIL);
-          sessionStorage.removeItem(OTP_STORAGE_USER_ID);
-        }
-        navigate('/login', {
-          state: {
-            email,
-            message: 'Xác thực OTP thành công! Vui lòng đăng nhập.',
-          },
-        });
-      },
-      onError: err => {
-        setError(getErrorMessage(err));
-      },
+    onSuccess: async () => {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(OTP_STORAGE_EMAIL);
+        sessionStorage.removeItem(OTP_STORAGE_USER_ID);
+      }
+      navigate('/login', {
+        state: {
+          email,
+          message: 'Xác thực OTP thành công! Vui lòng đăng nhập.',
+        },
+      });
+    },
+    onError: err => {
+      setError(getErrorMessage(err));
     },
   });
 
   const resendMutation = useAuthResendOtp({
-    mutation: {
-      onSuccess: () => {
-        setResendSuccess(true);
-        setError('');
-        setTimeout(() => setResendSuccess(false), 3000);
-      },
-      onError: err => {
-        setError(getErrorMessage(err));
-      },
+    onSuccess: () => {
+      setResendSuccess(true);
+      setError('');
+      setTimeout(() => setResendSuccess(false), 3000);
+    },
+    onError: err => {
+      setError(getErrorMessage(err));
     },
   });
 
@@ -79,10 +75,8 @@ export function OTPVerifyPage() {
     }
 
     verifyMutation.mutate({
-      data: {
-        user_id,
-        otp: otpCode,
-      },
+      user_id,
+      otp: otpCode,
     });
   };
 
@@ -93,9 +87,7 @@ export function OTPVerifyPage() {
     }
 
     resendMutation.mutate({
-      data: {
-        user_id,
-      },
+      user_id,
     });
   };
 

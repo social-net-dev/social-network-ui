@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useFriendsListIncomingRequests, useFriendsListOutgoingRequests, useFriendsAcceptRequest, useFriendsRejectRequest, useFriendsCancelRequest, getFriendsListIncomingRequestsQueryKey, getFriendsListOutgoingRequestsQueryKey } from "@/lib/api/generated/friends/friends";
+import { useFriendsListIncomingRequests, useFriendsListOutgoingRequests, useFriendsAcceptRequest, useFriendsRejectRequest, useFriendsCancelRequest, getFriendsListIncomingRequestsQueryKey, getFriendsListOutgoingRequestsQueryKey } from "@/lib/api/hooks/friends.hooks";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +9,7 @@ import { Avatar } from "@/features/shared/components/Avatar";
 import { getErrorMessage } from "@/lib/utils/api";
 import { Loader2, UserCheck, UserX, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import type { FriendRequest } from "@/lib/api/generated/model";
+import type { FriendRequest } from "@/lib/api/types";
 
 function userLabel(fr: FriendRequest, side: 'requester' | 'addressee') {
   const u = side === 'requester' ? fr.requester : fr.addressee;
@@ -86,8 +86,8 @@ export function FriendRequestsPage() {
     }
   };
 
-  const incoming = useMemo(() => incomingQuery.data?.data || [], [incomingQuery.data]);
-  const outgoing = useMemo(() => outgoingQuery.data?.data || [], [outgoingQuery.data]);
+  const incoming = useMemo(() => incomingQuery.data || [], [incomingQuery.data]);
+  const outgoing = useMemo(() => outgoingQuery.data || [], [outgoingQuery.data]);
 
   return (
     <div className="space-y-6">

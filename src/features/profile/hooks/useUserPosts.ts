@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { postsGetMyPosts, getPostsGetMyPostsQueryKey, postsGetPostsByUser, getPostsGetPostsByUserQueryKey } from '@/lib/api/generated/posts/posts';
-import type { PostSummary } from '@/lib/api/generated/model';
+import { postsGetMyPosts, getPostsGetMyPostsQueryKey, postsGetPostsByUser, getPostsGetPostsByUserQueryKey } from '@/lib/api/endpoints/posts';
+import type { PostSummary } from '@/lib/api/types';
 
 /**
  * Hook to fetch a user's posts (paginated, infinite scroll).
@@ -16,20 +16,20 @@ export function useUserPosts(userId?: string) {
     queryFn: async ({ pageParam, signal }) => {
       const cursor = pageParam as string | undefined;
       if (isMe) {
-        return postsGetMyPosts({ cursor }, undefined, signal);
+        return postsGetMyPosts({ cursor }, signal);
       }
-      return postsGetPostsByUser(userId!, { cursor }, undefined, signal);
+      return postsGetPostsByUser(userId!, { cursor }, signal);
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
-      const { pagination } = lastPage.data;
+      const { pagination } = lastPage;
       return pagination.has_next_page ? pagination.next_cursor : undefined;
     },
     enabled: !!userId || isMe,
     staleTime: 30_000,
   });
 
-  const posts: PostSummary[] = query.data?.pages.flatMap((page) => page.data.items ?? []) ?? [];
+  const posts: PostSummary[] = query.data?.pages.flatMap((page) => page.items ?? []) ?? [];
 
   return {
     posts,

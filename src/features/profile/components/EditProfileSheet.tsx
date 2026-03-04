@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Camera, Save, User as UserIcon, School, Heart } from 'lucide-react';
 import { useProfile } from '../hooks/useProfile';
 import { getDefaultAvatar } from '@/lib/utils/api';
-import type { User } from '@/lib/api/generated/model';
+import type { User } from '@/lib/api/types';
 import { toast } from 'sonner';
 
 interface EditProfileSheetProps {

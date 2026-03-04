@@ -11,56 +11,88 @@ Tài liệu này mô tả kiến trúc, quy ước, và các quyết định thi
 ```
 contract/main.tsp
         ↓  pnpm gen:spec
-tsp-output/schema/openapi.json
-        ↓  pnpm gen:api
-src/lib/api/generated/
+tsp-output/schema/openapi.json     (tham khảo)
+        ↓  viết tay dựa trên contract
+src/lib/api/types/                 # TypeScript types thủ công
+src/lib/api/endpoints/             # Pure async functions
+src/lib/api/hooks/                 # React Query hooks
         ↓  import
 src/features/*/hooks/ → src/features/*/components/
 ```
 
 1. **Nguồn sự thật duy nhất** là `contract/main.tsp` (nằm trong cùng project)
-2. **Không bao giờ** sửa tay các file trong `src/lib/api/generated/` hay `tsp-output/`
-3. Khi cần thêm field, endpoint, hay type mới → **sửa `contract/main.tsp` trước**, sau đó chạy lại pipeline
+2. **Không bao giờ** sửa tay các file trong `tsp-output/`
+3. Khi cần thêm field, endpoint, hay type mới → **sửa `contract/main.tsp` trước**, sau đó cập nhật thủ công `src/lib/api/types/`, `src/lib/api/endpoints/`, `src/lib/api/hooks/`
 
-### Pipeline tái sinh
+### Pipeline tái sinh OpenAPI spec (nếu cần)
 
 ```bash
-# Chạy toàn bộ pipeline trong một lệnh (khuyến dùng)
-pnpm gen
-
-# Hoặc từng bước:
+# Chỉ gen OpenAPI spec từ TypeSpec (không gen TS code nữa)
 pnpm gen:spec   # contract/main.tsp → tsp-output/schema/openapi.json
-pnpm gen:api    # openapi.json → src/lib/api/generated/
 ```
 
 ---
 
-## Cấu trúc Generated Client
+## Cấu trúc API Client (Hand-Written)
 
 ```
-src/lib/api/generated/
-├── model/              # Tất cả TypeScript types (PostSummary, User, Author…)
-│   └── index.ts        # Re-export tập trung
-├── feed/               # Feed hooks
-├── posts/              # Posts hooks
-├── users/              # Users hooks
-├── profiles/           # Profiles hooks
-├── comments/           # Comments hooks
-├── reactions/          # Reactions hooks
-├── friends/            # Friends hooks
-├── notifications/      # Notifications hooks
-├── media/              # Media hooks
-├── auth/               # Auth hooks
-├── shares/             # Shares hooks
-├── search/             # Search hooks
-└── admin/              # Admin hooks
+src/lib/api/
+├── types/                  # TypeScript types thủ công từ contract
+│   ├── common.ts           # ApiError, PaginatedResponse, CursorPaginatedResponse, Enums
+│   ├── auth.ts             # LoginRequest, LoginResponse, RegisterRequest…
+│   ├── user.ts             # Author, UserBase, UserPublic, UserMe, User, UserPrivacy…
+│   ├── post.ts             # PostSummary, Post, FeedResponse, CreatePostRequest…
+│   ├── comment.ts          # Comment, CommentResponse, CreateCommentRequest…
+│   ├── media.ts            # MediaAsset, PresignedUploadInitRequest…
+│   ├── reaction.ts         # ReactRequest, PostReaction, CommentReaction
+│   ├── friend.ts           # Friend, FriendRequest, FriendshipStatus…
+│   ├── notification.ts     # Notification, NotificationListResponse…
+│   ├── search.ts           # SearchUsersResponse, ApiSuggestion…
+│   └── index.ts            # Re-export barrel
+├── endpoints/              # Pure async functions per domain
+│   ├── auth.ts             # authLogin, authRegister, authLogout…
+│   ├── users.ts            # usersGetMe, usersUpdateProfile…
+│   ├── feed.ts             # feedGetFeed + getFeedGetFeedQueryKey
+│   ├── posts.ts            # postsGetPost, postsCreatePost… + query key factories
+│   ├── comments.ts         # commentsCreateComment, commentsDeleteComment…
+│   ├── reactions.ts        # reactionsReactToPost, reactionsUnreactPost…
+│   ├── shares.ts           # sharesSharePost, sharesUnsharePost
+│   ├── friends.ts          # friendsListFriends, friendsSendRequest…
+│   ├── follows.ts          # followsFollowUser, followsGetFollowers…
+│   ├── notifications.ts    # notificationsListNotifications…
+│   ├── profiles.ts         # profilesGetProfile
+│   ├── media.ts            # mediaInitUpload, mediaCompleteUpload…
+│   ├── search.ts           # searchSearchUsers
+│   ├── recommendations.ts  # recommendationsSuggestions
+│   └── index.ts            # Re-export barrel
+├── hooks/                  # React Query hooks per domain
+│   ├── auth.hooks.ts       # useAuthLogin, useAuthRegister…
+│   ├── users.hooks.ts      # useUsersGetMe, useUsersUpdateProfile…
+│   ├── feed.hooks.ts       # useFeedGetFeed (infinite query)
+│   ├── posts.hooks.ts      # usePostsGetPost, usePostsCreatePost…
+│   ├── comments.hooks.ts   # useCommentsCreateComment…
+│   ├── reactions.hooks.ts  # useReactionsReactToPost…
+│   ├── shares.hooks.ts     # useSharesSharePost
+│   ├── friends.hooks.ts    # useFriendsListFriends, useFriendsSendRequest…
+│   ├── follows.hooks.ts    # useFollowsFollowUser
+│   ├── notifications.hooks.ts  # useNotificationsListNotifications…
+│   ├── profiles.hooks.ts   # useProfilesGetProfile
+│   ├── media.hooks.ts      # useMediaInitUpload, useMediaCompleteUpload…
+│   ├── search.hooks.ts     # useSearchSearchUsers, useRecommendationsSuggestions
+│   └── index.ts            # Re-export barrel
+├── createApiClient.ts      # Tạo Axios instance
+├── attachRequestInterceptor.ts  # Inject auth token + X-Tenant-Slug
+├── attachResponseInterceptor.ts # Unwrap ApiResponse envelope + token refresh
+├── authRequestGuards.ts    # Helper: public vs protected routes
+├── zodValidation.ts        # Zod validation helpers
+└── utils.ts                # extractUserIdFromTenantSlug, v.v.
 ```
 
 Mỗi domain có pattern nhất quán:
-- `useXxxYyy(...)` — React Query hook (query)
-- `useXxxYyyMutation(...)` — React Query mutation hook
-- `xxxYyy(...)` — hàm async thuần (dùng trong `queryFn` custom)
-- `getXxxYyyQueryKey(...)` — lấy query key
+- `useXxxYyy(...)` — React Query hook (query), nhận `UseQueryOptions` override
+- `useXxxYyy(...)` — React Query mutation hook, nhận `UseMutationOptions` override
+- `xxxYyy(...)` — hàm async thuần trả về `Promise<T>` (fully unwrapped)
+- `getXxxYyyQueryKey(...)` — lấy query key (defined trong endpoints, re-exported từ hooks)
 
 ---
 
@@ -68,7 +100,13 @@ Mỗi domain có pattern nhất quán:
 
 ### ✅ Đúng
 ```ts
-import type { PostSummary, User, Author, FeedResponse } from '@/lib/api/generated/model';
+import type { PostSummary, User, Author, FeedResponse } from '@/lib/api/types';
+```
+
+### ✅ Đúng — import hooks
+```ts
+import { usePostsCreatePost, usePostsGetPost } from '@/lib/api/hooks/posts.hooks';
+import { feedGetFeed, getFeedGetFeedQueryKey } from '@/lib/api/endpoints/feed';
 ```
 
 ### ❌ Sai — không bao giờ làm
@@ -100,11 +138,10 @@ Mọi response API đều được unwrap tự động bởi `attachResponseInte
 // Server trả về:
 { success: true, data: T, request_id: string }
 
-// Sau unwrap, hooks nhận được:
-{ data: T }   ← resp.data === T trực tiếp (không phải resp.data.data)
+// Sau unwrap, endpoint functions nhận được T trực tiếp:
+const feedResponse = await feedGetFeed(params);
+// feedResponse = FeedResponse = { items: PostSummary[], pagination: CursorPaginationMeta }
 ```
-
-> **Exception**: `skipUnwrap` flag tắt unwrap cho một số endpoint đặc biệt.
 
 ### Pagination chuẩn
 Tất cả paginated responses dùng cấu trúc `PaginatedResponse<T>`:
@@ -262,23 +299,23 @@ Một số `as unknown as` là không thể tránh:
 
 | Thứ bị xóa | Thay thế bằng |
 |------------|---------------|
-| `src/lib/api/transforms/` | Không cần — dùng generated types trực tiếp |
-| `src/lib/api/services/` | Generated hooks trong `src/lib/api/generated/` |
-| `src/lib/api/hooks/` (manual) | Generated hooks |
-| `src/lib/api/types/` (manual) | `src/lib/api/generated/model/` |
-| `src/lib/query-keys.ts` | `getXxxQueryKey()` từ Orval |
+| `src/lib/api/transforms/` | Không cần — dùng types trực tiếp |
+| `src/lib/api/services/` | Hooks trong `src/lib/api/hooks/` |
+| `src/lib/api/generated/` | `src/lib/api/types/` + `src/lib/api/endpoints/` + `src/lib/api/hooks/` |
+| `src/lib/query-keys.ts` | `getXxxQueryKey()` trong endpoints |
 | `src/lib/utils/userTransform.ts` | `useProfile` select trực tiếp |
 | `toFeedPost()` adapter | `PostCard` nhận `PostSummary` trực tiếp |
 | `IBackendPost`, `IBackendAuthor`… | Không dùng — typed qua contract |
+| Orval-generated wrapper types (`AuthLogin200`, `FeedGetFeed200`…) | Dùng trực tiếp: `LoginResponse`, `FeedResponse`… |
 
 ---
 
 ## Checklist Trước Khi Commit
 
 - [ ] `pnpm tsc --noEmit` — 0 errors
-- [ ] Không có type định nghĩa lại từ generated model
+- [ ] Không có type định nghĩa lại từ `@/lib/api/types`
 - [ ] Không có Axios call thủ công (ngoài `customInstance` đặc biệt)
-- [ ] Nếu sửa TypeSpec → đã chạy lại `gen:spec` + `orval`
+- [ ] Nếu sửa TypeSpec → đã chạy `gen:spec`, sau đó cập nhật tay `types/`, `endpoints/`, `hooks/` tương ứng
 - [ ] Pagination dùng `items` + `pagination.page/total_pages` (không dùng field cũ)
 - [ ] `pnpm lint` — không có error
 
@@ -288,8 +325,10 @@ Một số `as unknown as` là không thể tránh:
 
 | Loại | Convention | Ví dụ |
 |------|-----------|-------|
-| Generated query hook | `useXxxYyy` | `useFeedGetFeed`, `usePostsGetPost` |
-| Generated mutation hook | `useXxxYyy` | `usePostsCreatePost`, `useAuthLogin` |
+| Query hook | `useXxxYyy` | `useFeedGetFeed`, `usePostsGetPost` |
+| Mutation hook | `useXxxYyy` | `usePostsCreatePost`, `useAuthLogin` |
+| Raw endpoint fn | `xxxYyy` | `feedGetFeed`, `postsCreatePost` |
+| Query key factory | `getXxxYyyQueryKey` | `getFeedGetFeedQueryKey`, `getPostsGetPostQueryKey` |
 | Custom hook | `useXxx` (camelCase) | `useFeed`, `useProfile`, `useComments` |
 | Component | PascalCase | `PostCard`, `FeedList`, `Avatar` |
 | Feature page | PascalCase + Page | `FeedPage`, `ProfilePage` |
@@ -298,4 +337,4 @@ Một số `as unknown as` là không thể tránh:
 
 ---
 
-*Cập nhật lần cuối: Tháng 2, 2026*
+*Cập nhật lần cuối: Tháng 3, 2026*

@@ -9,23 +9,20 @@ import {
   useUsersGetMe,
   useUsersUpdatePrivacy,
   useUsersUpdateProfile,
-} from '@/lib/api/generated/users/users'
-import { useProfilesGetProfile, getProfilesGetProfileQueryKey } from '@/lib/api/generated/profiles/profiles'
-import type { User } from '@/lib/api/generated/model'
-import { PrivacyField } from '@/lib/api/generated/model/privacyField'
+} from '@/lib/api/hooks/users.hooks'
+import { useProfilesGetProfile, getProfilesGetProfileQueryKey } from '@/lib/api/hooks/profiles.hooks'
+import type { User } from '@/lib/api/types'
 import type {
   PrivacyOverride,
-  MediaInitUpload201,
   PresignedUploadCompleteRequest,
   PresignedUploadInitRequest,
-  PresignedUploadInitResponse,
   UpdatePrivacyRequest,
   Visibility,
-} from '@/lib/api/generated/model'
+} from '@/lib/api/types'
 import {
   useMediaCompleteUpload,
   useMediaInitUpload,
-} from '@/lib/api/generated/media/media'
+} from '@/lib/api/hooks/media.hooks'
 
 export function useProfile(userIdParam?: string) {
   const params = useParams()
@@ -45,18 +42,14 @@ export function useProfile(userIdParam?: string) {
   const isMe = identifier === 'me'
 
   const meQuery = useUsersGetMe({
-    query: {
-      enabled: isMe && isAuthenticated,
-      staleTime: 1000 * 60 * 5,
-      select: (resp): User => resp.data as User,
-    },
+    enabled: isMe && isAuthenticated,
+    staleTime: 1000 * 60 * 5,
+    select: (resp): User => resp as unknown as User,
   })
 
   const profileQuery = useProfilesGetProfile(String(identifier ?? ''), {
-    query: {
-      enabled: !isMe && !!identifier,
-      select: (resp): User => resp.data as User,
-    },
+    enabled: !isMe && !!identifier,
+    select: (resp): User => resp as unknown as User,
   })
 
   const query = isMe ? meQuery : profileQuery
@@ -107,8 +100,8 @@ export function useProfile(userIdParam?: string) {
       access: 'public',
     }
 
-    const initResp = await initUploadMutation.mutateAsync({ data: initReq })
-    const init = (initResp as MediaInitUpload201).data as PresignedUploadInitResponse
+    const initResp = await initUploadMutation.mutateAsync(initReq)
+    const init = initResp
 
     const etag = await uploadFileToPresigned(init, file)
 
@@ -123,13 +116,11 @@ export function useProfile(userIdParam?: string) {
 
   const handleUpdateProfile = async (data: EditProfileFormData & { personal_info?: any }) => {
     const res = await updateProfileMutation.mutateAsync({
-      data: {
-        display_name: data.displayName,
-        username: data.username || undefined,
-        birth_date: data.birthDate && data.birthDate.trim() !== '' ? data.birthDate : undefined,
-        bio: data.bio,
-        personal_info: data.personal_info,
-      },
+      display_name: data.displayName,
+      username: data.username || undefined,
+      birth_date: data.birthDate && data.birthDate.trim() !== '' ? data.birthDate : undefined,
+      bio: data.bio,
+      personal_info: data.personal_info,
     })
 
     // Immediately update cache from mutation response to avoid staleTime delay
@@ -144,7 +135,7 @@ export function useProfile(userIdParam?: string) {
   const handleUpdatePrivacy = async (
     data: Partial<Record<string, Visibility>>,
   ) => {
-    const validPrivacyFields = Object.values(PrivacyField) as string[];
+    const validPrivacyFields: string[] = ['display_name', 'birth_date', 'bio', 'avatar', 'background', 'personal_info'];
     const overrides: PrivacyOverride[] = Object.entries(data ?? {})
       .filter(([key, visibility]) => key.endsWith('_visibility') && !!visibility)
       .map(([key, visibility]) => {
@@ -159,9 +150,7 @@ export function useProfile(userIdParam?: string) {
     }
 
     const res = await updatePrivacyMutation.mutateAsync({
-      data: {
-        ...payload,
-      },
+      ...payload,
     })
 
     queryClient.invalidateQueries({ queryKey: getUsersGetMeQueryKey() })
@@ -170,14 +159,14 @@ export function useProfile(userIdParam?: string) {
 
   const handleUploadAvatar = async (file: File) => {
     const assetId = await uploadMediaAsset('avatar', file)
-    const res = await uploadAvatarMutation.mutateAsync({ data: { asset_id: assetId } })
+    const res = await uploadAvatarMutation.mutateAsync({ asset_id: assetId })
     queryClient.invalidateQueries({ queryKey: getUsersGetMeQueryKey() })
     return res
   }
 
   const handleUploadBackground = async (file: File) => {
     const assetId = await uploadMediaAsset('background', file)
-    const res = await uploadBackgroundMutation.mutateAsync({ data: { asset_id: assetId } })
+    const res = await uploadBackgroundMutation.mutateAsync({ asset_id: assetId })
     queryClient.invalidateQueries({ queryKey: getUsersGetMeQueryKey() })
     return res
   }

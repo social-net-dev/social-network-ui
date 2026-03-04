@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { profilesGetProfile } from '@/lib/api/generated/profiles/profiles';
-import { usersGetMe } from '@/lib/api/generated/users/users';
+import { profilesGetProfile } from '@/lib/api/endpoints/profiles';
+import { usersGetMe } from '@/lib/api/endpoints/users';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { callGetDMRoom } from '@/features/message/services/messageApi';
 import { useRoomManager } from '@/features/message/hooks/useRoomManager';
-import type { UserPublic } from '@/lib/api/generated/model';
+import type { UserPublic } from '@/lib/api/types';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,34 +24,18 @@ export const SearchUsers: React.FC = () => {
   // Get current user ID from tenant slug
   const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
 
-  // Debug: Log component state
-  console.log('[SearchUsers] Component state:', {
-    tenantSlug,
-    currentUserId,
-    searchQuery,
-    resultsCount: searchResults.length,
-    loading,
-    error,
-  });
-
   const handleSearch = async () => {
-    console.log('[SearchUsers] handleSearch called!');
-    console.log('[SearchUsers] searchQuery:', searchQuery);
-    console.log('[SearchUsers] tenantSlug:', tenantSlug);
 
     if (!searchQuery.trim()) {
       setError('Vui lòng nhập tên người dùng');
-      console.log('[SearchUsers] Empty search query');
       return;
     }
 
     if (!tenantSlug) {
       setError('Không tìm thấy tenant slug. Vui lòng đăng nhập lại.');
-      console.log('[SearchUsers] No tenantSlug found!');
       return;
     }
 
-    console.log('[SearchUsers] Starting search:', { query: searchQuery, tenantSlug });
     setLoading(true);
     setError(null);
     setSearchResults([]);
@@ -59,7 +43,7 @@ export const SearchUsers: React.FC = () => {
     try {
       // Use Orval-generated profilesGetProfile for type-safe API call
       const response = await profilesGetProfile(searchQuery.trim());
-      const p = response.data;
+      const p = response;
       if (p) {
         setSearchResults([p]);
         setError(null);
@@ -89,7 +73,7 @@ export const SearchUsers: React.FC = () => {
     try {
       // Fetch current user info using Orval-generated usersGetMe
       const meResponse = await usersGetMe();
-      const me = meResponse.data;
+      const me = meResponse;
       const myDisplay = me.display_name || null;
       const myUsername = me.username || me.email || null;
       const otherDisplay = targetUser.display_name || null;

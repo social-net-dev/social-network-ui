@@ -7,8 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, X, Check } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import type { Project } from '@/features/home/types/feed.types'
-import { ACADEMIC_FIELDS } from '@/features/home/constants/fields'
+import type { Project } from '@/features/posts/types/feed.types'
+import { ACADEMIC_FIELDS } from '@/features/posts/constants/fields'
 
 export interface Interest {
   label: string

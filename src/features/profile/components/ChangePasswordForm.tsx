@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuthChangePassword } from "@/lib/api/generated/auth/auth";
+import { useAuthChangePassword } from "@/lib/api/hooks/auth.hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,22 +45,20 @@ export function ChangePasswordForm() {
     });
 
     const mutation = useAuthChangePassword({
-        mutation: {
-            onSuccess: () => {
+        onSuccess: () => {
                 setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
                 form.reset();
                 setTimeout(() => setSuccessMessage(""), 3000);
             },
-            onError: (error: unknown) => {
+        onError: (error: unknown) => {
                 form.setError("currentPassword", { message: getErrorMessage(error) });
             },
-        },
     });
 
     const onSubmit = (data: ChangePasswordFormData) => {
-        mutation.mutate({
-            data: { current_password: data.currentPassword, new_password: data.newPassword },
-        });
+        mutation.mutate(
+            { current_password: data.currentPassword, new_password: data.newPassword },
+        );
     };
 
     return (

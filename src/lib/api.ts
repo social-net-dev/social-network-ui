@@ -20,8 +20,9 @@ type CustomInstanceOptions = AxiosRequestConfig & {
 };
 
 /**
- * Custom instance wrapper for React Query compatibility.
- * Passes skipUnwrap to keep full envelope response for generated hooks.
+ * Core HTTP client for all API calls.
+ * The response interceptor automatically unwraps ApiResponse<T> envelopes,
+ * so T here is the final payload type (not the envelope).
  * Optionally validates responses against a Zod schema in development mode.
  */
 export const customInstance = <T,>(
@@ -32,7 +33,6 @@ export const customInstance = <T,>(
   return apiClient({
     ...config,
     ...axiosOptions,
-    skipUnwrap: true,
   }).then(({ data }) => {
     if (zodSchema) {
       return safeParseResponse(zodSchema, data);

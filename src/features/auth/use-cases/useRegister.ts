@@ -3,15 +3,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { getErrorMessage } from "@/lib/utils/api";
 import { RegisterFormDataSchema, type RegisterFormData } from "../types/auth.types";
-import { useAuthRegister } from "@/lib/api/generated/auth/auth";
-import { useMediaCompletePublicUpload, useMediaInitPublicUpload } from "@/lib/api/generated/media/media";
+import { useAuthRegister } from "@/lib/api/hooks/auth.hooks";
+import { useMediaCompletePublicUpload, useMediaInitPublicUpload } from "@/lib/api/hooks/media.hooks";
 import type {
   PresignedUploadInitRequest,
-  PresignedUploadInitRequestAccess,
-  PresignedUploadInitRequestPurpose,
   RegisterRequest,
-  Role,
-} from "@/lib/api/generated/model";
+} from "@/lib/api/types";
+import type { Role } from "@/lib/api/types";
 
 export function useRegister() {
   const navigate = useNavigate();
@@ -45,12 +43,12 @@ export function useRegister() {
           filename: file.name,
           content_type: file.type || "application/octet-stream",
           size_bytes: file.size,
-          access: "public" as PresignedUploadInitRequestAccess,
-          purpose: "verification" as PresignedUploadInitRequestPurpose,
+          access: "public" as 'public' | 'private',
+          purpose: "kyc" as 'post' | 'comment' | 'avatar' | 'background' | 'kyc',
         };
 
-        const initRes = await initPublicUploadMutation.mutateAsync({ data: initRequest });
-        const initData = initRes.data;
+        const initRes = await initPublicUploadMutation.mutateAsync(initRequest);
+        const initData = initRes;
 
         const uploadUrl = initData.upload_url;
         const uploadMethod = initData.method;
@@ -101,8 +99,8 @@ export function useRegister() {
         ...(verification_media_asset_ids.length > 0 ? { verification_media_asset_ids } : {}),
       };
 
-      const response = await registerMutation.mutateAsync({ data: registerData });
-      const user_id = response.data.id;
+      const response = await registerMutation.mutateAsync(registerData);
+      const user_id = response.id;
 
       sessionStorage.setItem("otp_verify_email", data.email);
       sessionStorage.setItem("otp_verify_user_id", user_id);

@@ -6,7 +6,7 @@ import {
   useNotificationsMarkAllAsRead,
   useNotificationsMarkAsRead,
   getNotificationsListNotificationsQueryKey,
-} from "@/lib/api/generated/notifications/notifications";
+} from "@/lib/api/hooks/notifications.hooks";
 import { useNotificationSocket } from "./useNotificationSocket";
 import { mapApiNotificationToUi, type BackendNotificationRaw } from "../utils/mapBackendNotification";
 
@@ -19,11 +19,8 @@ export function useNotifications() {
   const { data, isLoading, isError } = useNotificationsListNotifications(
     { limit: 50 },
     {
-      query: {
-        staleTime: 10 * 1000,
-        refetchOnWindowFocus: true,
-        select: (resp) => resp.data,
-      },
+      staleTime: 10 * 1000,
+      refetchOnWindowFocus: true,
     }
   );
 

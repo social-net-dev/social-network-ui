@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { School, Heart, MapPin, Calendar } from 'lucide-react';
-import type { User } from '@/lib/api/generated/model';
+import type { User } from '@/lib/api/types';
 
 interface PersonalInfoSidebarProps {
   profile?: User | null;

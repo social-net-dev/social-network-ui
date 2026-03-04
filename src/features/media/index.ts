@@ -25,37 +25,29 @@ export type {
   MediaAsset,
   PresignedUploadInitRequest,
   PresignedUploadCompleteRequest,
-} from '@/lib/api/generated/model';
+} from '@/lib/api/types';
 
 // ===========================
 // 🎯 RE-EXPORT GENERATED API FUNCTIONS
 // ===========================
 
 export {
-  // Queries
+  // Raw endpoint functions
   mediaGetAsset,
   getMediaGetAssetQueryKey,
-  getMediaGetAssetQueryOptions,
-  useMediaGetAsset,
-
-  // Mutations
   mediaInitUpload,
-  getMediaInitUploadMutationOptions,
-  useMediaInitUpload,
-
   mediaCompleteUpload,
-  getMediaCompleteUploadMutationOptions,
-  useMediaCompleteUpload,
-
   mediaInitPublicUpload,
-  getMediaInitPublicUploadMutationOptions,
-  useMediaInitPublicUpload,
-
   mediaCompletePublicUpload,
-  getMediaCompletePublicUploadMutationOptions,
-  useMediaCompletePublicUpload,
-
   mediaGetSignedDownloadUrl,
-  getMediaGetSignedDownloadUrlMutationOptions,
+} from '@/lib/api/endpoints/media';
+
+export {
+  // React Query hooks
+  useMediaGetAsset,
+  useMediaInitUpload,
+  useMediaCompleteUpload,
+  useMediaInitPublicUpload,
+  useMediaCompletePublicUpload,
   useMediaGetSignedDownloadUrl,
-} from '@/lib/api/generated/media/media';
+} from '@/lib/api/hooks/media.hooks';

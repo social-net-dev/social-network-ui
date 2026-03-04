@@ -3,17 +3,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   usePostsGetPostComments,
   getPostsGetPostCommentsQueryKey,
-} from '@/lib/api/generated/posts/posts';
+} from '@/lib/api/hooks/posts.hooks';
 import {
   useCommentsCreateComment,
   useCommentsDeleteComment,
   useCommentsReplyToComment,
   useCommentsUpdateComment,
-} from '@/lib/api/generated/comments/comments';
+} from '@/lib/api/hooks/comments.hooks';
 import {
   useReactionsReactToComment,
   useReactionsUnreactComment,
-} from '@/lib/api/generated/reactions/reactions';
+} from '@/lib/api/hooks/reactions.hooks';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import type { FeedComment, ReactionType } from '../types/feed.types';
@@ -28,10 +28,7 @@ export function useComments(postId: string) {
   );
 
   const query = usePostsGetPostComments(postId, undefined, {
-    query: {
-      enabled: !!postId,
-      select: (resp) => resp.data.items,
-    },
+    enabled: !!postId,
   });
 
   const createCommentMutation = useCommentsCreateComment();
@@ -94,12 +91,10 @@ export function useComments(postId: string) {
           : undefined;
 
         await createCommentMutation.mutateAsync({
-          data: {
             post_id: postId,
             content_text: content,
             media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
-          },
-        });
+          });
         toast.success('Đã gửi bình luận');
         queryClient.invalidateQueries({ queryKey });
       } catch (err) {
@@ -235,7 +230,7 @@ export function useComments(postId: string) {
     [postId, queryClient, queryKey, replyToCommentMutation, updateCache, user]
   );
 
-  const comments: FeedComment[] = (query.data as FeedComment[]) || [];
+  const comments: FeedComment[] = useMemo(() => (query.data?.items ?? []) as FeedComment[], [query.data]);
 
   // Build a tree of comments with nested replies grouped under their top-level parent
   const organizedComments = useMemo(() => {

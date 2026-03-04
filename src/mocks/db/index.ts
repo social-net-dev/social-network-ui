@@ -13,7 +13,7 @@ import type {
   UserMe,
   UserPrivacy,
   UserPublic,
-} from '@/lib/api/generated/model';
+} from '@/lib/api/types';
 
 // Local type for Field (not in generated model)
 interface Field {
@@ -36,7 +36,6 @@ interface PostShare {
   created_at: string;
 }
 
-import { NotificationType, PostType, Visibility } from '@/lib/api/generated/model';
 import { makeId } from '../factories';
 import { makeFriend, makeFriendRequest, makeNotification } from '../factories';
 
@@ -211,8 +210,8 @@ const SEED_POSTS: PostSummary[] = [
     media: [],
     stats: { reactions: 26, comments: 9, shares: 2 },
     user_reaction: 'LIKE',
-    visibility: Visibility.PUBLIC,
-    post_type: PostType.SOCIAL,
+    visibility: 'PUBLIC',
+    post_type: 'SOCIAL',
     field_id: 'software-engineering',
     created_at: minsAgo(22),
     updated_at: minsAgo(20),
@@ -226,8 +225,8 @@ const SEED_POSTS: PostSummary[] = [
     media: [],
     stats: { reactions: 41, comments: 14, shares: 6 },
     user_reaction: null,
-    visibility: Visibility.PUBLIC,
-    post_type: PostType.SOCIAL,
+    visibility: 'PUBLIC',
+    post_type: 'SOCIAL',
     field_id: 'product-design',
     created_at: hoursAgo(2),
     updated_at: hoursAgo(1),
@@ -241,8 +240,8 @@ const SEED_POSTS: PostSummary[] = [
     media: [],
     stats: { reactions: 33, comments: 17, shares: 4 },
     user_reaction: 'LOVE',
-    visibility: Visibility.PUBLIC,
-    post_type: PostType.QUESTION,
+    visibility: 'PUBLIC',
+    post_type: 'QUESTION',
     field_id: 'ai-ml',
     created_at: hoursAgo(4),
     updated_at: hoursAgo(4),
@@ -256,8 +255,8 @@ const SEED_POSTS: PostSummary[] = [
     media: [],
     stats: { reactions: 12, comments: 5, shares: 10 },
     user_reaction: null,
-    visibility: Visibility.PUBLIC,
-    post_type: PostType.JOB,
+    visibility: 'PUBLIC',
+    post_type: 'JOB',
     field_id: 'cloud-devops',
     created_at: hoursAgo(6),
     updated_at: hoursAgo(5),
@@ -271,8 +270,8 @@ const SEED_POSTS: PostSummary[] = [
     media: [],
     stats: { reactions: 18, comments: 7, shares: 3 },
     user_reaction: 'WOW',
-    visibility: Visibility.PUBLIC,
-    post_type: PostType.SOCIAL,
+    visibility: 'PUBLIC',
+    post_type: 'SOCIAL',
     field_id: 'frontend-architecture',
     created_at: hoursAgo(11),
     updated_at: hoursAgo(10),
@@ -286,8 +285,8 @@ const SEED_POSTS: PostSummary[] = [
     media: [],
     stats: { reactions: 24, comments: 11, shares: 5 },
     user_reaction: null,
-    visibility: Visibility.PUBLIC,
-    post_type: PostType.QUESTION,
+    visibility: 'PUBLIC',
+    post_type: 'QUESTION',
     field_id: 'backend',
     created_at: hoursAgo(20),
     updated_at: hoursAgo(19),
@@ -486,7 +485,7 @@ const SEED_OUTGOING: FriendRequest[] = [
 const SEED_NOTIFICATIONS: Notification[] = [
   makeNotification(AUTHORS.hoang, {
     id: 'notif_001',
-    type: NotificationType.POST_LIKE,
+    type: 'POST_LIKE',
     target_id: 'post_001',
     target_type: 'post',
     message: `${AUTHORS.hoang.display_name} đã thích bài viết của bạn`,
@@ -495,7 +494,7 @@ const SEED_NOTIFICATIONS: Notification[] = [
   }),
   makeNotification(AUTHORS.linh, {
     id: 'notif_002',
-    type: NotificationType.POST_COMMENT,
+    type: 'POST_COMMENT',
     target_id: 'post_001',
     target_type: 'post',
     message: `${AUTHORS.linh.display_name} đã bình luận về bài viết của bạn`,
@@ -504,14 +503,14 @@ const SEED_NOTIFICATIONS: Notification[] = [
   }),
   makeNotification(AUTHORS.phuc, {
     id: 'notif_003',
-    type: NotificationType.FRIEND_ACCEPT,
+    type: 'FRIEND_ACCEPT',
     message: `${AUTHORS.phuc.display_name} đã chấp nhận lời mời kết bạn`,
     is_read: true,
     created_at: hoursAgo(2),
   }),
   makeNotification(AUTHORS.an, {
     id: 'notif_004',
-    type: NotificationType.MENTION,
+    type: 'MENTION',
     target_id: 'post_004',
     target_type: 'post',
     message: `${AUTHORS.an.display_name} đã đề cập đến bạn trong một bình luận`,
@@ -520,14 +519,14 @@ const SEED_NOTIFICATIONS: Notification[] = [
   }),
   makeNotification(AUTHORS.duy, {
     id: 'notif_005',
-    type: NotificationType.FRIEND_REQUEST,
+    type: 'FRIEND_REQUEST',
     message: `${AUTHORS.duy.display_name} đã gửi lời mời kết bạn cho bạn`,
     is_read: false,
     created_at: hoursAgo(1),
   }),
   makeNotification(AUTHORS.hiru, {
     id: 'notif_006',
-    type: NotificationType.SYSTEM,
+    type: 'SYSTEM',
     message: 'Chào mừng đến với Etechs Social Network! Hoàn thiện profile để kết nối dễ hơn.',
     is_read: true,
     created_at: daysAgo(7),

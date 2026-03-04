@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Circle, Sparkles } from 'lucide-react';
-import type { User } from '@/lib/api/generated/model';
+import type { User } from '@/lib/api/types';
 
 interface ProfileCompletenessCardProps {
   profile: User | null | undefined;

@@ -13,7 +13,7 @@ import type {
   PostSummary,
   ReactionType,
   UserPublic,
-} from '@/lib/api/generated/model';
+} from '@/lib/api/types';
 import { db, AUTHORS } from './db';
 import { makeId } from './factories';
 

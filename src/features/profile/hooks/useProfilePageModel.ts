@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { useProfile } from './useProfile'
-import type { User } from '@/lib/api/generated/model'
+import type { User } from '@/lib/api/types'
 
 export type ProfilePageMode = 'me' | 'other'
 

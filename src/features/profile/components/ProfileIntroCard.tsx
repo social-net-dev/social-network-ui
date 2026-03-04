@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Calendar, School, Heart, MessageCircle, Share2, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import type { User, UserPublic } from '@/lib/api/generated/model';
+import type { User, UserPublic } from '@/lib/api/types';
 
 interface ProfileIntroCardProps {
   profile: User | UserPublic | null | undefined;

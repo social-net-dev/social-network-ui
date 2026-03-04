@@ -4,8 +4,8 @@ import {
   getPostsGetPostsByUserQueryKey,
   usePostsGetMyPosts,
   usePostsGetPostsByUser,
-} from '@/lib/api/generated/posts/posts'
-import type { PostSummary } from '@/lib/api/generated/model'
+} from '@/lib/api/hooks/posts.hooks'
+import type { PostSummary } from '@/lib/api/types'
 
 export type UseProfilePostsArgs = {
   mode: 'me' | 'other'
@@ -14,17 +14,11 @@ export type UseProfilePostsArgs = {
 
 export function useProfilePosts({ mode, subjectUserId }: UseProfilePostsArgs) {
   const myPostsQuery = usePostsGetMyPosts(undefined, {
-    query: {
-      enabled: mode === 'me',
-      select: (resp) => resp.data.items,
-    },
+    enabled: mode === 'me',
   })
 
   const userPostsQuery = usePostsGetPostsByUser(String(subjectUserId ?? ''), undefined, {
-    query: {
-      enabled: mode === 'other' && !!subjectUserId,
-      select: (resp) => resp.data.items,
-    },
+    enabled: mode === 'other' && !!subjectUserId,
   })
 
   const query = mode === 'me' ? myPostsQuery : userPostsQuery
@@ -41,7 +35,7 @@ export function useProfilePosts({ mode, subjectUserId }: UseProfilePostsArgs) {
     return ['profile-posts'] as unknown as readonly unknown[]
   }, [mode, subjectUserId])
 
-  const posts: PostSummary[] = useMemo(() => query.data ?? [], [query.data])
+  const posts: PostSummary[] = useMemo(() => query.data?.items ?? [], [query.data])
 
   return {
     posts,

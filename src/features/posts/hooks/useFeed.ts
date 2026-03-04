@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { feedGetFeed, getFeedGetFeedQueryKey } from '@/lib/api/generated/feed/feed';
-import { usePostsCreatePost } from '@/lib/api/generated/posts/posts';
-import type { FeedGetFeedParams, PostSummary, PostType } from '@/lib/api/generated/model';
+import { feedGetFeed, getFeedGetFeedQueryKey } from '@/lib/api/endpoints/feed';
+import type { FeedGetFeedParams } from '@/lib/api/endpoints/feed';
+import { usePostsCreatePost } from '@/lib/api/hooks/posts.hooks';
+import type { PostSummary, PostType } from '@/lib/api/types';
 import { uploadMediaAsset } from '@/features/posts/lib/uploadMediaAsset';
 
 interface UseFeedOptions {
@@ -34,17 +35,17 @@ export function useFeed(options?: UseFeedOptions) {
       feedGetFeed({
         ...params,
         cursor: pageParam as string | undefined,
-      }, undefined, signal),
+      }, signal),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
-      const { pagination } = lastPage.data;
+      const { pagination } = lastPage;
       return pagination.has_next_page ? pagination.next_cursor : undefined;
     },
   });
 
   const createPostMutation = usePostsCreatePost();
 
-  const posts: PostSummary[] = query.data?.pages.flatMap((p) => p.data.items) ?? [];
+  const posts: PostSummary[] = query.data?.pages.flatMap((p) => p.items) ?? [];
 
   const createPost = useCallback(
     async (content: string, files: File[], postType?: string, fieldId?: string) => {
@@ -53,12 +54,10 @@ export function useFeed(options?: UseFeedOptions) {
         : undefined;
 
       return createPostMutation.mutateAsync({
-        data: {
-          content_text: content,
-          post_type: (postType as PostType) || 'SOCIAL',
-          field_id: fieldId || undefined,
-          media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
-        },
+        content_text: content,
+        post_type: (postType as PostType) || 'SOCIAL',
+        field_id: fieldId || undefined,
+        media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
       });
     },
     [createPostMutation]

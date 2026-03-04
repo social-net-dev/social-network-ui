@@ -5,8 +5,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Edit, Clock } from 'lucide-react';
 import { VerificationBadge } from '@/features/shared/components/VerificationBadge';
-import type { PostSummary } from '@/lib/api/generated/model';
-import { useState, useEffect, useCallback } from 'react';
+import type { PostSummary } from '@/lib/api/types';
+import { memo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CommentSection } from './CommentSection';
 import { SharedPostCard } from './SharedPostCard';
@@ -33,7 +33,7 @@ interface PostProps {
   onOpenDetail?: (postId: string) => void;
 }
 
-export function PostCard({ post, onLike, onComment, onShare, showComments, onDelete, onEdit, currentUserId, onOpenDetail }: PostProps) {
+export const PostCard = memo(function PostCard({ post, onLike, onComment, onShare, showComments, onDelete, onEdit, currentUserId, onOpenDetail }: PostProps) {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
@@ -293,4 +293,4 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
       )}
     </article>
   );
-}
+});

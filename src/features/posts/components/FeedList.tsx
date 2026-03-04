@@ -1,6 +1,6 @@
 import { FileText, Loader2 } from "lucide-react";
 import { PostCard } from "./PostCard";
-import type { PostSummary } from "@/lib/api/generated/model";
+import type { PostSummary } from "@/lib/api/types";
 import { useRef } from "react";
 
 type PostWithShared = PostSummary & { sharedPost?: PostSummary | null };

@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'src/lib/api/generated']),
+  globalIgnores(['dist']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -28,7 +28,7 @@ export default defineConfig([
       'no-restricted-imports': ['error', {
         patterns: [{
           group: ['**/features/*/services/*Api'],
-          message: 'Vui lòng sử dụng generated hooks từ @/lib/api/generated thay vì viết manual API services.'
+          message: 'Vui lòng sử dụng hooks từ @/lib/api/hooks hoặc endpoints từ @/lib/api/endpoints thay vì viết manual API services.'
         }]
       }]
     },

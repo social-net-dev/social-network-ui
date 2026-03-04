@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchRoomsForUser, callCreateRoom } from '../services/messageApi';
-import { usersGetMe } from '@/lib/api/generated/users/users';
-import { profilesGetProfile } from '@/lib/api/generated/profiles/profiles';
+import { usersGetMe } from '@/lib/api/endpoints/users';
+import { profilesGetProfile } from '@/lib/api/endpoints/profiles';
 import type { IRoomUser } from '../types/message.types';
 
 import { useMessageStore } from '@/stores/messageStore';
@@ -92,8 +92,8 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
         try {
           meResp = await usersGetMe();
           console.log('[useRoomManager] usersGetMe returned', meResp);
-          myDisplayName = meResp.data?.display_name || meResp.data?.username || undefined;
-          myUsername = meResp.data?.username || meResp.data?.email || undefined;
+          myDisplayName = meResp?.display_name || meResp?.username || undefined;
+          myUsername = meResp?.username || meResp?.email || undefined;
         } catch (err) {
           console.error('[useRoomManager] usersApi.getMe error', err);
           myDisplayName = undefined;
@@ -109,7 +109,7 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
         for (const m of memberIds) {
           console.log('[useRoomManager] resolving member', m);
           if (myUsername && m === myUsername) {
-            const myId = (meResp as any)?.data?.id || myUsername;
+            const myId = (meResp as any)?.id || myUsername;
             members.push({ user_id: String(myId), display_name: myDisplayName });
             console.log('[useRoomManager] added current user as member', { user_id: myId, display_name: myDisplayName });
             continue;
@@ -118,7 +118,7 @@ export const useRoomManager = ({ userId }: UseRoomManagerProps) => {
           try {
             const profResp = await profilesGetProfile(m);
             console.log('[useRoomManager] profilesGetProfile returned', profResp);
-            const prof = profResp.data;
+            const prof = profResp;
             const profId = prof?.id || null;
             const display = prof?.display_name || prof?.username || undefined;
             if (!display || !profId) {

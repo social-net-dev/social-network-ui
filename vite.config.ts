@@ -29,11 +29,12 @@ export default defineConfig({
       output: {
         manualChunks: id => {
           if (id.includes('node_modules')) {
-            // React ecosystem
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'vendor';
-            }
-            // Các vendor khác gộp vào vendor
+            if (id.includes('react/') || id.includes('react-dom') || id.includes('scheduler')) return 'react';
+            if (id.includes('@radix-ui')) return 'radix';
+            if (id.includes('@tanstack')) return 'query';
+            if (id.includes('lucide-react')) return 'icons';
+            if (id.includes('date-fns')) return 'date-fns';
+            if (id.includes('react-router') || id.includes('react-router-dom')) return 'router';
             return 'vendor';
           }
           return undefined;

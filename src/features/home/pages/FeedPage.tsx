@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useRef, useEffect } from 'react';
+import { useState, lazy, Suspense, useRef, useEffect, useCallback } from 'react';
 import { useFeed, FeedList, ShareDialog, usePostActions } from '@/features/posts';
 import { CreatePostFAB } from '@/features/posts/components/CreatePostFAB';
 import { PostComposerCard } from '@/features/posts/components/PostComposerCard';
@@ -54,7 +54,7 @@ export function FeedPage() {
     }
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleCreatePost = async (content: string, files: File[], _hashtags: string[], postType?: string, fieldId?: string) => {
+  const handleCreatePost = useCallback(async (content: string, files: File[], _hashtags: string[], postType?: string, fieldId?: string) => {
     try {
       setIsCreating(true);
       await createPost(content, files, postType, fieldId);
@@ -63,25 +63,25 @@ export function FeedPage() {
     } finally {
       setIsCreating(false);
     }
-  };
+  }, [createPost]);
 
-  const handleLike = async (postId: string, liked: boolean) => {
+  const handleLike = useCallback(async (postId: string, liked: boolean) => {
     await likePost(postId, liked);
-  };
+  }, [likePost]);
 
-  const handleComment = (postId: string) => {
+  const handleComment = useCallback((postId: string) => {
     setOpenCommentPostIds((prev) =>
       prev.includes(postId)
         ? prev.filter((id) => id !== postId)
         : [...prev, postId],
     );
-  };
+  }, []);
 
-  const handleShare = (postId: string) => {
+  const handleShare = useCallback((postId: string) => {
     setSharePostId(postId);
-  };
+  }, []);
 
-  const handleShareSubmit = async (content: string) => {
+  const handleShareSubmit = useCallback(async (content: string) => {
     if (!sharePostId) return;
     try {
       await sharePost(sharePostId, content);
@@ -90,30 +90,30 @@ export function FeedPage() {
       console.error('Failed to share post:', err);
       throw err;
     }
-  };
+  }, [sharePostId, sharePost, refresh]);
 
-  const handleDismissBanner = () => {
+  const handleDismissBanner = useCallback(() => {
     setBannerDismissed(true);
     localStorage.setItem('etechs_unverified_banner_dismissed', 'true');
-  };
+  }, []);
 
-  const handleDeletePost = async (postId: string) => {
+  const handleDeletePost = useCallback(async (postId: string) => {
     try {
       await deletePost(postId);
       refresh();
     } catch (err) {
       console.error('Failed to delete post:', err);
     }
-  };
+  }, [deletePost, refresh]);
 
-  const handleEditPost = async (postId: string, content: string) => {
+  const handleEditPost = useCallback(async (postId: string, content: string) => {
     try {
       await updatePost(postId, content);
       refresh();
     } catch (err) {
       console.error('Failed to edit post:', err);
     }
-  };
+  }, [updatePost, refresh]);
 
   const communities = [
     {

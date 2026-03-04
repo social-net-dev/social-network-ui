@@ -5,66 +5,28 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/features/shared/components/Avatar';
-import { Search, UserPlus, UserCheck, Clock, UserX, Loader2 } from 'lucide-react';
-import { profilesGetProfile } from '@/lib/api/generated/profiles/profiles';
-import { usersGetMe } from '@/lib/api/generated/users/users';
+import { Search, UserCheck, UserX, Loader2, UserPlus } from 'lucide-react';
+import { profilesGetProfile } from '@/lib/api/endpoints/profiles';
+import { usersGetMe } from '@/lib/api/endpoints/users';
 import { useAuthStore } from '@/stores/authStore';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { callGetDMRoom } from '@/features/message/services/messageApi';
 import { useRoomManager } from '@/features/message/hooks/useRoomManager';
-import { useFriendsSendRequest, useFriendsAcceptRequest, useFriendsCancelRequest, getFriendsListFriendsQueryKey, getFriendsListIncomingRequestsQueryKey, getFriendsListOutgoingRequestsQueryKey } from '@/lib/api/generated/friends/friends';
-import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import type { UserPublic } from '@/lib/api/generated/model';
+import type { UserPublic } from '@/lib/api/types';
+import { FriendshipStatusBadge } from '@/features/friends/components/FriendshipStatusBadge';
+import { useFriendActions } from '@/features/friends/hooks/useFriendActions';
 
 interface SearchUser extends UserPublic {
-}
-
-function FriendshipStatusBadge({ status }: { status: string | undefined }) {
-  switch (status) {
-    case 'friends':
-      return (
-        <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-          <UserCheck className="h-3 w-3 mr-1" />
-          Bạn bè
-        </Badge>
-      );
-    case 'request_sent':
-      return (
-        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
-          <Clock className="h-3 w-3 mr-1" />
-          Đã gửi lời mời
-        </Badge>
-      );
-    case 'request_received':
-      return (
-        <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-          <UserPlus className="h-3 w-3 mr-1" />
-          Đã gửi cho bạn
-        </Badge>
-      );
-    default:
-      return null;
-  }
 }
 
 export function SearchPage() {
   const [searchInput, setSearchInput] = useState('');
   const [query, setQuery] = useState('');
-  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const [creatingRoomFor, setCreatingRoomFor] = useState<string | null>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
-
-  const addProcessing = (id: string) => setProcessingIds(prev => new Set(prev).add(id));
-  const removeProcessing = (id: string) =>
-    setProcessingIds(prev => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
 
   // Replace generic search endpoint with exact-profile lookup
   const [data, setData] = useState<{ users: UserPublic[]; total: number } | undefined>(undefined);
@@ -86,7 +48,7 @@ export function SearchPage() {
       try {
         // Call exact-match profile endpoint instead of search list
         const resp = await profilesGetProfile(query.trim());
-        const p = resp.data;
+        const p = resp;
         if (!mounted) return;
         setData({ users: p ? [p] : [], total: p ? 1 : 0 });
       } catch (err: any) {
@@ -103,17 +65,14 @@ export function SearchPage() {
       mounted = false;
     };
   }, [query]);
-  const sendRequestMutation = useFriendsSendRequest();
-  const acceptRequestMutation = useFriendsAcceptRequest();
-  const cancelRequestMutation = useFriendsCancelRequest();
 
   // Messaging helpers
   const { tenantSlug } = useAuthStore();
   const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
   const { createRoom } = useRoomManager({ userId: currentUserId || '' });
 
-  // Optimistically update a user's status in the search results cache
-  const updateUserStatus = (userId: string, newStatus: string | undefined, requestId?: string | null) => {
+  // Optimistically update a user's status in local state
+  const updateUserStatus = useCallback((userId: string, newStatus: string | undefined, requestId?: string | null) => {
     qc.setQueryData(['search', 'users', { q: query }], (old: { users: SearchUser[]; total: number } | undefined) => {
       if (!old) return old;
       return {
@@ -134,57 +93,31 @@ export function SearchPage() {
         ),
       };
     });
-  };
+    setData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        users: prev.users.map(u =>
+          u.id === userId
+            ? {
+                ...u,
+                viewer_context: {
+                  ...u.viewer_context,
+                  is_owner: u.viewer_context?.is_owner ?? false,
+                  is_friend: newStatus === 'friends',
+                  friendship_status: newStatus,
+                  friend_request_id: requestId ?? u.viewer_context?.friend_request_id,
+                },
+              }
+            : u
+        ),
+      };
+    });
+  }, [qc, query]);
 
-  const handleSendRequest = async (userId: string, username: string) => {
-    addProcessing(userId);
-    try {
-      const res = await sendRequestMutation.mutateAsync({ data: { addressee_username: username } });
-      toast.success('Đã gửi lời mời kết bạn');
-      const requestId = res.data?.id || null;
-      updateUserStatus(userId, 'request_sent', requestId ? String(requestId) : null);
-      qc.invalidateQueries({ queryKey: ['/friends/'] });
-      qc.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
-      qc.invalidateQueries({ queryKey: getFriendsListOutgoingRequestsQueryKey() });
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } }; message?: string };
-      toast.error(e?.response?.data?.message || e?.message || 'Lỗi khi gửi lời mời');
-    } finally {
-      removeProcessing(userId);
-    }
-  };
-
-  const handleAcceptRequest = async (userId: string, requestId: string) => {
-    addProcessing(userId);
-    try {
-      await acceptRequestMutation.mutateAsync({ requestId });
-      toast.success('Đã chấp nhận lời mời kết bạn');
-      updateUserStatus(userId, 'friends');
-      qc.invalidateQueries({ queryKey: ['/friends/'] });
-      qc.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
-      qc.invalidateQueries({ queryKey: getFriendsListIncomingRequestsQueryKey() });
-    } catch (_err) {
-      toast.error('Lỗi khi chấp nhận lời mời');
-    } finally {
-      removeProcessing(userId);
-    }
-  };
-
-  const handleCancelRequest = async (userId: string, requestId: string) => {
-    addProcessing(userId);
-    try {
-      await cancelRequestMutation.mutateAsync({ requestId });
-      toast.success('Đã hủy lời mời kết bạn');
-      updateUserStatus(userId, 'none', null);
-      qc.invalidateQueries({ queryKey: ['/friends/'] });
-      qc.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
-      qc.invalidateQueries({ queryKey: getFriendsListOutgoingRequestsQueryKey() });
-    } catch (_err) {
-      toast.error('Lỗi khi hủy lời mời');
-    } finally {
-      removeProcessing(userId);
-    }
-  };
+  const { processingIds, sendRequest: handleSendRequest, acceptRequest: handleAcceptRequest, cancelRequest: handleCancelRequest } = useFriendActions({
+    onStatusChange: updateUserStatus,
+  });
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
@@ -220,13 +153,10 @@ export function SearchPage() {
                   setCreatingRoomFor(null);
                   return;
                 }
-                console.log('[SearchPage] callGetDMRoom returned no room (200 but empty)', dmResp);
               } catch (err: any) {
-                const status = err?.response?.status;
-                if (status === 404) {
-                  console.log('[SearchPage] callGetDMRoom returned 404 — will create room');
-                } else {
-                  console.warn('[SearchPage] callGetDMRoom failed', err);
+                // 404 = room doesn't exist yet, will create below
+                if (err?.response?.status !== 404) {
+                  console.error('[SearchPage] callGetDMRoom failed', err);
                 }
               }
             }
@@ -234,7 +164,7 @@ export function SearchPage() {
             // Ensure both users have display names before creating a room
             try {
               const meResp = await usersGetMe();
-              const me = meResp.data;
+              const me = meResp;
               const myDisplay = me?.display_name || null;
               const otherDisplay = user.display_name || null;
               if (!myDisplay || !otherDisplay) {

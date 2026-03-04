@@ -11,7 +11,7 @@ import { SharedPostCard } from './SharedPostCard';
 import { FormattedContent } from '@/features/shared/components/FormattedContent';
 import { cn } from '@/lib/utils';
 import { POST_TYPES, ACADEMIC_FIELDS } from '../constants/fields';
-import type { PostSummary } from '@/lib/api/generated/model';
+import type { PostSummary } from '@/lib/api/types';
 import { useState, useCallback } from 'react';
 
 type PostWithShared = PostSummary & { sharedPost?: PostSummary | null };

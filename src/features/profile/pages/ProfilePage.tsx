@@ -14,12 +14,12 @@ import { ProfilePhotosTab } from '../components/ProfilePhotosTab';
 import { EditProfileSheet } from '../components/EditProfileSheet';
 import { PostComposerCard } from '@/features/posts/components/PostComposerCard';
 import { CreatePostFAB } from '@/features/posts/components/CreatePostFAB';
-import { usePostsCreatePost } from '@/lib/api/generated/posts/posts';
+import { usePostsCreatePost } from '@/lib/api/hooks/posts.hooks';
 import { uploadMediaAsset } from '@/features/posts/lib/uploadMediaAsset';
 import { useQueryClient } from '@tanstack/react-query';
-import { getPostsGetMyPostsQueryKey } from '@/lib/api/generated/posts/posts';
-import type { PostType } from '@/lib/api/generated/model';
-import type { User } from '@/lib/api/generated/model';
+import { getPostsGetMyPostsQueryKey } from '@/lib/api/hooks/posts.hooks';
+import type { PostType } from '@/lib/api/types';
+import type { User } from '@/lib/api/types';
 
 const CreatePostModal = lazy(() =>
   import('@/features/posts/components/CreatePostModal').then(module => ({
@@ -43,12 +43,10 @@ function ProfilePage() {
         ? await Promise.all(files.map((f) => uploadMediaAsset(f, 'post')))
         : undefined;
       await createPostMutation.mutateAsync({
-        data: {
-          content_text: content,
-          post_type: (postType as PostType) || 'SOCIAL',
-          field_id: fieldId || undefined,
-          media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
-        },
+        content_text: content,
+        post_type: (postType as PostType) || 'SOCIAL',
+        field_id: fieldId || undefined,
+        media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
       });
       queryClient.invalidateQueries({ queryKey: getPostsGetMyPostsQueryKey(undefined) });
     } catch (err) {

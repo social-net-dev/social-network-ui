@@ -1,5 +1,5 @@
 import { useProfile } from '../hooks/useProfile';
-import type { User, Project } from '@/lib/api/generated/model';
+import type { User, Project } from '@/lib/api/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
