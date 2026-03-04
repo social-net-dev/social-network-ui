@@ -11,44 +11,41 @@ Tài liệu này mô tả kiến trúc, quy ước, và các quyết định thi
 ```
 contract/main.tsp
         ↓  pnpm gen:spec
-tsp-output/schema/openapi.json     (tham khảo)
-        ↓  viết tay dựa trên contract
-src/lib/api/types/                 # TypeScript types thủ công
-src/lib/api/endpoints/             # Pure async functions
-src/lib/api/hooks/                 # React Query hooks
+tsp-output/schema/openapi.json
+        ↓  pnpm gen:types  (openapi-typescript)
+src/lib/api/types/schema.d.ts  # Auto-generated — KHÔNG sửa tay
+src/lib/api/types/index.ts     # Re-export + frontend-only generics
+        ↓  import
+src/lib/api/endpoints/         # Pure async functions (viết tay)
+src/lib/api/hooks/             # React Query hooks (viết tay)
         ↓  import
 src/features/*/hooks/ → src/features/*/components/
 ```
 
 1. **Nguồn sự thật duy nhất** là `contract/main.tsp` (nằm trong cùng project)
-2. **Không bao giờ** sửa tay các file trong `tsp-output/`
-3. Khi cần thêm field, endpoint, hay type mới → **sửa `contract/main.tsp` trước**, sau đó cập nhật thủ công `src/lib/api/types/`, `src/lib/api/endpoints/`, `src/lib/api/hooks/`
+2. **Không bao giờ** sửa tay `tsp-output/` hay `src/lib/api/types/schema.d.ts`
+3. Khi cần thêm field, endpoint, hay type mới → **sửa `contract/main.tsp` trước**, sau đó chạy lại pipeline
 
-### Pipeline tái sinh OpenAPI spec (nếu cần)
+### Pipeline tái sinh
 
 ```bash
-# Chỉ gen OpenAPI spec từ TypeSpec (không gen TS code nữa)
+# Chạy toàn bộ pipeline trong một lệnh (khuyến dùng)
+pnpm gen
+
+# Hoặc từng bước:
 pnpm gen:spec   # contract/main.tsp → tsp-output/schema/openapi.json
+pnpm gen:types  # openapi.json → src/lib/api/types/schema.d.ts  (openapi-typescript)
 ```
 
 ---
 
-## Cấu trúc API Client (Hand-Written)
+## Cấu trúc API Client
 
 ```
 src/lib/api/
-├── types/                  # TypeScript types thủ công từ contract
-│   ├── common.ts           # ApiError, PaginatedResponse, CursorPaginatedResponse, Enums
-│   ├── auth.ts             # LoginRequest, LoginResponse, RegisterRequest…
-│   ├── user.ts             # Author, UserBase, UserPublic, UserMe, User, UserPrivacy…
-│   ├── post.ts             # PostSummary, Post, FeedResponse, CreatePostRequest…
-│   ├── comment.ts          # Comment, CommentResponse, CreateCommentRequest…
-│   ├── media.ts            # MediaAsset, PresignedUploadInitRequest…
-│   ├── reaction.ts         # ReactRequest, PostReaction, CommentReaction
-│   ├── friend.ts           # Friend, FriendRequest, FriendshipStatus…
-│   ├── notification.ts     # Notification, NotificationListResponse…
-│   ├── search.ts           # SearchUsersResponse, ApiSuggestion…
-│   └── index.ts            # Re-export barrel
+├── types/
+│   ├── schema.d.ts         # AUTO-GENERATED (openapi-typescript) — KHÔNG sửa tay
+│   └── index.ts            # Re-export tất cả schema types + frontend generics
 ├── endpoints/              # Pure async functions per domain
 │   ├── auth.ts             # authLogin, authRegister, authLogout…
 │   ├── users.ts            # usersGetMe, usersUpdateProfile…
@@ -315,7 +312,7 @@ Một số `as unknown as` là không thể tránh:
 - [ ] `pnpm tsc --noEmit` — 0 errors
 - [ ] Không có type định nghĩa lại từ `@/lib/api/types`
 - [ ] Không có Axios call thủ công (ngoài `customInstance` đặc biệt)
-- [ ] Nếu sửa TypeSpec → đã chạy `gen:spec`, sau đó cập nhật tay `types/`, `endpoints/`, `hooks/` tương ứng
+- [ ] Nếu sửa TypeSpec → đã chạy `pnpm gen` (`gen:spec` + `gen:types`), sau đó cập nhật tay `endpoints/`, `hooks/` tương ứng
 - [ ] Pagination dùng `items` + `pagination.page/total_pages` (không dùng field cũ)
 - [ ] `pnpm lint` — không có error
 
