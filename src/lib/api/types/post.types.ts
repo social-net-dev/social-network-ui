@@ -12,6 +12,12 @@ export interface MediaFile {
   media_type?: string;
 }
 
+export interface MediaItem {
+  id: string;
+  url: string;
+  mime_type?: string;
+}
+
 export interface PostStats {
   reactions: number;
   comments: number;
@@ -23,6 +29,7 @@ export interface Post {
   author: Author;
   content: string;
   mediaUrls: string[];
+  mediaFiles: MediaItem[];
   stats: PostStats;
   userReaction: ReactionType | null;
   sharedPost: Post | null;

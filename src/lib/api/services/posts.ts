@@ -1,15 +1,15 @@
-/**
+﻿/**
  * Posts API Service
  */
 
-import apiClient from '../../api';
+import socialClient from '../../socialApi';
 import { transformPost, transformComment } from '../transforms';
 
-import type { Post, CreatePostRequest, UpdatePostRequest, CreateCommentRequest, UpdateCommentRequest, Comment, CommentResponse, FeedResponse, PaginationParams, ReplyRequest } from '../types';
+import type { Post, CreatePostRequest, CreateCommentRequest, UpdateCommentRequest, Comment, CommentResponse, FeedResponse, PaginationParams, ReplyRequest } from '../types';
 
 export const postsApi = {
   async getFeed(params?: PaginationParams): Promise<FeedResponse> {
-    const res = await apiClient.get<Record<string, any>>('/feed/', {
+    const res = await socialClient.get<Record<string, any>>('/feed/', {
       params: {
         page: params?.page,
         page_size: params?.pageSize,
@@ -30,7 +30,7 @@ export const postsApi = {
   },
 
   async getPosts(params?: PaginationParams): Promise<FeedResponse> {
-    const res = await apiClient.get<Record<string, any>>('/posts/', { params });
+    const res = await socialClient.get<Record<string, any>>('/posts/', { params });
     const data = res?.data || res;
     const items = (Array.isArray(data) ? data : data.posts || data.items || []) as Record<string, any>[];
 
@@ -44,7 +44,7 @@ export const postsApi = {
   },
 
   async getPostDetail(postId: string): Promise<Post> {
-    const res = await apiClient.get<Record<string, any>>(`/posts/${postId}/`);
+    const res = await socialClient.get<Record<string, any>>(`/posts/${postId}/`);
     return transformPost((res?.data || res) as Record<string, any>);
   },
 
@@ -58,24 +58,30 @@ export const postsApi = {
       data.files.forEach(file => formData.append('files', file));
     }
 
-    const res = await apiClient.post<Record<string, any>>('/posts/create/', formData, {
+    const res = await socialClient.post<Record<string, any>>('/posts/create/', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return transformPost((res?.data || res) as Record<string, any>);
   },
 
-  async updatePost(postId: string, data: UpdatePostRequest): Promise<Post> {
-    const res = await apiClient.patch<Record<string, any>>(`/posts/${postId}/update/`, data);
+  async updatePost(postId: string, data: FormData | Record<string, unknown>): Promise<Post> {
+    if (data instanceof FormData) {
+      const res = await socialClient.post<Record<string, any>>(`/posts/${postId}/update/`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return transformPost((res?.data || res) as Record<string, any>);
+    }
+    const res = await socialClient.post<Record<string, any>>(`/posts/${postId}/update/`, data);
     return transformPost((res?.data || res) as Record<string, any>);
   },
 
   async deletePost(postId: string): Promise<{ message: string }> {
-    const res = await apiClient.post<{ message: string }>(`/posts/${postId}/delete/`);
+    const res = await socialClient.post<{ message: string }>(`/posts/${postId}/delete/`);
     return res.data;
   },
 
   async getMyPosts(params?: PaginationParams): Promise<FeedResponse> {
-    const res = await apiClient.get<Record<string, any>>('/posts/me/list/', { params });
+    const res = await socialClient.get<Record<string, any>>('/posts/me/list/', { params });
     const data = res?.data || res;
     const items = (Array.isArray(data) ? data : data.posts || data.items || []) as Record<string, any>[];
 
@@ -89,7 +95,7 @@ export const postsApi = {
   },
 
   async getPostsByUser(userId: string, params?: PaginationParams): Promise<FeedResponse> {
-    const res = await apiClient.get<Record<string, any>>(`/posts/user/${userId}/`, { params });
+    const res = await socialClient.get<Record<string, any>>(`/posts/user/${userId}/`, { params });
     const data = res?.data || res;
     const items = (Array.isArray(data) ? data : data.posts || data.items || []) as Record<string, any>[];
 
@@ -103,7 +109,7 @@ export const postsApi = {
   },
 
   async getPostComments(postId: string, params?: PaginationParams): Promise<CommentResponse> {
-    const res = await apiClient.get<Record<string, any>>(`/posts/${postId}/comments/`, { params });
+    const res = await socialClient.get<Record<string, any>>(`/posts/${postId}/comments/`, { params });
     const data = res?.data || res;
     const items = (Array.isArray(data) ? data : data.comments || data.items || []) as Record<string, any>[];
 
@@ -122,7 +128,7 @@ export const postsApi = {
     formData.append('content_text', data.content_text);
     if (data.files && data.files.length > 0) {
       data.files.forEach(file => formData.append('files', file));
-      const res = await apiClient.post<Record<string, any>>(`/posts/${data.post_id}/comments/`, formData, {
+      const res = await socialClient.post<Record<string, any>>(`/posts/${data.post_id}/comments/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return transformComment((res?.data || res) as Record<string, any>);
@@ -130,17 +136,23 @@ export const postsApi = {
 
     // No files -> send JSON payload to post-scoped comments endpoint
     const payload = { content_text: data.content_text };
-    const res = await apiClient.post<Record<string, any>>(`/posts/${data.post_id}/comments/`, payload);
+    const res = await socialClient.post<Record<string, any>>(`/posts/${data.post_id}/comments/`, payload);
     return transformComment((res?.data || res) as Record<string, any>);
   },
 
-  async updateComment(commentId: string, data: UpdateCommentRequest): Promise<Comment> {
-    const res = await apiClient.patch<Record<string, any>>(`/comments/${commentId}/update/`, data);
+  async updateComment(commentId: string, data: FormData | UpdateCommentRequest): Promise<Comment> {
+    if (data instanceof FormData) {
+      const res = await socialClient.post<Record<string, any>>(`/comments/${commentId}/update/`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return transformComment((res?.data || res) as Record<string, any>);
+    }
+    const res = await socialClient.post<Record<string, any>>(`/comments/${commentId}/update/`, data);
     return transformComment((res?.data || res) as Record<string, any>);
   },
 
   async deleteComment(commentId: string): Promise<{ message: string }> {
-    const res = await apiClient.post<{ message: string }>(`/comments/${commentId}/delete/`);
+    const res = await socialClient.post<{ message: string }>(`/comments/${commentId}/delete/`);
     return res.data;
   },
 
@@ -151,9 +163,18 @@ export const postsApi = {
     if (data.files && data.files.length > 0) {
       data.files.forEach(file => formData.append('files', file));
     }
-    const res = await apiClient.post<Record<string, any>>(`/comments/${commentId}/replies/`, formData, {
+    const res = await socialClient.post<Record<string, any>>(`/comments/${commentId}/replies/`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return transformComment((res?.data || res) as Record<string, any>);
+  },
+
+  async getCommentReplies(commentId: string, page = 1, pageSize = 20): Promise<{ replies: Comment[]; total: number; total_pages: number; page: number }> {
+    const res = await socialClient.get<{ replies: Record<string, any>[]; total: number; total_pages: number; page: number }>(`/comments/${commentId}/replies/?page=${page}&page_size=${pageSize}`);
+    const data = res.data || (res as any);
+    return {
+      ...data,
+      replies: (data.replies || []).map((r: Record<string, any>) => transformComment(r)),
+    };
   },
 };

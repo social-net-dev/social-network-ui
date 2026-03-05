@@ -17,6 +17,7 @@ export interface Comment {
   parentCommentId: string | null;
   content: string;
   mediaUrls: string[];
+  mediaFiles: { id: string; url: string; mime_type?: string }[];
   stats: CommentStats;
   userReaction: ReactionType | null;
   createdAt: string;

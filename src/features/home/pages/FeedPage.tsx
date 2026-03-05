@@ -83,9 +83,9 @@ export function FeedPage() {
     }
   };
 
-  const handleEditPost = async (postId: string, content: string) => {
+  const handleEditPost = async (postId: string, formData: FormData) => {
     try {
-      await updatePost(postId, content);
+      await updatePost(postId, formData);
       refresh();
     } catch (err) {
       console.error('Failed to edit post:', err);
@@ -175,7 +175,7 @@ export function FeedPage() {
           </div>
         )}
 
-        <FeedList posts={posts} isLoading={isLoading} onLike={handleLike} onComment={handleComment} onShare={handleShare} onDelete={handleDeletePost} onEdit={handleEditPost} selectedPostId={selectedPostId} currentUserId={currentUser?.id} />
+        <FeedList posts={posts} isLoading={isLoading} onLike={handleLike} onComment={handleComment} onShare={handleShare} onDelete={handleDeletePost} onEdit={handleEditPost} selectedPostId={selectedPostId} currentUserId={currentUser?.id != null ? String(currentUser.id) : undefined} />
 
         {/* Sentinel for Infinite Scroll */}
         <div ref={loadMoreRef} className="flex justify-center pt-4 pb-8 min-h-16">

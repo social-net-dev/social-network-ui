@@ -5,6 +5,7 @@ import { useReactions } from '@/lib/api/hooks/useReactions';
 import { useShares } from '@/lib/api/hooks/useShares';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
+import { transformPost } from '@/lib/api/transforms';
 import type { FeedPost } from '../types/feed.types';
 
 export function usePostActions(customQueryKey?: readonly unknown[]) {
@@ -18,25 +19,21 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
   const updateCache = useCallback(
     (updater: (posts: FeedPost[]) => FeedPost[]) => {
       // Tìm tất cả các query có thể chứa bài viết
-      const allQueries = queryClient.getQueryCache().findAll({ 
-        predicate: (query) => 
-          query.queryKey.includes('feed') || 
-          query.queryKey.includes('posts') || 
-          query.queryKey.includes('recommendation') ||
-          query.queryKey.includes('search')
+      const allQueries = queryClient.getQueryCache().findAll({
+        predicate: query => query.queryKey.includes('feed') || query.queryKey.includes('posts') || query.queryKey.includes('recommendation') || query.queryKey.includes('search'),
       });
 
       const updateData = (data: any): any => {
         if (!data) return data;
-        
+
         // Nếu data là mảng bài viết (hiếm gặp trong React Query data root nhưng có thể ở pages)
         if (Array.isArray(data)) return updater(data);
-        
+
         // Nếu data có cấu trúc { posts: [...] } (getFeed response)
         if ('posts' in data && Array.isArray(data.posts)) {
           return { ...data, posts: updater(data.posts) };
         }
-        
+
         // Nếu data có cấu trúc { items: [...] } (PaginatedResponse)
         if ('items' in data && Array.isArray(data.items)) {
           return { ...data, items: updater(data.items) };
@@ -59,7 +56,7 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
       for (const query of allQueries) {
         queryClient.setQueryData<any>(query.queryKey, (old: any) => {
           if (!old) return old;
-          
+
           // Xử lý Infinite Query
           if ('pages' in old && Array.isArray(old.pages)) {
             return {
@@ -67,7 +64,7 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
               pages: old.pages.map((page: any) => updateData(page)),
             };
           }
-          
+
           return updateData(old);
         });
       }
@@ -92,14 +89,16 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
   );
 
   const updatePost = useCallback(
-    async (postId: string, content: string) => {
-      updateCache(posts => posts.map(p => (p.id === postId ? { ...p, content } : p)));
+    async (postId: string, formData: FormData) => {
+      const optimisticContent = formData.get('content_text') as string | null;
+      if (optimisticContent !== null) {
+        updateCache(posts => posts.map(p => (p.id === postId ? { ...p, content: optimisticContent } : p)));
+      }
 
       try {
-        await manualUpdate({
-          postId,
-          data: { content_text: content },
-        });
+        const updated = await manualUpdate({ postId, data: formData });
+        // Replace with server response to get fresh media_files
+        updateCache(posts => posts.map(p => (p.id === postId ? { ...p, ...updated } : p)));
         toast.success('Đã cập nhật bài viết');
       } catch (err) {
         queryClient.invalidateQueries({ queryKey: ['feed'] });
@@ -114,17 +113,15 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
     async (postId: string, message?: string) => {
       // Search ALL feed queries for the original post
       let postsArray: FeedPost[] = [];
-      const allQueries = queryClient.getQueryCache().findAll({ 
-        predicate: (query) => query.queryKey.includes('feed')
+      const allQueries = queryClient.getQueryCache().findAll({
+        predicate: query => query.queryKey.includes('feed'),
       });
-      
+
       for (const query of allQueries) {
         const allData = query.state.data as any;
         if (!allData) continue;
         if ('pages' in allData) {
-          postsArray = allData.pages.flatMap((page: any) => 
-            Array.isArray(page) ? page : 'posts' in page ? page.posts : 'items' in page ? page.items : 'data' in page ? page.data.posts : []
-          );
+          postsArray = allData.pages.flatMap((page: any) => (Array.isArray(page) ? page : 'posts' in page ? page.posts : 'items' in page ? page.items : 'data' in page ? page.data.posts : []));
         } else {
           postsArray = Array.isArray(allData) ? allData : 'posts' in allData ? allData.posts : 'items' in allData ? allData.items : 'data' in allData ? allData.data.posts : [];
         }
@@ -154,23 +151,26 @@ export function usePostActions(customQueryKey?: readonly unknown[]) {
           },
           userReaction: null,
           mediaUrls: [],
+          mediaFiles: [],
         };
 
         updateCache(posts => [optimisticSharedPost, ...posts]);
       }
 
       try {
-        await share({
+        const rawPost = await share({
           postId,
           message: message || '',
         });
+        // Replace the optimistic temp entry with the real server post
+        const realPost = transformPost(rawPost as Record<string, any>);
+        updateCache(posts => posts.map(p => (p.id.startsWith('temp-') && p.sharedPost?.id === postId ? (realPost as FeedPost) : p)));
         toast.success('Đã chia sẻ bài viết');
-        queryClient.invalidateQueries({ queryKey: ['feed'] });
-        if (customQueryKey) {
-          queryClient.invalidateQueries({ queryKey: customQueryKey });
-        }
       } catch (err) {
+        // Revert optimistic on error
+        updateCache(posts => posts.filter(p => !(p.id.startsWith('temp-') && p.sharedPost?.id === postId)));
         queryClient.invalidateQueries({ queryKey: ['feed'] });
+        if (customQueryKey) queryClient.invalidateQueries({ queryKey: customQueryKey });
         toast.error('Lỗi khi chia sẻ bài viết');
         throw err;
       }

@@ -2,7 +2,7 @@
  * Common transformation and API utilities
  */
 
-import { getApiBaseUrl } from '@/lib/config';
+import { getApiBaseUrl, getSocialApiUrl } from '@/lib/config';
 
 /**
  * Read the JWT auth token from localStorage (remove surrounding quotes if any).
@@ -50,18 +50,22 @@ export const buildMediaUrl = (filePath: string | null | undefined): string => {
   if (filePath.startsWith('http')) return filePath;
 
   const apiBase = getApiBaseUrl().replace(/\/+$/, '');
+  // Social service host for static /media/ uploads (port 8003)
+  const socialBase = getSocialApiUrl().replace(/\/api\/?$/, '');
 
   let mediaPath: string;
+  let baseToUse = apiBase;
 
   // Already has /api prefix → strip it (apiBase already includes /api)
-  if (
-    filePath.startsWith('/api/media/stream') ||
-    filePath.startsWith('/api/social/media/') ||
-    filePath.startsWith('/api/media/')
-  ) {
+  if (filePath.startsWith('/api/media/stream') || filePath.startsWith('/api/social/media/') || filePath.startsWith('/api/media/')) {
     mediaPath = filePath.replace(/^\/api/, '');
   }
-  // Relative /media/ path
+  // Static /media/ file served by social-servece (NOT the stream endpoint)
+  else if (filePath.startsWith('/media/') && !filePath.startsWith('/media/stream')) {
+    mediaPath = filePath;
+    baseToUse = socialBase; // e.g. http://localhost:8003
+  }
+  // Relative /media/ path (includes stream)
   else if (filePath.startsWith('/media/')) {
     mediaPath = filePath;
   }
@@ -70,7 +74,7 @@ export const buildMediaUrl = (filePath: string | null | undefined): string => {
     mediaPath = `/media/stream/?path=${encodeURIComponent(filePath)}`;
   }
 
-  const fullUrl = `${apiBase}${mediaPath}`;
+  const fullUrl = `${baseToUse}${mediaPath}`;
 
   // Append auth token
   const cleanToken = getAuthToken();
@@ -97,11 +101,7 @@ export const buildMediaPath = (filePath: string | null | undefined): string => {
   let mediaPath: string;
 
   // Already a full /api/... stream URL → strip /api prefix (axios base already has /api)
-  if (
-    filePath.startsWith('/api/media/stream') ||
-    filePath.startsWith('/api/social/media/') ||
-    filePath.startsWith('/api/media/')
-  ) {
+  if (filePath.startsWith('/api/media/stream') || filePath.startsWith('/api/social/media/') || filePath.startsWith('/api/media/')) {
     mediaPath = filePath.replace(/^\/api/, '');
   }
   // Already a relative /media/ path

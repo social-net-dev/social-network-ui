@@ -15,13 +15,13 @@ import { Search, MessageCircle, Loader2 } from 'lucide-react';
 
 export const SearchUsersMini: React.FC = () => {
   const navigate = useNavigate();
-  const { tenantSlug } = useAuthStore();
+  const { tenantSlug, user: authUser } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [creatingRoomFor, setCreatingRoomFor] = useState<string | null>(null);
 
-  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
+  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : ((authUser as any)?.id ?? null);
 
   // Debug: Log component state
   console.log('[SearchUsersMini] Component state:', {

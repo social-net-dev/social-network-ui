@@ -2,7 +2,7 @@
  * Search API Service
  */
 
-import apiClient from '../../api';
+import socialClient from '../../socialApi';
 import { transformUser } from '../transforms';
 import type { PaginationParams } from '../types/common.types';
 
@@ -14,7 +14,7 @@ export interface SearchUsersParams extends PaginationParams {
 
 export const searchApi = {
   async searchUsers(params: SearchUsersParams): Promise<{ users: User[]; total: number }> {
-    const res = await apiClient.get<Record<string, any>>('/search/users/', { 
+    const res = await socialClient.get<Record<string, any>>('/search/users/', { 
       params: {
         q: params.q,
         limit: params.pageSize || 20,

@@ -1,5 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { customInstance } from '@/lib/api';
+import { getSocialApiUrl } from '@/lib/config';
+
+/**
+ * Build absolute URL for /media/ paths using social service host.
+ * e.g. /media/abc.jpg -> http://localhost:8003/media/abc.jpg
+ */
+function buildMediaAbsoluteUrl(url: string): string {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/media/')) {
+    // getSocialApiUrl() = "http://localhost:8003/api" → strip "/api" suffix
+    const socialBase = getSocialApiUrl().replace(/\/api\/?$/, '');
+    return `${socialBase}${url}`;
+  }
+  return url;
+}
 
 /**
  * Hook to fetch media as blob and create object URL.
@@ -12,25 +28,28 @@ export function useMediaBlob(url: string | null | undefined) {
     queryFn: async () => {
       if (!url) return '';
 
-      // Absolute URLs (external CDN): return as-is
-      if (url.startsWith('http')) return url;
+      // Build absolute URL (handles /media/ -> social service host)
+      const absUrl = buildMediaAbsoluteUrl(url);
+
+      // Absolute URLs (external CDN or /media/ static files): return as-is
+      if (absUrl.startsWith('http')) return absUrl;
 
       // Fetch via authenticated API client as blob
       try {
         const res = await customInstance<Blob>({
-          url,
+          url: absUrl,
           method: 'GET',
           responseType: 'blob',
         });
         return URL.createObjectURL(res);
       } catch (e) {
-        console.error('Failed to fetch media blob:', url, e);
+        console.error('Failed to fetch media blob:', absUrl, e);
         return '';
       }
     },
     enabled: !!url,
     staleTime: 1000 * 60 * 30, // Cache blobs for 30 minutes
-    gcTime: 1000 * 60 * 60,    // Keep in GC for 1 hour
+    gcTime: 1000 * 60 * 60, // Keep in GC for 1 hour
   });
 }
 
@@ -44,19 +63,23 @@ export function useMediaBlobs(urls: string[]) {
       if (!urls || urls.length === 0) return [];
 
       const promises = urls.map(async url => {
-        // Absolute URLs: return as-is
-        if (url.startsWith('http')) return url;
         if (!url) return '';
+
+        // Build absolute URL (handles /media/ -> social service host)
+        const absUrl = buildMediaAbsoluteUrl(url);
+
+        // Absolute URLs (external CDN or /media/ static files): return as-is
+        if (absUrl.startsWith('http')) return absUrl;
 
         try {
           const res = await customInstance<Blob>({
-            url,
+            url: absUrl,
             method: 'GET',
             responseType: 'blob',
           });
           return URL.createObjectURL(res);
         } catch (e) {
-          console.error('Failed to fetch media blob for:', url, e);
+          console.error('Failed to fetch media blob for:', absUrl, e);
           return '';
         }
       });

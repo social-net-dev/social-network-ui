@@ -4,21 +4,7 @@
 
 import apiClient from '../../api';
 
-import type {
-  LoginRequest,
-  LoginResponse,
-  RegisterRequest,
-  RegisterResponse,
-  VerifyOtpRequest,
-  VerifyOtpResponse,
-  ResendOtpRequest,
-  RefreshTokenRequest,
-  RefreshTokenResponse,
-  ForgotPasswordRequest,
-  ResetPasswordRequest,
-  ChangePasswordRequest,
-  User,
-} from '../types';
+import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, VerifyOtpRequest, VerifyOtpResponse, ResendOtpRequest, RefreshTokenRequest, RefreshTokenResponse, ForgotPasswordRequest, ResetPasswordRequest, ChangePasswordRequest, User } from '../types';
 
 export const authApi = {
   async login(data: LoginRequest): Promise<LoginResponse> {
@@ -33,12 +19,12 @@ export const authApi = {
         formData.append(key, value instanceof File ? value : String(value));
       }
     });
-    const res = await apiClient.post<RegisterResponse>('/auth/register/', formData);
+    const res = await apiClient.post<RegisterResponse>('/register/email/request/', formData);
     return res.data;
   },
 
   async verifyOtp(data: VerifyOtpRequest): Promise<VerifyOtpResponse> {
-    const res = await apiClient.post<VerifyOtpResponse>('/auth/verify-otp/', data);
+    const res = await apiClient.post<VerifyOtpResponse>('/register/email/confirm/', data);
     return res.data;
   },
 

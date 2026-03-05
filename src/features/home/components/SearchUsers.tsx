@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { profilesApi } from '@/lib/api/services';
+import { searchApi } from '@/lib/api/services/search';
+import { friendsApi } from '@/lib/api/services/friends';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { callGetDMRoom } from '@/features/message/services/messageApi';
 import { useRoomManager } from '@/features/message/hooks/useRoomManager';
@@ -10,68 +11,79 @@ import type { User } from '@/lib/api/types/user.types';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageCircle, Loader2 } from 'lucide-react';
+import { MessageCircle, Loader2, UserPlus, UserCheck, Clock } from 'lucide-react';
 
 export const SearchUsers: React.FC = () => {
   const navigate = useNavigate();
-  const { tenantSlug } = useAuthStore();
+  const { tenantSlug, user: authUser } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creatingRoomFor, setCreatingRoomFor] = useState<string | null>(null);
+  // Track per-user friend request state: userId -> 'idle' | 'sending' | 'sent' | 'friends'
+  const [friendStates, setFriendStates] = useState<Record<string, 'idle' | 'sending' | 'sent' | 'friends'>>({});
 
-  // Get current user ID from tenant slug
-  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
-
-  // Debug: Log component state
-  console.log('[SearchUsers] Component state:', {
-    tenantSlug,
-    currentUserId,
-    searchQuery,
-    resultsCount: searchResults.length,
-    loading,
-    error,
-  });
+  // Get current user ID from tenant slug, fall back to user.id in auth store
+  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : ((authUser as any)?.id ?? null);
 
   const handleSearch = async () => {
-    console.log('[SearchUsers] handleSearch called!');
-    console.log('[SearchUsers] searchQuery:', searchQuery);
-    console.log('[SearchUsers] tenantSlug:', tenantSlug);
-
     if (!searchQuery.trim()) {
       setError('Vui lòng nhập tên người dùng');
-      console.log('[SearchUsers] Empty search query');
       return;
     }
 
     if (!tenantSlug) {
       setError('Không tìm thấy tenant slug. Vui lòng đăng nhập lại.');
-      console.log('[SearchUsers] No tenantSlug found!');
       return;
     }
 
-    console.log('[SearchUsers] Starting search:', { query: searchQuery, tenantSlug });
     setLoading(true);
     setError(null);
     setSearchResults([]);
+    setFriendStates({});
 
     try {
-      // Gọi trực tiếp profilesApi để tìm theo username/email (exact match)
-      const p = await profilesApi.getProfile(searchQuery.trim());
-      if (p) {
-        setSearchResults([p as User]);
-        setError(null);
+      const { users } = await searchApi.searchUsers({ q: searchQuery.trim(), pageSize: 20 });
+      if (users.length > 0) {
+        setSearchResults(users);
+
+        // Check friendship status for each result in parallel
+        const statuses: Record<string, 'idle' | 'sending' | 'sent' | 'friends'> = {};
+        await Promise.all(
+          users.map(async u => {
+            if (u.id === currentUserId) return;
+            try {
+              const status = await friendsApi.checkFriendship(u.id);
+              if (status.is_friend) statuses[u.id] = 'friends';
+              else if (status.is_requested) statuses[u.id] = 'sent';
+              else statuses[u.id] = 'idle';
+            } catch {
+              statuses[u.id] = 'idle';
+            }
+          })
+        );
+        setFriendStates(statuses);
       } else {
         setError('Không tìm thấy người dùng');
-        setSearchResults([]);
       }
     } catch (err: any) {
-      console.error('[SearchUsers] profilesApi search error:', err);
+      console.error('[SearchUsers] search error:', err);
       setError(err?.response?.data?.message || 'Không tìm thấy người dùng');
-      setSearchResults([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendFriendRequest = async (targetUser: User) => {
+    setFriendStates(prev => ({ ...prev, [targetUser.id]: 'sending' }));
+    try {
+      await friendsApi.sendRequest({ addressee_id: targetUser.id });
+      setFriendStates(prev => ({ ...prev, [targetUser.id]: 'sent' }));
+    } catch (err: any) {
+      console.error('[SearchUsers] sendRequest error:', err);
+      setFriendStates(prev => ({ ...prev, [targetUser.id]: 'idle' }));
+      alert(err?.response?.data?.detail || 'Không thể gửi lời mời kết bạn');
     }
   };
 
@@ -179,22 +191,41 @@ export const SearchUsers: React.FC = () => {
                   {user.bio && <p className="text-sm mt-1 text-gray-700 dark:text-gray-300 line-clamp-2">{user.bio}</p>}
                 </div>
 
-                {/* Action Button */}
-                <Button onClick={() => handleStartChat(user)} disabled={creatingRoomFor === user.id || user.id === currentUserId} className="flex-shrink-0 gap-2" variant={user.id === currentUserId ? 'secondary' : 'default'}>
-                  {creatingRoomFor === user.id ? (
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  {user.id !== currentUserId && (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Đang tạo...
-                    </>
-                  ) : user.id === currentUserId ? (
-                    'Bạn'
-                  ) : (
-                    <>
-                      <MessageCircle className="h-4 w-4" />
-                      Nhắn tin
+                      {/* Add Friend button */}
+                      {friendStates[user.id] === 'friends' ? (
+                        <Button variant="secondary" size="sm" disabled className="gap-2">
+                          <UserCheck className="h-4 w-4" />
+                          Bạn bè
+                        </Button>
+                      ) : friendStates[user.id] === 'sent' ? (
+                        <Button variant="outline" size="sm" disabled className="gap-2">
+                          <Clock className="h-4 w-4" />
+                          Đã gửi
+                        </Button>
+                      ) : (
+                        <Button size="sm" className="gap-2" onClick={() => handleSendFriendRequest(user)} disabled={friendStates[user.id] === 'sending'}>
+                          {friendStates[user.id] === 'sending' ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                          Thêm bạn
+                        </Button>
+                      )}
+
+                      {/* Chat button */}
+                      <Button variant="outline" size="sm" onClick={() => handleStartChat(user)} disabled={creatingRoomFor === user.id} className="gap-2">
+                        {creatingRoomFor === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
+                        Nhắn tin
+                      </Button>
                     </>
                   )}
-                </Button>
+                  {user.id === currentUserId && (
+                    <Button variant="secondary" size="sm" disabled>
+                      Bạn
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

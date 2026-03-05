@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Avatar } from '@/features/shared/components/Avatar';
 import { Search, UserPlus, UserCheck, Clock, UserX, Loader2 } from 'lucide-react';
 import { getErrorMessage } from '@/lib/api/transforms';
-import { profilesApi } from '@/lib/api/services';
+import { searchApi } from '@/lib/api/services/search';
+import { friendsApi } from '@/lib/api/services/friends';
 import { useAuthStore } from '@/stores/authStore';
 import { usersApi } from '@/lib/api/services';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
-import { callGetDMRoom } from '@/features/message/services/messageApi';
-import { useRoomManager } from '@/features/message/hooks/useRoomManager';
+import { callGetDMRoom, callCreateRoom } from '@/features/message/services/messageApi';
 import { useFriendActions } from '@/lib/api/hooks/useFriends';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -74,6 +74,10 @@ export function SearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
+  // Messaging helpers
+  const { tenantSlug, user: authUser } = useAuthStore();
+  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : ((authUser as any)?.id ?? null);
+
   React.useEffect(() => {
     let mounted = true;
     if (!query || query.trim().length === 0) {
@@ -87,12 +91,36 @@ export function SearchPage() {
       setIsLoading(true);
       setIsError(false);
       try {
-        // Call exact-match profile endpoint instead of search list
-        const p = await profilesApi.getProfile(query.trim());
+        // Call search users endpoint for multiple results
+        const { users } = await searchApi.searchUsers({ q: query.trim(), pageSize: 20 });
         if (!mounted) return;
-        setData({ users: p ? [p as User] : [], total: p ? 1 : 0 });
+
+        // Check friendship status for each user
+        const usersWithStatus: SearchUser[] = await Promise.all(
+          users.map(async u => {
+            if (!currentUserId || u.id === currentUserId) {
+              return { ...u, friendshipStatus: 'none' as const, friendRequestId: null };
+            }
+            try {
+              const status = await friendsApi.checkFriendship(u.id);
+              if (status.is_friend) {
+                return { ...u, friendshipStatus: 'friends' as const, friendRequestId: null };
+              } else if (status.is_requested) {
+                return { ...u, friendshipStatus: 'request_sent' as const, friendRequestId: null };
+              } else if (status.is_received) {
+                return { ...u, friendshipStatus: 'request_received' as const, friendRequestId: null };
+              }
+              return { ...u, friendshipStatus: 'none' as const, friendRequestId: null };
+            } catch {
+              return { ...u, friendshipStatus: 'none' as const, friendRequestId: null };
+            }
+          })
+        );
+
+        if (!mounted) return;
+        setData({ users: usersWithStatus, total: usersWithStatus.length });
       } catch (err: any) {
-        console.error('[SearchPage] profilesApi.getProfile error', err);
+        console.error('[SearchPage] searchApi.searchUsers error', err);
         if (!mounted) return;
         setData({ users: [], total: 0 });
         setIsError(true);
@@ -104,13 +132,9 @@ export function SearchPage() {
     return () => {
       mounted = false;
     };
-  }, [query]);
-  const { sendRequest, acceptRequest, cancelRequest } = useFriendActions();
+  }, [query, currentUserId]);
 
-  // Messaging helpers
-  const { tenantSlug } = useAuthStore();
-  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
-  const { createRoom } = useRoomManager({ userId: currentUserId || '' });
+  const { sendRequest, acceptRequest, cancelRequest } = useFriendActions();
 
   // Optimistically update a user's status in the search results cache
   const updateUserStatus = (userId: string, newStatus: SearchUser['friendshipStatus'], requestId?: string | null) => {
@@ -123,10 +147,10 @@ export function SearchPage() {
     });
   };
 
-  const handleSendRequest = async (userId: string, username: string) => {
+  const handleSendRequest = async (userId: string) => {
     addProcessing(userId);
     try {
-      const res = await sendRequest({ addressee_username: username });
+      const res = await sendRequest({ addressee_id: userId });
       toast.success('Đã gửi lời mời kết bạn');
       const requestId = res?.id || null;
       updateUserStatus(userId, 'request_sent', requestId ? String(requestId) : null);
@@ -187,53 +211,52 @@ export function SearchPage() {
           if (!currentUserId) return;
           setCreatingRoomFor(user.id);
           try {
-            // fetch my username and other username
-            // const me = await usersApi.getMe();
-            // const myUsername = (me as any)?.username || (me as any)?.email || null;
-            // const otherUsername = (user as any).username || (user as any).email || null;
-            if (currentUserId && user.id) {
-              try {
-                const dmResp = await callGetDMRoom(currentUserId, user.id);
-                const existingRoomId = dmResp?.data?.id || dmResp?.data?.room?.id || dmResp?.data?.room_id || dmResp?.data?.roomId;
-                if (existingRoomId) {
-                  navigate(`/messages/${existingRoomId}?user_id=${currentUserId}`);
-                  setCreatingRoomFor(null);
-                  return;
-                }
-                console.log('[SearchPage] callGetDMRoom returned no room (200 but empty)', dmResp);
-              } catch (err: any) {
-                const status = err?.response?.status;
-                if (status === 404) {
-                  console.log('[SearchPage] callGetDMRoom returned 404 — will create room');
-                } else {
-                  console.warn('[SearchPage] callGetDMRoom failed', err);
-                }
+            // 1. Check if DM room already exists
+            try {
+              const dmResp = await callGetDMRoom(currentUserId, user.id);
+              const existingRoomId = dmResp?.data?.id || dmResp?.data?.room?.id || dmResp?.data?.room_id || dmResp?.data?.roomId;
+              if (existingRoomId) {
+                navigate(`/messages/${existingRoomId}?user_id=${currentUserId}`);
+                return;
+              }
+            } catch (err: any) {
+              if (err?.response?.status !== 404) {
+                console.warn('[SearchPage] callGetDMRoom failed', err);
               }
             }
 
-            // Ensure both users have display names before creating a room
+            // 2. Create new DM room — use UUID from search result, get my display name once
+            const targetDisplayName = user.displayName || user.username || user.email || user.id;
+            let myDisplayName: string | undefined;
             try {
               const me = await usersApi.getMe();
-              const myDisplay = (me as any)?.displayName || (me as any)?.display_name || null;
-              const otherDisplay = (user as any).displayName || (user as any).display_name || null;
-              if (!myDisplay || !otherDisplay) {
-                alert('Cần display name hợp lệ của cả hai người để tạo phòng. Vui lòng cập nhật tên hiển thị.');
-              } else {
-                const roomDisplay = `${myDisplay} & ${otherDisplay}`;
-                const myUsername = (me as any)?.username || (me as any)?.email || null;
-                const otherUsername = (user as any).username || (user as any).email || null;
-                if (!myUsername || !otherUsername) {
-                  alert('Không thể xác định username của một trong hai người.');
-                } else {
-                  const roomId = await createRoom(roomDisplay, [myUsername, otherUsername]);
-                  if (roomId) navigate(`/messages/${roomId}?user_id=${currentUserId}`);
-                }
-              }
+              myDisplayName = (me as any)?.displayName || (me as any)?.display_name || (me as any)?.username || (me as any)?.email;
             } catch (e) {
-              console.error('Failed to verify display names before createRoom', e);
+              console.error('[SearchPage] getMe failed', e);
+            }
+            if (!myDisplayName) {
+              toast.error('Không lấy được tên hiển thị của bạn. Vui lòng cập nhật tên hiển thị.');
+              return;
+            }
+
+            const res = await callCreateRoom({
+              name: null as unknown as string,
+              type: 'dm',
+              members: [
+                { user_id: currentUserId, display_name: myDisplayName },
+                { user_id: user.id, display_name: targetDisplayName },
+              ],
+              creator_id: currentUserId,
+            } as any);
+            const roomId = res?.data?.id ?? (res?.data as any)?.room_id ?? null;
+            if (roomId) {
+              navigate(`/messages/${roomId}?user_id=${currentUserId}`);
+            } else {
+              toast.error('Tạo phòng chat thất bại');
             }
           } catch (e) {
-            console.error('create DM failed', e);
+            console.error('[SearchPage] create DM failed', e);
+            toast.error('Không thể tạo phòng chat');
           } finally {
             setCreatingRoomFor(null);
           }
@@ -286,7 +309,7 @@ export function SearchPage() {
         return (
           <div className="flex items-center gap-2">
             {messageButton}
-            <Button variant="outline" size="sm" className="flex-shrink-0 rounded-full" onClick={() => handleSendRequest(user.id, user.username || user.email)} disabled={isProcessing}>
+            <Button variant="outline" size="sm" className="flex-shrink-0 rounded-full" onClick={() => handleSendRequest(user.id)} disabled={isProcessing}>
               {isProcessing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserPlus className="h-4 w-4 mr-1" />}
               Kết bạn
             </Button>

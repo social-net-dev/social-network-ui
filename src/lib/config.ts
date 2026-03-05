@@ -21,6 +21,20 @@ export const getApiBaseUrl = (): string => {
 };
 
 /**
+ * Get Social Service Base URL (posts, reactions, friends, feed)
+ * Docker: social-servece container, host port 8003
+ */
+export const getSocialApiUrl = (): string => {
+  if (typeof window !== 'undefined' && (window.__ENV__ as Record<string, string> | undefined)?.VITE_API_SOCIAL_URL) {
+    return (window.__ENV__ as Record<string, string>).VITE_API_SOCIAL_URL;
+  }
+  if (import.meta.env.DEV) {
+    return import.meta.env.VITE_API_SOCIAL_URL || 'http://localhost:8003/api';
+  }
+  return import.meta.env.VITE_API_SOCIAL_URL || '/api-social';
+};
+
+/**
  * Get Message Service Base URL (different microservice)
  */
 export const getMessageApiUrl = (): string => {

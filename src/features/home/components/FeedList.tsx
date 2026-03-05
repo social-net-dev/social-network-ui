@@ -1,5 +1,5 @@
-import { PostCard } from "./PostCard";
-import type { Post } from "../types/feed.types";
+import { PostCard } from './PostCard';
+import type { Post } from '../types/feed.types';
 
 interface FeedListProps {
   posts: Post[];
@@ -9,29 +9,16 @@ interface FeedListProps {
   onShare: (postId: string) => void;
   selectedPostId?: string | null;
   onDelete?: (postId: string) => void;
-  onEdit?: (postId: string, content: string) => void;
+  onEdit?: (postId: string, formData: FormData) => void;
   currentUserId?: string;
 }
 
-export function FeedList({
-  posts,
-  isLoading,
-  onLike,
-  onComment,
-  onShare,
-  selectedPostId,
-  onDelete,
-  onEdit,
-  currentUserId,
-}: FeedListProps) {
+export function FeedList({ posts, isLoading, onLike, onComment, onShare, selectedPostId, onDelete, onEdit, currentUserId }: FeedListProps) {
   if (isLoading && posts.length === 0) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="bg-white dark:bg-[#0A2737] rounded-2xl shadow-lg p-6 animate-pulse"
-          >
+        {[1, 2, 3].map(i => (
+          <div key={i} className="bg-white dark:bg-[#0A2737] rounded-2xl shadow-lg p-6 animate-pulse">
             <div className="flex items-center space-x-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700" />
               <div className="flex-1">
@@ -53,47 +40,22 @@ export function FeedList({
     return (
       <div className="bg-white dark:bg-[#0A2737] rounded-2xl shadow-lg p-12 text-center">
         <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-gray-400"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
             <polyline points="16 6 12 2 8 6" />
             <line x1="12" y1="2" x2="12" y2="15" />
           </svg>
         </div>
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-          Chưa có bài viết nào
-        </h3>
-        <p className="text-gray-500 dark:text-gray-400">
-          Hãy đăng bài đầu tiên của bạn!
-        </p>
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Chưa có bài viết nào</h3>
+        <p className="text-gray-500 dark:text-gray-400">Hãy đăng bài đầu tiên của bạn!</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {posts.map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onLike={onLike}
-          onComment={onComment}
-          onShare={onShare}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          currentUserId={currentUserId}
-          showComments={selectedPostId === post.id}
-        />
+      {posts.map(post => (
+        <PostCard key={post.id} post={post} onLike={onLike} onComment={onComment} onShare={onShare} onDelete={onDelete} onEdit={onEdit} currentUserId={currentUserId} showComments={selectedPostId === post.id} />
       ))}
       {isLoading && (
         <div className="flex justify-center py-4">

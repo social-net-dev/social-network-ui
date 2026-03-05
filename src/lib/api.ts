@@ -1,12 +1,15 @@
 /**
- * Unified Axios Instance
+ * Auth / Middleware Axios Client  (`authClient`)
+ * Points to etechs-middleware (Django, port 8001/api).
+ * Handles: auth (login, register, refresh), user profile management,
+ *          notifications, admin, fields.
+ *
+ * For social features (posts, reactions, friends, feed) use socialApi.ts instead.
+ *
  * - Refresh token logic with queue
  * - Public auth paths (no token sent)
- * - Unwrap middleware response { success: true, data: T }
+ * - Unwrap middleware response format: { success: true, data: T }
  * - Tenant header support
- *
- * Used by:
- * - Manual API services (authApi, postsApi, usersApi, etc.)
  */
 import axios, { AxiosError } from 'axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
@@ -151,7 +154,7 @@ apiClient.interceptors.response.use(
         // Call refresh token endpoint (etechs-middleware expects "refresh")
         const refreshURL = baseURL.endsWith('/') ? `${baseURL}auth/refresh/` : `${baseURL}/auth/refresh/`;
         const response = await axios.post(refreshURL, { refresh: refreshToken });
-        
+
         // Handle wrapped response: { data: { access: "..." } } or { access: "..." }
         const payload = response.data?.data ?? response.data;
         const newAccessToken = payload?.access ?? payload?.access_token;
@@ -203,10 +206,7 @@ apiClient.interceptors.response.use(
  * Custom instance wrapper for React Query compatibility.
  * Unwraps response data automatically.
  */
-export const customInstance = <T,>(
-  config: AxiosRequestConfig,
-  options?: AxiosRequestConfig,
-): Promise<T> => {
+export const customInstance = <T>(config: AxiosRequestConfig, options?: AxiosRequestConfig): Promise<T> => {
   return apiClient({
     ...config,
     ...options,

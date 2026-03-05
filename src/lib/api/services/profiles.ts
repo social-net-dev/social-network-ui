@@ -2,7 +2,7 @@
  * Profiles API Service
  */
 
-import apiClient from '../../api';
+import socialClient from '../../socialApi';
 import type { User } from '../types/user.types';
 import { transformUser } from '../transforms';
 
@@ -12,9 +12,8 @@ export const profilesApi = {
    * @param username - Email or username
    */
   async getProfile(username: string): Promise<User> {
-    const res = await apiClient.get<Record<string, any>>(`/profiles/${username}/`);
-    // The interceptor should have unwrapped this, but let's be safe
-    const data = res?.data?.data ?? res?.data ?? res;
+    const res = await socialClient.get<Record<string, any>>(`/profiles/${username}/`);
+    const data = res?.data ?? res;
     return transformUser(data as Record<string, any>);
   },
 };

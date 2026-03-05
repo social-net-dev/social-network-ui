@@ -12,6 +12,7 @@ import { FormattedContent } from '@/features/shared/components/FormattedContent'
 import { useMediaBlobs } from '../hooks/useMedia';
 import { cn } from '@/lib/utils';
 import { POST_TYPES, ACADEMIC_FIELDS } from '../constants/fields';
+import { CreatePostModal } from './CreatePostModal';
 
 const ROLE_MAP: Record<string, { label: string; class: string }> = {
   STUDENT: { label: 'Người học', class: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
@@ -30,27 +31,26 @@ interface PostProps {
   onShare: (postId: string) => void;
   showComments?: boolean;
   onDelete?: (postId: string) => void;
-  onEdit?: (postId: string, content: string) => void;
+  onEdit?: (postId: string, formData: FormData) => void;
   currentUserId?: string;
 }
 
 export function PostCard({ post, onLike, onComment, onShare, showComments, onDelete, onEdit, currentUserId }: PostProps) {
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
   // Optimistic Like State
   const [optimisticLike, setOptimisticLike] = useState({
     liked: !!post.userReaction,
-    count: post.stats?.reactions ?? 0
+    count: post.stats?.reactions ?? 0,
   });
 
   // Sync with props when post changes (e.g. after API settles)
   useEffect(() => {
     setOptimisticLike({
       liked: !!post.userReaction,
-      count: post.stats?.reactions ?? 0
+      count: post.stats?.reactions ?? 0,
     });
   }, [post.userReaction, post.stats?.reactions]);
 
@@ -64,17 +64,17 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
   const images = post.mediaUrls || [];
   const { data: blobUrls = [], isLoading: loadingImages } = useMediaBlobs(images);
 
-  const isAuthor = currentUserId === post.author.id;
+  const isAuthor = !!currentUserId && String(currentUserId) === String(post.author?.id ?? '');
   const sharedPost = post.sharedPost;
 
   const handleLikeClick = () => {
     const newLiked = !optimisticLike.liked;
     const newCount = optimisticLike.count + (newLiked ? 1 : -1);
-    
+
     // 1. Update UI instantly
     setOptimisticLike({
       liked: newLiked,
-      count: Math.max(0, newCount)
+      count: Math.max(0, newCount),
     });
 
     // 2. Call parent onLike (which handles API and global cache)
@@ -89,15 +89,8 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
   };
 
   const handleEdit = () => {
-    setEditContent(content);
-    setIsEditing(true);
+    setIsEditModalOpen(true);
     setShowMenu(false);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!onEdit || !editContent.trim()) return;
-    onEdit(post.id, editContent);
-    setIsEditing(false);
   };
 
   return (
@@ -113,16 +106,8 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
                 <h3 className="font-semibold text-foreground truncate hover:text-primary transition-colors-300 cursor-pointer" onClick={() => navigate(`/profile/${post.author.username}`)}>
                   {post.author.displayName}
                 </h3>
-                {post.author.role && ROLE_MAP[post.author.role] && (
-                  <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-semibold', ROLE_MAP[post.author.role].class)}>
-                    {ROLE_MAP[post.author.role].label}
-                  </span>
-                )}
-                {post.author.accountStatus && STATUS_MAP[post.author.accountStatus] && (
-                  <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', STATUS_MAP[post.author.accountStatus].class)}>
-                    {STATUS_MAP[post.author.accountStatus].label}
-                  </span>
-                )}
+                {post.author.role && ROLE_MAP[post.author.role] && <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-semibold', ROLE_MAP[post.author.role].class)}>{ROLE_MAP[post.author.role].label}</span>}
+                {post.author.accountStatus && STATUS_MAP[post.author.accountStatus] && <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', STATUS_MAP[post.author.accountStatus].class)}>{STATUS_MAP[post.author.accountStatus].label}</span>}
               </div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -130,12 +115,16 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
                   {sharedPost && <span className="w-1 h-1 bg-muted-foreground/50 rounded-full"></span>}
                   {sharedPost && <span className="text-primary">đã chia sẻ</span>}
                 </p>
-                {post.postType && post.postType !== 'SOCIAL' && (() => {
-                  const pt = POST_TYPES.find(t => t.value === post.postType);
-                  return pt ? (
-                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">{pt.icon} {pt.label}</span>
-                  ) : null;
-                })()}
+                {post.postType &&
+                  post.postType !== 'SOCIAL' &&
+                  (() => {
+                    const pt = POST_TYPES.find(t => t.value === post.postType);
+                    return pt ? (
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">
+                        {pt.icon} {pt.label}
+                      </span>
+                    ) : null;
+                  })()}
               </div>
             </div>
           </div>
@@ -160,32 +149,38 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
           )}
         </div>
 
-        {isEditing ? (
-          <div className="mb-4">
-            <textarea value={editContent} onChange={e => setEditContent(e.target.value)} className="w-full p-3 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-primary/20 transition-all-300 resize-none" rows={3} placeholder="Nhập nội dung bài viết..." />
-            <div className="flex gap-2 mt-2">
-              <Button size="sm" onClick={handleSaveEdit} className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors-300">
-                Lưu
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setIsEditing(false)} className="hover:bg-muted/50 transition-colors-300">
-                Hủy
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <FormattedContent content={content} className="text-foreground/90 leading-relaxed mb-3 text-sm block" />
-            {post.fieldId && (() => {
+        {isEditModalOpen && (
+          <CreatePostModal
+            open={isEditModalOpen}
+            onOpenChange={setIsEditModalOpen}
+            onSubmit={() => {}}
+            editPostId={post.id}
+            initialContent={content}
+            initialMediaUrls={post.mediaFiles ?? []}
+            initialPostType={post.postType ?? 'SOCIAL'}
+            initialFieldId={post.fieldId ?? ''}
+            onUpdate={(postId, formData) => {
+              if (onEdit) onEdit(postId, formData);
+              setIsEditModalOpen(false);
+            }}
+          />
+        )}
+
+        <div>
+          <FormattedContent content={content} className="text-foreground/90 leading-relaxed mb-3 text-sm block" />
+          {post.fieldId &&
+            (() => {
               const f = ACADEMIC_FIELDS.find(af => af.value === post.fieldId);
               return f ? (
                 <div className="mb-3">
-                  <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium', f.color)}>{f.icon} {f.label}</span>
+                  <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium', f.color)}>
+                    {f.icon} {f.label}
+                  </span>
                 </div>
               ) : null;
             })()}
-            {sharedPost && <SharedPostCard post={sharedPost} />}
-          </>
-        )}
+          {sharedPost && <SharedPostCard post={sharedPost} />}
+        </div>
 
         {!sharedPost && images.length > 0 && (
           <div className="mb-4 grid gap-2">
@@ -207,12 +202,7 @@ export function PostCard({ post, onLike, onComment, onShare, showComments, onDel
 
         <div className="flex items-center justify-between pt-4 border-t border-border/50">
           <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLikeClick}
-              className={cn('rounded-full px-3 transition-all-300 hover:bg-red-50 dark:hover:bg-red-950/30', optimisticLike.liked ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground hover:text-red-500 dark:hover:text-red-400')}
-            >
+            <Button variant="ghost" size="sm" onClick={handleLikeClick} className={cn('rounded-full px-3 transition-all-300 hover:bg-red-50 dark:hover:bg-red-950/30', optimisticLike.liked ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground hover:text-red-500 dark:hover:text-red-400')}>
               <Heart className={cn('w-4.5 h-4.5 transition-transform', optimisticLike.liked ? 'fill-current scale-110' : '')} />
               {optimisticLike.count > 0 && <span className="ml-1.5 text-xs font-medium">{optimisticLike.count}</span>}
             </Button>

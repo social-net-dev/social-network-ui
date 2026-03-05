@@ -90,6 +90,7 @@ export interface FeedPost {
   author: Author;
   content: string;
   mediaUrls: string[];
+  mediaFiles: { id: string; url: string; mime_type?: string }[];
   stats: {
     reactions: number;
     comments: number;
@@ -114,6 +115,7 @@ export interface FeedComment {
   parentCommentId: string | null;
   content: string;
   mediaUrls: string[];
+  mediaFiles: { id: string; url: string; mime_type?: string }[];
   stats: {
     reactions: number;
     replies: number;

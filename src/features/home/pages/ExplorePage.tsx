@@ -66,20 +66,16 @@ export function ExplorePage() {
     }
   };
 
-  const handleEditPost = async (postId: string, content: string) => {
+  const handleEditPost = async (postId: string, formData: FormData) => {
     try {
-      await updatePost(postId, content);
+      await updatePost(postId, formData);
       refresh();
     } catch (err) {
       console.error('Failed to edit post:', err);
     }
   };
 
-  const filteredFields = searchQuery
-    ? ACADEMIC_FIELDS.filter(f =>
-        f.label.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : ACADEMIC_FIELDS;
+  const filteredFields = searchQuery ? ACADEMIC_FIELDS.filter(f => f.label.toLowerCase().includes(searchQuery.toLowerCase())) : ACADEMIC_FIELDS;
 
   return (
     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[280px_minmax(0,2fr)] gap-6">
@@ -93,24 +89,11 @@ export function ExplorePage() {
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Tìm lĩnh vực..."
-              className="pl-9 h-9 text-sm"
-            />
+            <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Tìm lĩnh vực..." className="pl-9 h-9 text-sm" />
           </div>
 
           <div className="space-y-1 max-h-[60vh] overflow-y-auto">
-            <button
-              onClick={() => setSelectedField('')}
-              className={cn(
-                'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                !selectedField
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-foreground hover:bg-muted/50'
-              )}
-            >
+            <button onClick={() => setSelectedField('')} className={cn('w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all', !selectedField ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground hover:bg-muted/50')}>
               <span className="text-base">🌐</span>
               <span>Tất cả lĩnh vực</span>
             </button>
@@ -119,12 +102,7 @@ export function ExplorePage() {
               <button
                 key={field.value}
                 onClick={() => setSelectedField(field.value)}
-                className={cn(
-                  'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                  selectedField === field.value
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-foreground hover:bg-muted/50'
-                )}
+                className={cn('w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all', selectedField === field.value ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground hover:bg-muted/50')}
               >
                 <span className="text-base">{field.icon}</span>
                 <span className="flex-1 text-left">{field.label}</span>
@@ -148,11 +126,7 @@ export function ExplorePage() {
             {(() => {
               const field = ACADEMIC_FIELDS.find(f => f.value === selectedField);
               return field ? (
-                <Badge
-                  variant="secondary"
-                  className={cn('text-sm px-3 py-1 cursor-pointer hover:opacity-80', field.color)}
-                  onClick={() => setSelectedField('')}
-                >
+                <Badge variant="secondary" className={cn('text-sm px-3 py-1 cursor-pointer hover:opacity-80', field.color)} onClick={() => setSelectedField('')}>
                   {field.icon} {field.label} ✕
                 </Badge>
               ) : null;
@@ -171,17 +145,7 @@ export function ExplorePage() {
           </div>
         )}
 
-        <FeedList
-          posts={posts}
-          isLoading={isLoading}
-          onLike={handleLike}
-          onComment={handleComment}
-          onShare={handleShare}
-          onDelete={handleDeletePost}
-          onEdit={handleEditPost}
-          selectedPostId={selectedPostId}
-          currentUserId={currentUser?.id}
-        />
+        <FeedList posts={posts} isLoading={isLoading} onLike={handleLike} onComment={handleComment} onShare={handleShare} onDelete={handleDeletePost} onEdit={handleEditPost} selectedPostId={selectedPostId} currentUserId={currentUser?.id != null ? String(currentUser.id) : undefined} />
 
         {/* Sentinel for Infinite Scroll */}
         <div ref={loadMoreRef} className="flex justify-center pt-4 pb-8 min-h-16">
@@ -191,18 +155,12 @@ export function ExplorePage() {
               <span>Đang tải thêm bài viết...</span>
             </div>
           )}
-          {!hasNextPage && posts.length > 0 && (
-            <p className="text-muted-foreground text-sm">
-              {selectedField ? 'Đã xem hết bài viết trong lĩnh vực này' : 'Đã xem hết bài viết'}
-            </p>
-          )}
+          {!hasNextPage && posts.length > 0 && <p className="text-muted-foreground text-sm">{selectedField ? 'Đã xem hết bài viết trong lĩnh vực này' : 'Đã xem hết bài viết'}</p>}
           {!isLoading && posts.length === 0 && selectedField && (
             <div className="text-center py-12">
               <Compass className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
               <h3 className="text-lg font-semibold text-foreground mb-2">Chưa có bài viết</h3>
-              <p className="text-muted-foreground text-sm">
-                Chưa có bài viết nào trong lĩnh vực này.
-              </p>
+              <p className="text-muted-foreground text-sm">Chưa có bài viết nào trong lĩnh vực này.</p>
             </div>
           )}
         </div>

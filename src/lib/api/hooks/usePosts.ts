@@ -4,16 +4,15 @@
 
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { postsApi } from '../services';
-import type { CreatePostRequest, UpdatePostRequest } from '../types';
+import type { CreatePostRequest } from '../types';
 import type { PaginationParams } from '../types/common.types';
 
 export function useInfiniteFeed(params?: Omit<PaginationParams, 'page'>) {
   return useInfiniteQuery({
     queryKey: ['feed', 'infinite', params],
-    queryFn: ({ pageParam = 1 }) => 
-      postsApi.getFeed({ ...params, page: pageParam }),
+    queryFn: ({ pageParam = 1 }) => postsApi.getFeed({ ...params, page: pageParam }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
+    getNextPageParam: lastPage => {
       if (lastPage.page < lastPage.total_pages) {
         return lastPage.page + 1;
       }
@@ -153,8 +152,7 @@ export function usePostActions() {
   });
 
   const updatePostMutation = useMutation({
-    mutationFn: ({ postId, data }: { postId: string; data: UpdatePostRequest }) =>
-      postsApi.updatePost(postId, data),
+    mutationFn: ({ postId, data }: { postId: string; data: FormData | Record<string, unknown> }) => postsApi.updatePost(postId, data),
     onSuccess: (_, { postId }) => {
       queryClient.invalidateQueries({ queryKey: ['posts', postId] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
@@ -173,9 +171,6 @@ export function usePostActions() {
     createPost: createPostMutation.mutateAsync,
     updatePost: updatePostMutation.mutateAsync,
     deletePost: deletePostMutation.mutateAsync,
-    isLoading:
-      createPostMutation.isPending ||
-      updatePostMutation.isPending ||
-      deletePostMutation.isPending,
+    isLoading: createPostMutation.isPending || updatePostMutation.isPending || deletePostMutation.isPending,
   };
 }

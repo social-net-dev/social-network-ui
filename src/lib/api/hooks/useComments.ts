@@ -10,10 +10,9 @@ import type { PaginationParams } from '../types/common.types';
 export function useInfiniteComments(postId: string, params?: Omit<PaginationParams, 'page'>) {
   return useInfiniteQuery({
     queryKey: ['comments', 'infinite', postId, params],
-    queryFn: ({ pageParam = 1 }) => 
-      postsApi.getPostComments(postId, { ...params, page: pageParam }),
+    queryFn: ({ pageParam = 1 }) => postsApi.getPostComments(postId, { ...params, page: pageParam }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
+    getNextPageParam: lastPage => {
       if (lastPage.page < lastPage.total_pages) {
         return lastPage.page + 1;
       }
@@ -64,8 +63,7 @@ export function useCommentActions() {
   });
 
   const updateCommentMutation = useMutation({
-    mutationFn: ({ commentId, data }: { commentId: string; data: UpdateCommentRequest }) =>
-      postsApi.updateComment(commentId, data),
+    mutationFn: ({ commentId, data }: { commentId: string; data: FormData | UpdateCommentRequest }) => postsApi.updateComment(commentId, data),
   });
 
   const deleteCommentMutation = useMutation({
@@ -73,8 +71,7 @@ export function useCommentActions() {
   });
 
   const replyToCommentMutation = useMutation({
-    mutationFn: ({ commentId, data }: { commentId: string; data: ReplyRequest }) =>
-      postsApi.replyToComment(commentId, data),
+    mutationFn: ({ commentId, data }: { commentId: string; data: ReplyRequest }) => postsApi.replyToComment(commentId, data),
     onSuccess: (_, { data }) => {
       queryClient.invalidateQueries({ queryKey: ['comments', data.post_id] });
     },
@@ -85,9 +82,6 @@ export function useCommentActions() {
     updateComment: updateCommentMutation.mutateAsync,
     deleteComment: deleteCommentMutation.mutateAsync,
     replyToComment: replyToCommentMutation.mutateAsync,
-    isLoading:
-      createCommentMutation.isPending ||
-      updateCommentMutation.isPending ||
-      deleteCommentMutation.isPending,
+    isLoading: createCommentMutation.isPending || updateCommentMutation.isPending || deleteCommentMutation.isPending,
   };
 }

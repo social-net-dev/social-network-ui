@@ -13,11 +13,15 @@ import type { ReactionType } from '../types/common.types';
  */
 export const transformPost = (post: Record<string, any>): Post => {
   const mediaUrls: string[] = [];
-  
+  const mediaFiles: { id: string; url: string; mime_type?: string }[] = [];
+
   const rawMedia = (post.media_files || post.media || []) as any[];
   rawMedia.forEach((m: any) => {
     const url = buildMediaUrl(m.file_url || m.file_path || m.media_url);
-    if (url) mediaUrls.push(url);
+    if (url) {
+      mediaUrls.push(url);
+      mediaFiles.push({ id: String(m.id || ''), url, mime_type: m.mime_type || '' });
+    }
   });
 
   // If no files but there are media_urls (legacy or simple array)
@@ -25,7 +29,10 @@ export const transformPost = (post: Record<string, any>): Post => {
     const urls = post.media_urls as string[];
     urls.forEach((url: string) => {
       const formatted = buildMediaUrl(url);
-      if (formatted) mediaUrls.push(formatted);
+      if (formatted) {
+        mediaUrls.push(formatted);
+        mediaFiles.push({ id: '', url: formatted });
+      }
     });
   }
 
@@ -34,6 +41,7 @@ export const transformPost = (post: Record<string, any>): Post => {
     author: transformAuthor(post.author as Record<string, any>),
     content: String(post.content_text || post.content || ''),
     mediaUrls,
+    mediaFiles,
     stats: {
       reactions: Number(post.reaction_count ?? 0),
       comments: Number(post.comment_count ?? 0),
@@ -54,11 +62,15 @@ export const transformPost = (post: Record<string, any>): Post => {
  */
 export const transformComment = (comment: Record<string, any>): Comment => {
   const mediaUrls: string[] = [];
-  
+  const mediaFiles: { id: string; url: string; mime_type?: string }[] = [];
+
   const rawMedia = (comment.media_files || comment.media || []) as any[];
   rawMedia.forEach((m: any) => {
     const url = buildMediaUrl(m.file_url || m.file_path || m.media_url);
-    if (url) mediaUrls.push(url);
+    if (url) {
+      mediaUrls.push(url);
+      mediaFiles.push({ id: String(m.id || ''), url, mime_type: m.mime_type || '' });
+    }
   });
 
   // If no files but there are media_urls (legacy or simple array)
@@ -66,7 +78,10 @@ export const transformComment = (comment: Record<string, any>): Comment => {
     if (Array.isArray(comment.media_urls)) {
       comment.media_urls.forEach((url: string) => {
         const formatted = buildMediaUrl(url);
-        if (formatted) mediaUrls.push(formatted);
+        if (formatted) {
+          mediaUrls.push(formatted);
+          mediaFiles.push({ id: '', url: formatted });
+        }
       });
     }
   }
@@ -78,6 +93,7 @@ export const transformComment = (comment: Record<string, any>): Comment => {
     parentCommentId: comment.parent_comment_id ? String(comment.parent_comment_id) : null,
     content: String(comment.content_text || comment.content || ''),
     mediaUrls,
+    mediaFiles,
     stats: {
       reactions: Number(comment.reaction_count ?? 0),
       replies: Number(comment.reply_count ?? 0),

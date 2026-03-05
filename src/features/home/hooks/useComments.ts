@@ -77,6 +77,7 @@ export function useComments(postId: string) {
         content,
         createdAt: new Date().toISOString(),
         mediaUrls: [],
+        mediaFiles: [],
         userReaction: null,
         stats: { reactions: 0, replies: 0 },
       };
@@ -157,14 +158,19 @@ export function useComments(postId: string) {
   );
 
   const updateComment = useCallback(
-    async (commentId: string, content: string) => {
-      updateCache(comments => comments.map(c => (c.id === commentId ? { ...c, content } : c)));
+    async (commentId: string, formData: FormData) => {
+      const optimisticContent = formData.get('content_text') as string | null;
+      if (optimisticContent !== null) {
+        updateCache(comments => comments.map(c => (c.id === commentId ? { ...c, content: optimisticContent } : c)));
+      }
 
       try {
         await manualUpdateComment({
           commentId,
-          data: { content_text: content },
+          data: formData,
         });
+        // Invalidate so updated mediaFiles are reflected from server response
+        queryClient.invalidateQueries({ queryKey });
         toast.success('Đã cập nhật bình luận');
       } catch (err) {
         queryClient.invalidateQueries({ queryKey });
@@ -193,6 +199,7 @@ export function useComments(postId: string) {
         content,
         createdAt: new Date().toISOString(),
         mediaUrls: [],
+        mediaFiles: [],
         userReaction: null,
         stats: { reactions: 0, replies: 0 },
       };
@@ -221,9 +228,11 @@ export function useComments(postId: string) {
   );
 
   const comments = query.data?.pages.flatMap(page => (Array.isArray(page) ? page : page.comments || [])) || [];
+  const totalCount: number = (query.data?.pages?.[0] as any)?.total ?? 0;
 
   return {
     comments,
+    totalCount,
     isLoading: query.isPending,
     isFetchingNextPage: query.isFetchingNextPage,
     hasNextPage: query.hasNextPage,
