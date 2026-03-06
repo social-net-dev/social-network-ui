@@ -3,8 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { getErrorMessage } from "@/lib/utils/api";
 import { RegisterFormDataSchema, type RegisterFormData } from "../types/auth.types";
-import { useAuthRegister } from "@/lib/api/hooks/auth.hooks";
-import { useMediaCompletePublicUpload, useMediaInitPublicUpload } from "@/lib/api/hooks/media.hooks";
+import { useAuthRegister, useMediaCompletePublicUpload, useMediaInitPublicUpload } from "@/lib/api/generated";
 import type {
   PresignedUploadInitRequest,
   RegisterRequest,
@@ -47,7 +46,7 @@ export function useRegister() {
           purpose: "kyc" as 'post' | 'comment' | 'avatar' | 'background' | 'kyc',
         };
 
-        const initRes = await initPublicUploadMutation.mutateAsync(initRequest);
+        const initRes = await initPublicUploadMutation.mutateAsync({ data: initRequest });
         const initData = initRes;
 
         const uploadUrl = initData.upload_url;
@@ -99,7 +98,7 @@ export function useRegister() {
         ...(verification_media_asset_ids.length > 0 ? { verification_media_asset_ids } : {}),
       };
 
-      const response = await registerMutation.mutateAsync(registerData);
+      const response = await registerMutation.mutateAsync({ data: registerData });
       const user_id = response.id;
 
       sessionStorage.setItem("otp_verify_email", data.email);

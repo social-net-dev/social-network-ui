@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/features/shared/components/Avatar";
 import { GraduationCap, Search, Sparkles, Users, UserCheck, Clock, Loader2, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useRecommendationsSuggestions } from "@/lib/api/hooks/search.hooks";
-import { useFriendsSendRequest, useFriendsAcceptRequest, useFriendsCancelRequest, getFriendsListFriendsQueryKey, getFriendsListIncomingRequestsQueryKey, getFriendsListOutgoingRequestsQueryKey } from "@/lib/api/hooks/friends.hooks";
+import { useRecommendationsSuggestions, useFriendsSendRequest, useFriendsAcceptRequest, useFriendsCancelRequest, getFriendsListFriendsQueryKey, getFriendsListIncomingRequestsQueryKey, getFriendsListOutgoingRequestsQueryKey } from "@/lib/api/generated";
 import { getErrorMessage } from "@/lib/utils/api";
 import { toast } from "sonner";
 import type { ApiSuggestion, RecommendationResponse } from "@/lib/api/types";
@@ -118,7 +117,7 @@ export function RecommendationPage() {
     const handleConnect = async (userId: string, username: string) => {
         addProcessing(userId);
         try {
-            const res = await sendRequestMutation.mutateAsync({ addressee_username: username });
+            const res = await sendRequestMutation.mutateAsync({ data: { addressee_username: username } });
             toast.success("Đã gửi lời mời kết bạn");
             const requestId = res?.id || null;
             updateSuggestionStatus(userId, "REQUEST_SENT", requestId ? String(requestId) : null);
@@ -163,8 +162,8 @@ export function RecommendationPage() {
     };
 
     const { data: suggestionsResp, isLoading } = useRecommendationsSuggestions(
-        activeTab,
-        { staleTime: 60 * 1000 }
+        { filter: activeTab },
+        { query: { staleTime: 60 * 1000 } }
     );
     const rawSuggestions = (suggestionsResp?.suggestions || []) as ApiSuggestion[];
 

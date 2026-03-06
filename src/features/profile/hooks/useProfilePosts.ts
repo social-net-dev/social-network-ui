@@ -4,7 +4,7 @@ import {
   getPostsGetPostsByUserQueryKey,
   usePostsGetMyPosts,
   usePostsGetPostsByUser,
-} from '@/lib/api/hooks/posts.hooks'
+} from '@/lib/api/generated'
 import type { PostSummary } from '@/lib/api/types'
 
 export type UseProfilePostsArgs = {
@@ -14,11 +14,11 @@ export type UseProfilePostsArgs = {
 
 export function useProfilePosts({ mode, subjectUserId }: UseProfilePostsArgs) {
   const myPostsQuery = usePostsGetMyPosts(undefined, {
-    enabled: mode === 'me',
+    query: { enabled: mode === 'me' },
   })
 
   const userPostsQuery = usePostsGetPostsByUser(String(subjectUserId ?? ''), undefined, {
-    enabled: mode === 'other' && !!subjectUserId,
+    query: { enabled: mode === 'other' && !!subjectUserId },
   })
 
   const query = mode === 'me' ? myPostsQuery : userPostsQuery

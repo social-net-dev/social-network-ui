@@ -1,9 +1,8 @@
 import { useCallback } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
-import { feedGetFeed, getFeedGetFeedQueryKey } from '@/lib/api/endpoints/feed';
-import type { FeedGetFeedParams } from '@/lib/api/endpoints/feed';
-import { usePostsCreatePost } from '@/lib/api/hooks/posts.hooks';
+import { feedGetFeed, getFeedGetFeedQueryKey, usePostsCreatePost } from '@/lib/api/generated';
+import type { FeedGetFeedParams } from '@/lib/api/generated';
 import type { PostSummary, PostType } from '@/lib/api/types';
 import { uploadMediaAsset } from '@/features/posts/lib/uploadMediaAsset';
 import { queryKeys } from '@/lib/queryKeys';
@@ -32,7 +31,7 @@ export function useFeed(options?: UseFeedOptions) {
       feedGetFeed({
         ...params,
         cursor: pageParam as string | undefined,
-      }, signal),
+      }, undefined, signal),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       const { pagination } = lastPage;
@@ -51,10 +50,12 @@ export function useFeed(options?: UseFeedOptions) {
         : undefined;
 
       const newPost = await createPostMutation.mutateAsync({
-        content_text: content,
-        post_type: (postType as PostType) || 'SOCIAL',
-        field_id: fieldId || undefined,
-        media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
+        data: {
+          content_text: content,
+          post_type: (postType as PostType) || 'SOCIAL',
+          field_id: fieldId || undefined,
+          media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
+        },
       });
 
       // Prepend the new post to the first page of the infinite query cache

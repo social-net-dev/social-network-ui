@@ -12,7 +12,7 @@ import { exportPrivateKey, importPrivateKey, encryptPrivateKeyWithPassphrase, de
 import { callBackupPrivateKey, callGetPrivateKeyBackup, callGetUserPublicKey } from '@/features/message/services/messageApi';
 import { PassphraseModal } from '@/features/message/components/PassphraseModal';
 import { ChangePasswordForm } from '../components/ChangePasswordForm';
-import { useUsersDeactivate } from '@/lib/api/hooks/users.hooks';
+import { useUsersDeactivate } from '@/lib/api/generated';
 import { useAuthStore } from '@/stores/authStore';
 import type { User } from '@/lib/api/types';
 import { privacyToFlatSettings } from '../lib/privacy';
@@ -80,13 +80,15 @@ export function ProfileSettingsPage() {
   };
 
   const deactivateMutation = useUsersDeactivate({
-    onSuccess: async () => {
-      await logout();
-      navigate('/login', { replace: true });
-    },
-    onError: (error: unknown) => {
-      const e = error as { response?: { data?: { detail?: string; message?: string }; }; message?: string };
-      setDeactivateError(e?.response?.data?.detail || e?.response?.data?.message || e?.message || 'Đã có lỗi xảy ra');
+    mutation: {
+      onSuccess: async () => {
+        await logout();
+        navigate('/login', { replace: true });
+      },
+      onError: (error: unknown) => {
+        const e = error as { response?: { data?: { detail?: string; message?: string }; }; message?: string };
+        setDeactivateError(e?.response?.data?.detail || e?.response?.data?.message || e?.message || 'Đã có lỗi xảy ra');
+      },
     },
   });
 
@@ -354,7 +356,7 @@ export function ProfileSettingsPage() {
       <DeactivateAccountDialog
         isOpen={isDeactivateOpen}
         onClose={() => setIsDeactivateOpen(false)}
-        onConfirm={(password) => deactivateMutation.mutate({ password })}
+        onConfirm={(password) => deactivateMutation.mutate({ data: { password } })}
         isPending={deactivateMutation.isPending}
         error={deactivateError}
       />

@@ -4,27 +4,29 @@ Tài liệu này mô tả kiến trúc, quy ước, và các quyết định thi
 
 ---
 
-## Mô hình làm việc: Contract-First
+## Mô hình làm việc: Contract-First + Orval Auto-Generation
 
 Đây là nguyên tắc cốt lõi của toàn bộ codebase:
 
 ```
 contract/main.tsp
         ↓  pnpm gen:spec
-tsp-output/schema/openapi.json
-        ↓  pnpm gen:types  (openapi-typescript)
-src/lib/api/types/schema.d.ts  # Auto-generated — KHÔNG sửa tay
-src/lib/api/types/index.ts     # Re-export + frontend-only generics
-        ↓  import
-src/lib/api/endpoints/         # Pure async functions (viết tay)
-src/lib/api/hooks/             # React Query hooks (viết tay)
+tsp-output/schema/openapi.json         # Có envelope ApiResponse<T> — dùng cho Scalar/Swagger docs
+        ↓  pnpm gen:clean  (scripts/transform-openapi.ts)
+tsp-output/schema/openapi.clean.json  # Envelope stripped — dùng cho Orval code gen
+        ↓  pnpm gen:hooks  (Orval)
+src/lib/api/generated/                 # AUTO-GENERATED — KHÔNG sửa tay
+  ├── model/                           # Tất cả TypeScript types từ contract
+  └── {domain}/                        # Endpoint functions + React Query hooks per domain
+src/lib/api/types/index.ts            # Re-export từ generated/model + frontend-only generics
         ↓  import
 src/features/*/hooks/ → src/features/*/components/
 ```
 
-1. **Nguồn sự thật duy nhất** là `contract/main.tsp` (nằm trong cùng project)
-2. **Không bao giờ** sửa tay `tsp-output/` hay `src/lib/api/types/schema.d.ts`
+1. **Nguồn sự thật duy nhất** là `contract/main.tsp`
+2. **Không bao giờ** sửa tay `tsp-output/` hay `src/lib/api/generated/`
 3. Khi cần thêm field, endpoint, hay type mới → **sửa `contract/main.tsp` trước**, sau đó chạy lại pipeline
+4. **Tại sao cần `gen:clean`?** TypeSpec wrap responses trong `ApiResponse<T>` envelope, nhưng `attachResponseInterceptor.ts` đã unwrap tại runtime. Script transform-openapi.ts strip envelope để Orval generate đúng types.
 
 ### Pipeline tái sinh
 
@@ -34,7 +36,8 @@ pnpm gen
 
 # Hoặc từng bước:
 pnpm gen:spec   # contract/main.tsp → tsp-output/schema/openapi.json
-pnpm gen:types  # openapi.json → src/lib/api/types/schema.d.ts  (openapi-typescript)
+pnpm gen:clean  # openapi.json → openapi.clean.json (strip ApiResponse envelope)
+pnpm gen:hooks  # openapi.clean.json → src/lib/api/generated/ (Orval)
 ```
 
 ---
@@ -43,71 +46,75 @@ pnpm gen:types  # openapi.json → src/lib/api/types/schema.d.ts  (openapi-types
 
 ```
 src/lib/api/
+├── generated/                  # AUTO-GENERATED bởi Orval — KHÔNG sửa tay
+│   ├── model/                  # Tất cả TypeScript types từ contract (~100 types)
+│   ├── auth/auth.ts            # authLogin, authRegister… + useAuthLogin, useAuthRegister…
+│   ├── users/users.ts          # usersGetMe… + useUsersGetMe…
+│   ├── feed/feed.ts            # feedGetFeed + useFeedGetFeed (infinite)
+│   ├── posts/posts.ts          # postsGetPost, postsCreatePost… + hooks
+│   ├── comments/comments.ts    # commentsCreateComment… + hooks
+│   ├── reactions/reactions.ts  # reactionsReactToPost… + hooks
+│   ├── shares/shares.ts        # sharesSharePost… + hooks
+│   ├── friends/friends.ts      # friendsListFriends… + hooks
+│   ├── follows/follows.ts      # followsGetFollowers… + hooks (infinite)
+│   ├── notifications/notifications.ts  # notificationsListNotifications… + hooks (infinite)
+│   ├── profiles/profiles.ts    # profilesGetProfile… + hooks
+│   ├── media/media.ts          # mediaInitUpload, mediaCompleteUpload… + hooks
+│   ├── search/search.ts        # searchSearchUsers… + hooks
+│   ├── recommendations/recommendations.ts  # recommendationsSuggestions… + hooks
+│   └── index.ts                # Re-export barrel (import từ đây)
 ├── types/
-│   ├── schema.d.ts         # AUTO-GENERATED (openapi-typescript) — KHÔNG sửa tay
-│   └── index.ts            # Re-export tất cả schema types + frontend generics
-├── endpoints/              # Pure async functions per domain
-│   ├── auth.ts             # authLogin, authRegister, authLogout…
-│   ├── users.ts            # usersGetMe, usersUpdateProfile…
-│   ├── feed.ts             # feedGetFeed + getFeedGetFeedQueryKey
-│   ├── posts.ts            # postsGetPost, postsCreatePost… + query key factories
-│   ├── comments.ts         # commentsCreateComment, commentsDeleteComment…
-│   ├── reactions.ts        # reactionsReactToPost, reactionsUnreactPost…
-│   ├── shares.ts           # sharesSharePost, sharesUnsharePost
-│   ├── friends.ts          # friendsListFriends, friendsSendRequest…
-│   ├── follows.ts          # followsFollowUser, followsGetFollowers…
-│   ├── notifications.ts    # notificationsListNotifications…
-│   ├── profiles.ts         # profilesGetProfile
-│   ├── media.ts            # mediaInitUpload, mediaCompleteUpload…
-│   ├── search.ts           # searchSearchUsers
-│   ├── recommendations.ts  # recommendationsSuggestions
-│   └── index.ts            # Re-export barrel
-├── hooks/                  # React Query hooks per domain
-│   ├── auth.hooks.ts       # useAuthLogin, useAuthRegister…
-│   ├── users.hooks.ts      # useUsersGetMe, useUsersUpdateProfile…
-│   ├── feed.hooks.ts       # useFeedGetFeed (infinite query)
-│   ├── posts.hooks.ts      # usePostsGetPost, usePostsCreatePost…
-│   ├── comments.hooks.ts   # useCommentsCreateComment…
-│   ├── reactions.hooks.ts  # useReactionsReactToPost…
-│   ├── shares.hooks.ts     # useSharesSharePost
-│   ├── friends.hooks.ts    # useFriendsListFriends, useFriendsSendRequest…
-│   ├── follows.hooks.ts    # useFollowsFollowUser
-│   ├── notifications.hooks.ts  # useNotificationsListNotifications…
-│   ├── profiles.hooks.ts   # useProfilesGetProfile
-│   ├── media.hooks.ts      # useMediaInitUpload, useMediaCompleteUpload…
-│   ├── search.hooks.ts     # useSearchSearchUsers, useRecommendationsSuggestions
-│   └── index.ts            # Re-export barrel
-├── createApiClient.ts      # Tạo Axios instance
-├── attachRequestInterceptor.ts  # Inject auth token + X-Tenant-Slug
+│   └── index.ts                # Re-export từ generated/model + frontend-only generics
+├── createApiClient.ts          # Tạo Axios instance
+├── attachRequestInterceptor.ts # Inject auth token + X-Tenant-Slug
 ├── attachResponseInterceptor.ts # Unwrap ApiResponse envelope + token refresh
-├── authRequestGuards.ts    # Helper: public vs protected routes
-├── zodValidation.ts        # Zod validation helpers
-└── utils.ts                # extractUserIdFromTenantSlug, v.v.
+├── authRequestGuards.ts        # Helper: public vs protected routes
+├── zodValidation.ts            # Zod validation helpers
+└── utils.ts                    # extractUserIdFromTenantSlug, v.v.
 ```
 
-Mỗi domain có pattern nhất quán:
-- `useXxxYyy(...)` — React Query hook (query), nhận `UseQueryOptions` override
-- `useXxxYyy(...)` — React Query mutation hook, nhận `UseMutationOptions` override
-- `xxxYyy(...)` — hàm async thuần trả về `Promise<T>` (fully unwrapped)
-- `getXxxYyyQueryKey(...)` — lấy query key (defined trong endpoints, re-exported từ hooks)
+Mỗi domain có pattern nhất quán (Orval-generated):
+- `xxxYyy(body, options?, signal?)` — hàm async thuần trả về `Promise<T>`
+- `useXxxYyy(params?, options?)` — React Query hook, `options = { query?: QueryOptions, request?: CustomInstanceOptions }`
+- `useXxxYyy(options?)` — React Query mutation hook, `options = { mutation?: MutationOptions, request?: CustomInstanceOptions }`
+- `getXxxYyyQueryKey(params?)` — lấy query key
+
+**Quan trọng — Orval mutation variables**: Body params được wrap trong `{ data: T }`:
+```ts
+// Mutation variable structure: { data: ChangePasswordRequest }
+const { mutate } = useAuthChangePassword();
+mutate({ data: { current_password: '...', new_password: '...' } });
+```
+
+**Quan trọng — Query/Mutation options**: Phải wrap trong đúng key:
+```ts
+// Query options → trong `query: { ... }`
+useXxx(params, { query: { enabled: !!id, staleTime: 60000 } });
+
+// Mutation callbacks → trong `mutation: { ... }`
+useXxx({ mutation: { onSuccess: (res) => ..., onError: (err: ApiErrorResponse) => ... } });
+```
 
 ---
 
 ## Quy tắc Import Types
 
-### ✅ Đúng
+### ✅ Đúng — import types
 ```ts
 import type { PostSummary, User, Author, FeedResponse } from '@/lib/api/types';
 ```
 
-### ✅ Đúng — import hooks
+### ✅ Đúng — import hooks & endpoints
 ```ts
-import { usePostsCreatePost, usePostsGetPost } from '@/lib/api/hooks/posts.hooks';
-import { feedGetFeed, getFeedGetFeedQueryKey } from '@/lib/api/endpoints/feed';
+import { usePostsCreatePost, usePostsGetPost, feedGetFeed, getFeedGetFeedQueryKey } from '@/lib/api/generated';
 ```
 
 ### ❌ Sai — không bao giờ làm
 ```ts
+// Đường dẫn cũ đã bị xóa
+import { usePostsGetPost } from '@/lib/api/hooks/posts.hooks';  // ❌ không tồn tại
+import { feedGetFeed } from '@/lib/api/endpoints/feed';          // ❌ không tồn tại
+
 // Định nghĩa lại type đã có trong contract
 interface Post {
   id: string;
@@ -297,24 +304,28 @@ Một số `as unknown as` là không thể tránh:
 | Thứ bị xóa | Thay thế bằng |
 |------------|---------------|
 | `src/lib/api/transforms/` | Không cần — dùng types trực tiếp |
-| `src/lib/api/services/` | Hooks trong `src/lib/api/hooks/` |
-| `src/lib/api/generated/` | `src/lib/api/types/` + `src/lib/api/endpoints/` + `src/lib/api/hooks/` |
-| `src/lib/query-keys.ts` | `getXxxQueryKey()` trong endpoints |
+| `src/lib/api/services/` | Hooks trong `src/lib/api/generated/` |
+| `src/lib/api/endpoints/` (14 files) | `src/lib/api/generated/{domain}/{domain}.ts` |
+| `src/lib/api/hooks/` (15 files) | `src/lib/api/generated/{domain}/{domain}.ts` |
+| `src/lib/api/types/schema.d.ts` | `src/lib/api/generated/model/` |
+| `src/lib/api/types/auth.types.ts` | Generated types trong `src/lib/api/generated/model/` |
+| `src/lib/query-keys.ts` | `getXxxQueryKey()` factories trong generated files |
 | `src/lib/utils/userTransform.ts` | `useProfile` select trực tiếp |
 | `toFeedPost()` adapter | `PostCard` nhận `PostSummary` trực tiếp |
 | `IBackendPost`, `IBackendAuthor`… | Không dùng — typed qua contract |
-| Orval-generated wrapper types (`AuthLogin200`, `FeedGetFeed200`…) | Dùng trực tiếp: `LoginResponse`, `FeedResponse`… |
+| `openapi-typescript` devDep + `gen:types` script | Orval generates models trực tiếp |
 
 ---
 
 ## Checklist Trước Khi Commit
 
-- [ ] `pnpm tsc --noEmit` — 0 errors
+- [ ] `pnpm typecheck` — 0 errors (`tsc -p tsconfig.app.json --noEmit`)
 - [ ] Không có type định nghĩa lại từ `@/lib/api/types`
 - [ ] Không có Axios call thủ công (ngoài `customInstance` đặc biệt)
-- [ ] Nếu sửa TypeSpec → đã chạy `pnpm gen` (`gen:spec` + `gen:types`), sau đó cập nhật tay `endpoints/`, `hooks/` tương ứng
-- [ ] Pagination dùng `items` + `pagination.page/total_pages` (không dùng field cũ)
-- [ ] `pnpm lint` — không có error
+- [ ] Không import từ `@/lib/api/hooks/*` hay `@/lib/api/endpoints/*` (đã bị xóa)
+- [ ] Nếu sửa TypeSpec → đã chạy `pnpm gen` (`gen:spec` + `gen:clean` + `gen:hooks`)
+- [ ] Pagination cursor-based dùng `items` + `pagination.cursor` (không dùng page-based fields)
+- [ ] `pnpm lint` — không có error mới
 
 ---
 

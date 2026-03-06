@@ -14,10 +14,9 @@ import { ProfilePhotosTab } from '../components/ProfilePhotosTab';
 import { EditProfileSheet } from '../components/EditProfileSheet';
 import { PostComposerCard } from '@/features/posts/components/PostComposerCard';
 import { CreatePostFAB } from '@/features/posts/components/CreatePostFAB';
-import { usePostsCreatePost } from '@/lib/api/hooks/posts.hooks';
+import { usePostsCreatePost, getPostsGetMyPostsQueryKey } from '@/lib/api/generated';
 import { uploadMediaAsset } from '@/features/posts/lib/uploadMediaAsset';
 import { useQueryClient } from '@tanstack/react-query';
-import { getPostsGetMyPostsQueryKey } from '@/lib/api/hooks/posts.hooks';
 import type { PostType } from '@/lib/api/types';
 import type { User } from '@/lib/api/types';
 
@@ -43,10 +42,12 @@ function ProfilePage() {
         ? await Promise.all(files.map((f) => uploadMediaAsset(f, 'post')))
         : undefined;
       await createPostMutation.mutateAsync({
-        content_text: content,
-        post_type: (postType as PostType) || 'SOCIAL',
-        field_id: fieldId || undefined,
-        media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
+        data: {
+          content_text: content,
+          post_type: (postType as PostType) || 'SOCIAL',
+          field_id: fieldId || undefined,
+          media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
+        },
       });
       queryClient.invalidateQueries({ queryKey: getPostsGetMyPostsQueryKey(undefined) });
     } catch (err) {

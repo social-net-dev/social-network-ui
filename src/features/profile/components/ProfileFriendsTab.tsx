@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users, Loader2, Lock } from 'lucide-react';
-import { useFriendsListFriends } from '@/lib/api/hooks/friends.hooks';
+import { useFriendsListFriends } from '@/lib/api/generated';
 import { getDefaultAvatar } from '@/lib/utils/api';
 
 interface ProfileFriendsTabProps {
@@ -13,7 +13,7 @@ interface ProfileFriendsTabProps {
 export function ProfileFriendsTab({ userId, isCurrentUser = false }: ProfileFriendsTabProps) {
   const { data, isLoading } = useFriendsListFriends(
     { page: 1, page_size: 24 },
-    { enabled: !!userId && isCurrentUser }
+    { query: { enabled: !!userId && isCurrentUser } }
   );
 
   // For other users' profiles, the API doesn't support fetching their friend list

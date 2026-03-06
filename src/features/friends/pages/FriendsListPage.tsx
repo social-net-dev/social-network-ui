@@ -15,7 +15,7 @@ import {
   useFriendsListFriends,
   useFriendsRemoveFriend,
   getFriendsListFriendsQueryKey,
-} from "@/lib/api/hooks/friends.hooks";
+} from "@/lib/api/generated";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
@@ -44,7 +44,7 @@ export function FriendsListPage() {
 
   const { data, isLoading, isError } = useFriendsListFriends(
     { limit: 100 } as any,
-    { staleTime: 1000 * 30 }
+    { query: { staleTime: 1000 * 30 } }
   );
 
   const friends = useMemo(() => {
@@ -59,12 +59,14 @@ export function FriendsListPage() {
   }, [data?.items, searchQuery]);
 
   const removeFriendMutation = useFriendsRemoveFriend({
-    onSuccess: () => {
-      toast.success("Đã hủy kết bạn");
-      qc.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
-    },
-    onError: () => {
-      toast.error("Lỗi khi hủy kết bạn");
+    mutation: {
+      onSuccess: () => {
+        toast.success("Đã hủy kết bạn");
+        qc.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
+      },
+      onError: () => {
+        toast.error("Lỗi khi hủy kết bạn");
+      },
     },
   });
 

@@ -3,7 +3,7 @@ import {
   mediaGetAsset,
   getMediaGetAssetQueryKey,
   mediaGetSignedDownloadUrl,
-} from '@/lib/api/endpoints/media';
+} from '@/lib/api/generated';
 import type {
   MediaAssetSummary,
 } from '@/lib/api/types';

@@ -1,5 +1,5 @@
 import type { PresignedUploadCompleteRequest, PresignedUploadInitRequest } from '@/lib/api/types'
-import { mediaCompleteUpload, mediaInitUpload } from '@/lib/api/endpoints/media'
+import { mediaCompleteUpload, mediaInitUpload } from '@/lib/api/generated'
 
 /**
  * Extract the list of header names that are part of the presigned URL signature.

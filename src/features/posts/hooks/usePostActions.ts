@@ -1,11 +1,9 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePostsDeletePost, usePostsUpdatePost } from '@/lib/api/hooks/posts.hooks';
-import { useReactionsReactToPost, useReactionsUnreactPost } from '@/lib/api/hooks/reactions.hooks';
-import { useSharesSharePost } from '@/lib/api/hooks/shares.hooks';
+import { usePostsDeletePost, usePostsUpdatePost, useReactionsReactToPost, useReactionsUnreactPost, useSharesSharePost } from '@/lib/api/generated';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
-import type { PostSummary, ReactionType } from '@/lib/api/types';
+import type { PostSummary, ReactionType, UpdatePostRequest } from '@/lib/api/types';
 import { queryKeys } from '@/lib/queryKeys';
 
 type QueryKey = readonly unknown[];
@@ -87,66 +85,70 @@ export function usePostActions(options?: UsePostActionsOptions) {
   const affectedQueryKeys = options?.affectedQueryKeys ?? [];
 
   const deletePostMutation = usePostsDeletePost({
-    onMutate: async ({ postId }) => {
-      // Cancel outgoing refetches to avoid overwriting optimistic update
-      await queryClient.cancelQueries({ queryKey: queryKeys.posts.all() });
-      // Snapshot previous values
-      const snapshots = affectedQueryKeys.map((key) => ({
-        key,
-        data: queryClient.getQueryData(key),
-      }));
-      // Optimistically remove the post
-      for (const key of affectedQueryKeys) {
-        queryClient.setQueryData<unknown>(key, (old: unknown) =>
-          updatePostsInUnknown(old, (posts) => posts.filter((p) => p.id !== postId))
-        );
-      }
-      return { snapshots };
-    },
-    onError: (_err, _vars, context) => {
-      // Rollback on error
-      const ctx = context as { snapshots?: Array<{ key: QueryKey; data: unknown }> } | undefined;
-      for (const { key, data } of ctx?.snapshots ?? []) {
-        queryClient.setQueryData(key, data);
-      }
-      toast.error('Lỗi khi xóa bài viết');
-    },
-    onSuccess: () => {
-      toast.success('Đã xóa bài viết');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all() });
+    mutation: {
+      onMutate: async ({ postId }) => {
+        // Cancel outgoing refetches to avoid overwriting optimistic update
+        await queryClient.cancelQueries({ queryKey: queryKeys.posts.all() });
+        // Snapshot previous values
+        const snapshots = affectedQueryKeys.map((key) => ({
+          key,
+          data: queryClient.getQueryData(key),
+        }));
+        // Optimistically remove the post
+        for (const key of affectedQueryKeys) {
+          queryClient.setQueryData<unknown>(key, (old: unknown) =>
+            updatePostsInUnknown(old, (posts) => posts.filter((p) => p.id !== postId))
+          );
+        }
+        return { snapshots };
+      },
+      onError: (_err: unknown, _vars: { postId: string }, context: unknown) => {
+        // Rollback on error
+        const ctx = context as { snapshots?: Array<{ key: QueryKey; data: unknown }> } | undefined;
+        for (const { key, data } of ctx?.snapshots ?? []) {
+          queryClient.setQueryData(key, data);
+        }
+        toast.error('Lỗi khi xóa bài viết');
+      },
+      onSuccess: () => {
+        toast.success('Đã xóa bài viết');
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.posts.all() });
+      },
     },
   });
 
   const updatePostMutation = usePostsUpdatePost({
-    onMutate: async ({ postId, data }) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.posts.all() });
-      const snapshots = affectedQueryKeys.map((key) => ({
-        key,
-        data: queryClient.getQueryData(key),
-      }));
-      for (const key of affectedQueryKeys) {
-        queryClient.setQueryData<unknown>(key, (old: unknown) =>
-          updatePostsInUnknown(old, (posts) =>
-            posts.map((p) => (p.id === postId ? { ...p, content: data.content_text ?? p.content } : p))
-          )
-        );
-      }
-      return { snapshots };
-    },
-    onError: (_err, _vars, context) => {
-      const ctx = context as { snapshots?: Array<{ key: QueryKey; data: unknown }> } | undefined;
-      for (const { key, data } of ctx?.snapshots ?? []) {
-        queryClient.setQueryData(key, data);
-      }
-      toast.error('Lỗi khi cập nhật bài viết');
-    },
-    onSuccess: () => {
-      toast.success('Đã cập nhật bài viết');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all() });
+    mutation: {
+      onMutate: async ({ postId, data }) => {
+        await queryClient.cancelQueries({ queryKey: queryKeys.posts.all() });
+        const snapshots = affectedQueryKeys.map((key) => ({
+          key,
+          data: queryClient.getQueryData(key),
+        }));
+        for (const key of affectedQueryKeys) {
+          queryClient.setQueryData<unknown>(key, (old: unknown) =>
+            updatePostsInUnknown(old, (posts) =>
+              posts.map((p) => (p.id === postId ? { ...p, content: data.content_text ?? p.content } : p))
+            )
+          );
+        }
+        return { snapshots };
+      },
+      onError: (_err: unknown, _vars: { postId: string; data: UpdatePostRequest }, context: unknown) => {
+        const ctx = context as { snapshots?: Array<{ key: QueryKey; data: unknown }> } | undefined;
+        for (const { key, data } of ctx?.snapshots ?? []) {
+          queryClient.setQueryData(key, data);
+        }
+        toast.error('Lỗi khi cập nhật bài viết');
+      },
+      onSuccess: () => {
+        toast.success('Đã cập nhật bài viết');
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.posts.all() });
+      },
     },
   });
 

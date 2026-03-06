@@ -8,7 +8,7 @@ import {
   getFriendsListFriendsQueryKey,
   getFriendsListIncomingRequestsQueryKey,
   getFriendsListOutgoingRequestsQueryKey,
-} from '@/lib/api/hooks/friends.hooks';
+} from '@/lib/api/generated';
 
 interface UseFriendActionsOptions {
   /** Called after optimistic update with new status and optional requestId */
@@ -43,7 +43,7 @@ export function useFriendActions(options?: UseFriendActionsOptions) {
   const sendRequest = useCallback(async (userId: string, username: string) => {
     addProcessing(userId);
     try {
-      const res = await sendMutation.mutateAsync({ addressee_username: username });
+      const res = await sendMutation.mutateAsync({ data: { addressee_username: username } });
       toast.success('Đã gửi lời mời kết bạn');
       const requestId = res?.id ? String(res.id) : null;
       options?.onStatusChange?.(userId, 'request_sent', requestId);

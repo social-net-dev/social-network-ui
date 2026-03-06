@@ -32,7 +32,7 @@ export type {
 // ===========================
 
 export {
-  // Raw endpoint functions
+  // Raw endpoint functions + React Query hooks
   mediaGetAsset,
   getMediaGetAssetQueryKey,
   mediaInitUpload,
@@ -40,14 +40,10 @@ export {
   mediaInitPublicUpload,
   mediaCompletePublicUpload,
   mediaGetSignedDownloadUrl,
-} from '@/lib/api/endpoints/media';
-
-export {
-  // React Query hooks
   useMediaGetAsset,
   useMediaInitUpload,
   useMediaCompleteUpload,
   useMediaInitPublicUpload,
   useMediaCompletePublicUpload,
   useMediaGetSignedDownloadUrl,
-} from '@/lib/api/hooks/media.hooks';
+} from '@/lib/api/generated';

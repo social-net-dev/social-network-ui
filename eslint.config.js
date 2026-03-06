@@ -28,7 +28,7 @@ export default defineConfig([
       'no-restricted-imports': ['error', {
         patterns: [{
           group: ['**/features/*/services/*Api'],
-          message: 'Vui lòng sử dụng hooks từ @/lib/api/hooks hoặc endpoints từ @/lib/api/endpoints thay vì viết manual API services.'
+          message: 'Vui lòng sử dụng hooks từ @/lib/api/generated hoặc custom hooks từ @/features/*/hooks/ thay vì viết manual API services.'
         }]
       }]
     },

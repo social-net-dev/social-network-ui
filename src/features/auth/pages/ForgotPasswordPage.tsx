@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, Loader, ArrowLeft } from "lucide-react";
-import { useAuthForgotPassword, useAuthResetPassword } from "@/lib/api/hooks/auth.hooks";
+import { useAuthForgotPassword, useAuthResetPassword } from "@/lib/api/generated";
 
 type Step = 'email' | 'otp' | 'password';
 
@@ -26,31 +26,35 @@ export function ForgotPasswordPage() {
   const [successMessage, setSuccessMessage] = useState('');
 
   const sendOtpMutation = useAuthForgotPassword({
-    onSuccess: (res) => {
-      const uid = res.user_id || "";
-      if (uid) setUserId(uid);
-      setStep("otp");
-      setSuccessMessage("Mã OTP đã được gửi tới email của bạn");
-      setError("");
-    },
-    onError: (err) => {
-      setError(getErrorMessage(err));
+    mutation: {
+      onSuccess: (res) => {
+        const uid = res.user_id || "";
+        if (uid) setUserId(uid);
+        setStep("otp");
+        setSuccessMessage("Mã OTP đã được gửi tới email của bạn");
+        setError("");
+      },
+      onError: (err) => {
+        setError(getErrorMessage(err));
+      },
     },
   });
 
   const resetPasswordMutation = useAuthResetPassword({
-    onSuccess: () => {
-      setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
-      setTimeout(() => {
-        navigate("/login", { state: { message: "Mật khẩu đã thay đổi. Vui lòng đăng nhập lại." } });
-      }, 1500);
-    },
-    onError: (err) => {
-      const detail = getErrorMessage(err);
-      setError(detail);
-      if (typeof detail === "string" && detail.toLowerCase().includes("otp")) {
-        setStep("otp");
-      }
+    mutation: {
+      onSuccess: () => {
+        setSuccessMessage("Mật khẩu đã được thay đổi thành công!");
+        setTimeout(() => {
+          navigate("/login", { state: { message: "Mật khẩu đã thay đổi. Vui lòng đăng nhập lại." } });
+        }, 1500);
+      },
+      onError: (err) => {
+        const detail = getErrorMessage(err);
+        setError(detail);
+        if (typeof detail === "string" && detail.toLowerCase().includes("otp")) {
+          setStep("otp");
+        }
+      },
     },
   });
 
@@ -68,7 +72,7 @@ export function ForgotPasswordPage() {
       return;
     }
 
-    sendOtpMutation.mutate({ email: email.trim() });
+    sendOtpMutation.mutate({ data: { email: email.trim() } });
   };
 
   const handleVerifyOtp = () => {
@@ -119,7 +123,7 @@ export function ForgotPasswordPage() {
       return;
     }
 
-    resetPasswordMutation.mutate({ user_id: userId, otp, new_password: password });
+    resetPasswordMutation.mutate({ data: { user_id: userId, otp, new_password: password } });
   };
 
   return (

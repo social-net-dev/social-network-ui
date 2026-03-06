@@ -12,7 +12,6 @@ const apiClient = createApiClient(baseURL);
 attachRequestInterceptor(apiClient);
 attachResponseInterceptor(apiClient, baseURL);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CustomInstanceOptions = AxiosRequestConfig & {
   /** Optional Zod schema for dev-mode response validation (non-throwing). */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

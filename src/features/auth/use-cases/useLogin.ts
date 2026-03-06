@@ -6,7 +6,7 @@ import { LoginFormDataSchema, type LoginFormData } from '../types/auth.types';
 import apiClient from '@/lib/api';
 import { useE2EEStore } from '@/stores/e2eeStore';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
-import { useAuthLogin } from '@/lib/api/hooks/auth.hooks';
+import { useAuthLogin } from '@/lib/api/generated';
 
 export function useLogin() {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ export function useLogin() {
     let response;
     try {
       response = await loginMutation.mutateAsync({
-        email: data.email, password: data.password,
+        data: { email: data.email, password: data.password },
       });
     } catch {
       return; // error toast handled globally by MutationCache

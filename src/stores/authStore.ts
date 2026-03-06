@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { authLogout } from '@/lib/api/endpoints/auth';
+import { authLogout } from '@/lib/api/generated';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { useE2EEStore } from './e2eeStore';
 import { callSetPublicKey } from '@/features/message/services/messageApi';

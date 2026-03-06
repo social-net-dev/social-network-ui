@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { postsGetMyPosts, getPostsGetMyPostsQueryKey, postsGetPostsByUser, getPostsGetPostsByUserQueryKey } from '@/lib/api/endpoints/posts';
+import { postsGetMyPosts, getPostsGetMyPostsQueryKey, postsGetPostsByUser, getPostsGetPostsByUserQueryKey } from '@/lib/api/generated';
 import type { PostSummary } from '@/lib/api/types';
 
 /**
@@ -16,9 +16,9 @@ export function useUserPosts(userId?: string) {
     queryFn: async ({ pageParam, signal }) => {
       const cursor = pageParam as string | undefined;
       if (isMe) {
-        return postsGetMyPosts({ cursor }, signal);
+        return postsGetMyPosts({ cursor }, undefined, signal);
       }
-      return postsGetPostsByUser(userId!, { cursor }, signal);
+      return postsGetPostsByUser(userId!, { cursor }, undefined, signal);
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {

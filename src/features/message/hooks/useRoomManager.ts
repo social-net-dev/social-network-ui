@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchRoomsForUser, callCreateRoom } from '../services/messageApi';
-import { usersGetMe } from '@/lib/api/endpoints/users';
-import { profilesGetProfile } from '@/lib/api/endpoints/profiles';
+import { usersGetMe, profilesGetProfile } from '@/lib/api/generated';
 import type { IRoomUser } from '../types/message.types';
 
 import { useMessageStore } from '@/stores/messageStore';

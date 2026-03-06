@@ -3,17 +3,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   usePostsGetPostComments,
   getPostsGetPostCommentsQueryKey,
-} from '@/lib/api/hooks/posts.hooks';
-import {
   useCommentsCreateComment,
   useCommentsDeleteComment,
   useCommentsReplyToComment,
   useCommentsUpdateComment,
-} from '@/lib/api/hooks/comments.hooks';
-import {
   useReactionsReactToComment,
   useReactionsUnreactComment,
-} from '@/lib/api/hooks/reactions.hooks';
+} from '@/lib/api/generated';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import type { FeedComment, ReactionType } from '../types/feed.types';
@@ -28,7 +24,7 @@ export function useComments(postId: string) {
   );
 
   const query = usePostsGetPostComments(postId, undefined, {
-    enabled: !!postId,
+    query: { enabled: !!postId },
   });
 
   const createCommentMutation = useCommentsCreateComment();
@@ -91,9 +87,11 @@ export function useComments(postId: string) {
           : undefined;
 
         await createCommentMutation.mutateAsync({
-            post_id: postId,
-            content_text: content,
-            media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
+            data: {
+              post_id: postId,
+              content_text: content,
+              media_asset_ids: media_asset_ids?.length ? media_asset_ids : undefined,
+            },
           });
         toast.success('Đã gửi bình luận');
         queryClient.invalidateQueries({ queryKey });
