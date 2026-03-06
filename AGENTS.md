@@ -169,21 +169,21 @@ Tất cả paginated responses dùng cấu trúc `PaginatedResponse<T>`:
 
 ### Feed
 ```ts
-// src/features/home/hooks/useFeed.ts
+// src/features/posts/hooks/useFeed.ts  (re-exported từ src/features/home/hooks/useFeed.ts)
 const { posts, queryKey, isLoading, fetchNextPage, hasNextPage, createPost } = useFeed({ fieldId, postType });
 // posts là PostSummary[]
 ```
 
 ### Comments
 ```ts
-// src/features/home/hooks/useComments.ts
+// src/features/posts/hooks/useComments.ts  (re-exported từ src/features/home/hooks/useComments.ts)
 const { comments, addComment, deleteComment, reactToComment, updateComment, replyToComment } = useComments(postId);
 // comments là FeedComment[] (= Comment & { author: Author })
 ```
 
 ### Post Actions (optimistic update)
 ```ts
-// src/features/home/hooks/usePostActions.ts
+// src/features/posts/hooks/usePostActions.ts  (re-exported từ src/features/home/hooks/usePostActions.ts)
 const { deletePost, updatePost, sharePost, likePost } = usePostActions({ affectedQueryKeys: [queryKey] });
 // Tự động update cache optimistic trên tất cả queryKeys được truyền vào
 ```
@@ -232,8 +232,9 @@ Tự động resolve URL từ `avatar_path` (R2 key) hoặc `avatar` (absolute U
 
 ### Auth Store (`src/stores/authStore.ts`)
 ```ts
-const { user, isAuthenticated, login, logout, getUserId } = useAuthStore();
+const { user, isAuthenticated, setAuth, logout, getUserId } = useAuthStore();
 // user là User | null (kiểu từ generated model)
+// setAuth(payload) — nhận AuthPayload (hỗ trợ cả snake_case từ backend và camelCase nội bộ)
 ```
 
 ### E2EE Store (`src/stores/e2eeStore.ts`)
@@ -254,7 +255,7 @@ interface UserPrivacy {
 }
 ```
 
-Helper `privacyToFlatSettings()` trong `ProfileSettingsPage.tsx` convert sang flat map cho UI:
+Helper `privacyToFlatSettings()` trong `src/features/profile/lib/privacy.ts` convert sang flat map cho UI:
 ```ts
 function privacyToFlatSettings(privacy: UserPrivacy): Record<string, string>
 // → { bio_visibility: 'PRIVATE', avatar_visibility: 'PUBLIC', ... }
@@ -309,7 +310,7 @@ Một số `as unknown as` là không thể tránh:
 | `src/lib/api/hooks/` (15 files) | `src/lib/api/generated/{domain}/{domain}.ts` |
 | `src/lib/api/types/schema.d.ts` | `src/lib/api/generated/model/` |
 | `src/lib/api/types/auth.types.ts` | Generated types trong `src/lib/api/generated/model/` |
-| `src/lib/query-keys.ts` | `getXxxQueryKey()` factories trong generated files |
+| `src/lib/query-keys.ts` | `src/lib/queryKeys.ts` (đổi tên) + `getXxxQueryKey()` factories trong generated files |
 | `src/lib/utils/userTransform.ts` | `useProfile` select trực tiếp |
 | `toFeedPost()` adapter | `PostCard` nhận `PostSummary` trực tiếp |
 | `IBackendPost`, `IBackendAuthor`… | Không dùng — typed qua contract |
