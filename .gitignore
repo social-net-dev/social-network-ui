@@ -30,3 +30,5 @@ package-lock.json
 
 tsp-output/
 dist/
+# Mock server generated data (regenerate with: pnpm mock:seed)
+mock/db.json
