@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios';
-import { AUTH_STORAGE_KEYS, PUBLIC_AUTH_PATHS } from '@/lib/auth.constants';
+import { PUBLIC_AUTH_PATHS } from '@/lib/auth.constants';
+import { useAuthStore } from '@/stores/authStore';
 
 export function isPublicAuthRequest(apiClient: AxiosInstance, url: string | undefined): boolean {
   if (!url) return false;
@@ -8,16 +9,13 @@ export function isPublicAuthRequest(apiClient: AxiosInstance, url: string | unde
 }
 
 export function getTokenFromStorage(): string | null {
-  const token = localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN);
-  return token ? token.replace(/"/g, '') : null;
+  return useAuthStore.getState().token;
 }
 
 export function getRefreshTokenFromStorage(): string | null {
-  const token = localStorage.getItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN);
-  return token ? token.replace(/"/g, '') : null;
+  return useAuthStore.getState().refreshToken;
 }
 
 export function getTenantSlugFromStorage(): string | null {
-  const slug = localStorage.getItem(AUTH_STORAGE_KEYS.TENANT_SLUG);
-  return slug ? slug.replace(/"/g, '') : null;
+  return useAuthStore.getState().tenantSlug ?? null;
 }

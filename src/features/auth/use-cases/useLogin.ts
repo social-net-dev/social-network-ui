@@ -1,15 +1,16 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
 import { LoginFormDataSchema, type LoginFormData } from '../types/auth.types';
-import apiClient from '@/lib/api';
 import { useE2EEStore } from '@/stores/e2eeStore';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
-import { useAuthLogin } from '@/lib/api/generated';
+import { useAuthLogin, getUsersGetMeQueryOptions } from '@/lib/api/generated';
 
 export function useLogin() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const setAuth = useAuthStore(state => state.setAuth);
 
   const loginMutation = useAuthLogin();
@@ -38,8 +39,7 @@ export function useLogin() {
 
     let redirectPath = '/';
     try {
-      const meRes = await apiClient.get('users/me/');
-      const userData = meRes.data;
+      const userData = await queryClient.fetchQuery(getUsersGetMeQueryOptions());
       useAuthStore.getState().setUser(userData);
 
       const tenantSlug = payload.tenant_slug;

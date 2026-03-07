@@ -36,7 +36,6 @@ export function useFriendActions(options?: UseFriendActionsOptions) {
   }, []);
 
   const invalidateFriends = useCallback(() => {
-    qc.invalidateQueries({ queryKey: ['/friends/'] });
     qc.invalidateQueries({ queryKey: getFriendsListFriendsQueryKey() });
   }, [qc]);
 

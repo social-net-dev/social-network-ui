@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNotificationStore } from "@/stores/notificationStore";
 import type { Notification } from "@/types/notification";
 import {
   useNotificationsListNotifications,
@@ -12,7 +13,7 @@ import { mapApiNotificationToUi, type BackendNotificationRaw } from "../utils/ma
 
 export function useNotifications() {
   const queryClient = useQueryClient();
-  const [unreadCountFromWs, setUnreadCountFromWs] = useState<number | null>(null);
+  const { unreadCount: unreadCountFromWs, setUnreadCount, incrementUnread, resetUnread } = useNotificationStore();
 
   const queryKey = getNotificationsListNotificationsQueryKey({ limit: 50 });
 
@@ -48,11 +49,11 @@ export function useNotifications() {
     try {
       await markAllAsReadMutation.mutateAsync();
       queryClient.invalidateQueries({ queryKey });
-      setUnreadCountFromWs(0);
+      resetUnread();
     } catch {
       // ignore
     }
-  }, [markAllAsReadMutation, queryClient, queryKey]);
+  }, [markAllAsReadMutation, queryClient, queryKey, resetUnread]);
 
   useNotificationSocket({
     enabled: true,
@@ -88,13 +89,13 @@ export function useNotifications() {
         if (!updated) {
           queryClient.invalidateQueries({ queryKey });
         }
-        setUnreadCountFromWs((c) => (c !== null ? c + 1 : 1));
+        incrementUnread();
       },
-      [queryClient, queryKey]
+      [queryClient, queryKey, incrementUnread]
     ),
     onUnreadCount: useCallback((count: number) => {
-      setUnreadCountFromWs(count);
-    }, []),
+      setUnreadCount(count);
+    }, [setUnreadCount]),
   });
 
   const refetch = useCallback(() => {

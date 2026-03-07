@@ -52,16 +52,6 @@ export const useAuthStore = create<AuthState>()(
         const refreshToken = authResponse.refreshToken || authResponse.refresh;
         const tenantSlug = authResponse.tenantSlug || authResponse.tenant_slug;
 
-        if (token) {
-          localStorage.setItem('auth_token', token);
-        }
-        if (refreshToken) {
-          localStorage.setItem('refresh_token', refreshToken);
-        }
-        if (tenantSlug) {
-          localStorage.setItem('tenant_slug', tenantSlug);
-        }
-
         set({
           user: authResponse.user || null,
           token: token || null,
@@ -118,12 +108,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       onRehydrateStorage: () => state => {
-        // Restore tenant_slug from localStorage to zustand state
         if (state) {
-          const tenantSlug = localStorage.getItem('tenant_slug')?.replace(/"/g, '');
-          if (tenantSlug) {
-            state.tenantSlug = tenantSlug;
-          }
           state.setLoading(false);
         }
       },

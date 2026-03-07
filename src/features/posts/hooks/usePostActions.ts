@@ -1,10 +1,19 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePostsDeletePost, usePostsUpdatePost, useReactionsReactToPost, useReactionsUnreactPost, useSharesSharePost } from '@/lib/api/generated';
+import {
+  usePostsDeletePost,
+  usePostsUpdatePost,
+  useReactionsReactToPost,
+  useReactionsUnreactPost,
+  useSharesSharePost,
+  getPostsListPostsQueryKey,
+  getPostsListPostsInfiniteQueryKey,
+  getFeedGetFeedQueryKey,
+  getFeedGetFeedInfiniteQueryKey,
+} from '@/lib/api/generated';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import type { PostSummary, ReactionType, UpdatePostRequest } from '@/lib/api/types';
-import { queryKeys } from '@/lib/queryKeys';
 
 type QueryKey = readonly unknown[];
 type UnknownRecord = Record<string, unknown>;
@@ -88,7 +97,8 @@ export function usePostActions(options?: UsePostActionsOptions) {
     mutation: {
       onMutate: async ({ postId }) => {
         // Cancel outgoing refetches to avoid overwriting optimistic update
-        await queryClient.cancelQueries({ queryKey: queryKeys.posts.all() });
+        await queryClient.cancelQueries({ queryKey: getPostsListPostsQueryKey() });
+        await queryClient.cancelQueries({ queryKey: getPostsListPostsInfiniteQueryKey() });
         // Snapshot previous values
         const snapshots = affectedQueryKeys.map((key) => ({
           key,
@@ -114,7 +124,8 @@ export function usePostActions(options?: UsePostActionsOptions) {
         toast.success('Đã xóa bài viết');
       },
       onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.posts.all() });
+        queryClient.invalidateQueries({ queryKey: getPostsListPostsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getPostsListPostsInfiniteQueryKey() });
       },
     },
   });
@@ -122,7 +133,8 @@ export function usePostActions(options?: UsePostActionsOptions) {
   const updatePostMutation = usePostsUpdatePost({
     mutation: {
       onMutate: async ({ postId, data }) => {
-        await queryClient.cancelQueries({ queryKey: queryKeys.posts.all() });
+        await queryClient.cancelQueries({ queryKey: getPostsListPostsQueryKey() });
+        await queryClient.cancelQueries({ queryKey: getPostsListPostsInfiniteQueryKey() });
         const snapshots = affectedQueryKeys.map((key) => ({
           key,
           data: queryClient.getQueryData(key),
@@ -147,7 +159,8 @@ export function usePostActions(options?: UsePostActionsOptions) {
         toast.success('Đã cập nhật bài viết');
       },
       onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.posts.all() });
+        queryClient.invalidateQueries({ queryKey: getPostsListPostsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getPostsListPostsInfiniteQueryKey() });
       },
     },
   });
@@ -212,8 +225,10 @@ export function usePostActions(options?: UsePostActionsOptions) {
         toast.error('Lỗi khi chia sẻ bài viết');
         throw err;
       } finally {
-        queryClient.invalidateQueries({ queryKey: queryKeys.posts.all() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all() });
+        queryClient.invalidateQueries({ queryKey: getPostsListPostsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getPostsListPostsInfiniteQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getFeedGetFeedQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getFeedGetFeedInfiniteQueryKey() });
       }
     },
     [affectedQueryKeys, sharePostMutation, queryClient, currentUser]
@@ -250,7 +265,8 @@ export function usePostActions(options?: UsePostActionsOptions) {
         }
       } catch (err) {
         // Rollback by invalidating
-        queryClient.invalidateQueries({ queryKey: queryKeys.posts.all() });
+        queryClient.invalidateQueries({ queryKey: getPostsListPostsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getPostsListPostsInfiniteQueryKey() });
         toast.error('Lỗi khi tương tác bài viết');
         throw err;
       }
