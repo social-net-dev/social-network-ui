@@ -2,14 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { queryClient } from './lib/react-query';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import './index.css';
 import App from './App.tsx';
-import { Agentation } from 'agentation';
 import { cleanupLocalStorage } from './features/message/lib/localStorageCleanup';
 
 // 🧹 Clean up old E2EE cache và message plaintext
@@ -37,8 +35,6 @@ const bootstrap = async () => {
               />
             </ThemeProvider>
           </BrowserRouter>
-          {import.meta.env.MODE != 'production' && <Agentation />}
-          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
         </QueryClientProvider>
       </ErrorBoundary>
     </StrictMode>
