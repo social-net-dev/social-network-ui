@@ -209,7 +209,7 @@ export function useComments(postId: string) {
           ? await Promise.all(files.map((f) => uploadMediaAsset(f, 'comment')))
           : undefined;
 
-        await replyToCommentMutation.mutateAsync({
+        const serverReply = await replyToCommentMutation.mutateAsync({
           commentId,
           data: {
             post_id: postId,
@@ -218,9 +218,14 @@ export function useComments(postId: string) {
           },
         });
         toast.success('Đã gửi phản hồi');
-        queryClient.invalidateQueries({ queryKey });
+        // Replace the optimistic temp reply with the real server response to avoid
+        // content disappearing if the server field mapping differs (e.g. content_text vs content)
+        updateCache((comments) =>
+          comments.map((c) => (c.id === tempId ? (serverReply as FeedComment) : c))
+        );
       } catch (err) {
-        queryClient.invalidateQueries({ queryKey });
+        // On failure, remove the optimistic reply and rollback
+        updateCache((comments) => comments.filter((c) => c.id !== tempId));
         toast.error('Lỗi khi gửi phản hồi');
         throw err;
       }
