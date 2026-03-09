@@ -244,7 +244,7 @@ server.post('/api/auth/change-password', requireAuth, (_req: Request, res: Respo
 })
 
 server.post('/api/auth/logout', requireAuth, (_req: Request, res: Response) => {
-  res.status(204).send()
+  reply(res, { message: 'Logged out' })
 })
 
 // ─── USERS / ME ───────────────────────────────────────────────────────────────
@@ -297,7 +297,7 @@ server.get('/api/users/me/privacy', requireAuth, (req: Request, res: Response) =
   reply(res, ((req as AnyRecord)._user as AnyRecord).privacy ?? { default_visibility: 'PUBLIC', overrides: [] })
 })
 
-server.put('/api/users/me/privacy', requireAuth, (req: Request, res: Response) => {
+const updatePrivacyHandler = (req: Request, res: Response) => {
   const db = getDb()
   const me = (req as AnyRecord)._user as AnyRecord
   const userIdx = (db.users as AnyRecord[]).findIndex(u => u.id === me.id)
@@ -306,7 +306,9 @@ server.put('/api/users/me/privacy', requireAuth, (req: Request, res: Response) =
   db.users[userIdx].updated_at = new Date().toISOString()
   saveDb(db)
   reply(res, db.users[userIdx].privacy)
-})
+}
+server.put('/api/users/me/privacy', requireAuth, updatePrivacyHandler)
+server.patch('/api/users/me/privacy', requireAuth, updatePrivacyHandler)
 
 server.post('/api/users/me/deactivate', requireAuth, (_req: Request, res: Response) => {
   reply(res, { message: 'Account deactivated' })
@@ -316,8 +318,8 @@ server.post('/api/users/me/reactivate', (_req: Request, res: Response) => {
   reply(res, { message: 'Reactivation request submitted' })
 })
 
-server.get('/api/users/me/reactivation-requests', (_req: Request, res: Response) => {
-  reply(res, { items: [], pagination: { page: 1, page_size: 20, total: 0, total_pages: 0 } })
+server.post('/api/users/me/reactivation-requests', (_req: Request, res: Response) => {
+  reply(res, { message: 'Reactivation request created' })
 })
 
 // ─── PROFILES ─────────────────────────────────────────────────────────────────
@@ -475,7 +477,7 @@ server.delete('/api/posts/:postId', requireAuth, (req: Request, res: Response) =
   }
   db.posts.splice(idx, 1)
   saveDb(db)
-  res.status(204).send()
+  reply(res, { message: 'Post deleted' })
 })
 
 // ─── POST COMMENTS ────────────────────────────────────────────────────────────
@@ -494,10 +496,10 @@ server.get('/api/posts/:postId/comments', requireAuth, (req: Request, res: Respo
 
 server.get('/api/posts/:postId/reactions', requireAuth, (req: Request, res: Response) => {
   const db = getDb()
-  const page = Number(req.query.page ?? 1)
-  const pageSize = Number(req.query.page_size ?? 20)
+  const cursor = req.query.cursor as string | undefined
+  const limit = Math.min(Number(req.query.limit ?? 20), 100)
   const reactions = (db.post_reactions as AnyRecord[]).filter(r => r.post_id === req.params.postId)
-  reply(res, offsetPaginate(reactions, page, pageSize))
+  reply(res, cursorPaginate(reactions, cursor, limit))
 })
 
 server.post('/api/posts/:postId/reactions', requireAuth, (req: Request, res: Response) => {
@@ -529,7 +531,7 @@ server.post('/api/posts/:postId/reactions', requireAuth, (req: Request, res: Res
   db.posts[postIdx].stats.reactions++
   db.posts[postIdx].user_reaction = reaction
   saveDb(db)
-  reply(res, newReaction, 201)
+  reply(res, newReaction)
 })
 
 server.delete('/api/posts/:postId/reactions', requireAuth, (req: Request, res: Response) => {
@@ -547,7 +549,7 @@ server.delete('/api/posts/:postId/reactions', requireAuth, (req: Request, res: R
     }
     saveDb(db)
   }
-  res.status(204).send()
+  reply(res, { message: 'Reaction removed' })
 })
 
 // ─── POST SHARES ──────────────────────────────────────────────────────────────
@@ -568,7 +570,7 @@ server.post('/api/posts/:postId/share', requireAuth, (req: Request, res: Respons
   db.shares.push(share)
   db.posts[postIdx].stats.shares++
   saveDb(db)
-  reply(res, share, 201)
+  reply(res, share)
 })
 
 server.delete('/api/posts/:postId/share', requireAuth, (req: Request, res: Response) => {
@@ -581,7 +583,7 @@ server.delete('/api/posts/:postId/share', requireAuth, (req: Request, res: Respo
     if (postIdx >= 0) db.posts[postIdx].stats.shares = Math.max(0, db.posts[postIdx].stats.shares - 1)
     saveDb(db)
   }
-  res.status(204).send()
+  reply(res, { message: 'Share removed' })
 })
 
 // ─── COMMENTS ─────────────────────────────────────────────────────────────────
@@ -647,7 +649,7 @@ server.delete('/api/comments/:commentId', requireAuth, (req: Request, res: Respo
   if (post) post.stats.comments = Math.max(0, post.stats.comments - 1)
   db.comments.splice(idx, 1)
   saveDb(db)
-  res.status(204).send()
+  reply(res, { message: 'Comment deleted' })
 })
 
 server.get('/api/comments/:commentId/replies', requireAuth, (req: Request, res: Response) => {
@@ -706,7 +708,6 @@ server.post('/api/comments/:commentId/reactions', requireAuth, (req: Request, re
       reaction,
       created_at: new Date().toISOString(),
     },
-    201,
   )
 })
 
@@ -718,7 +719,7 @@ server.delete('/api/comments/:commentId/reactions', requireAuth, (req: Request, 
     db.comments[commentIdx].user_reaction = null
     saveDb(db)
   }
-  res.status(204).send()
+  reply(res, { message: 'Reaction removed' })
 })
 
 // ─── FRIENDS ──────────────────────────────────────────────────────────────────
@@ -760,29 +761,25 @@ server.post('/api/friends/requests', requireAuth, (req: Request, res: Response) 
   }
   db.friend_requests.push(newReq)
   saveDb(db)
-  reply(res, newReq, 201)
+  reply(res, newReq)
 })
 
 server.get('/api/friends/requests/incoming', requireAuth, (req: Request, res: Response) => {
   const db = getDb()
   const me = (req as AnyRecord)._user as AnyRecord
-  const page = Number(req.query.page ?? 1)
-  const pageSize = Number(req.query.page_size ?? 20)
   const incoming = (db.friend_requests as AnyRecord[]).filter(
     fr => fr.addressee.id === me.id && fr.status === 'PENDING',
   )
-  reply(res, offsetPaginate(incoming, page, pageSize))
+  reply(res, incoming)
 })
 
 server.get('/api/friends/requests/outgoing', requireAuth, (req: Request, res: Response) => {
   const db = getDb()
   const me = (req as AnyRecord)._user as AnyRecord
-  const page = Number(req.query.page ?? 1)
-  const pageSize = Number(req.query.page_size ?? 20)
   const outgoing = (db.friend_requests as AnyRecord[]).filter(
     fr => fr.requester.id === me.id && fr.status === 'PENDING',
   )
-  reply(res, offsetPaginate(outgoing, page, pageSize))
+  reply(res, outgoing)
 })
 
 server.get('/api/friends/requests', requireAuth, (req: Request, res: Response) => {
@@ -864,7 +861,7 @@ server.delete('/api/friends/:friendId', requireAuth, (req: Request, res: Respons
     db.friends.splice(idx, 1)
     saveDb(db)
   }
-  res.status(204).send()
+  reply(res, { message: 'Friend removed' })
 })
 
 // ─── FOLLOWS ──────────────────────────────────────────────────────────────────
@@ -898,29 +895,29 @@ server.delete('/api/users/:userId/follow', requireAuth, (req: Request, res: Resp
     if (meIdx >= 0) db.users[meIdx].following = Math.max(0, (db.users[meIdx].following ?? 1) - 1)
     saveDb(db)
   }
-  res.status(204).send()
+  reply(res, { message: 'Unfollowed' })
 })
 
 server.get('/api/users/:userId/followers', requireAuth, (req: Request, res: Response) => {
   const db = getDb()
-  const page = Number(req.query.page ?? 1)
-  const pageSize = Number(req.query.page_size ?? 20)
+  const cursor = req.query.cursor as string | undefined
+  const limit = Math.min(Number(req.query.limit ?? 20), 100)
   const followerIds = (db.follows as AnyRecord[])
     .filter(f => f.followed_id === req.params.userId)
     .map(f => f.follower_id)
-  const followers = (db.users as AnyRecord[]).filter(u => followerIds.includes(u.id))
-  reply(res, offsetPaginate(followers, page, pageSize))
+  const followers = (db.users as AnyRecord[]).filter(u => followerIds.includes(u.id)).map(safeUser)
+  reply(res, cursorPaginate(followers, cursor, limit))
 })
 
 server.get('/api/users/:userId/following', requireAuth, (req: Request, res: Response) => {
   const db = getDb()
-  const page = Number(req.query.page ?? 1)
-  const pageSize = Number(req.query.page_size ?? 20)
+  const cursor = req.query.cursor as string | undefined
+  const limit = Math.min(Number(req.query.limit ?? 20), 100)
   const followingIds = (db.follows as AnyRecord[])
     .filter(f => f.follower_id === req.params.userId)
     .map(f => f.followed_id)
-  const following = (db.users as AnyRecord[]).filter(u => followingIds.includes(u.id))
-  reply(res, offsetPaginate(following, page, pageSize))
+  const following = (db.users as AnyRecord[]).filter(u => followingIds.includes(u.id)).map(safeUser)
+  reply(res, cursorPaginate(following, cursor, limit))
 })
 
 // ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
@@ -965,7 +962,7 @@ server.delete('/api/notifications/:notificationId', requireAuth, (req: Request, 
     db.notifications.splice(idx, 1)
     saveDb(db)
   }
-  res.status(204).send()
+  reply(res, { message: 'Notification deleted' })
 })
 
 // ─── SEARCH ───────────────────────────────────────────────────────────────────
@@ -1055,15 +1052,55 @@ server.put('/api/mock-upload/:uploadId', (_req: Request, res: Response) => {
 })
 
 server.post('/api/media/uploads/:uploadId/complete', requireAuth, (req: Request, res: Response) => {
-  // Mark asset as ready – uploadId is not tracked here; just return success
-  reply(res, { status: 'ready', created_at: new Date().toISOString() })
+  const db = getDb()
+  // Find the asset associated with this uploadId (we stored assetId in the fake upload flow)
+  // For simplicity, return the most recently added asset or a synthetic one
+  const assets = db.media_assets as AnyRecord[]
+  const asset = assets[assets.length - 1] ?? {
+    id: genId(),
+    type: 'image',
+    access: 'public',
+    status: 'ready',
+    cdn_url: `https://picsum.photos/seed/${genId()}/800/600`,
+    original_url: `https://picsum.photos/seed/${genId()}/800/600`,
+    thumbnail_url: `https://picsum.photos/seed/${genId()}/200/200`,
+    width: 800,
+    height: 600,
+    content_type: 'image/jpeg',
+    size_bytes: 500000,
+    created_at: new Date().toISOString(),
+  }
+  // Mark asset as ready
+  const assetIdx = assets.findIndex(a => a.id === asset.id)
+  if (assetIdx >= 0) {
+    db.media_assets[assetIdx].status = 'ready'
+    saveDb(db)
+  }
+  reply(res, { ...asset, status: 'ready' })
 })
 
-server.post('/api/media/uploads/public', requireAuth, (req: Request, res: Response) => {
-  // Same as private uploads for mocking purposes
-  const { filename, content_type } = req.body as AnyRecord
+server.post('/api/media/uploads/public', (req: Request, res: Response) => {
+  // Same as private uploads for mocking purposes – no auth required per contract
+  const { content_type } = req.body as AnyRecord
   const assetId = genId()
   const uploadId = genId()
+  const fakeAsset: AnyRecord = {
+    id: assetId,
+    type: content_type?.startsWith('image/') ? 'image' : content_type?.startsWith('video/') ? 'video' : 'file',
+    access: 'public',
+    status: 'pending',
+    cdn_url: `https://picsum.photos/seed/${assetId}/800/600`,
+    original_url: `https://picsum.photos/seed/${assetId}/800/600`,
+    thumbnail_url: `https://picsum.photos/seed/${assetId}/200/200`,
+    width: 800,
+    height: 600,
+    content_type: content_type ?? 'image/jpeg',
+    size_bytes: 500000,
+    created_at: new Date().toISOString(),
+  }
+  const db = getDb()
+  db.media_assets.push(fakeAsset)
+  saveDb(db)
   reply(
     res,
     {
@@ -1078,8 +1115,21 @@ server.post('/api/media/uploads/public', requireAuth, (req: Request, res: Respon
   )
 })
 
-server.post('/api/media/uploads/public/:uploadId/complete', requireAuth, (_req: Request, res: Response) => {
-  reply(res, { status: 'ready', created_at: new Date().toISOString() })
+server.post('/api/media/uploads/public/:uploadId/complete', (_req: Request, res: Response) => {
+  reply(res, {
+    id: genId(),
+    type: 'image',
+    access: 'public',
+    status: 'ready',
+    cdn_url: `https://picsum.photos/seed/${genId()}/800/600`,
+    original_url: `https://picsum.photos/seed/${genId()}/800/600`,
+    thumbnail_url: `https://picsum.photos/seed/${genId()}/200/200`,
+    width: 800,
+    height: 600,
+    content_type: 'image/jpeg',
+    size_bytes: 500000,
+    created_at: new Date().toISOString(),
+  })
 })
 
 server.get('/api/media/assets/:assetId', requireAuth, (req: Request, res: Response) => {
@@ -1089,7 +1139,7 @@ server.get('/api/media/assets/:assetId', requireAuth, (req: Request, res: Respon
   reply(res, asset)
 })
 
-server.get('/api/media/assets/:assetId/download-url', requireAuth, (req: Request, res: Response) => {
+server.post('/api/media/assets/:assetId/download-url', requireAuth, (req: Request, res: Response) => {
   const db = getDb()
   const asset = (db.media_assets as AnyRecord[]).find(a => a.id === req.params.assetId)
   reply(res, {

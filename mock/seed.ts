@@ -35,6 +35,95 @@ const NOTIFICATION_TYPES = [
 const ROLES = ['STUDENT', 'TEACHER', 'ADMIN', 'STAFF'] as const
 const GENDERS = ['MALE', 'FEMALE', 'OTHER'] as const
 
+// ─── public sample videos (Google storage, no auth required) ────────────────
+
+const VIDEO_SAMPLES = [
+  {
+    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg',
+    w: 1280, h: 720,
+  },
+  {
+    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg',
+    w: 1280, h: 720,
+  },
+  {
+    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg',
+    w: 1280, h: 720,
+  },
+  {
+    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg',
+    w: 1280, h: 720,
+  },
+  {
+    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/SubaruOutbackOnStreetAndDirt.jpg',
+    w: 1280, h: 720,
+  },
+  {
+    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg',
+    w: 1280, h: 720,
+  },
+  {
+    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+    thumbnail: 'https://storage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg',
+    w: 1280, h: 720,
+  },
+] as const
+
+// ─── media asset helpers ─────────────────────────────────────────────────────
+
+function makeImageAsset(seed?: string): object {
+  const s = seed ?? uid()
+  const w = pick([800, 1024, 1200] as const)
+  const h = pick([600, 768, 900] as const)
+  return {
+    id: uid(),
+    type: 'image',
+    access: 'public',
+    cdn_url: faker.image.urlPicsumPhotos({ width: w, height: h, seed: s }),
+    original_url: faker.image.urlPicsumPhotos({ width: w, height: h, seed: s }),
+    thumbnail_url: faker.image.urlPicsumPhotos({ width: 400, height: 300, seed: s }),
+    width: w,
+    height: h,
+    content_type: 'image/jpeg',
+    size_bytes: faker.number.int({ min: 200_000, max: 3_000_000 }),
+  }
+}
+
+function makeVideoAsset(): object {
+  const sample = pick(VIDEO_SAMPLES)
+  return {
+    id: uid(),
+    type: 'video',
+    access: 'public',
+    cdn_url: sample.url,
+    original_url: sample.url,
+    thumbnail_url: sample.thumbnail,
+    width: sample.w,
+    height: sample.h,
+    content_type: 'video/mp4',
+    size_bytes: faker.number.int({ min: 5_000_000, max: 80_000_000 }),
+  }
+}
+
+/** Return a random MediaAssetSummary[] for a post (may be empty) */
+function makePostMedia(): object[] {
+  const roll = Math.random()
+  if (roll < 0.30) return []                                       // 30% no media
+  if (roll < 0.50) return [makeImageAsset()]                       // 20% single image
+  if (roll < 0.65) return [makeImageAsset(), makeImageAsset()]     // 15% 2 images
+  if (roll < 0.73) return Array.from({ length: 3 }, makeImageAsset)  // 8% 3 images
+  if (roll < 0.78) return Array.from({ length: 4 }, makeImageAsset)  // 5% 4 images
+  if (roll < 0.87) return [makeVideoAsset()]                       // 9% single video
+  if (roll < 0.93) return [makeVideoAsset(), makeImageAsset()]     // 6% video + image
+  return [makeImageAsset(), makeVideoAsset(), makeImageAsset()]     // 7% mixed
+}
+
 function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
@@ -60,6 +149,7 @@ function _makeUser() {
   const firstName = faker.person.firstName()
   const lastName = faker.person.lastName()
   const username = faker.internet.username({ firstName, lastName }).toLowerCase().replace(/[^a-z0-9_]/g, '_')
+  const hasProjects = Math.random() > 0.5
   return {
     id: uid(),
     username,
@@ -79,10 +169,24 @@ function _makeUser() {
     posts_count: 0,
     privacy: { default_visibility: 'PUBLIC', overrides: [] },
     personal_info: {
-      education_level: 'university',
+      education_level: pick(['high_school', 'university', 'postgraduate'] as const),
       school: faker.company.name() + ' University',
       major: faker.person.jobArea(),
       location: `${faker.location.city()}, ${faker.location.country()}`,
+      class: `K${faker.number.int({ min: 18, max: 23 })}`,
+      academic_year: `${faker.number.int({ min: 1, max: 4 })}`,
+      hobbies: faker.helpers.arrayElements(['Lập trình', 'Đọc sách', 'Thể thao', 'Âm nhạc', 'Du lịch', 'Gaming', 'Nhiếp ảnh'], { min: 1, max: 3 }),
+      favorite_subjects: faker.helpers.arrayElements(['Toán', 'Lập trình', 'Cơ sở dữ liệu', 'AI/ML', 'Mạng máy tính', 'Giải tích', 'Vật lý'], { min: 1, max: 3 }),
+      projects: hasProjects
+        ? Array.from({ length: faker.number.int({ min: 1, max: 3 }) }, () => ({
+            id: uid(),
+            title: faker.company.catchPhrase(),
+            category: pick(['Web', 'Mobile', 'AI/ML', 'IoT', 'Game', 'Data Science'] as const),
+            description: faker.lorem.paragraph(),
+            image_url: faker.image.urlPicsumPhotos({ width: 400, height: 300 }),
+            source_link: Math.random() > 0.5 ? `https://github.com/${username}/${faker.word.noun()}` : undefined,
+          }))
+        : [],
     },
     created_at: isoDate(90),
     updated_at: isoDate(5),
@@ -98,6 +202,34 @@ const ME_USER = makeUser({
   display_name: 'Hiếu Developer',
   role: 'STUDENT',
   avatar: faker.image.avatar(),
+  bio: 'Full-stack developer đang học năm 3 tại HCMUTE. Đam mê React, TypeScript và cloud computing.',
+  personal_info: {
+    education_level: 'university',
+    school: 'ĐH Sư Phạm Kỹ Thuật TPHCM (HCMUTE)',
+    major: 'Công nghệ Thông tin',
+    location: 'TP. Hồ Chí Minh, Việt Nam',
+    class: 'K21',
+    academic_year: '3',
+    hobbies: ['Lập trình', 'Gaming', 'Đọc sách'],
+    favorite_subjects: ['Lập trình', 'Cơ sở dữ liệu', 'AI/ML'],
+    projects: [
+      {
+        id: uid(),
+        title: 'Social Network UI',
+        category: 'Web',
+        description: 'Giao diện mạng xã hội cho sinh viên đại học, xây dựng bằng React + TypeScript + TailwindCSS.',
+        image_url: faker.image.urlPicsumPhotos({ width: 400, height: 300 }),
+        source_link: 'https://github.com/hieu_dev/social-network-ui',
+      },
+      {
+        id: uid(),
+        title: 'AI Study Assistant',
+        category: 'AI/ML',
+        description: 'Trợ lý học tập AI giúp sinh viên tóm tắt tài liệu và tạo câu hỏi ôn tập.',
+        image_url: faker.image.urlPicsumPhotos({ width: 400, height: 300 }),
+      },
+    ],
+  },
 })
 
 const OTHER_USERS = Array.from({ length: 12 }, () => makeUser())
@@ -128,22 +260,25 @@ const POST_CONTENT_SAMPLES = [
   'Mình đang tìm kiếm mentor để định hướng career path. Có ai giúp được không?',
 ]
 
-function makePost(authorUser: typeof ME_USER) {
+function makePost(authorUser: typeof ME_USER, sharedPost?: ReturnType<typeof makePost> | null) {
   const reactions = faker.number.int({ min: 0, max: 200 })
   const comments = faker.number.int({ min: 0, max: 50 })
   const shares = faker.number.int({ min: 0, max: 30 })
+  const media = makePostMedia()
+  // Populate legacy media_urls from image assets for backward compat
+  const mediaUrls = media.filter((a: any) => a.type === 'image').map((a: any) => a.cdn_url as string)
   return {
     id: uid(),
     author: makeAuthor(authorUser),
     content: pick(POST_CONTENT_SAMPLES as readonly string[]),
-    media_urls: Math.random() > 0.7 ? [faker.image.urlPicsumPhotos({ width: 800, height: 600 })] : [],
-    media: [] as unknown[],
+    media_urls: mediaUrls,
+    media,
     stats: { reactions, comments, shares },
     user_reaction: null,
     visibility: pick(VISIBILITIES),
     post_type: pick(POST_TYPES),
     field_id: Math.random() > 0.5 ? faker.string.uuid() : undefined,
-    shared_post: null,
+    shared_post: sharedPost ?? null,
     created_at: isoDate(faker.number.int({ min: 0, max: 20 })),
     updated_at: isoDate(faker.number.int({ min: 0, max: 5 })),
   }
@@ -151,7 +286,25 @@ function makePost(authorUser: typeof ME_USER) {
 
 // 8 posts by me, 32 by others
 const MY_POSTS = Array.from({ length: 8 }, () => makePost(ME_USER))
-const OTHER_POSTS = Array.from({ length: 32 }, () => makePost(pick(OTHER_USERS)))
+const BASE_OTHER_POSTS = Array.from({ length: 28 }, () => makePost(pick(OTHER_USERS)))
+// 4 shared posts (share an existing post from another user)
+const SHARED_POSTS = Array.from({ length: 4 }, () => {
+  const originalPost = pick(BASE_OTHER_POSTS)
+  const sharer = pick(OTHER_USERS)
+  return makePost(sharer, {
+    id: originalPost.id,
+    author: originalPost.author,
+    content: originalPost.content,
+    media_urls: originalPost.media_urls,
+    stats: originalPost.stats,
+    user_reaction: originalPost.user_reaction,
+    visibility: originalPost.visibility,
+    post_type: originalPost.post_type,
+    created_at: originalPost.created_at,
+    updated_at: originalPost.updated_at,
+  })
+})
+const OTHER_POSTS = [...BASE_OTHER_POSTS, ...SHARED_POSTS]
 const ALL_POSTS = [...MY_POSTS, ...OTHER_POSTS]
 
 // Update posts_count for me
@@ -327,22 +480,12 @@ const SHARES = ALL_POSTS.slice(0, 3).map(post => ({
   created_at: isoDate(),
 }))
 
-// ─── media assets ─────────────────────────────────────────────────────────────
+// ─── media assets (standalone library) ───────────────────────────────────────
 
-const MEDIA_ASSETS = Array.from({ length: 10 }, () => ({
-  id: uid(),
-  type: pick(['image', 'video', 'file'] as const),
-  access: 'public' as const,
-  status: 'ready' as const,
-  cdn_url: faker.image.urlPicsumPhotos({ width: 800, height: 600 }),
-  original_url: faker.image.urlPicsumPhotos({ width: 800, height: 600 }),
-  thumbnail_url: faker.image.urlPicsumPhotos({ width: 200, height: 200 }),
-  width: 800,
-  height: 600,
-  content_type: 'image/jpeg',
-  size_bytes: faker.number.int({ min: 100000, max: 5000000 }),
-  created_at: isoDate(),
-}))
+const MEDIA_ASSETS = [
+  ...Array.from({ length: 7 }, () => ({ ...makeImageAsset(), status: 'ready', created_at: isoDate() })),
+  ...Array.from({ length: 3 }, () => ({ ...makeVideoAsset(), status: 'ready', created_at: isoDate() })),
+]
 
 // ─── write db.json ────────────────────────────────────────────────────────────
 
