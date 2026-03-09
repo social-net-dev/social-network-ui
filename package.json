@@ -15,18 +15,12 @@
     "gen:clean": "tsx scripts/transform-openapi.ts",
     "gen:hooks": "orval --config orval.config.ts",
     "gen": "pnpm gen:spec && pnpm gen:clean && pnpm gen:hooks",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy",
     "mock:seed": "tsx mock/seed.ts",
     "mock:server": "tsx mock/server.ts",
     "mock:dev": "concurrently \"pnpm mock:server\" \"vite --mode mock\"",
     "mock:start": "pnpm mock:seed && pnpm mock:server",
-    "mock:init": "msw init public --save",
     "prepare": "husky"
   },
   "dependencies": {
@@ -72,8 +66,6 @@
     "@eslint/js": "^9.39.1",
     "@faker-js/faker": "^10.2.0",
     "@tanstack/react-query-devtools": "^5.91.2",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
     "@types/cors": "^2.8.19",
     "@types/json-server": "^0.14.8",
     "@types/node": "^24.10.1",
@@ -86,7 +78,6 @@
     "@typespec/rest": "latest",
     "@typespec/versioning": "latest",
     "@vitejs/plugin-react": "^5.1.1",
-    "@vitest/ui": "^4.0.18",
     "agentation": "^1.3.2",
     "concurrently": "^9.2.1",
     "cors": "^2.8.6",
@@ -97,7 +88,6 @@
     "husky": "^9.1.7",
     "jsdom": "^28.0.0",
     "json-server": "^0.17.4",
-    "msw": "^2.11.6",
     "orval": "^8.5.2",
     "prettier": "^3.8.1",
     "shadcn": "^3.7.0",
@@ -106,12 +96,6 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
-    "vitest": "^4.0.18",
     "wrangler": "^4.65.0"
-  },
-  "msw": {
-    "workerDirectory": [
-      "public"
-    ]
   }
 }
