@@ -71,21 +71,16 @@ export const useMessageManager = ({ roomId, wsMessages }: UseMessageManagerProps
           if (url.startsWith('http')) {
             try {
               const u = new URL(url);
-              // If it's pointing to the main API host but files are served by message service, swap origin
-              if (u.origin === apiBase.origin && (u.pathname.startsWith('/files') || u.pathname.startsWith('/media') || u.pathname.startsWith('/api/media'))) {
-                const swapped = url.replace(apiBase.origin, msgBase.origin);
-                // If message service origin, append auth token if available
-                try {
-                  const swappedUrl = new URL(swapped);
-                  if (swappedUrl.origin === msgBase.origin) {
-                    const separator = swapped.includes('?') ? '&' : '?';
-                    const token = localStorage.getItem('auth_token')?.replace(/"/g, '');
-                    return token ? `${swapped}${separator}access_token=${encodeURIComponent(token)}` : swapped;
-                  }
-                } catch (e) {
-                  return swapped;
-                }
-                return swapped;
+              // If localhost URL has media/files path, always use message service (port 8002)
+              const isMediaPath = u.pathname.startsWith('/files') || u.pathname.startsWith('/media') || u.pathname.startsWith('/api/media') || u.pathname.startsWith('/media/stream');
+              const isLocalhost = u.hostname === 'localhost' || u.hostname === '127.0.0.1';
+
+              if (isMediaPath && (isLocalhost || u.origin === apiBase.origin)) {
+                // Swap origin to message service base
+                const swapped = `${msgBase.origin}${u.pathname}${u.search}${u.hash}`;
+                const separator = swapped.includes('?') ? '&' : '?';
+                const token = localStorage.getItem('auth_token')?.replace(/"/g, '');
+                return token ? `${swapped}${separator}access_token=${encodeURIComponent(token)}` : swapped;
               }
             } catch (e) {
               return url;

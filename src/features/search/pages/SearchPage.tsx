@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { extractUserIdFromTenantSlug } from '@/lib/api/utils';
 import { callGetDMRoom } from '@/features/message/services/messageApi';
 import { useRoomManager } from '@/features/message/hooks/useRoomManager';
+import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import type { UserPublic } from '@/lib/api/types';
@@ -32,6 +33,10 @@ export function SearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
+  // Messaging helpers
+  const { tenantSlug, user: authUser } = useAuthStore();
+  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : ((authUser as any)?.id ?? null);
+
   React.useEffect(() => {
     let mounted = true;
     if (!query || query.trim().length === 0) {
@@ -51,7 +56,7 @@ export function SearchPage() {
         if (!mounted) return;
         setData({ users: p ? [p] : [], total: p ? 1 : 0 });
       } catch (err: any) {
-        console.error('[SearchPage] profilesApi.getProfile error', err);
+        console.error('[SearchPage] searchApi.searchUsers error', err);
         if (!mounted) return;
         setData({ users: [], total: 0 });
         setIsError(true);
@@ -65,10 +70,6 @@ export function SearchPage() {
     };
   }, [query]);
 
-  // Messaging helpers
-  const { tenantSlug } = useAuthStore();
-  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
-  const { createRoom } = useRoomManager({ userId: currentUserId || '' });
 
   // Optimistically update a user's status in local state
   const updateUserStatus = useCallback((userId: string, newStatus: string | undefined, requestId?: string | null) => {
@@ -114,6 +115,7 @@ export function SearchPage() {
     });
   }, [qc, query]);
 
+  const { createRoom } = useRoomManager({ userId: currentUserId || '' });
   const { processingIds, sendRequest: handleSendRequest, acceptRequest: handleAcceptRequest, cancelRequest: handleCancelRequest } = useFriendActions({
     onStatusChange: updateUserStatus,
   });
@@ -139,51 +141,51 @@ export function SearchPage() {
           if (!currentUserId) return;
           setCreatingRoomFor(user.id);
           try {
-            // fetch my username and other username
-            // const me = await usersApi.getMe();
-            // const myUsername = (me as any)?.username || (me as any)?.email || null;
-            // const otherUsername = (user as any).username || (user as any).email || null;
-            if (currentUserId && user.id) {
-              try {
-                const dmResp = await callGetDMRoom(currentUserId, user.id);
-                const existingRoomId = dmResp?.data?.id || dmResp?.data?.room?.id || dmResp?.data?.room_id || dmResp?.data?.roomId;
-                if (existingRoomId) {
-                  navigate(`/messages/${existingRoomId}?user_id=${currentUserId}`);
-                  setCreatingRoomFor(null);
-                  return;
-                }
-              } catch (err: any) {
-                // 404 = room doesn't exist yet, will create below
-                if (err?.response?.status !== 404) {
-                  console.error('[SearchPage] callGetDMRoom failed', err);
-                }
+            // 1. Check if DM room already exists
+            try {
+              const dmResp = await callGetDMRoom(currentUserId, user.id);
+              const existingRoomId = dmResp?.data?.id || dmResp?.data?.room?.id || dmResp?.data?.room_id || dmResp?.data?.roomId;
+              if (existingRoomId) {
+                navigate(`/messages/${existingRoomId}?user_id=${currentUserId}`);
+                setCreatingRoomFor(null);
+                return;
+              }
+            } catch (err: any) {
+              if (err?.response?.status !== 404) {
+                console.warn('[SearchPage] callGetDMRoom failed', err);
               }
             }
 
-            // Ensure both users have display names before creating a room
+            // 2. Create new DM room — fetch display names via API
             try {
               const meResp = await usersGetMe();
               const me = meResp;
               const myDisplay = me?.display_name || null;
               const otherDisplay = user.display_name || null;
               if (!myDisplay || !otherDisplay) {
-                alert('Cần display name hợp lệ của cả hai người để tạo phòng. Vui lòng cập nhật tên hiển thị.');
+                toast.error('Cần display name hợp lệ của cả hai người để tạo phòng. Vui lòng cập nhật tên hiển thị.');
+                return;
+              }
+              const roomDisplay = `${myDisplay} & ${otherDisplay}`;
+              const myUsername = me?.username || null;
+              const otherUsername = user.username || null;
+              if (!myUsername || !otherUsername) {
+                toast.error('Không thể xác định username của một trong hai người.');
+                return;
+              }
+              const roomId = await createRoom(roomDisplay, [myUsername, otherUsername]);
+              if (roomId) {
+                navigate(`/messages/${roomId}?user_id=${currentUserId}`);
               } else {
-                const roomDisplay = `${myDisplay} & ${otherDisplay}`;
-                const myUsername = me?.username || null;
-                const otherUsername = user.username || null;
-                if (!myUsername || !otherUsername) {
-                  alert('Không thể xác định username của một trong hai người.');
-                } else {
-                  const roomId = await createRoom(roomDisplay, [myUsername, otherUsername]);
-                  if (roomId) navigate(`/messages/${roomId}?user_id=${currentUserId}`);
-                }
+                toast.error('Tạo phòng chat thất bại');
               }
             } catch (e) {
-              console.error('Failed to verify display names before createRoom', e);
+              console.error('[SearchPage] create DM failed', e);
+              toast.error('Không thể tạo phòng chat');
             }
           } catch (e) {
-            console.error('create DM failed', e);
+            console.error('[SearchPage] create DM failed', e);
+            toast.error('Không thể tạo phòng chat');
           } finally {
             setCreatingRoomFor(null);
           }
@@ -236,7 +238,7 @@ export function SearchPage() {
         return (
           <div className="flex items-center gap-2">
             {messageButton}
-            <Button variant="outline" size="sm" className="flex-shrink-0 rounded-full" onClick={() => handleSendRequest(user.id, user.username)} disabled={isProcessing}>
+            <Button variant="outline" size="sm" className="flex-shrink-0 rounded-full" onClick={() => handleSendRequest(user.id, user.username || '')} disabled={isProcessing}>
               {isProcessing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <UserPlus className="h-4 w-4 mr-1" />}
               Kết bạn
             </Button>

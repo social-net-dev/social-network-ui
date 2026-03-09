@@ -21,6 +21,20 @@ export const getApiBaseUrl = (): string => {
 };
 
 /**
+ * Get Social Service Base URL (posts, reactions, friends, feed)
+ * Docker: social-servece container, host port 8003
+ */
+export const getSocialApiUrl = (): string => {
+  if (typeof window !== 'undefined' && (window.__ENV__ as Record<string, string> | undefined)?.VITE_API_SOCIAL_URL) {
+    return (window.__ENV__ as Record<string, string>).VITE_API_SOCIAL_URL;
+  }
+  if (import.meta.env.DEV) {
+    return import.meta.env.VITE_API_SOCIAL_URL || 'http://localhost:8003/api';
+  }
+  return import.meta.env.VITE_API_SOCIAL_URL || '/api-social';
+};
+
+/**
  * Get Message Service Base URL (different microservice)
  */
 export const getMessageApiUrl = (): string => {
@@ -41,7 +55,7 @@ export const getNotificationWebSocketUrl = (): string => {
       base
         .slice(7)
         .replace(/\/api$/, '')
-        .replace(/\/+$/, '') || 'localhost:8001';
+        .replace(/\/+$/g, '') || 'localhost:8001';
     return `ws://${host}/ws/social/notifications/`;
   }
   if (base.startsWith('https://')) {
@@ -49,7 +63,7 @@ export const getNotificationWebSocketUrl = (): string => {
       base
         .slice(8)
         .replace(/\/api$/, '')
-        .replace(/\/+$/, '') ||
+        .replace(/\/+$/g, '') ||
       window?.location?.host ||
       'localhost';
     return `wss://${host}/ws/social/notifications/`;
@@ -65,13 +79,14 @@ export const getNotificationWebSocketUrl = (): string => {
  * UI kết nối với query user_id & room_id.
  */
 export const getChatWebSocketUrl = (): string => {
-  const base = getApiBaseUrl().trim().replace(/\/$/, '');
+  // Use message service base (may be a different microservice host)
+  const base = getMessageApiUrl().trim().replace(/\/$/, '');
   if (base.startsWith('http://')) {
     const host =
       base
         .slice(7)
         .replace(/\/api$/, '')
-        .replace(/\/+$/, '') || 'localhost:8000';
+        .replace(/\/+$/g, '') || 'localhost:8000';
     return `ws://${host}/ws`;
   }
   if (base.startsWith('https://')) {
@@ -79,7 +94,7 @@ export const getChatWebSocketUrl = (): string => {
       base
         .slice(8)
         .replace(/\/api$/, '')
-        .replace(/\/+$/, '') ||
+        .replace(/\/+$/g, '') ||
       window?.location?.host ||
       'localhost';
     return `wss://${host}/ws`;

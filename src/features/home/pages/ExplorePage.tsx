@@ -101,11 +101,7 @@ export function ExplorePage() {
     }
   };
 
-  const filteredFields = searchQuery
-    ? ACADEMIC_FIELDS.filter(f =>
-        f.label.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : ACADEMIC_FIELDS;
+  const filteredFields = searchQuery ? ACADEMIC_FIELDS.filter(f => f.label.toLowerCase().includes(searchQuery.toLowerCase())) : ACADEMIC_FIELDS;
 
   return (
     <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[280px_minmax(0,2fr)] gap-6">
@@ -200,11 +196,7 @@ export function ExplorePage() {
             {(() => {
               const field = ACADEMIC_FIELDS.find(f => f.value === selectedField);
               return field ? (
-                <Badge
-                  variant="secondary"
-                  className={cn('text-sm px-3 py-1 cursor-pointer hover:opacity-80', field.color)}
-                  onClick={() => setSelectedField('')}
-                >
+                <Badge variant="secondary" className={cn('text-sm px-3 py-1 cursor-pointer hover:opacity-80', field.color)} onClick={() => setSelectedField('')}>
                   {field.icon} {field.label} ✕
                 </Badge>
               ) : null;
@@ -243,18 +235,12 @@ export function ExplorePage() {
               <span>Đang tải thêm bài viết...</span>
             </div>
           )}
-          {!hasNextPage && posts.length > 0 && (
-            <p className="text-muted-foreground text-sm">
-              {selectedField ? 'Đã xem hết bài viết trong lĩnh vực này' : 'Đã xem hết bài viết'}
-            </p>
-          )}
+          {!hasNextPage && posts.length > 0 && <p className="text-muted-foreground text-sm">{selectedField ? 'Đã xem hết bài viết trong lĩnh vực này' : 'Đã xem hết bài viết'}</p>}
           {!isLoading && posts.length === 0 && selectedField && (
             <div className="text-center py-12">
               <Compass className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
               <h3 className="text-lg font-semibold text-foreground mb-2">Chưa có bài viết</h3>
-              <p className="text-muted-foreground text-sm">
-                Chưa có bài viết nào trong lĩnh vực này.
-              </p>
+              <p className="text-muted-foreground text-sm">Chưa có bài viết nào trong lĩnh vực này.</p>
             </div>
           )}
         </div>

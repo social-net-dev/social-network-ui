@@ -9,22 +9,23 @@ import type { UserPublic } from '@/lib/api/types';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageCircle, Loader2 } from 'lucide-react';
+import { MessageCircle, Loader2, UserPlus, UserCheck, Clock } from 'lucide-react';
 
 export const SearchUsers: React.FC = () => {
   const navigate = useNavigate();
-  const { tenantSlug } = useAuthStore();
+  const { tenantSlug, user: authUser } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserPublic[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creatingRoomFor, setCreatingRoomFor] = useState<string | null>(null);
+  // Track per-user friend request state: userId -> 'idle' | 'sending' | 'sent' | 'friends'
+  const [friendStates, setFriendStates] = useState<Record<string, 'idle' | 'sending' | 'sent' | 'friends'>>({});
 
-  // Get current user ID from tenant slug
-  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : null;
+  // Get current user ID from tenant slug, fall back to user.id in auth store
+  const currentUserId = tenantSlug ? extractUserIdFromTenantSlug(tenantSlug) : ((authUser as any)?.id ?? null);
 
   const handleSearch = async () => {
-
     if (!searchQuery.trim()) {
       setError('Vui lòng nhập tên người dùng');
       return;
@@ -38,6 +39,7 @@ export const SearchUsers: React.FC = () => {
     setLoading(true);
     setError(null);
     setSearchResults([]);
+    setFriendStates({});
 
     try {
       // Use Orval-generated profilesGetProfile for type-safe API call
@@ -48,7 +50,6 @@ export const SearchUsers: React.FC = () => {
         setError(null);
       } else {
         setError('Không tìm thấy người dùng');
-        setSearchResults([]);
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Không tìm thấy người dùng';
@@ -74,8 +75,8 @@ export const SearchUsers: React.FC = () => {
       const meResponse = await usersGetMe();
       const me = meResponse;
       const myDisplay = me.display_name || null;
-      const myUsername = me.username || me.email || null;
       const otherDisplay = targetUser.display_name || null;
+      const myUsername = me.username || me.email || null;
       const otherUsername = targetUser.username || null;
 
       if (!myDisplay || !otherDisplay) {
@@ -166,22 +167,41 @@ export const SearchUsers: React.FC = () => {
                   {user.bio && <p className="text-sm mt-1 text-gray-700 dark:text-gray-300 line-clamp-2">{user.bio}</p>}
                 </div>
 
-                {/* Action Button */}
-                <Button onClick={() => handleStartChat(user)} disabled={creatingRoomFor === user.id || user.id === currentUserId} className="flex-shrink-0 gap-2" variant={user.id === currentUserId ? 'secondary' : 'default'}>
-                  {creatingRoomFor === user.id ? (
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  {user.id !== currentUserId && (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Đang tạo...
-                    </>
-                  ) : user.id === currentUserId ? (
-                    'Bạn'
-                  ) : (
-                    <>
-                      <MessageCircle className="h-4 w-4" />
-                      Nhắn tin
+                      {/* Friend status indicator */}
+                      {friendStates[user.id] === 'friends' ? (
+                        <Button variant="secondary" size="sm" disabled className="gap-2">
+                          <UserCheck className="h-4 w-4" />
+                          Bạn bè
+                        </Button>
+                      ) : friendStates[user.id] === 'sent' ? (
+                        <Button variant="outline" size="sm" disabled className="gap-2">
+                          <Clock className="h-4 w-4" />
+                          Đã gửi
+                        </Button>
+                      ) : (
+                        <Button size="sm" className="gap-2" disabled>
+                          <UserPlus className="h-4 w-4" />
+                          Thêm bạn
+                        </Button>
+                      )}
+
+                      {/* Chat button */}
+                      <Button variant="outline" size="sm" onClick={() => handleStartChat(user)} disabled={creatingRoomFor === user.id} className="gap-2">
+                        {creatingRoomFor === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
+                        Nhắn tin
+                      </Button>
                     </>
                   )}
-                </Button>
+                  {user.id === currentUserId && (
+                    <Button variant="secondary" size="sm" disabled>
+                      Bạn
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

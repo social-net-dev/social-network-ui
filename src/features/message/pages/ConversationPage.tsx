@@ -10,6 +10,7 @@ import { useE2EEMessaging } from '../hooks/useE2EEMessaging';
 import { PassphraseModal } from '../components/PassphraseModal';
 import { SetDisplayName } from '../components/SetDisplayName';
 import { useAuthStore } from '@/stores/authStore';
+import { getChatWebSocketUrl, getMessageApiUrl } from '@/lib/config';
 import { RoomSidebar } from '../components/RoomSidebar';
 import { MessageArea } from '../components/MessageArea';
 import { MessageInput } from '../components/MessageInput';
@@ -109,8 +110,8 @@ const ConversationPage: React.FC = () => {
     room: resolvedRoom,
     userId: resolvedUserId,
 
-    wsUrl: import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'ws://localhost:8002/ws' : ''),
-    restBase: import.meta.env.VITE_API_URL_MESSAGE || (import.meta.env.DEV ? 'http://localhost:8002' : ''),
+    wsUrl: getChatWebSocketUrl(),
+    restBase: getMessageApiUrl(),
     onReactionEvent: handleReactionEvent,
     onExternalMessage: (msg: MessageOut) => {
       if (msg.room_id && msg.room_id !== resolvedRoom) {

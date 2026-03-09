@@ -78,13 +78,14 @@ export function FriendsListPage() {
     [searchInput]
   );
 
-  const handleRemoveFriend = (friendId: string, name: string) => {
+  const handleRemoveFriend = (friendUserId: string, name: string) => {
     if (confirm(`Bạn có chắc muốn hủy kết bạn với ${name}?`)) {
-      removeFriendMutation.mutate({ friendId });
+      removeFriendMutation.mutate({ friendId: friendUserId });
     }
   };
 
   const total = data?.items?.length ?? 0;
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -93,13 +94,9 @@ export function FriendsListPage() {
           <Users className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Bạn bè
-          </h1>
+          <h1 className="text-3xl font-bold text-foreground">Bạn bè</h1>
           <p className="text-sm text-muted-foreground">
-            {total > 0
-              ? `Bạn có ${total} bạn bè`
-              : "Danh sách bạn bè của bạn"}
+            {total > 0 ? `Bạn có ${total} bạn bè` : "Danh sách bạn bè của bạn"}
           </p>
         </div>
       </div>
@@ -131,7 +128,7 @@ export function FriendsListPage() {
         </Card>
       )}
 
-      {!isLoading && friends.length === 0 && (
+      {!isLoading && !isError && friends.length === 0 && (
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
@@ -183,7 +180,7 @@ export function FriendsListPage() {
                     variant="ghost"
                     size="sm"
                     className="rounded-full text-destructive hover:bg-destructive/10"
-                    onClick={() => handleRemoveFriend(friend.id, friend.user.display_name || friend.user.username)}
+                    onClick={() => handleRemoveFriend(friend.id, friend.user.display_name || friend.user.username || '')}
                     disabled={removeFriendMutation.isPending}
                   >
                     <UserMinus className="h-4 w-4" />
@@ -197,3 +194,4 @@ export function FriendsListPage() {
     </div>
   );
 }
+
