@@ -12,7 +12,7 @@ function unwrapResponse(response: AxiosResponse): AxiosResponse {
   return response;
 }
 
-export function attachResponseInterceptor(apiClient: AxiosInstance, baseURL: string): void {
+export function attachResponseInterceptor(apiClient: AxiosInstance, baseURL: string, refreshBaseURL?: string): void {
   let isRefreshing = false;
   let failedQueue: Array<{
     resolve: (value?: unknown) => void;
@@ -70,7 +70,8 @@ export function attachResponseInterceptor(apiClient: AxiosInstance, baseURL: str
         }
 
         try {
-          const refreshURL = baseURL.endsWith('/') ? `${baseURL}auth/refresh/` : `${baseURL}/auth/refresh/`;
+          const refreshRoot = (refreshBaseURL ?? baseURL).replace(/\/$/, '');
+          const refreshURL = `${refreshRoot}/auth/refresh/`;
           const response = await axios.post(refreshURL, { refresh: refreshToken });
 
           const responseData = response.data as unknown;

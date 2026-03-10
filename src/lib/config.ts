@@ -2,6 +2,7 @@ declare global {
   interface Window {
     __ENV__?: {
       VITE_API_BASE_URL?: string;
+      VITE_API_SOCIAL_URL?: string;
     };
   }
 }
@@ -25,8 +26,8 @@ export const getApiBaseUrl = (): string => {
  * Docker: social-servece container, host port 8003
  */
 export const getSocialApiUrl = (): string => {
-  if (typeof window !== 'undefined' && (window.__ENV__ as Record<string, string> | undefined)?.VITE_API_SOCIAL_URL) {
-    return (window.__ENV__ as Record<string, string>).VITE_API_SOCIAL_URL;
+  if (typeof window !== 'undefined' && window.__ENV__?.VITE_API_SOCIAL_URL) {
+    return window.__ENV__.VITE_API_SOCIAL_URL;
   }
   if (import.meta.env.DEV) {
     return import.meta.env.VITE_API_SOCIAL_URL || 'http://localhost:8003/api';
